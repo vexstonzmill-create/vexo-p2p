@@ -21,8 +21,8 @@ function loadDB() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
   if (!fs.existsSync(DATA_FILE)) {
     return {
-      users: [], ads: [], orders: [], messages: [], reviews: [],
-      counters: { user: 0, ad: 0, order: 0, message: 0, review: 0 }
+      users: [], ads: [], orders: [], messages: [], reviews: [], platformReviews: [],
+      counters: { user: 0, ad: 0, order: 0, message: 0, review: 0, platformReview: 0 }
     };
   }
   try { return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); } 
@@ -30,6 +30,8 @@ function loadDB() {
 }
 
 let DB = loadDB();
+if (!DB.platformReviews) DB.platformReviews = []; // Миграция для старых баз
+
 function saveDB() { fs.writeFileSync(DATA_FILE, JSON.stringify(DB, null, 2), 'utf8'); }
 function nextId(kind) { DB.counters[kind] = (DB.counters[kind] || 0) + 1; return DB.counters[kind]; }
 
@@ -144,6 +146,7 @@ app.get('/api/ads', (req, res) => {
   if (req.query.side) list = list.filter(a => a.side === req.query.side);
   if (req.query.asset) list = list.filter(a => a.asset === req.query.asset);
   if (req.query.face_type) list = list.filter(a => a.faceType === req.query.face_type);
+  if (req.query.payment) list = list.filter(a => a.paymentMethods.includes(req.query.payment));
   if (req.query.min_amount) list = list.filter(a => a.maxRub >= Number(req.query.min_amount));
   if (req.query.max_amount) list = list.filter(a => a.minRub <= Number(req.query.max_amount));
   list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -244,7 +247,7 @@ app.get('/api/orders/:id', auth, (req, res) => {
   const o = DB.orders.find(o => o.id === Number(req.params.id));
   if (!o) return res.status(404).json({ error: 'not_found' });
   if (o.buyerId !== req.user.id && o.sellerId !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
-  res.json({ order: shapeOrder(o), history: o.history });
+  res.json({ order: shapeOrder(o), history: o.history, terms: DB.ads.find(a => a.id === o.adId)?.terms });
 });
 
 function transition(orderId, to, note) {
@@ -295,6 +298,7 @@ app.post('/api/chat/:orderId', auth, (req, res) => {
   res.status(201).json({ id: m.id, senderId: m.senderId, senderUsername: req.user.username, text: m.text, createdAt: m.createdAt, isMine: true });
 });
 
+// Отзывы (для пользователей)
 app.post('/api/reviews', auth, (req, res) => {
   const { order_id, rating, comment } = req.body || {};
   const o = DB.orders.find(o => o.id === Number(order_id));
@@ -311,13 +315,51 @@ app.post('/api/reviews', auth, (req, res) => {
   DB.reviews.push(review); saveDB(); res.status(201).json(review);
 });
 
+app.get('/api/reviews/user/:userId', (req, res) => {
+  const userId = Number(req.params.userId);
+  const items = DB.reviews.filter(r => r.targetId === userId).map(r => ({
+    id: r.id, rating: r.rating, comment: r.comment,
+    author: DB.users.find(u => u.id === r.authorId)?.username || '?',
+    createdAt: r.createdAt
+  }));
+  res.json({ items });
+});
+
+// Отзывы о ПЛАТФОРМЕ (Один раз, после 1-й сделки)
+app.post('/api/platform-reviews', auth, (req, res) => {
+  const { rating, comment } = req.body || {};
+  const r = Number(rating);
+  if (!(r >= 1 && r <= 5)) return res.status(400).json({ error: 'bad_rating' });
+  
+  // Проверка: есть ли хотя бы 1 завершенная сделка
+  const hasCompleted = DB.orders.some(o => o.status === 'completed' && (o.buyerId === req.user.id || o.sellerId === req.user.id));
+  if (!hasCompleted) return res.status(403).json({ error: 'no_completed_deals' });
+  
+  // Проверка: не оставлял ли уже
+  if (DB.platformReviews.find(r => r.userId === req.user.id)) return res.status(409).json({ error: 'already_reviewed' });
+
+  const review = {
+    id: nextId('platformReview'), userId: req.user.id,
+    username: req.user.username, rating: r, comment: (comment || '').slice(0, 1000),
+    createdAt: new Date().toISOString()
+  };
+  DB.platformReviews.push(review); saveDB(); res.status(201).json(review);
+});
+
+app.get('/api/platform-reviews', (req, res) => {
+  res.json({ items: DB.platformReviews });
+});
+
 app.get('/api/stats', (req, res) => {
   const users = DB.users.length;
   const completedOrders = DB.orders.filter(o => o.status === 'completed');
   const deals = completedOrders.length;
   const turnover = completedOrders.reduce((sum, o) => sum + o.amountRub, 0);
-  const reviews = DB.reviews;
+  
+  // Средний рейтинг берем из отзывов о ПЛАТФОРМЕ
+  const reviews = DB.platformReviews;
   const avgRating = reviews.length ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(2) : '—';
+  
   res.json({ users, deals, turnover, avgRating });
 });
 

@@ -22,21 +22,20 @@
 
   <div class="main">
     <header class="topbar">
-      <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
         <button class="btn btn-sm btn-ghost hidden" id="backBtn" style="padding: 8px; border-radius: 50%; width: 36px; height: 36px;">←</button>
         <div style="display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 18px;">
           <div class="logo-mark" style="width: 28px; height: 28px; font-size: 14px;">V</div>
           <span>VEXO</span>
         </div>
-        <div class="topbar-title" id="topbarTitle" style="display: none;">Главная</div>
       </div>
-      
+      <div class="topbar-title" id="topbarTitle" style="display: none;">Главная</div>
       <div style="display: flex; align-items: center; gap: 8px;">
         <button class="btn btn-sm btn-ghost" id="themeBtn" style="padding: 8px; border-radius: 50%; width: 38px; height: 38px;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
         </button>
         <button class="btn btn-sm btn-primary" id="loginBtn">Войти</button>
-        <button class="avatar-btn hidden" id="avatarBtn"></button>
+        <button class="avatar-btn hidden" id="avatarBtn" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;"></button>
       </div>
     </header>
 
@@ -84,9 +83,9 @@
       <section class="screen" id="screen-market">
         <h2 style="margin-bottom: 16px;">P2P Маркет</h2>
         
+        <!-- Убрали "Все", оставили "Купить" (активно) и "Продать" -->
         <div class="tabs" id="marketSideTabs">
-          <button class="tab active" data-side="">Все</button>
-          <button class="tab" data-side="buy">Купить</button>
+          <button class="tab active" data-side="buy">Купить</button>
           <button class="tab" data-side="sell">Продать</button>
         </div>
 
@@ -98,9 +97,9 @@
         </div>
 
         <div class="filter-label">Сумма (₽)</div>
-        <div style="display:flex; gap:8px; margin-bottom:12px;">
-          <input type="number" class="input" id="filterMinAmount" placeholder="От" style="padding:10px;">
-          <input type="number" class="input" id="filterMaxAmount" placeholder="До" style="padding:10px;">
+        <div style="display:flex; gap:8px; margin-bottom:16px;">
+          <input type="number" class="input" id="filterMinAmount" placeholder="От" style="padding:12px;">
+          <input type="number" class="input" id="filterMaxAmount" placeholder="До" style="padding:12px;">
         </div>
 
         <div class="filter-label">Актив</div>
@@ -111,7 +110,15 @@
           <div class="icon-chip" data-val="TON"><div class="coin-icon ton">T</div> TON</div>
         </div>
 
-        <div id="adsList" style="margin-top: 16px;">Загрузка...</div>
+        <div class="filter-label">Оплата</div>
+        <div class="icon-scroll" id="filterPayment">
+          <div class="icon-chip active" data-val="">Все</div>
+          <div class="icon-chip" data-val="СБП">🏦 СБП</div>
+          <div class="icon-chip" data-val="Тинькофф">🟡 Тинькофф</div>
+          <div class="icon-chip" data-val="Сбербанк">🟢 Сбер</div>
+        </div>
+
+        <div id="adsList" style="margin-top: 20px;">Загрузка...</div>
       </section>
 
       <!-- СОЗДАТЬ ОБЪЯВЛЕНИЕ -->
@@ -252,7 +259,6 @@
   </div>
 </div>
 
-<!-- Модалка редактирования -->
 <div class="modal-overlay" id="editAdModal">
   <div class="modal">
     <h3 style="font-size: 18px;">Редактировать объявление</h3>
@@ -266,35 +272,58 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="authModal">
-  <div class="modal">
-    <div class="tabs">
-      <button class="tab active" id="tabLogin">Вход</button>
-      <button class="tab" id="tabRegister">Регистрация</button>
-    </div>
-    <form id="authForm">
-      <div class="field hidden" id="emailField"><label>Email</label><input class="input" type="email" id="authEmail"></div>
-      <div class="field"><label id="loginLabel">Логин или Email</label><input class="input" type="text" id="authLogin" required></div>
-      <div class="field"><label>Пароль</label><input class="input" type="password" id="authPass" required minlength="8"></div>
-      <div class="error-msg" id="authError"></div>
-      <button class="btn btn-primary btn-block" type="submit" id="authSubmit">Войти</button>
-    </form>
-    <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('authModal')">Отмена</button>
-  </div>
-</div>
-
+<!-- Модалка создания ордера с Условиями -->
 <div class="modal-overlay" id="orderModal">
-  <div class="modal">
-    <h3 id="orderTitle" style="font-size: 18px;">Покупка USDT</h3>
-    <div class="ad-head" style="margin-bottom: 12px;"><div class="avatar" id="orderAvatar">?</div><div><div style="font-weight: 700;" id="orderUsername">-</div><div style="font-size: 12px; color: var(--dim);" id="orderUserMeta">-</div></div></div>
-    <div style="background: var(--surf2); padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; margin-bottom: 12px;"><span style="color: var(--dim);">Курс</span><strong id="orderRate" style="color: var(--yellow);">0 ₽</strong></div>
-    <div style="background: var(--surf2); padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; margin-bottom: 12px;"><span style="color: var(--dim);">Доступно</span><strong id="orderAvailable">0</strong></div>
-    <div class="field"><label>Сумма в рублях</label><input class="input" type="number" id="orderAmount" placeholder="Введите сумму..."><div class="hint" id="orderLimit">Лимит: 0 - 0 ₽</div></div>
-    <div style="background: var(--surf2); padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; margin-bottom: 12px;"><span style="color: var(--dim);" id="orderResultLabel">Вы получите</span><strong id="orderResult">0 USDT</strong></div>
-    <div class="field"><label>Способ оплаты</label><div class="icon-scroll" id="orderPayments"></div></div>
+  <div class="modal" style="padding: 20px; gap: 12px; max-width: 450px;">
+    <h3 id="orderTitle" style="font-size: 18px; text-align: center;">Покупка USDT</h3>
+    
+    <div style="display: flex; align-items: center; gap: 12px; background: var(--surf2); padding: 12px; border-radius: 12px;">
+      <div class="avatar" id="orderAvatar" style="width: 36px; height: 36px; font-size: 14px;">?</div>
+      <div>
+        <div style="font-weight: 800; font-size: 15px;" id="orderUsername">-</div>
+        <div style="font-size: 12px; color: var(--dim);" id="orderUserMeta">-</div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <div style="background: var(--surf2); padding: 10px 14px; border-radius: 10px;">
+        <div style="font-size: 11px; color: var(--dim); margin-bottom: 2px;">Курс</div>
+        <strong id="orderRate" style="color: var(--yellow); font-size: 16px;">0 ₽</strong>
+      </div>
+      <div style="background: var(--surf2); padding: 10px 14px; border-radius: 10px;">
+        <div style="font-size: 11px; color: var(--dim); margin-bottom: 2px;">Доступно</div>
+        <strong id="orderAvailable" style="font-size: 16px;">0</strong>
+      </div>
+    </div>
+
+    <div class="field" style="margin-bottom: 0;">
+      <label style="font-size: 13px; margin-bottom: 4px;">Сумма в рублях</label>
+      <input class="input" type="number" id="orderAmount" placeholder="Введите сумму..." style="font-size: 18px; font-weight: 800; padding: 12px 14px;">
+      <div class="hint" id="orderLimit" style="margin-top: 4px;">Лимит: 0 - 0 ₽</div>
+    </div>
+
+    <div style="background: var(--surf2); padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
+      <span style="color: var(--dim); font-size: 13px;" id="orderResultLabel">Вы получите</span>
+      <strong id="orderResult" style="font-size: 18px;">0 USDT</strong>
+    </div>
+
+    <!-- Условия мейкера -->
+    <div style="background: rgba(255,214,10,0.05); border: 1px dashed rgba(255,214,10,0.3); border-radius: 10px; padding: 12px;">
+      <div style="font-size: 11px; font-weight: 800; color: var(--yellow); text-transform: uppercase; margin-bottom: 4px;">Условия мейкера</div>
+      <div id="orderTerms" style="font-size: 12px; color: var(--dim); line-height: 1.4; max-height: 60px; overflow-y: auto;"></div>
+    </div>
+
+    <div class="field" style="margin-bottom: 0;">
+      <label style="font-size: 13px; margin-bottom: 4px;">Способ оплаты</label>
+      <div class="icon-scroll" id="orderPayments" style="margin-bottom: 0;"></div>
+    </div>
+    
     <div class="error-msg" id="orderError"></div>
-    <button class="btn btn-primary btn-block" id="orderSubmit">Подтвердить</button>
-    <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('orderModal')">Отмена</button>
+    
+    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+      <button class="btn btn-primary btn-block" id="orderSubmit">Подтвердить</button>
+      <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('orderModal')">Отмена</button>
+    </div>
   </div>
 </div>
 
