@@ -50,10 +50,10 @@
               <div class="banner">
                 <div class="banner-tag">VEXO P2P</div>
                 <h2>Покупайте и продавайте <span>цифровые активы</span> безопасно</h2>
-                <p>USDT · BTC · TON за рубли. Проверенные продавцы, эскроу-сделки, честная статистика.</p>
-                <button class="btn btn-primary" onclick="show('market')">Перейти к P2P →</button>
+                <p>USDT · BTC · TON за рубли. Проверенные продавцы, эскроу-сделки.</p>
+                <button class="btn btn-primary" onclick="show('market')">Перейти в Маркет</button>
               </div>
-              <div class="banner banner-tg" style="background: linear-gradient(135deg,#0c1820,#0f1418); border-color: #1c2a35;">
+              <div class="banner" style="background: linear-gradient(135deg,#0c1820,#0f1418); border-color: #1c2a35;">
                 <div class="banner-tag" style="color: #4db8e0; border-color: rgba(34,158,217,.3); background: rgba(34,158,217,.12);">Официальный канал</div>
                 <h2>Новости, курсы<br>и <span style="color: #4db8e0;">розыгрыши</span></h2>
                 <p>Подпишитесь на наш Telegram — анонсы обновлений и полезные материалы.</p>
@@ -68,47 +68,43 @@
           </div>
         </div>
 
-        <div class="quick-actions">
-          <div class="qa-card" onclick="show('market')">
-            <div class="qa-icon buy">↓</div>
-            <div><div class="qa-lbl">Купить</div><div class="qa-title">USDT / BTC / TON</div></div>
-          </div>
-          <div class="qa-card" onclick="show('market')">
-            <div class="qa-icon sell">↑</div>
-            <div><div class="qa-lbl">Продать</div><div class="qa-title">USDT / BTC / TON</div></div>
-          </div>
-        </div>
-
-        <h3 class="sec-title">Статистика платформы</h3>
         <div class="stats">
           <div class="stat"><div class="stat-lbl">Пользователи</div><div class="stat-val" id="statUsers">0</div></div>
-          <div class="stat"><div class="stat-lbl">Завершённые сделки</div><div class="stat-val" id="statDeals">0</div></div>
-          <div class="stat"><div class="stat-lbl">Общий оборот</div><div class="stat-val" id="statTurnover">0 ₽</div></div>
-          <div class="stat"><div class="stat-lbl">Средний рейтинг</div><div class="stat-val" id="statRating">—</div></div>
+          <div class="stat"><div class="stat-lbl">Сделки</div><div class="stat-val" id="statDeals">0</div></div>
+          <div class="stat"><div class="stat-lbl">Оборот</div><div class="stat-val" id="statTurnover">0 ₽</div></div>
+          <div class="stat"><div class="stat-lbl">Рейтинг</div><div class="stat-val" id="statRating">—</div></div>
         </div>
-
-        <div class="section-head">
-          <h3>Популярные объявления</h3>
-          <a href="#" onclick="show('market'); return false;">Все →</a>
-        </div>
-        <div id="homeAdsList"></div>
       </section>
 
       <!-- МАРКЕТ -->
       <section class="screen" id="screen-market">
         <h2 style="margin-bottom: 16px;">P2P Маркет</h2>
         
-        <div class="tabs">
+        <div class="tabs" id="marketSideTabs">
           <button class="tab active" data-side="">Все</button>
           <button class="tab" data-side="buy">Купить</button>
           <button class="tab" data-side="sell">Продать</button>
         </div>
 
-        <div class="asset-scroll" id="filterAsset">
-          <div class="asset-chip active" data-val="">Все активы</div>
-          <div class="asset-chip" data-val="USDT"><div class="coin-icon usdt">₮</div> USDT</div>
-          <div class="asset-chip" data-val="BTC"><div class="coin-icon btc">₿</div> BTC</div>
-          <div class="asset-chip" data-val="TON"><div class="coin-icon ton">T</div> TON</div>
+        <div class="filter-label">Тип лица</div>
+        <div class="chips" id="filterFace">
+          <button class="chip active" data-val="">Все</button>
+          <button class="chip" data-val="first">1-е лицо</button>
+          <button class="chip" data-val="third">3-е лицо</button>
+        </div>
+
+        <div class="filter-label">Сумма (₽)</div>
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+          <input type="number" class="input" id="filterMinAmount" placeholder="От" style="padding:10px;">
+          <input type="number" class="input" id="filterMaxAmount" placeholder="До" style="padding:10px;">
+        </div>
+
+        <div class="filter-label">Актив</div>
+        <div class="icon-scroll" id="filterAsset">
+          <div class="icon-chip active" data-val="">Все</div>
+          <div class="icon-chip" data-val="USDT"><div class="coin-icon usdt">₮</div> USDT</div>
+          <div class="icon-chip" data-val="BTC"><div class="coin-icon btc">₿</div> BTC</div>
+          <div class="icon-chip" data-val="TON"><div class="coin-icon ton">T</div> TON</div>
         </div>
 
         <div id="adsList" style="margin-top: 16px;">Загрузка...</div>
@@ -136,16 +132,16 @@
 
         <div class="field">
           <label>Актив</label>
-          <div class="asset-scroll" id="f-asset-select">
-            <div class="asset-chip active" data-val="USDT"><div class="coin-icon usdt">₮</div> USDT</div>
-            <div class="asset-chip" data-val="BTC"><div class="coin-icon btc">₿</div> BTC</div>
-            <div class="asset-chip" data-val="TON"><div class="coin-icon ton">T</div> TON</div>
+          <div class="icon-scroll" id="f-asset-select">
+            <div class="icon-chip active" data-val="USDT"><div class="coin-icon usdt">₮</div> USDT</div>
+            <div class="icon-chip" data-val="BTC"><div class="coin-icon btc">₿</div> BTC</div>
+            <div class="icon-chip" data-val="TON"><div class="coin-icon ton">T</div> TON</div>
           </div>
         </div>
 
         <div class="field">
-          <label>Способы оплаты (можно несколько)</label>
-          <div class="pay-scroll" id="f-payments">
+          <label>Способы оплаты</label>
+          <div class="icon-scroll" id="f-payments">
             <div class="pay-chip" data-val="СБП">🏦 СБП</div>
             <div class="pay-chip" data-val="Тинькофф">🟡 Тинькофф</div>
             <div class="pay-chip" data-val="Сбербанк">🟢 Сбер</div>
@@ -192,8 +188,8 @@
           <div class="lbl">Общий баланс в рублях</div>
           <div class="amount">0,00 <span>₽</span></div>
           <div class="wallet-actions">
-            <a href="https://t.me/vexoio_bot?start=deposit" target="_blank" class="btn btn-primary" style="flex:1;">Пополнить</a>
-            <a href="https://t.me/vexoio_bot?start=withdraw" target="_blank" class="btn btn-ghost" style="flex:1;">Вывести</a>
+            <button class="btn btn-primary" id="btnDeposit" style="flex:1;">Пополнить</button>
+            <button class="btn btn-ghost" id="btnWithdraw" style="flex:1;">Вывести</button>
           </div>
         </div>
 
@@ -230,10 +226,40 @@
   </div>
 </div>
 
+<!-- Модалки -->
 <div class="toast-container" id="toastContainer"></div>
 <div class="modal-overlay" id="dialogOverlay"><div class="modal" id="dialogContent"></div></div>
 
-<!-- МОДАЛКИ -->
+<!-- Модалка пополнения / вывода -->
+<div class="modal-overlay" id="walletActionModal">
+  <div class="modal">
+    <h3 id="walletActionTitle" style="font-size: 18px;">Пополнение</h3>
+    
+    <div class="field">
+      <label>Выберите актив</label>
+      <div class="icon-scroll" id="walletActionAsset">
+        <div class="icon-chip active" data-val="RUB"><div class="coin-icon rub">₽</div> RUB</div>
+        <div class="icon-chip" data-val="USDT"><div class="coin-icon usdt">₮</div> USDT</div>
+        <div class="icon-chip" data-val="BTC"><div class="coin-icon btc">₿</div> BTC</div>
+        <div class="icon-chip" data-val="TON"><div class="coin-icon ton">T</div> TON</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Сумма</label>
+      <input type="number" class="input" id="walletActionAmount" placeholder="Введите сумму">
+    </div>
+
+    <div class="field" id="walletRequisitesField" style="display:none;">
+      <label>Реквизиты</label>
+      <input type="text" class="input" id="walletActionRequisites" placeholder="Номер карты или адрес кошелька">
+    </div>
+
+    <button class="btn btn-primary btn-block" id="walletActionSubmit">Перейти в Telegram</button>
+    <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('walletActionModal')">Отмена</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="authModal">
   <div class="modal">
     <div class="tabs">
@@ -263,7 +289,7 @@
     
     <div style="background: var(--surf2); padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; margin-bottom: 12px;"><span style="color: var(--dim);" id="orderResultLabel">Вы получите</span><strong id="orderResult">0 USDT</strong></div>
     
-    <div class="field"><label>Способ оплаты</label><div class="pay-scroll" id="orderPayments"></div></div>
+    <div class="field"><label>Способ оплаты</label><div class="icon-scroll" id="orderPayments"></div></div>
     <div class="error-msg" id="orderError"></div>
     <button class="btn btn-primary btn-block" id="orderSubmit">Подтвердить</button>
     <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('orderModal')">Отмена</button>

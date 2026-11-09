@@ -10,7 +10,7 @@ const PORT = Number(process.env.PORT) || 3000;
 const JWT_SECRET = process.env.JWT_SECRET;
 
 if (!JWT_SECRET || JWT_SECRET.length < 32) {
-  console.error('❌ JWT_SECRET must be at least 32 chars in .env');
+  console.error('❌ JWT_SECRET must be at least 32 chars');
   process.exit(1);
 }
 
@@ -146,6 +146,10 @@ app.get('/api/ads', (req, res) => {
   if (req.query.side) list = list.filter(a => a.side === req.query.side);
   if (req.query.asset) list = list.filter(a => a.asset === req.query.asset);
   if (req.query.face_type) list = list.filter(a => a.faceType === req.query.face_type);
+  
+  if (req.query.min_amount) list = list.filter(a => a.maxRub >= Number(req.query.min_amount));
+  if (req.query.max_amount) list = list.filter(a => a.minRub <= Number(req.query.max_amount));
+
   list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   res.json({ items: list.map(shapeAd) });
 });
@@ -158,6 +162,7 @@ app.post('/api/ads', auth, (req, res) => {
   if (mn > mx) return res.status(400).json({ error: 'min_gt_max' });
   const totalRub = at * p;
   if (mx > totalRub) return res.status(400).json({ error: 'max_exceeds_total' });
+  
   const ad = {
     id: nextId('ad'), userId: req.user.id, side, faceType: face_type, asset,
     price: p, amountTotal: at, amountLeft: at, minRub: mn, maxRub: mx,
@@ -217,7 +222,6 @@ app.get('/api/orders/my', auth, (req, res) => {
   if (f === 'active') list = list.filter(o => ['waiting', 'paid'].includes(o.status));
   else if (f === 'completed') list = list.filter(o => o.status === 'completed');
   else if (f === 'cancelled') list = list.filter(o => o.status === 'cancelled');
-  else if (f === 'dispute') list = list.filter(o => o.status === 'dispute');
   list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   res.json({ items: list.map(shapeOrder) });
 });

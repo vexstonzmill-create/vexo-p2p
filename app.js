@@ -57,6 +57,7 @@ function show(name) {
 document.querySelectorAll('[data-screen]').forEach(b => b.onclick = e => { e.preventDefault(); const s = b.dataset.screen; if (!['order'].includes(s)) previousScreen = s; show(s); });
 document.getElementById('backBtn').onclick = () => show(previousScreen);
 
+// Карусель
 (function() {
   const track = document.getElementById('bannerTrack');
   const dots = document.querySelectorAll('.banner-dot');
@@ -70,6 +71,7 @@ document.getElementById('backBtn').onclick = () => show(previousScreen);
   auto();
 })();
 
+// Авторизация
 let authMode = 'login';
 function setAuthMode(mode) {
   authMode = mode;
@@ -114,12 +116,8 @@ function updateAuthUI() {
   else { loginBtn.classList.remove('hidden'); avatarBtn.classList.add('hidden'); }
 }
 
+// Главная и Маркет
 async function loadHome() {
-  try {
-    const { items } = await API.req('GET', '/ads');
-    document.getElementById('homeAdsList').innerHTML = items.length ? items.slice(0, 3).map(renderAd).join('') : '<p style="color:var(--dim);padding:20px;text-align:center">Объявлений пока нет</p>';
-    bindAdButtons();
-  } catch (e) {}
   try {
     const stats = await API.req('GET', '/stats');
     document.getElementById('statUsers').textContent = fmt(stats.users);
@@ -131,11 +129,20 @@ async function loadHome() {
 
 async function loadMarket() {
   const filters = {};
-  const activeTab = document.querySelector('.tabs .tab.active[data-side]');
+  const activeTab = document.querySelector('#marketSideTabs .tab.active');
   if (activeTab && activeTab.dataset.side) filters.side = activeTab.dataset.side;
-  const activeAsset = document.querySelector('#filterAsset .asset-chip.active');
-  if (activeAsset && activeAsset.dataset.val) filters.asset = activeAsset.dataset.val;
   
+  const faceChip = document.querySelector('#filterFace .chip.active');
+  if (faceChip && faceChip.dataset.val) filters.face_type = faceChip.dataset.val;
+  
+  const assetChip = document.querySelector('#filterAsset .icon-chip.active');
+  if (assetChip && assetChip.dataset.val) filters.asset = assetChip.dataset.val;
+  
+  const minAmt = document.getElementById('filterMinAmount').value;
+  const maxAmt = document.getElementById('filterMaxAmount').value;
+  if (minAmt) filters.min_amount = minAmt;
+  if (maxAmt) filters.max_amount = maxAmt;
+
   document.getElementById('adsList').innerHTML = '<p style="text-align:center;padding:20px;color:var(--dim)">Загрузка...</p>';
   try {
     const { items } = await API.req('GET', '/ads?' + new URLSearchParams(filters));
@@ -145,7 +152,7 @@ async function loadMarket() {
 }
 
 function renderAd(ad) {
-  const isSell = ad.side === 'sell'; // Если продажа, значит мы покупаем
+  const isSell = ad.side === 'sell';
   const faceLabel = ad.faceType === 'first' ? '1-е лицо' : '3-е лицо';
   const faceClass = ad.faceType === 'first' ? 'first' : 'third';
   window._ads = window._ads || {}; window._ads[ad.id] = ad;
@@ -178,18 +185,22 @@ function bindAdButtons() {
   });
 }
 
-document.querySelectorAll('.tabs .tab[data-side]').forEach(c => c.onclick = () => {
-  document.querySelectorAll('.tabs .tab[data-side]').forEach(x => x.classList.remove('active'));
-  c.classList.add('active');
-  loadMarket();
+document.querySelectorAll('#marketSideTabs .tab').forEach(c => c.onclick = () => {
+  document.querySelectorAll('#marketSideTabs .tab').forEach(x => x.classList.remove('active'));
+  c.classList.add('active'); loadMarket();
 });
-document.querySelectorAll('#filterAsset .asset-chip').forEach(c => c.onclick = () => {
-  document.querySelectorAll('#filterAsset .asset-chip').forEach(x => x.classList.remove('active'));
-  c.classList.add('active');
-  loadMarket();
+document.querySelectorAll('#filterFace .chip').forEach(c => c.onclick = () => {
+  document.querySelectorAll('#filterFace .chip').forEach(x => x.classList.remove('active'));
+  c.classList.add('active'); loadMarket();
 });
+document.querySelectorAll('#filterAsset .icon-chip').forEach(c => c.onclick = () => {
+  document.querySelectorAll('#filterAsset .icon-chip').forEach(x => x.classList.remove('active'));
+  c.classList.add('active'); loadMarket();
+});
+document.getElementById('filterMinAmount').oninput = loadMarket;
+document.getElementById('filterMaxAmount').oninput = loadMarket;
 
-// Форма создания
+// Создание объявления
 const fPrice = document.getElementById('f-price'), fAmount = document.getElementById('f-amount'), fMax = document.getElementById('f-max');
 function recalc() {
   const total = (parseFloat(fAmount.value) || 0) * (parseFloat(fPrice.value) || 0);
@@ -203,8 +214,8 @@ function recalc() {
 document.querySelectorAll('#f-side .seg-btn').forEach(b => b.onclick = () => { document.querySelectorAll('#f-side .seg-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); });
 document.querySelectorAll('#f-face .seg-btn').forEach(b => b.onclick = () => { document.querySelectorAll('#f-face .seg-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); });
 document.querySelectorAll('#f-payments .pay-chip').forEach(c => c.onclick = () => c.classList.toggle('active'));
-document.querySelectorAll('#f-asset-select .asset-chip').forEach(c => c.onclick = () => {
-  document.querySelectorAll('#f-asset-select .asset-chip').forEach(x => x.classList.remove('active'));
+document.querySelectorAll('#f-asset-select .icon-chip').forEach(c => c.onclick = () => {
+  document.querySelectorAll('#f-asset-select .icon-chip').forEach(x => x.classList.remove('active'));
   c.classList.add('active');
   document.getElementById('f-asset-label').textContent = c.dataset.val;
 });
@@ -216,7 +227,7 @@ document.getElementById('createBtn').onclick = async () => {
   if (!payments.length) { errEl.textContent = 'Выберите способ оплаты'; return; }
   const btn = document.getElementById('createBtn'); btn.disabled = true; btn.textContent = 'Публикация...';
   
-  const asset = document.querySelector('#f-asset-select .asset-chip.active').dataset.val;
+  const asset = document.querySelector('#f-asset-select .icon-chip.active').dataset.val;
   
   try {
     await API.req('POST', '/ads', {
@@ -336,7 +347,6 @@ function renderOrderPage(order, history) {
   const u = API.user(), isBuyer = order.buyer.id === u.id, isSeller = order.seller.id === u.id;
   const sc = { waiting: '#FFD60A', paid: '#22c55e', completed: '#22c55e', cancelled: '#ef4444', dispute: '#D4AF37' };
   
-  // Визуальный прогресс
   let progress = 20;
   if (order.status === 'paid') progress = 60;
   if (order.status === 'completed') progress = 100;
@@ -377,7 +387,7 @@ function renderOrderPage(order, history) {
     
     ${actionsHtml}
     
-    <button style="width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--surf);border:1px solid var(--brd);border-radius:14px;padding:16px;margin-bottom:16px;color:#fff;font-size:14px" onclick="openChatModal(${order.id}, '${otherUser}')">
+    <button style="width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--surf);border:1px solid var(--brd);border-radius:14px;padding:16px;margin-bottom:16px;color:var(--txt);font-size:14px" onclick="openChatModal(${order.id}, '${otherUser}')">
       <div style="display:flex;align-items:center;gap:12px">
         <div class="avatar" style="width:36px;height:36px;font-size:14px">${otherUser[0].toUpperCase()}</div>
         <div><div style="font-weight:700">Чат с ${otherUser}</div><div style="font-size:11px;color:var(--dim)">Обсудить детали</div></div>
@@ -548,29 +558,84 @@ async function logoutAction() {
   }
 }
 
-// Темы
-const themes = ['dark', 'light', 'dark-gray', 'light-gray'];
+// Темы (строго 2)
 let currentTheme = localStorage.getItem('vexo_theme') || 'dark';
-
 function applyTheme(theme) {
   document.body.setAttribute('data-theme', theme);
   localStorage.setItem('vexo_theme', theme);
 }
-
 applyTheme(currentTheme);
 
 document.addEventListener('DOMContentLoaded', () => {
   const themeBtn = document.getElementById('themeBtn');
   if (themeBtn) {
     themeBtn.onclick = () => {
-      let idx = themes.indexOf(currentTheme);
-      idx = (idx + 1) % themes.length; 
-      currentTheme = themes[idx];
+      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
       applyTheme(currentTheme);
-      toast('Тема: ' + currentTheme, 'info'); 
+      toast('Тема: ' + (currentTheme === 'dark' ? 'Тёмная' : 'Светлая'), 'info'); 
     };
   }
 });
 
+// ЛОГИКА ПОПОЛНЕНИЯ / ВЫВОДА (В МОДАЛЬНОМ ОКНЕ)
+let walletActionType = 'deposit'; // 'deposit' или 'withdraw'
+
+document.getElementById('btnDeposit').onclick = () => {
+  walletActionType = 'deposit';
+  document.getElementById('walletActionTitle').textContent = 'Пополнение';
+  document.getElementById('walletRequisitesField').style.display = 'none'; // При пополнении реквизиты не нужны
+  document.getElementById('walletActionAmount').value = '';
+  document.getElementById('walletActionRequisites').value = '';
+  document.getElementById('walletActionModal').classList.add('active');
+};
+
+document.getElementById('btnWithdraw').onclick = () => {
+  walletActionType = 'withdraw';
+  document.getElementById('walletActionTitle').textContent = 'Вывод';
+  document.getElementById('walletRequisitesField').style.display = 'block'; // При выводе нужны реквизиты
+  document.getElementById('walletActionAmount').value = '';
+  document.getElementById('walletActionRequisites').value = '';
+  document.getElementById('walletActionModal').classList.add('active');
+};
+
+document.querySelectorAll('#walletActionAsset .icon-chip').forEach(c => {
+  c.onclick = () => {
+    document.querySelectorAll('#walletActionAsset .icon-chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+  };
+});
+
+document.getElementById('walletActionSubmit').onclick = () => {
+  if (!API.user()) {
+    closeModal('walletActionModal');
+    document.getElementById('authModal').classList.add('active');
+    return;
+  }
+
+  const asset = document.querySelector('#walletActionAsset .icon-chip.active').dataset.val;
+  const amount = document.getElementById('walletActionAmount').value;
+  const requisites = document.getElementById('walletActionRequisites').value;
+  
+  if (!amount || Number(amount) <= 0) return toast('Введите корректную сумму', 'error');
+  if (walletActionType === 'withdraw' && !requisites) return toast('Введите реквизиты для вывода', 'error');
+  
+  // Формируем безопасный payload для Telegram (макс 64 символа)
+  // Пример: dep_USDT_100 или wth_RUB_5000_card1234
+  let payload = walletActionType === 'deposit' ? 'dep' : 'wth';
+  payload += `_${asset}_${amount}`;
+  if (walletActionType === 'withdraw') {
+    const cleanReq = requisites.replace(/[^a-zA-Z0-9]/g, '').slice(0, 20); // чистим от спецсимволов
+    payload += `_${cleanReq}`;
+  }
+  
+  const url = `https://t.me/vexoio_bot?start=${payload}`;
+  
+  // Открываем Telegram
+  window.open(url, '_blank');
+  closeModal('walletActionModal');
+  toast('Перенаправление в Telegram...', 'success');
+};
+
+// Инициализация
 updateAuthUI();
-loadHome();dHome();
+loadHome();
