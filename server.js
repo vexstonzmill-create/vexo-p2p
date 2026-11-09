@@ -318,6 +318,6 @@ app.get('*', (req, res, next) => {
 
 app.listen(PORT, () => {
   console.log('VEXO P2P started on http://localhost:' + PORT);
-});RT);
+  }););
 }););RT);
 });
