@@ -127,17 +127,15 @@ app.patch('/api/users/me', auth, (req, res) => {
 function shapeAd(a) {
   const u = DB.users.find(x => x.id === a.userId);
   const stats = userStats(a.userId);
-  
-  // Считаем реальный максимум: либо заявленный лимит, либо остаток актива в рублях
   const realMaxRub = Math.min(a.maxRub, a.amountLeft * a.price);
 
   return {
     id: a.id, userId: a.userId, username: u?.username || '?', kycStatus: u?.kycStatus || 'none',
     side: a.side, faceType: a.faceType, asset: a.asset, price: a.price,
     amountTotal: a.amountTotal, amountLeft: a.amountLeft, 
-    totalRub: (a.amountLeft * a.price).toFixed(2), // Объем теперь динамический
+    totalRub: (a.amountLeft * a.price).toFixed(2), 
     minRub: a.minRub, 
-    maxRub: realMaxRub.toFixed(2), // Лимит теперь динамический!
+    maxRub: realMaxRub.toFixed(2), 
     paymentMethods: a.paymentMethods, terms: a.terms,
     active: a.active, createdAt: a.createdAt, ...stats
   };
@@ -295,7 +293,6 @@ app.post('/api/reviews', auth, (req, res) => {
   DB.reviews.push(review); saveDB(); res.status(201).json(review);
 });
 
-// ========== СТАТИСТИКА ПЛАТФОРМЫ ==========
 app.get('/api/stats', (req, res) => {
   const users = DB.users.length;
   const completedOrders = DB.orders.filter(o => o.status === 'completed');
@@ -308,7 +305,6 @@ app.get('/api/stats', (req, res) => {
   res.json({ users, deals, turnover, avgRating });
 });
 
-// ========== РАЗДАЧА ФРОНТЕНДА ==========
 const FRONTEND = path.join(__dirname);
 app.use(express.static(FRONTEND));
 app.get('*', (req, res, next) => {
@@ -318,6 +314,4 @@ app.get('*', (req, res, next) => {
 
 app.listen(PORT, () => {
   console.log('VEXO P2P started on http://localhost:' + PORT);
-  }););
-}););RT);
 });
