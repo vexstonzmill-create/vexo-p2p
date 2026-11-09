@@ -55,10 +55,12 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    // ГЛОБАЛЬНАЯ ФУНКЦИЯ ЗАКРЫТИЯ (ИСПРАВЛЯЕТ КНОПКУ ОТМЕНА)
     function closeModal(id) { 
       const el = document.getElementById(id); 
       if (el) el.classList.remove('active');
     }
+    window.closeModal = closeModal;
 
     const titles = { home: 'Главная', market: 'Маркет', create: 'Создать', orders: 'Ордера', order: 'Ордер', profile: 'Профиль', wallet: 'Кошелёк' };
     let previousScreen = 'home';
@@ -124,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('tabRegister')?.classList.toggle('active', mode === 'register');
       document.getElementById('emailField')?.classList.toggle('hidden', mode !== 'register');
       const l = document.getElementById('loginLabel');
-      if (l) l.textContent = mode === 'register' ? 'Никнейм' : 'Логин или Email';
+      if (l) l.textContent = mode === 'register' ? 'Никнейм (логин)' : 'Логин или Email';
       const b = document.getElementById('authSubmit');
       if (b) b.textContent = mode === 'login' ? 'Войти' : 'Зарегистрироваться';
       const er = document.getElementById('authError');
@@ -172,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
           localStorage.setItem('vexo_user', JSON.stringify(data.user));
           closeModal('authModal');
           updateAuthUI();
-          toast(authMode === 'login' ? 'Добро пожаловать, ' + data.user.username : 'Аккаунт создан!', 'success');
+          toast(authMode === 'login' ? 'Добро пожаловать, ' + data.user.displayName : 'Аккаунт создан!', 'success');
           show('market');
         } catch (err) {
           const map = { invalid_credentials: 'Неверный логин или пароль', user_exists: 'Никнейм уже занят', email_exists: 'Email занят', short_password: 'Пароль мин. 8 символов', short_username: 'Никнейм мин. 3 символа', bad_email: 'Неверный email' };
@@ -189,7 +191,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const ab = document.getElementById('avatarBtn');
       if (u) {
         if (lb) lb.classList.add('hidden');
-        if (ab) { ab.classList.remove('hidden'); ab.textContent = u.username[0].toUpperCase(); }
+        if (ab) {
+          ab.classList.remove('hidden');
+          if (u.avatarUrl) {
+            ab.innerHTML = `<img src="${u.avatarUrl}" alt="">`;
+          } else {
+            ab.innerHTML = (u.displayName || u.username || '?')[0].toUpperCase();
+          }
+        }
       } else {
         if (lb) lb.classList.remove('hidden');
         if (ab) ab.classList.add('hidden');
@@ -215,7 +224,10 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadMarket() {
       const filters = {};
       const activeTab = document.querySelector('#marketSideTabs .trade-tab.active');
-      if (activeTab && activeTab.dataset.side) filters.side = activeTab.dataset.side;
+      if (activeTab && activeTab.dataset.side) {
+        // Инвертируем: "Купить" значит показываем "sell" (кто продает)
+        filters.side = activeTab.dataset.side === 'buy' ? 'sell' : 'buy';
+      }
 
       const faceChip = document.querySelector('#filterFace .chip.active');
       if (faceChip && faceChip.dataset.val) filters.face_type = faceChip.dataset.val;
@@ -252,11 +264,16 @@ document.addEventListener('DOMContentLoaded', () => {
       window._ads = window._ads || {}; window._ads[ad.id] = ad;
       const pays = (ad.paymentMethods || []).map(p => `<span class="pay-tag">${p}</span>`).join('');
       const coinClass = ad.asset.toLowerCase();
+      
+      const avatarHtml = ad.avatarUrl 
+        ? `<div class="avatar"><img src="${ad.avatarUrl}" alt=""></div>` 
+        : `<div class="avatar">${ad.displayName[0].toUpperCase()}</div>`;
+
       return `<div class="ad-card">
-        <div class="ad-head">
-          <div class="avatar">${ad.username[0].toUpperCase()}</div>
+        <div class="ad-head" onclick="openPublicProfile(${ad.userId})">
+          ${avatarHtml}
           <div class="ad-user">
-            <div class="ad-name">${ad.username} <span class="badge-face ${faceClass}">${faceLabel}</span></div>
+            <div class="ad-name">${ad.displayName} <span class="badge-face ${faceClass}">${faceLabel}</span></div>
             <div class="ad-meta"><span>★ ${ad.ratingAvg || '—'}</span><span>${ad.successRate !== null ? ad.successRate + '%' : '—'}</span><span>${ad.dealsCompleted || 0} сделок</span></div>
           </div>
         </div>
@@ -312,6 +329,86 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fMinA) fMinA.oninput = loadMarket;
     const fMaxA = document.getElementById('filterMaxAmount');
     if (fMaxA) fMaxA.oninput = loadMarket;
+
+    // ПУБЛИЧНЫЙ ПРОФИЛЬ
+    window.openPublicProfile = async function(userId) {
+      const m = document.getElementById('publicProfileModal');
+      const c = document.getElementById('publicProfileContent');
+      if (!m || !c) return;
+      c.innerHTML = '<div style="text-align:center;padding:20px;">Загрузка...</div>';
+      m.classList.add('active');
+      
+      try {
+        const { user, stats, isFavorite } = await API.req('GET', '/users/' + userId);
+        
+        const avatarHtml = user.avatarUrl 
+          ? `<div class="avatar lg" style="margin:0 auto 10px;"><img src="${user.avatarUrl}" alt=""></div>` 
+          : `<div class="avatar lg" style="margin:0 auto 10px;">${user.displayName[0].toUpperCase()}</div>`;
+          
+        let favBtn = '';
+        if (API.user() && API.user().id !== user.id) {
+          favBtn = `<button class="btn-fav ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(${user.id}, this)">${isFavorite ? '❤️' : '🤍'}</button>`;
+        }
+
+        c.innerHTML = `
+          ${favBtn}
+          <div style="text-align:center; margin-bottom: 20px;">
+            ${avatarHtml}
+            <h2 style="font-size:20px;font-weight:800;margin-bottom:4px">${user.displayName}</h2>
+            <div style="font-size:12px;color:var(--dim);font-weight:600;">@${user.username}</div>
+            <div style="font-size:12px;color:var(--dim);margin-top:4px;font-weight:500;">С нами с ${new Date(user.createdAt).toLocaleDateString('ru-RU')}</div>
+          </div>
+          
+          <div class="stats">
+            <div class="stat"><div class="stat-lbl">Сделок</div><div class="stat-val">${stats.dealsTotal}</div></div>
+            <div class="stat"><div class="stat-lbl">Успешных</div><div class="stat-val">${stats.successRate !== null ? stats.successRate + '%' : '—'}</div></div>
+            <div class="stat"><div class="stat-lbl">Отзывов</div><div class="stat-val">${stats.reviewsCount}</div></div>
+            <div class="stat"><div class="stat-lbl">Рейтинг</div><div class="stat-val">${stats.ratingAvg ? '★ ' + stats.ratingAvg : '—'}</div></div>
+          </div>
+          
+          <div id="publicReviewsList" style="margin-top:16px;">Загрузка отзывов...</div>
+        `;
+        
+        loadPublicReviews(user.id);
+      } catch(e) {
+        c.innerHTML = '<div class="empty-state">Ошибка загрузки профиля</div>';
+      }
+    };
+
+    window.toggleFavorite = async function(targetId, btnEl) {
+      if (!API.user()) { document.getElementById('authModal')?.classList.add('active'); return; }
+      try {
+        const res = await API.req('POST', '/users/' + targetId + '/favorite');
+        if (res.isFavorite) {
+          btnEl.classList.add('active'); btnEl.innerHTML = '❤️';
+          toast('Добавлено в избранное', 'success');
+        } else {
+          btnEl.classList.remove('active'); btnEl.innerHTML = '🤍';
+          toast('Удалено из избранного', 'info');
+        }
+      } catch(e) { toast('Ошибка', 'error'); }
+    };
+
+    async function loadPublicReviews(userId) {
+      const list = document.getElementById('publicReviewsList');
+      if (!list) return;
+      try {
+        const data = await API.req('GET', '/reviews/user/' + userId);
+        const items = data.items || [];
+        list.innerHTML = `<div style="font-size:12px;font-weight:800;margin-bottom:10px;color:var(--dim);text-transform:uppercase;">Отзывы</div>` + 
+          (items.length ? items.map(r => `
+          <div class="ad-card" style="margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+              <strong style="font-size:13px;">${r.author}</strong>
+              <span style="color:var(--yellow);font-size:14px;">${'★'.repeat(r.rating)}</span>
+            </div>
+            <p style="font-size:12px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p>
+          </div>
+        `).join('') : '<div class="empty-state">Отзывов пока нет</div>');
+      } catch(e) {
+        list.innerHTML = '';
+      }
+    }
 
     // СОЗДАНИЕ ОБЪЯВЛЕНИЯ
     const fPrice = document.getElementById('f-price');
@@ -400,7 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div style="font-size:12px;color:var(--dim);display:flex;justify-content:space-between;font-weight:600">
               <span>${new Date(o.createdAt).toLocaleString('ru-RU')}</span>
-              <span>${o.buyer.username} ↔ ${o.seller.username}</span>
+              <span>${o.buyer.displayName} ↔ ${o.seller.displayName}</span>
             </div>
           </div>`).join('') : '<div class="empty-state">Ордеров нет</div>';
         list.querySelectorAll('[data-order-id]').forEach(el => {
@@ -448,7 +545,7 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (order.status === 'cancelled') actionsHtml = `<div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:14px;text-align:center;color:var(--red);font-size:13px;margin-bottom:16px;font-weight:700;">Ордер отменён</div>`;
 
       const timelineHtml = (history || []).map(h => `<div style="display:flex;gap:12px;padding:8px 0"><div style="width:13px;height:13px;border-radius:50%;background:var(--yellow);flex-shrink:0;margin-top:3px"></div><div style="flex:1"><div style="font-size:13px;font-weight:700">${h.note || h.status}</div><div style="font-size:11px;color:var(--dim);font-weight:600;">${new Date(h.at).toLocaleString('ru-RU')}</div></div></div>`).join('');
-      const otherUser = isBuyer ? order.seller.username : order.buyer.username;
+      const otherUser = isBuyer ? order.seller : order.buyer;
 
       const container = document.getElementById('orderDetailContent');
       if (!container) return;
@@ -475,10 +572,12 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="font-size: 13px; color: var(--dim); line-height: 1.5; font-weight: 600;">${terms || 'Стандартные условия сделки.'}</div>
         </div>
         ${actionsHtml}
-        <button style="width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--surf);border:1px solid var(--brd);border-radius:14px;padding:16px;margin-bottom:16px;color:var(--txt);font-size:14px" onclick="openChatModal(${order.id}, '${otherUser}')">
+        <button style="width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--surf);border:1px solid var(--brd);border-radius:14px;padding:16px;margin-bottom:16px;color:var(--txt);font-size:14px" onclick="openChatModal(${order.id}, '${otherUser.displayName}')">
           <div style="display:flex;align-items:center;gap:12px">
-            <div class="avatar" style="width:36px;height:36px;font-size:14px">${otherUser[0].toUpperCase()}</div>
-            <div><div style="font-weight:800">Чат с ${otherUser}</div><div style="font-size:11px;color:var(--dim);font-weight:600;">Обсудить детали</div></div>
+            <div class="avatar" style="width:36px;height:36px;font-size:14px" onclick="event.stopPropagation(); openPublicProfile(${otherUser.id});">
+              ${otherUser.avatarUrl ? `<img src="${otherUser.avatarUrl}" alt="">` : otherUser.displayName[0].toUpperCase()}
+            </div>
+            <div><div style="font-weight:800">Чат с ${otherUser.displayName}</div><div style="font-size:11px;color:var(--dim);font-weight:600;">Обсудить детали</div></div>
           </div>
           <span id="chatBadge" style="background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:10px;padding:2px 8px;display:none">0</span>
         </button>
@@ -612,15 +711,20 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (profileTab === 'history') contentHtml = '<div id="myHistoryList">Загрузка...</div>';
         else if (profileTab === 'reviews') contentHtml = '<div id="myReviewsList">Загрузка...</div>';
 
+        const avatarHtml = user.avatarUrl 
+          ? `<div class="avatar lg"><img src="${user.avatarUrl}" alt=""></div>` 
+          : `<div class="avatar lg">${user.displayName[0].toUpperCase()}</div>`;
+
         content.innerHTML = `
-          <div style="display:flex;align-items:center;gap:16px;padding:20px;background:var(--surf);border:1px solid var(--brd);border-radius:16px;margin-bottom:20px">
-            <div class="avatar lg">${user.username[0].toUpperCase()}</div>
+          <div style="display:flex;align-items:center;gap:16px;padding:20px;background:var(--surf);border:1px solid var(--brd);border-radius:16px;margin-bottom:20px;position:relative;">
+            ${avatarHtml}
             <div style="flex:1;min-width:0">
-              <h2 style="font-size:20px;font-weight:800;margin-bottom:4px">${user.username}</h2>
-              <div style="font-size:13px;color:var(--dim);font-weight:500;">${user.email}</div>
+              <h2 style="font-size:20px;font-weight:800;margin-bottom:4px">${user.displayName}</h2>
+              <div style="font-size:12px;color:var(--dim);font-weight:600;">@${user.username}</div>
               <div style="font-size:12px;color:var(--dim);margin-top:2px;font-weight:500;">С нами с ${new Date(user.createdAt).toLocaleDateString('ru-RU')}</div>
               <div>${kycBadge} ${adminBadge}</div>
             </div>
+            <button class="btn btn-ghost btn-sm" style="position:absolute;top:16px;right:16px;" onclick="openSettings()">⚙️</button>
           </div>
           <div class="stats">
             <div class="stat"><div class="stat-lbl">Сделок</div><div class="stat-val">${stats.dealsTotal}</div></div>
@@ -710,6 +814,75 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (e) { const l = document.getElementById('myReviewsList'); if (l) l.innerHTML = '<div class="empty-state">Отзывов нет</div>'; }
     }
 
+    // НАСТРОЙКИ
+    window.openSettings = function() {
+      const u = API.user(); if (!u) return;
+      
+      const prev = document.getElementById('settingsAvatarPreview');
+      if (u.avatarUrl) {
+        prev.innerHTML = `<img src="${u.avatarUrl}" alt="">`;
+      } else {
+        prev.innerHTML = u.displayName[0].toUpperCase();
+      }
+      
+      document.getElementById('settingsAvatarUrl').value = u.avatarUrl || '';
+      document.getElementById('settingsName').value = u.displayName || '';
+      document.getElementById('settingsEmail').value = u.email;
+      document.getElementById('settingsCurrentPass').value = '';
+      document.getElementById('settingsNewPass').value = '';
+      document.getElementById('settingsError').textContent = '';
+      
+      document.getElementById('settingsModal').classList.add('active');
+    };
+
+    const settingsAvatarUrl = document.getElementById('settingsAvatarUrl');
+    if (settingsAvatarUrl) {
+      settingsAvatarUrl.oninput = (e) => {
+        const prev = document.getElementById('settingsAvatarPreview');
+        if (e.target.value) {
+          prev.innerHTML = `<img src="${e.target.value}" alt="">`;
+        } else {
+          const u = API.user();
+          prev.innerHTML = (u.displayName || u.username || '?')[0].toUpperCase();
+        }
+      };
+    }
+
+    const settingsSaveBtn = document.getElementById('settingsSaveBtn');
+    if (settingsSaveBtn) {
+      settingsSaveBtn.onclick = async () => {
+        const btn = settingsSaveBtn; btn.disabled = true;
+        try {
+          const payload = {
+            displayName: document.getElementById('settingsName').value,
+            avatarUrl: document.getElementById('settingsAvatarUrl').value,
+            email: document.getElementById('settingsEmail').value
+          };
+          
+          const newPass = document.getElementById('settingsNewPass').value;
+          if (newPass) {
+            payload.password = newPass;
+            payload.currentPassword = document.getElementById('settingsCurrentPass').value;
+          }
+
+          const { user } = await API.req('PATCH', '/users/me', payload);
+          localStorage.setItem('vexo_user', JSON.stringify(user));
+          closeModal('settingsModal'); 
+          toast('Настройки сохранены', 'success'); 
+          updateAuthUI();
+          loadProfile();
+        } catch (e) {
+          const er = document.getElementById('settingsError');
+          if (er) {
+            if (e.code === 'email_taken') er.textContent = 'Этот email уже занят';
+            else if (e.code === 'wrong_password') er.textContent = 'Неверный текущий пароль';
+            else if (e.code === 'short_password') er.textContent = 'Пароль мин. 8 символов';
+            else er.textContent = 'Ошибка сохранения';
+          }
+        } finally { btn.disabled = false; }
+      };
+    }
+
     // РЕДАКТИРОВАНИЕ ОБЪЯВЛЕНИЯ
     window.openEditAd = function(adId) {
       const ad = window._myAds?.[adId];
@@ -752,8 +925,15 @@ document.addEventListener('DOMContentLoaded', () => {
       currentAd = ad; selectedPay = ad.paymentMethods?.[0] || null;
       const isBuy = ad.side === 'sell';
       document.getElementById('orderTitle').textContent = (isBuy ? 'Покупка ' : 'Продажа ') + ad.asset;
-      document.getElementById('orderAvatar').textContent = ad.username[0].toUpperCase();
-      document.getElementById('orderUsername').textContent = ad.username;
+      
+      const avatarEl = document.getElementById('orderAvatar');
+      if (ad.avatarUrl) {
+        avatarEl.innerHTML = `<img src="${ad.avatarUrl}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      } else {
+        avatarEl.textContent = ad.displayName[0].toUpperCase();
+      }
+      
+      document.getElementById('orderUsername').textContent = ad.displayName;
       document.getElementById('orderUserMeta').textContent = (ad.faceType === 'first' ? '1-е лицо' : '3-е лицо') + ' · ★ ' + (ad.ratingAvg || '—');
       document.getElementById('orderRate').textContent = fmt(ad.price) + ' ₽';
       document.getElementById('orderAvailable').textContent = fmtDec(ad.amountLeft, 2) + ' ' + ad.asset;
@@ -800,29 +980,6 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.disabled = false;
         btn.textContent = currentAd ? (currentAd.side === 'sell' ? 'Купить ' : 'Продать ') + currentAd.asset : 'OK';
       }
-    }
-
-    // НАСТРОЙКИ
-    window.openSettings = function() {
-      const u = API.user(); if (!u) return;
-      document.getElementById('settingsEmail').value = u.email;
-      document.getElementById('settingsError').textContent = '';
-      document.getElementById('settingsModal').classList.add('active');
-    };
-
-    const settingsSaveBtn = document.getElementById('settingsSaveBtn');
-    if (settingsSaveBtn) {
-      settingsSaveBtn.onclick = async () => {
-        const btn = settingsSaveBtn; btn.disabled = true;
-        try {
-          const { user } = await API.req('PATCH', '/users/me', { email: document.getElementById('settingsEmail').value });
-          localStorage.setItem('vexo_user', JSON.stringify(user));
-          closeModal('settingsModal'); toast('Настройки сохранены', 'success'); loadProfile();
-        } catch (e) {
-          const er = document.getElementById('settingsError');
-          if (er) er.textContent = e.code === 'email_taken' ? 'Этот email уже занят' : 'Неверный email';
-        } finally { btn.disabled = false; }
-      };
     }
 
     window.logoutAction = async function() {
@@ -893,15 +1050,38 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     }
 
-    // КАРУСЕЛЬ
+    // КАРУСЕЛЬ (СВАЙПЫ)
     (function() {
       const track = document.getElementById('bannerTrack');
       const dots = document.querySelectorAll('.banner-dot');
+      const viewport = document.getElementById('bannerViewport');
       if (!track || !dots.length) return;
       let idx = 0, timer;
-      function go(i) { idx = (i + dots.length) % dots.length; track.style.transform = `translateX(-${idx * 100}%)`; dots.forEach((d, k) => d.classList.toggle('active', k === idx)); }
+      
+      function go(i) { 
+        idx = (i + dots.length) % dots.length; 
+        track.style.transform = `translateX(-${idx * 100}%)`; 
+        dots.forEach((d, k) => d.classList.toggle('active', k === idx)); 
+      }
       function auto() { clearInterval(timer); timer = setInterval(() => go(idx + 1), 4500); }
+      
       dots.forEach((d, i) => d.onclick = () => { go(i); auto(); });
+
+      // Свайпы
+      let startX = 0;
+      viewport.addEventListener('touchstart', e => {
+        startX = e.touches[0].clientX;
+        clearInterval(timer);
+      }, { passive: true });
+
+      viewport.addEventListener('touchend', e => {
+        const endX = e.changedTouches[0].clientX;
+        const diff = startX - endX;
+        if (diff > 50) go(idx + 1); // Свайп влево
+        if (diff < -50) go(idx - 1); // Свайп вправо
+        auto();
+      });
+
       auto();
     })();
 

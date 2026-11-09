@@ -35,21 +35,28 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
         </button>
         <button class="btn btn-sm btn-primary" id="loginBtn">Войти</button>
-        <button class="avatar-btn hidden" id="avatarBtn" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 13px;"></button>
+        <button class="avatar-btn hidden" id="avatarBtn"></button>
       </div>
     </header>
 
     <main class="content">
       <section class="screen active" id="screen-home">
         <div class="banner-carousel">
-          <div class="banner-viewport">
+          <div class="banner-viewport" id="bannerViewport">
             <div class="banner-track" id="bannerTrack">
+              <!-- Баннер 1 с монетами -->
               <div class="banner">
                 <div class="banner-tag">VEXO P2P</div>
                 <h2>Покупайте и продавайте <span>цифровые активы</span> безопасно</h2>
                 <p>USDT · BTC · TON за рубли. Проверенные продавцы, эскроу-сделки.</p>
                 <button class="btn btn-primary" data-screen="market">Перейти в Маркет</button>
+                <div class="coin-decoration">
+                  <div class="coin-icon usdt float-1">₮</div>
+                  <div class="coin-icon btc float-2">₿</div>
+                  <div class="coin-icon ton float-3">T</div>
+                </div>
               </div>
+              <!-- Баннер 2 с Телегой -->
               <div class="banner banner-tg">
                 <div class="banner-tag tg-tag">Официальный канал</div>
                 <h2>Новости, курсы<br>и <span>розыгрыши</span></h2>
@@ -225,7 +232,7 @@
 <div class="toast-container" id="toastContainer"></div>
 <div class="modal-overlay" id="dialogOverlay"><div class="modal" id="dialogContent"></div></div>
 
-<!-- МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ (ТО САМОЕ, КОТОРОГО НЕ ХВАТАЛО) -->
+<!-- МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ -->
 <div class="modal-overlay" id="authModal">
   <div class="modal">
     <div style="display: flex; border-bottom: 1px solid var(--brd); margin-bottom: 16px;">
@@ -249,6 +256,40 @@
       <button type="submit" class="btn btn-primary btn-block" id="authSubmit">Войти</button>
       <button type="button" class="btn btn-ghost btn-block btn-sm" onclick="closeModal('authModal')" style="margin-top: 8px;">Отмена</button>
     </form>
+  </div>
+</div>
+
+<!-- НАСТРОЙКИ ПРОФИЛЯ -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <h3 style="font-size: 16px;">Настройки профиля</h3>
+    
+    <div style="text-align: center; margin-bottom: 10px;">
+      <div class="avatar lg" id="settingsAvatarPreview" style="margin: 0 auto 10px;"></div>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('settingsAvatarUrl').focus()">Сменить аватар (URL)</button>
+    </div>
+
+    <div class="field"><label>Ссылка на аватар (URL)</label><input class="input" type="url" id="settingsAvatarUrl" placeholder="https://..."></div>
+    <div class="field"><label>Имя (отображается на площадке)</label><input class="input" type="text" id="settingsName" maxlength="50"></div>
+    <div class="field"><label>Email</label><input class="input" type="email" id="settingsEmail"></div>
+    
+    <hr style="border: 0; border-top: 1px solid var(--brd); margin: 10px 0;">
+    
+    <div class="field"><label>Текущий пароль (для смены)</label><input class="input" type="password" id="settingsCurrentPass" placeholder="Обязательно при смене пароля"></div>
+    <div class="field"><label>Новый пароль</label><input class="input" type="password" id="settingsNewPass" placeholder="Оставьте пустым, чтобы не менять"></div>
+
+    <div class="error-msg" id="settingsError"></div>
+    
+    <button class="btn btn-primary btn-block" id="settingsSaveBtn">Сохранить</button>
+    <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('settingsModal')">Отмена</button>
+  </div>
+</div>
+
+<!-- ПУБЛИЧНЫЙ ПРОФИЛЬ -->
+<div class="modal-overlay" id="publicProfileModal">
+  <div class="modal" style="padding: 20px;">
+    <button style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: var(--dim); font-size: 20px;" onclick="closeModal('publicProfileModal')">×</button>
+    <div id="publicProfileContent">Загрузка...</div>
   </div>
 </div>
 
@@ -325,16 +366,6 @@
     <div style="padding: 12px 16px; border-bottom: 1px solid var(--brd); display: flex; align-items: center; gap: 10px;"><div class="avatar" id="chatAvatar">?</div><div style="flex: 1;"><div style="font-size: 14px; font-weight: 700;" id="chatTitle">Чат</div><div style="font-size: 10px; color: var(--dim);" id="chatSub">Собеседник</div></div><button style="background: none; border: none; color: var(--dim); font-size: 20px;" onclick="closeChatModal()">×</button></div>
     <div class="chat-body" id="chatBody"></div>
     <div class="chat-input-row"><input type="text" id="chatInput" placeholder="Сообщение..." maxlength="500"><button style="width: 32px; height: 32px; border-radius: 50%; background: var(--yellow); color: #000; border: none; display: flex; align-items: center; justify-content: center;" id="chatSend">➤</button></div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="settingsModal">
-  <div class="modal">
-    <h3 style="font-size: 16px;">Настройки профиля</h3>
-    <div class="field"><label>Email</label><input class="input" type="email" id="settingsEmail"></div>
-    <div class="error-msg" id="settingsError"></div>
-    <button class="btn btn-primary btn-block" id="settingsSaveBtn">Сохранить</button>
-    <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('settingsModal')">Отмена</button>
   </div>
 </div>
 

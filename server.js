@@ -54,9 +54,9 @@ if (process.argv.includes('--seed-admin')) {
   }
   const hash = bcrypt.hashSync(password, 10);
   DB.users.push({
-    id: nextId('user'), username, email: username + '@vexo.local',
+    id: nextId('user'), username, displayName: 'Admin', email: username + '@vexo.local',
     passwordHash: hash, role: 'admin', kycStatus: 'verified',
-    blocked: false, createdAt: new Date().toISOString()
+    blocked: false, favorites: [], avatarUrl: '', createdAt: new Date().toISOString()
   });
   saveDB();
   console.log('✓ Admin created: ' + username + ' / ' + password);
@@ -89,7 +89,16 @@ function auth(req, res, next) {
 }
 
 function publicUser(u) {
-  return { id: u.id, username: u.username, email: u.email, role: u.role, kycStatus: u.kycStatus, createdAt: u.createdAt };
+  return { 
+    id: u.id, 
+    username: u.username, 
+    displayName: u.displayName || u.username, 
+    email: u.email, 
+    role: u.role, 
+    kycStatus: u.kycStatus, 
+    avatarUrl: u.avatarUrl || '', 
+    createdAt: u.createdAt 
+  };
 }
 
 function userStats(userId) {
@@ -98,9 +107,11 @@ function userStats(userId) {
   const reviews = DB.reviews.filter(r => r.targetId === userId);
   const avg = reviews.length ? Number((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(2)) : null;
   return {
-    dealsTotal: completed + cancelled, dealsCompleted: completed,
+    dealsTotal: completed + cancelled, 
+    dealsCompleted: completed,
     successRate: (completed + cancelled) ? Math.round((completed / (completed + cancelled)) * 100) : null,
-    reviewsCount: reviews.length, ratingAvg: avg
+    reviewsCount: reviews.length, 
+    ratingAvg: avg
   };
 }
 
@@ -113,9 +124,9 @@ app.post('/api/auth/register', (req, res) => {
   if (DB.users.find(u => u.email === email.toLowerCase())) return res.status(409).json({ error: 'email_exists' });
 
   const user = {
-    id: nextId('user'), username, email: email.toLowerCase(),
+    id: nextId('user'), username, displayName: username, email: email.toLowerCase(),
     passwordHash: bcrypt.hashSync(password, 10), role: 'user',
-    kycStatus: 'none', blocked: false, createdAt: new Date().toISOString()
+    kycStatus: 'none', blocked: false, favorites: [], avatarUrl: '', createdAt: new Date().toISOString()
   };
   DB.users.push(user); saveDB();
   const token = jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: '7d' });
@@ -133,11 +144,50 @@ app.post('/api/auth/login', (req, res) => {
 
 app.get('/api/users/me', auth, (req, res) => res.json({ user: publicUser(req.user), stats: userStats(req.user.id) }));
 
+app.get('/api/users/:id', auth, (req, res) => {
+  const u = DB.users.find(x => x.id === Number(req.params.id));
+  if (!u) return res.status(404).json({ error: 'not_found' });
+  const isFavorite = req.user.favorites?.includes(u.id) || false;
+  res.json({ user: publicUser(u), stats: userStats(u.id), isFavorite });
+});
+
 app.patch('/api/users/me', auth, (req, res) => {
-  const { email } = req.body || {};
-  if (!email || !email.includes('@')) return res.status(400).json({ error: 'bad_email' });
-  if (DB.users.find(u => u.email === email.toLowerCase() && u.id !== req.user.id)) return res.status(409).json({ error: 'email_taken' });
-  req.user.email = email.toLowerCase(); saveDB(); res.json({ user: publicUser(req.user) });
+  const { email, displayName, avatarUrl, password, currentPassword } = req.body || {};
+  
+  if (email && email !== req.user.email) {
+    if (!email.includes('@')) return res.status(400).json({ error: 'bad_email' });
+    if (DB.users.find(u => u.email === email.toLowerCase() && u.id !== req.user.id)) return res.status(409).json({ error: 'email_taken' });
+    req.user.email = email.toLowerCase();
+  }
+  
+  if (displayName) req.user.displayName = displayName.slice(0, 50);
+  if (avatarUrl !== undefined) req.user.avatarUrl = avatarUrl;
+
+  if (password) {
+    if (!currentPassword || !bcrypt.compareSync(currentPassword, req.user.passwordHash)) {
+      return res.status(400).json({ error: 'wrong_password' });
+    }
+    if (password.length < 8) return res.status(400).json({ error: 'short_password' });
+    req.user.passwordHash = bcrypt.hashSync(password, 10);
+  }
+
+  saveDB(); res.json({ user: publicUser(req.user) });
+});
+
+app.post('/api/users/:id/favorite', auth, (req, res) => {
+  const targetId = Number(req.params.id);
+  if (targetId === req.user.id) return res.status(400).json({ error: 'self_fav' });
+  
+  if (!req.user.favorites) req.user.favorites = [];
+  const idx = req.user.favorites.indexOf(targetId);
+  
+  if (idx > -1) {
+    req.user.favorites.splice(idx, 1);
+  } else {
+    req.user.favorites.push(targetId);
+  }
+  saveDB();
+  res.json({ isFavorite: idx === -1 });
 });
 
 function shapeAd(a) {
@@ -145,7 +195,11 @@ function shapeAd(a) {
   const stats = userStats(a.userId);
   const realMaxRub = Math.min(a.maxRub, a.amountLeft * a.price);
   return {
-    id: a.id, userId: a.userId, username: u?.username || '?', kycStatus: u?.kycStatus || 'none',
+    id: a.id, userId: a.userId, 
+    username: u?.username || '?', 
+    displayName: u?.displayName || u?.username || '?', 
+    avatarUrl: u?.avatarUrl || '',
+    kycStatus: u?.kycStatus || 'none',
     side: a.side, faceType: a.faceType, asset: a.asset, price: a.price,
     amountTotal: a.amountTotal, amountLeft: a.amountLeft, 
     totalRub: (a.amountLeft * a.price).toFixed(2), 
@@ -214,8 +268,8 @@ function shapeOrder(o) {
     id: o.id, publicId: o.publicId, adId: o.adId, asset: o.asset, price: o.price,
     amountRub: o.amountRub, amountAsset: o.amountAsset, faceType: o.faceType,
     paymentMethod: o.paymentMethod, status: o.status, statusLabel: STATUS_LABEL[o.status] || o.status,
-    buyer: { id: o.buyerId, username: buyer?.username || '?' },
-    seller: { id: o.sellerId, username: seller?.username || '?' },
+    buyer: { id: o.buyerId, username: buyer?.username || '?', displayName: buyer?.displayName || buyer?.username || '?', avatarUrl: buyer?.avatarUrl || '' },
+    seller: { id: o.sellerId, username: seller?.username || '?', displayName: seller?.displayName || seller?.username || '?', avatarUrl: seller?.avatarUrl || '' },
     createdAt: o.createdAt, expiresAt: o.expiresAt
   };
 }
@@ -333,11 +387,14 @@ app.post('/api/reviews', auth, (req, res) => {
 
 app.get('/api/reviews/user/:userId', (req, res) => {
   const userId = Number(req.params.userId);
-  const items = DB.reviews.filter(r => r.targetId === userId).map(r => ({
-    id: r.id, rating: r.rating, comment: r.comment,
-    author: DB.users.find(u => u.id === r.authorId)?.username || '?',
-    createdAt: r.createdAt
-  }));
+  const items = DB.reviews.filter(r => r.targetId === userId).map(r => {
+    const author = DB.users.find(u => u.id === r.authorId);
+    return {
+      id: r.id, rating: r.rating, comment: r.comment,
+      author: author?.displayName || author?.username || '?',
+      createdAt: r.createdAt
+    };
+  });
   res.json({ items });
 });
 
@@ -353,7 +410,7 @@ app.post('/api/platform-reviews', auth, (req, res) => {
 
   const review = {
     id: nextId('platformReview'), userId: req.user.id,
-    username: req.user.username, rating: r, comment: (comment || '').slice(0, 1000),
+    username: req.user.displayName || req.user.username, rating: r, comment: (comment || '').slice(0, 1000),
     createdAt: new Date().toISOString()
   };
   DB.platformReviews.push(review); saveDB(); res.status(201).json(review);
