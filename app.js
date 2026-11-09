@@ -89,7 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
       window.scrollTo(0, 0);
     }
 
-    // НАВИГАЦИЯ
     document.querySelectorAll('[data-screen]').forEach(b => {
       b.onclick = e => {
         e.preventDefault();
@@ -283,7 +282,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Фильтры маркета
     document.querySelectorAll('#marketSideTabs .trade-tab').forEach(c => {
       c.onclick = () => {
         document.querySelectorAll('#marketSideTabs .trade-tab').forEach(x => x.classList.remove('active'));
@@ -581,7 +579,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const reviewSubmitBtn = document.getElementById('reviewSubmitBtn');
     if (reviewSubmitBtn) {
       reviewSubmitBtn.onclick = async () => {
-        btn.disabled = true;
+        reviewSubmitBtn.disabled = true;
         try {
           if (currentReviewOrderId === 'platform') {
             await API.req('POST', '/platform-reviews', { rating: currentRating, comment: document.getElementById('reviewComment')?.value || '' });
@@ -594,7 +592,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {
           const map = { already_reviewed: 'Вы уже оставили отзыв', no_completed_deals: 'Нужна хотя бы 1 завершенная сделка' };
           const er = document.getElementById('reviewError'); if (er) er.textContent = map[e.code] || e.message;
-        } finally { btn.disabled = false; }
+        } finally { reviewSubmitBtn.disabled = false; }
       };
     }
 
@@ -917,6 +915,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   } catch (err) {
     console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
-    alert('Ошибка инициализации VEXO: ' + err.message + '\n\nСкинь скриншот разработчику.');
+    alert('Ошибка инициализации VEXO: ' + err.message);
+  }
+});�ции VEXO: ' + err.message + '\n\nСкинь скриншот разработчику.');
   }
 });

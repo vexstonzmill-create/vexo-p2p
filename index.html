@@ -40,7 +40,6 @@
     </header>
 
     <main class="content">
-      <!-- ГЛАВНАЯ -->
       <section class="screen active" id="screen-home">
         <div class="banner-carousel">
           <div class="banner-viewport">
@@ -79,11 +78,8 @@
         </div>
       </section>
 
-      <!-- МАРКЕТ -->
       <section class="screen" id="screen-market">
         <h2 style="margin-bottom: 12px; font-size: 18px;">P2P Маркет</h2>
-        
-        <!-- Блоки Купить / Продать -->
         <div class="trade-tabs" id="marketSideTabs">
           <button class="trade-tab active" data-side="buy">Купить</button>
           <button class="trade-tab" data-side="sell">Продать</button>
@@ -121,7 +117,6 @@
         <div id="adsList" style="margin-top: 12px;">Загрузка...</div>
       </section>
 
-      <!-- СОЗДАТЬ ОБЪЯВЛЕНИЕ -->
       <section class="screen" id="screen-create">
         <h2 style="margin-bottom: 16px; font-size: 18px;">Создать объявление</h2>
         
@@ -176,7 +171,6 @@
         <button class="btn btn-primary btn-block" id="createBtn">Опубликовать</button>
       </section>
 
-      <!-- ОРДЕРА -->
       <section class="screen" id="screen-orders">
         <h2 style="margin-bottom: 16px; font-size: 18px;">Мои ордера</h2>
         <div class="tabs" id="ordersFilter">
@@ -189,7 +183,6 @@
 
       <section class="screen" id="screen-order"><div id="orderDetailContent"></div></section>
 
-      <!-- КОШЕЛЕК -->
       <section class="screen" id="screen-wallet">
         <h2 style="margin-bottom: 4px; font-size: 18px;">Кошелёк</h2>
         <p style="color: var(--dim); font-size: 12px; margin-bottom: 16px;">Балансы и история операций</p>
@@ -217,12 +210,10 @@
         </div>
       </section>
 
-      <!-- ПРОФИЛЬ -->
       <section class="screen" id="screen-profile">
         <h2 style="margin-bottom: 16px; font-size: 18px;">Профиль</h2>
         <div id="profileContent">Загрузка...</div>
       </section>
-
     </main>
 
     <nav class="bottom-nav">
@@ -236,7 +227,6 @@
   </div>
 </div>
 
-<!-- Модалки -->
 <div class="toast-container" id="toastContainer"></div>
 <div class="modal-overlay" id="dialogOverlay"><div class="modal" id="dialogContent"></div></div>
 
@@ -275,49 +265,32 @@
 <div class="modal-overlay" id="orderModal">
   <div class="modal" style="padding: 16px; gap: 10px; max-width: 400px;">
     <h3 id="orderTitle" style="font-size: 16px; text-align: center;">Покупка USDT</h3>
-    
     <div style="display: flex; align-items: center; gap: 10px; background: var(--surf2); padding: 10px; border-radius: 8px;">
       <div class="avatar" id="orderAvatar" style="width: 32px; height: 32px; font-size: 12px;">?</div>
-      <div>
-        <div style="font-weight: 800; font-size: 14px;" id="orderUsername">-</div>
-        <div style="font-size: 11px; color: var(--dim);" id="orderUserMeta">-</div>
-      </div>
+      <div><div style="font-weight: 800; font-size: 14px;" id="orderUsername">-</div><div style="font-size: 11px; color: var(--dim);" id="orderUserMeta">-</div></div>
     </div>
-
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-      <div style="background: var(--surf2); padding: 8px 12px; border-radius: 8px;">
-        <div style="font-size: 10px; color: var(--dim); margin-bottom: 2px;">Курс</div>
-        <strong id="orderRate" style="color: var(--yellow); font-size: 15px;">0 ₽</strong>
-      </div>
-      <div style="background: var(--surf2); padding: 8px 12px; border-radius: 8px;">
-        <div style="font-size: 10px; color: var(--dim); margin-bottom: 2px;">Доступно</div>
-        <strong id="orderAvailable" style="font-size: 15px;">0</strong>
-      </div>
+      <div style="background: var(--surf2); padding: 8px 12px; border-radius: 8px;"><div style="font-size: 10px; color: var(--dim); margin-bottom: 2px;">Курс</div><strong id="orderRate" style="color: var(--yellow); font-size: 15px;">0 ₽</strong></div>
+      <div style="background: var(--surf2); padding: 8px 12px; border-radius: 8px;"><div style="font-size: 10px; color: var(--dim); margin-bottom: 2px;">Доступно</div><strong id="orderAvailable" style="font-size: 15px;">0</strong></div>
     </div>
-
     <div class="field" style="margin-bottom: 0;">
       <label style="font-size: 12px; margin-bottom: 4px;">Сумма в рублях</label>
       <input class="input" type="number" id="orderAmount" placeholder="Введите сумму..." style="font-size: 16px; font-weight: 800; padding: 10px 12px;">
       <div class="hint" id="orderLimit" style="margin-top: 4px;">Лимит: 0 - 0 ₽</div>
     </div>
-
     <div style="background: var(--surf2); padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
       <span style="color: var(--dim); font-size: 12px;" id="orderResultLabel">Вы получите</span>
       <strong id="orderResult" style="font-size: 16px;">0 USDT</strong>
     </div>
-
     <div style="background: rgba(255,214,10,0.05); border: 1px dashed rgba(255,214,10,0.3); border-radius: 8px; padding: 10px;">
       <div style="font-size: 10px; font-weight: 800; color: var(--yellow); text-transform: uppercase; margin-bottom: 4px;">Условия мейкера</div>
       <div id="orderTerms" style="font-size: 12px; color: var(--dim); line-height: 1.4; max-height: 50px; overflow-y: auto;"></div>
     </div>
-
     <div class="field" style="margin-bottom: 0;">
       <label style="font-size: 12px; margin-bottom: 4px;">Способ оплаты</label>
       <div class="icon-scroll" id="orderPayments" style="margin-bottom: 0;"></div>
     </div>
-    
     <div class="error-msg" id="orderError"></div>
-    
     <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
       <button class="btn btn-primary btn-block" id="orderSubmit">Подтвердить</button>
       <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('orderModal')">Отмена</button>
@@ -348,6 +321,15 @@
     <h3 style="font-size: 16px;">Оставить отзыв</h3>
     <div class="rating-stars" id="ratingStars"><span class="rating-star" data-r="1">★</span><span class="rating-star" data-r="2">★</span><span class="rating-star" data-r="3">★</span><span class="rating-star" data-r="4">★</span><span class="rating-star" data-r="5">★</span></div>
     <textarea class="input" id="reviewComment" placeholder="Комментарий (необязательно)" style="min-height: 60px;"></textarea>
+    <div class="error-msg" id="reviewError"></div>
+    <button class="btn btn-primary btn-block" id="reviewSubmitBtn">Отправить</button>
+    <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('reviewModal')">Отмена</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>�еобязательно)" style="min-height: 60px;"></textarea>
     <div class="error-msg" id="reviewError"></div>
     <button class="btn btn-primary btn-block" id="reviewSubmitBtn">Отправить</button>
     <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('reviewModal')">Отмена</button>
