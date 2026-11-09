@@ -93,7 +93,6 @@ document.getElementById('backBtn').onclick = () => show(previousScreen);
       go(d > 0 ? idx + 1 : idx - 1); 
       auto(); 
     } else {
-      // Принудительно выравниваем, если свайп был слишком коротким
       go(idx); 
     }
   });
@@ -149,14 +148,12 @@ function updateAuthUI() {
 }
 
 async function loadHome() {
-  // Загружаем объявления
   try {
     const { items } = await API.req('GET', '/ads');
     document.getElementById('homeAdsList').innerHTML = items.length ? items.slice(0, 3).map(renderAd).join('') : '<p style="color:var(--dim);padding:20px;text-align:center">Объявлений пока нет</p>';
     bindAdButtons();
   } catch (e) {}
 
-  // Загружаем статистику
   try {
     const stats = await API.req('GET', '/stats');
     document.getElementById('statUsers').textContent = fmt(stats.users);
@@ -259,7 +256,6 @@ function openOrderModal(adId) {
   document.getElementById('orderRate').textContent = fmt(ad.price) + ' ₽';
   document.getElementById('orderAvailable').textContent = fmtDec(ad.amountLeft, 2) + ' ' + ad.asset;
   
-  // Используем реальный максимум
   document.getElementById('orderLimit').textContent = `Лимит: ${fmt(ad.minRub)} - ${fmt(ad.maxRub)} ₽`;
   
   document.getElementById('orderAmount').value = '';
@@ -545,9 +541,6 @@ async function logoutAction() {
   }
 }
 
-updateAuthUI();
-loadHome();
-
 // ========== ЛОГИКА ПЕРЕКЛЮЧЕНИЯ ТЕМ ==========
 const themes = ['dark', 'light', 'dark-gray', 'light-gray'];
 let currentTheme = localStorage.getItem('vexo_theme') || 'dark';
@@ -555,22 +548,22 @@ let currentTheme = localStorage.getItem('vexo_theme') || 'dark';
 function applyTheme(theme) {
   document.body.setAttribute('data-theme', theme);
   localStorage.setItem('vexo_theme', theme);
-  // Если тема светлая, можно сделать иконку луны/солнца другой, но пока оставим так
 }
 
-// Применяем сохраненную тему при загрузке
 applyTheme(currentTheme);
 
-// Обработчик клика по кнопке
 document.addEventListener('DOMContentLoaded', () => {
   const themeBtn = document.getElementById('themeBtn');
   if (themeBtn) {
     themeBtn.onclick = () => {
       let idx = themes.indexOf(currentTheme);
-      idx = (idx + 1) % themes.length; // Переключаем по кругу
+      idx = (idx + 1) % themes.length; 
       currentTheme = themes[idx];
       applyTheme(currentTheme);
-      toast('Тема: ' + currentTheme, 'info'); // Показываем уведомление
+      toast('Тема: ' + currentTheme, 'info'); 
     };
   }
 });
+
+updateAuthUI();
+loadHome();

@@ -298,10 +298,8 @@ app.get('/api/stats', (req, res) => {
   const completedOrders = DB.orders.filter(o => o.status === 'completed');
   const deals = completedOrders.length;
   const turnover = completedOrders.reduce((sum, o) => sum + o.amountRub, 0);
-  
   const reviews = DB.reviews;
   const avgRating = reviews.length ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(2) : '—';
-
   res.json({ users, deals, turnover, avgRating });
 });
 
