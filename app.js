@@ -8,6 +8,13 @@ const API = {
     if (this.token()) headers.Authorization = 'Bearer ' + this.token();
     const res = await fetch('/api' + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
     const data = await res.json().catch(() => ({}));
+    
+    if (res.status === 401) {
+      localStorage.removeItem('vexo_token');
+      localStorage.removeItem('vexo_user');
+      window.location.reload(); // Автоматический выход при истекшем токене
+    }
+
     if (!res.ok) { const e = new Error(data.error || 'error'); e.code = data.error; e.status = res.status; throw e; }
     return data;
   }
@@ -200,13 +207,13 @@ document.querySelectorAll('#filterAsset .icon-chip').forEach(c => c.onclick = ()
 document.getElementById('filterMinAmount').oninput = loadMarket;
 document.getElementById('filterMaxAmount').oninput = loadMarket;
 
-// Создание объявления
+// Создание и Редактирование объявления
 const fPrice = document.getElementById('f-price'), fAmount = document.getElementById('f-amount'), fMax = document.getElementById('f-max');
 function recalc() {
   const total = (parseFloat(fAmount.value) || 0) * (parseFloat(fPrice.value) || 0);
   document.getElementById('calcTotal').textContent = fmt(total) + ' ₽';
   document.getElementById('calcTotal2').textContent = fmt(total) + ' ₽';
-  document.getElementById('maxHint').textContent = 'Не больше ' + fmt(total) + ' ₽';
+  document.getElementById('maxHint').textContent = total > 0 ? 'Не больше ' + fmt(total) + ' ₽' : 'Введите данные для расчета';
   fMax.style.borderColor = parseFloat(fMax.value) > total ? 'var(--red)' : 'var(--brd)';
 }
 [fPrice, fAmount, fMax].forEach(el => el.oninput = recalc); recalc();
@@ -225,8 +232,9 @@ document.getElementById('createBtn').onclick = async () => {
   if (!API.user()) { errEl.textContent = 'Войдите в аккаунт'; setTimeout(() => document.getElementById('authModal').classList.add('active'), 500); return; }
   const payments = [...document.querySelectorAll('#f-payments .pay-chip.active')].map(c => c.dataset.val);
   if (!payments.length) { errEl.textContent = 'Выберите способ оплаты'; return; }
-  const btn = document.getElementById('createBtn'); btn.disabled = true; btn.textContent = 'Публикация...';
+  if (!fPrice.value || !fAmount.value || !document.getElementById('f-min').value || !fMax.value) { errEl.textContent = 'Заполните все поля'; return; }
   
+  const btn = document.getElementById('createBtn'); btn.disabled = true; btn.textContent = 'Публикация...';
   const asset = document.querySelector('#f-asset-select .icon-chip.active').dataset.val;
   
   try {
@@ -243,6 +251,35 @@ document.getElementById('createBtn').onclick = async () => {
     const map = { max_exceeds_total: 'Максимальный лимит больше общего объёма', min_gt_max: 'Минимум больше максимума', bad_amounts: 'Проверьте числа' };
     errEl.textContent = map[err.code] || err.message;
   } finally { btn.disabled = false; btn.textContent = 'Опубликовать'; }
+};
+
+// Модалка Редактирования
+let currentEditAdId = null;
+function openEditAd(adId) {
+  const ad = window._myAds[adId];
+  if (!ad) return;
+  currentEditAdId = adId;
+  document.getElementById('edit-price').value = ad.price;
+  document.getElementById('edit-min').value = ad.minRub;
+  document.getElementById('edit-max').value = ad.maxRub;
+  document.getElementById('edit-terms').value = ad.terms || '';
+  document.getElementById('editError').textContent = '';
+  document.getElementById('editAdModal').classList.add('active');
+}
+
+document.getElementById('editSaveBtn').onclick = async () => {
+  const btn = document.getElementById('editSaveBtn'); btn.disabled = true;
+  try {
+    await API.req('PATCH', `/ads/${currentEditAdId}`, {
+      price: document.getElementById('edit-price').value,
+      min_rub: document.getElementById('edit-min').value,
+      max_rub: document.getElementById('edit-max').value,
+      payment_methods: ['СБП'], // Упрощенно для формы
+      terms: document.getElementById('edit-terms').value
+    });
+    closeModal('editAdModal'); toast('Объявление обновлено!', 'success'); loadProfile();
+  } catch (e) { document.getElementById('editError').textContent = e.message; }
+  finally { btn.disabled = false; }
 };
 
 // Модалка Ордера
@@ -490,14 +527,23 @@ document.getElementById('reviewSubmitBtn').onclick = async () => {
   finally { btn.disabled = false; }
 };
 
-// Профиль
+// Профиль с табами
+let profileTab = 'ads';
+
 async function loadProfile() {
   const u = API.user();
   if (!u) { document.getElementById('profileContent').innerHTML = '<div style="text-align:center;padding:40px"><p style="color:var(--dim);margin-bottom:20px">Войдите в аккаунт</p><button class="btn btn-primary" onclick="document.getElementById(\'authModal\').classList.add(\'active\')">Войти</button></div>'; return; }
+  
   try {
     const { user, stats } = await API.req('GET', '/users/me');
     const kycBadge = user.kycStatus === 'verified' ? '<span style="background:rgba(34,197,94,.12);color:var(--grn);border:1px solid rgba(34,197,94,.3);padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600;text-transform:uppercase;margin-top:6px;display:inline-block">Проверен</span>' : '<span style="background:rgba(138,138,138,.12);color:var(--dim);border:1px solid var(--brd);padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600;text-transform:uppercase;margin-top:6px;display:inline-block">Не проверен</span>';
     const adminBadge = user.role === 'admin' ? '<span style="background:rgba(255,214,10,.12);color:var(--yellow);border:1px solid rgba(255,214,10,.3);padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600;text-transform:uppercase;margin-top:6px;display:inline-block;margin-left:4px">ADMIN</span>' : '';
+
+    let contentHtml = '';
+    if (profileTab === 'ads') contentHtml = '<div id="myAdsList">Загрузка...</div>';
+    else if (profileTab === 'history') contentHtml = '<div id="myHistoryList">Загрузка...</div>';
+    else if (profileTab === 'reviews') contentHtml = '<div id="myReviewsList">Загрузка...</div>';
+
     document.getElementById('profileContent').innerHTML = `
       <div style="display:flex;align-items:center;gap:16px;padding:20px;background:var(--surf);border:1px solid var(--brd);border-radius:16px;margin-bottom:20px">
         <div class="avatar lg">${user.username[0].toUpperCase()}</div>
@@ -514,25 +560,92 @@ async function loadProfile() {
         <div class="stat"><div class="stat-lbl">Отзывов</div><div class="stat-val">${stats.reviewsCount}</div></div>
         <div class="stat"><div class="stat-lbl">Рейтинг</div><div class="stat-val">${stats.ratingAvg ? '★ ' + stats.ratingAvg : '—'}</div></div>
       </div>
-      <div style="background:var(--surf);border:1px solid var(--brd);border-radius:14px;padding:20px;margin-bottom:16px">
+      <div style="background:var(--surf);border:1px solid var(--brd);border-radius:14px;padding:20px;margin-bottom:20px">
         <h4 style="font-size:15px;font-weight:700;margin-bottom:14px">Настройки</h4>
         <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--brd);font-size:13px"><span style="color:var(--dim)">Email</span><span style="font-weight:600">${user.email}</span></div>
         <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--brd);font-size:13px"><span style="color:var(--dim)">Роль</span><span style="font-weight:600;text-transform:capitalize">${user.role}</span></div>
         <div style="margin-top:14px"><button class="btn btn-ghost btn-block btn-sm" onclick="openSettings()">Изменить Email</button></div>
       </div>
-      <h3 style="margin-bottom:16px;font-size:16px">Мои объявления</h3>
-      <div id="myAdsList">Загрузка...</div>
+      
+      <div class="profile-tabs">
+        <button class="profile-tab ${profileTab === 'ads' ? 'active' : ''}" onclick="switchProfileTab('ads')">Объявления</button>
+        <button class="profile-tab ${profileTab === 'history' ? 'active' : ''}" onclick="switchProfileTab('history')">История</button>
+        <button class="profile-tab ${profileTab === 'reviews' ? 'active' : ''}" onclick="switchProfileTab('reviews')">Отзывы</button>
+      </div>
+      
+      <div id="profileTabContent">${contentHtml}</div>
+      
       <div style="margin-top:24px"><button class="btn btn-ghost btn-block" onclick="logoutAction()" style="color:var(--red)">Выйти из аккаунта</button></div>
     `;
-    loadMyAds();
+
+    if (profileTab === 'ads') loadMyAds();
+    else if (profileTab === 'history') loadMyHistory();
+    else if (profileTab === 'reviews') loadMyReviews();
+
   } catch (e) { document.getElementById('profileContent').innerHTML = 'Ошибка: ' + e.message; }
+}
+
+function switchProfileTab(tab) {
+  profileTab = tab;
+  loadProfile();
 }
 
 async function loadMyAds() {
   try {
     const { items } = await API.req('GET', '/ads/my');
-    document.getElementById('myAdsList').innerHTML = items.length ? items.map(ad => `<div class="ad-card"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><strong>${ad.side === 'sell' ? 'Продажа' : 'Покупка'} ${ad.asset}</strong><span style="color:${ad.active ? 'var(--grn)' : 'var(--red)'};font-size:11px">${ad.active ? 'Активно' : 'Неактивно'}</span></div><div class="ad-body"><div><div class="ad-lbl">Курс</div><div class="ad-val">${fmt(ad.price)} ₽</div></div><div><div class="ad-lbl">Остаток</div><div class="ad-val">${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div></div></div></div>`).join('') : '<p style="color:var(--dim);text-align:center;padding:20px">У вас нет объявлений</p>';
+    window._myAds = {};
+    items.forEach(ad => window._myAds[ad.id] = ad);
+    
+    document.getElementById('myAdsList').innerHTML = items.length ? items.map(ad => `
+      <div class="ad-card">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          <strong>${ad.side === 'sell' ? 'Продажа' : 'Покупка'} ${ad.asset}</strong>
+          <span style="color:${ad.active ? 'var(--grn)' : 'var(--red)'};font-size:11px">${ad.active ? 'Активно' : 'Неактивно'}</span>
+        </div>
+        <div class="ad-body">
+          <div><div class="ad-lbl">Курс</div><div class="ad-val">${fmt(ad.price)} ₽</div></div>
+          <div><div class="ad-lbl">Остаток</div><div class="ad-val">${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div></div>
+        </div>
+        <button class="btn btn-ghost btn-block btn-sm" onclick="openEditAd(${ad.id})" style="margin-top:10px;">Редактировать</button>
+      </div>
+    `).join('') : '<p style="color:var(--dim);text-align:center;padding:20px">У вас нет объявлений</p>';
   } catch (e) { document.getElementById('myAdsList').innerHTML = 'Ошибка'; }
+}
+
+async function loadMyHistory() {
+  try {
+    const { items } = await API.req('GET', '/orders/my?status=completed');
+    document.getElementById('myHistoryList').innerHTML = items.length ? items.map(o => `
+      <div class="ad-card" style="border-left:4px solid var(--grn);">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          <strong>#${o.publicId}</strong>
+          <span style="color:var(--grn);font-size:11px">Завершен</span>
+        </div>
+        <div class="ad-body">
+          <div><div class="ad-lbl">Сумма</div><div class="ad-val">${fmt(o.amountRub)} ₽</div></div>
+          <div><div class="ad-lbl">Актив</div><div class="ad-val">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div>
+        </div>
+      </div>
+    `).join('') : '<p style="color:var(--dim);text-align:center;padding:20px">История пуста</p>';
+  } catch (e) { document.getElementById('myHistoryList').innerHTML = 'Ошибка'; }
+}
+
+async function loadMyReviews() {
+  try {
+    const u = API.user();
+    const res = await fetch('/api/reviews/user/' + u.id); // Примерный эндпоинт
+    const data = await res.json();
+    const items = data.items || [];
+    document.getElementById('myReviewsList').innerHTML = items.length ? items.map(r => `
+      <div class="ad-card">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          <strong>${r.author}</strong>
+          <span style="color:var(--yellow);">${'★'.repeat(r.rating)}</span>
+        </div>
+        <p style="font-size:13px;color:var(--dim);">${r.comment || 'Без комментария'}</p>
+      </div>
+    `).join('') : '<p style="color:var(--dim);text-align:center;padding:20px">Отзывов нет</p>';
+  } catch (e) { document.getElementById('myReviewsList').innerHTML = '<p style="color:var(--dim);text-align:center;padding:20px">Отзывов нет</p>'; }
 }
 
 function openSettings() {
@@ -558,7 +671,7 @@ async function logoutAction() {
   }
 }
 
-// Темы (строго 2)
+// Темы
 let currentTheme = localStorage.getItem('vexo_theme') || 'dark';
 function applyTheme(theme) {
   document.body.setAttribute('data-theme', theme);
@@ -577,13 +690,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// ЛОГИКА ПОПОЛНЕНИЯ / ВЫВОДА (В МОДАЛЬНОМ ОКНЕ)
-let walletActionType = 'deposit'; // 'deposit' или 'withdraw'
+// ЛОГИКА ПОПОЛНЕНИЯ / ВЫВОДА
+let walletActionType = 'deposit';
 
 document.getElementById('btnDeposit').onclick = () => {
   walletActionType = 'deposit';
   document.getElementById('walletActionTitle').textContent = 'Пополнение';
-  document.getElementById('walletRequisitesField').style.display = 'none'; // При пополнении реквизиты не нужны
+  document.getElementById('walletRequisitesField').style.display = 'none';
   document.getElementById('walletActionAmount').value = '';
   document.getElementById('walletActionRequisites').value = '';
   document.getElementById('walletActionModal').classList.add('active');
@@ -592,7 +705,7 @@ document.getElementById('btnDeposit').onclick = () => {
 document.getElementById('btnWithdraw').onclick = () => {
   walletActionType = 'withdraw';
   document.getElementById('walletActionTitle').textContent = 'Вывод';
-  document.getElementById('walletRequisitesField').style.display = 'block'; // При выводе нужны реквизиты
+  document.getElementById('walletRequisitesField').style.display = 'block';
   document.getElementById('walletActionAmount').value = '';
   document.getElementById('walletActionRequisites').value = '';
   document.getElementById('walletActionModal').classList.add('active');
@@ -611,7 +724,6 @@ document.getElementById('walletActionSubmit').onclick = () => {
     document.getElementById('authModal').classList.add('active');
     return;
   }
-
   const asset = document.querySelector('#walletActionAsset .icon-chip.active').dataset.val;
   const amount = document.getElementById('walletActionAmount').value;
   const requisites = document.getElementById('walletActionRequisites').value;
@@ -619,23 +731,17 @@ document.getElementById('walletActionSubmit').onclick = () => {
   if (!amount || Number(amount) <= 0) return toast('Введите корректную сумму', 'error');
   if (walletActionType === 'withdraw' && !requisites) return toast('Введите реквизиты для вывода', 'error');
   
-  // Формируем безопасный payload для Telegram (макс 64 символа)
-  // Пример: dep_USDT_100 или wth_RUB_5000_card1234
   let payload = walletActionType === 'deposit' ? 'dep' : 'wth';
   payload += `_${asset}_${amount}`;
   if (walletActionType === 'withdraw') {
-    const cleanReq = requisites.replace(/[^a-zA-Z0-9]/g, '').slice(0, 20); // чистим от спецсимволов
+    const cleanReq = requisites.replace(/[^a-zA-Z0-9]/g, '').slice(0, 20);
     payload += `_${cleanReq}`;
   }
   
-  const url = `https://t.me/vexoio_bot?start=${payload}`;
-  
-  // Открываем Telegram
-  window.open(url, '_blank');
+  window.open(`https://t.me/vexoio_bot?start=${payload}`, '_blank');
   closeModal('walletActionModal');
   toast('Перенаправление в Telegram...', 'success');
 };
 
-// Инициализация
 updateAuthUI();
 loadHome();

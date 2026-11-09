@@ -128,14 +128,12 @@ function shapeAd(a) {
   const u = DB.users.find(x => x.id === a.userId);
   const stats = userStats(a.userId);
   const realMaxRub = Math.min(a.maxRub, a.amountLeft * a.price);
-
   return {
     id: a.id, userId: a.userId, username: u?.username || '?', kycStatus: u?.kycStatus || 'none',
     side: a.side, faceType: a.faceType, asset: a.asset, price: a.price,
     amountTotal: a.amountTotal, amountLeft: a.amountLeft, 
     totalRub: (a.amountLeft * a.price).toFixed(2), 
-    minRub: a.minRub, 
-    maxRub: realMaxRub.toFixed(2), 
+    minRub: a.minRub, maxRub: realMaxRub.toFixed(2), 
     paymentMethods: a.paymentMethods, terms: a.terms,
     active: a.active, createdAt: a.createdAt, ...stats
   };
@@ -146,10 +144,8 @@ app.get('/api/ads', (req, res) => {
   if (req.query.side) list = list.filter(a => a.side === req.query.side);
   if (req.query.asset) list = list.filter(a => a.asset === req.query.asset);
   if (req.query.face_type) list = list.filter(a => a.faceType === req.query.face_type);
-  
   if (req.query.min_amount) list = list.filter(a => a.maxRub >= Number(req.query.min_amount));
   if (req.query.max_amount) list = list.filter(a => a.minRub <= Number(req.query.max_amount));
-
   list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   res.json({ items: list.map(shapeAd) });
 });
@@ -170,6 +166,24 @@ app.post('/api/ads', auth, (req, res) => {
     active: true, createdAt: new Date().toISOString()
   };
   DB.ads.push(ad); saveDB(); res.status(201).json(shapeAd(ad));
+});
+
+app.patch('/api/ads/:id', auth, (req, res) => {
+  const ad = DB.ads.find(a => a.id === Number(req.params.id));
+  if (!ad) return res.status(404).json({ error: 'not_found' });
+  if (ad.userId !== req.user.id) return res.status(403).json({ error: 'forbidden' });
+
+  const { price, min_rub, max_rub, payment_methods, terms } = req.body || {};
+  const p = Number(price), mn = Number(min_rub), mx = Number(max_rub);
+  
+  if (!(p > 0) || !(mn > 0) || !(mx > 0)) return res.status(400).json({ error: 'bad_amounts' });
+  if (mn > mx) return res.status(400).json({ error: 'min_gt_max' });
+  const totalRub = ad.amountLeft * p;
+  if (mx > totalRub) return res.status(400).json({ error: 'max_exceeds_total' });
+
+  ad.price = p; ad.minRub = mn; ad.maxRub = mx;
+  ad.paymentMethods = payment_methods; ad.terms = (terms || '').slice(0, 2000);
+  saveDB(); res.json(shapeAd(ad));
 });
 
 app.get('/api/ads/my', auth, (req, res) => res.json({ items: DB.ads.filter(a => a.userId === req.user.id).map(shapeAd) }));

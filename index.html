@@ -22,14 +22,14 @@
 
   <div class="main">
     <header class="topbar">
-      <button class="btn btn-sm btn-ghost hidden" id="backBtn" style="padding: 8px; border-radius: 50%; width: 36px; height: 36px;">←</button>
-      
-      <div style="display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 18px;">
-        <div class="logo-mark" style="width: 28px; height: 28px; font-size: 14px;">V</div>
-        <span>VEXO</span>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <button class="btn btn-sm btn-ghost hidden" id="backBtn" style="padding: 8px; border-radius: 50%; width: 36px; height: 36px;">←</button>
+        <div style="display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 18px;">
+          <div class="logo-mark" style="width: 28px; height: 28px; font-size: 14px;">V</div>
+          <span>VEXO</span>
+        </div>
+        <div class="topbar-title" id="topbarTitle" style="display: none;">Главная</div>
       </div>
-      
-      <div class="topbar-title" id="topbarTitle" style="display: none;">Главная</div>
       
       <div style="display: flex; align-items: center; gap: 8px;">
         <button class="btn btn-sm btn-ghost" id="themeBtn" style="padding: 8px; border-radius: 50%; width: 38px; height: 38px;">
@@ -41,7 +41,6 @@
     </header>
 
     <main class="content">
-      
       <!-- ГЛАВНАЯ -->
       <section class="screen active" id="screen-home">
         <div class="banner-carousel">
@@ -53,12 +52,17 @@
                 <p>USDT · BTC · TON за рубли. Проверенные продавцы, эскроу-сделки.</p>
                 <button class="btn btn-primary" onclick="show('market')">Перейти в Маркет</button>
               </div>
-              <div class="banner" style="background: linear-gradient(135deg,#0c1820,#0f1418); border-color: #1c2a35;">
-                <div class="banner-tag" style="color: #4db8e0; border-color: rgba(34,158,217,.3); background: rgba(34,158,217,.12);">Официальный канал</div>
-                <h2>Новости, курсы<br>и <span style="color: #4db8e0;">розыгрыши</span></h2>
+              <div class="banner banner-tg">
+                <div class="banner-tag tg-tag">Официальный канал</div>
+                <h2>Новости, курсы<br>и <span>розыгрыши</span></h2>
                 <p>Подпишитесь на наш Telegram — анонсы обновлений и полезные материалы.</p>
-                <a href="https://t.me/vexoio_bot" target="_blank" class="btn" style="background: #229ED9; color: #fff;">✈ Подписаться</a>
-                <div class="tg-icon">✈</div>
+                <a href="https://t.me/vexoio_bot" target="_blank" class="btn btn-tg">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21.025 2.422L2.625 9.523c-1.25.47-1.244 1.16-.22 1.48l4.613 1.44L17.5 5.32c.502-.31.963-.14.585.17l-8.77 7.92-.33 4.73c.48 0 .69-.22.95-.48l2.28-2.22 4.73 3.5c.87.48 1.5.23 1.72-.8l3.13-14.7c.3-1.25-.47-1.82-1.29-1.5z" fill="currentColor"/></svg>
+                  Подписаться
+                </a>
+                <div class="tg-icon">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21.025 2.422L2.625 9.523c-1.25.47-1.244 1.16-.22 1.48l4.613 1.44L17.5 5.32c.502-.31.963-.14.585.17l-8.77 7.92-.33 4.73c.48 0 .69-.22.95-.48l2.28-2.22 4.73 3.5c.87.48 1.5.23 1.72-.8l3.13-14.7c.3-1.25-.47-1.82-1.29-1.5z" fill="currentColor"/></svg>
+                </div>
               </div>
             </div>
           </div>
@@ -149,17 +153,17 @@
           </div>
         </div>
 
-        <div class="field"><label>Цена за 1 <span id="f-asset-label">USDT</span> (₽)</label><input class="input" type="number" id="f-price" value="90"></div>
-        <div class="field"><label>Общий объем</label><input class="input" type="number" id="f-amount" value="500"></div>
+        <div class="field"><label>Цена за 1 <span id="f-asset-label">USDT</span> (₽)</label><input class="input" type="number" id="f-price" placeholder="Пример: 90"></div>
+        <div class="field"><label>Общий объем</label><input class="input" type="number" id="f-amount" placeholder="Пример: 500"></div>
 
         <div class="calc-box">
-          <div class="calc-row"><span style="color: var(--dim);">Объем × Цена</span><span id="calcTotal">45 000 ₽</span></div>
-          <div class="calc-row total"><span>Эквивалент</span><span class="val" id="calcTotal2" style="color: var(--yellow);">45 000 ₽</span></div>
+          <div class="calc-row"><span style="color: var(--dim);">Объем × Цена</span><span id="calcTotal">0 ₽</span></div>
+          <div class="calc-row total"><span>Эквивалент</span><span class="val" id="calcTotal2" style="color: var(--yellow);">0 ₽</span></div>
         </div>
 
-        <div class="field"><label>Мин. лимит (₽)</label><input class="input" type="number" id="f-min" value="3000"></div>
-        <div class="field"><label>Макс. лимит (₽)</label><input class="input" type="number" id="f-max" value="45000"><div class="hint" id="maxHint">Не больше 45 000 ₽</div></div>
-        <div class="field"><label>Условия</label><textarea class="input" id="f-terms" placeholder="Ваши условия..." style="min-height: 80px;"></textarea></div>
+        <div class="field"><label>Мин. лимит (₽)</label><input class="input" type="number" id="f-min" placeholder="Пример: 3000"></div>
+        <div class="field"><label>Макс. лимит (₽)</label><input class="input" type="number" id="f-max" placeholder="Пример: 45000"><div class="hint" id="maxHint">Введите данные для расчета</div></div>
+        <div class="field"><label>Условия</label><textarea class="input" id="f-terms" placeholder="Пример: ПРИНИМАЮ ТОЛЬКО СБП..." style="min-height: 80px;"></textarea></div>
 
         <div class="error-msg" id="createError"></div>
         <button class="btn btn-primary btn-block" id="createBtn">Опубликовать</button>
@@ -176,7 +180,6 @@
         <div id="ordersList">Загрузка...</div>
       </section>
 
-      <!-- СТРАНИЦА ОРДЕРА -->
       <section class="screen" id="screen-order"><div id="orderDetailContent"></div></section>
 
       <!-- КОШЕЛЕК -->
@@ -230,11 +233,9 @@
 <div class="toast-container" id="toastContainer"></div>
 <div class="modal-overlay" id="dialogOverlay"><div class="modal" id="dialogContent"></div></div>
 
-<!-- Модалка пополнения / вывода -->
 <div class="modal-overlay" id="walletActionModal">
   <div class="modal">
     <h3 id="walletActionTitle" style="font-size: 18px;">Пополнение</h3>
-    
     <div class="field">
       <label>Выберите актив</label>
       <div class="icon-scroll" id="walletActionAsset">
@@ -244,19 +245,24 @@
         <div class="icon-chip" data-val="TON"><div class="coin-icon ton">T</div> TON</div>
       </div>
     </div>
-
-    <div class="field">
-      <label>Сумма</label>
-      <input type="number" class="input" id="walletActionAmount" placeholder="Введите сумму">
-    </div>
-
-    <div class="field" id="walletRequisitesField" style="display:none;">
-      <label>Реквизиты</label>
-      <input type="text" class="input" id="walletActionRequisites" placeholder="Номер карты или адрес кошелька">
-    </div>
-
+    <div class="field"><label>Сумма</label><input type="number" class="input" id="walletActionAmount" placeholder="Введите сумму"></div>
+    <div class="field" id="walletRequisitesField" style="display:none;"><label>Реквизиты</label><input type="text" class="input" id="walletActionRequisites" placeholder="Номер карты или адрес кошелька"></div>
     <button class="btn btn-primary btn-block" id="walletActionSubmit">Перейти в Telegram</button>
     <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('walletActionModal')">Отмена</button>
+  </div>
+</div>
+
+<!-- Модалка редактирования -->
+<div class="modal-overlay" id="editAdModal">
+  <div class="modal">
+    <h3 style="font-size: 18px;">Редактировать объявление</h3>
+    <div class="field"><label>Цена за 1 единицу (₽)</label><input class="input" type="number" id="edit-price"></div>
+    <div class="field"><label>Мин. лимит (₽)</label><input class="input" type="number" id="edit-min"></div>
+    <div class="field"><label>Макс. лимит (₽)</label><input class="input" type="number" id="edit-max"></div>
+    <div class="field"><label>Условия</label><textarea class="input" id="edit-terms" style="min-height: 80px;"></textarea></div>
+    <div class="error-msg" id="editError"></div>
+    <button class="btn btn-primary btn-block" id="editSaveBtn">Сохранить</button>
+    <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('editAdModal')">Отмена</button>
   </div>
 </div>
 
@@ -281,14 +287,10 @@
   <div class="modal">
     <h3 id="orderTitle" style="font-size: 18px;">Покупка USDT</h3>
     <div class="ad-head" style="margin-bottom: 12px;"><div class="avatar" id="orderAvatar">?</div><div><div style="font-weight: 700;" id="orderUsername">-</div><div style="font-size: 12px; color: var(--dim);" id="orderUserMeta">-</div></div></div>
-    
     <div style="background: var(--surf2); padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; margin-bottom: 12px;"><span style="color: var(--dim);">Курс</span><strong id="orderRate" style="color: var(--yellow);">0 ₽</strong></div>
     <div style="background: var(--surf2); padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; margin-bottom: 12px;"><span style="color: var(--dim);">Доступно</span><strong id="orderAvailable">0</strong></div>
-    
     <div class="field"><label>Сумма в рублях</label><input class="input" type="number" id="orderAmount" placeholder="Введите сумму..."><div class="hint" id="orderLimit">Лимит: 0 - 0 ₽</div></div>
-    
     <div style="background: var(--surf2); padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; margin-bottom: 12px;"><span style="color: var(--dim);" id="orderResultLabel">Вы получите</span><strong id="orderResult">0 USDT</strong></div>
-    
     <div class="field"><label>Способ оплаты</label><div class="icon-scroll" id="orderPayments"></div></div>
     <div class="error-msg" id="orderError"></div>
     <button class="btn btn-primary btn-block" id="orderSubmit">Подтвердить</button>
