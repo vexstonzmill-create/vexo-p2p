@@ -1,6 +1,4 @@
-document.addEventListener('contextmenu', e => { 
-  if (!['INPUT', 'TEXTAREA'].includes(e.target.tagName)) e.preventDefault(); 
-});
+document.addEventListener('contextmenu', e => { if (!['INPUT', 'TEXTAREA'].includes(e.target.tagName)) e.preventDefault(); });
 
 const API = {
   token: () => localStorage.getItem('vexo_token'),
@@ -10,10 +8,7 @@ const API = {
     if (this.token()) headers.Authorization = 'Bearer ' + this.token();
     const res = await fetch('/api' + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      const e = new Error(data.error || 'error');
-      e.code = data.error; e.status = res.status; throw e;
-    }
+    if (!res.ok) { const e = new Error(data.error || 'error'); e.code = data.error; e.status = res.status; throw e; }
     return data;
   }
 };
@@ -42,7 +37,7 @@ function confirmAsync(title, message, okText = 'OK') {
 
 function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
-const titles = { home: 'Главная', market: 'Маркет', create: 'Создать', orders: 'Ордера', order: 'Ордер', profile: 'Профиль' };
+const titles = { home: 'Главная', market: 'Маркет', create: 'Создать', orders: 'Ордера', order: 'Ордер', profile: 'Профиль', wallet: 'Кошелёк' };
 let previousScreen = 'home';
 
 function show(name) {
@@ -59,43 +54,19 @@ function show(name) {
   window.scrollTo(0, 0);
 }
 
-document.querySelectorAll('[data-screen]').forEach(b => b.onclick = e => {
-  e.preventDefault();
-  const s = b.dataset.screen;
-  if (!['order'].includes(s)) previousScreen = s;
-  show(s);
-});
-
+document.querySelectorAll('[data-screen]').forEach(b => b.onclick = e => { e.preventDefault(); const s = b.dataset.screen; if (!['order'].includes(s)) previousScreen = s; show(s); });
 document.getElementById('backBtn').onclick = () => show(previousScreen);
 
 (function() {
   const track = document.getElementById('bannerTrack');
   const dots = document.querySelectorAll('.banner-dot');
   let idx = 0, timer;
-  
-  function go(i) { 
-    idx = (i + dots.length) % dots.length; 
-    track.style.transform = `translateX(-${idx * 100}%)`; 
-    dots.forEach((d, k) => d.classList.toggle('active', k === idx)); 
-  }
-  function auto() { 
-    clearInterval(timer); 
-    timer = setInterval(() => go(idx + 1), 4500); 
-  }
-  
+  function go(i) { idx = (i + dots.length) % dots.length; track.style.transform = `translateX(-${idx * 100}%)`; dots.forEach((d, k) => d.classList.toggle('active', k === idx)); }
+  function auto() { clearInterval(timer); timer = setInterval(() => go(idx + 1), 4500); }
   dots.forEach((d, i) => d.onclick = () => { go(i); auto(); });
-  
   let sx = 0; const vp = track.parentElement;
   vp.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, { passive: true });
-  vp.addEventListener('touchend', e => { 
-    const d = sx - e.changedTouches[0].clientX; 
-    if (Math.abs(d) > 40) { 
-      go(d > 0 ? idx + 1 : idx - 1); 
-      auto(); 
-    } else {
-      go(idx); 
-    }
-  });
+  vp.addEventListener('touchend', e => { const d = sx - e.changedTouches[0].clientX; if (Math.abs(d) > 40) { go(d > 0 ? idx + 1 : idx - 1); auto(); } else { go(idx); } });
   auto();
 })();
 
@@ -139,12 +110,8 @@ document.getElementById('authForm').onsubmit = async (e) => {
 
 function updateAuthUI() {
   const u = API.user(), loginBtn = document.getElementById('loginBtn'), avatarBtn = document.getElementById('avatarBtn');
-  if (u) {
-    loginBtn.classList.add('hidden'); avatarBtn.classList.remove('hidden');
-    avatarBtn.textContent = u.username[0].toUpperCase();
-  } else {
-    loginBtn.classList.remove('hidden'); avatarBtn.classList.add('hidden');
-  }
+  if (u) { loginBtn.classList.add('hidden'); avatarBtn.classList.remove('hidden'); avatarBtn.textContent = u.username[0].toUpperCase(); }
+  else { loginBtn.classList.remove('hidden'); avatarBtn.classList.add('hidden'); }
 }
 
 async function loadHome() {
@@ -153,23 +120,22 @@ async function loadHome() {
     document.getElementById('homeAdsList').innerHTML = items.length ? items.slice(0, 3).map(renderAd).join('') : '<p style="color:var(--dim);padding:20px;text-align:center">Объявлений пока нет</p>';
     bindAdButtons();
   } catch (e) {}
-
   try {
     const stats = await API.req('GET', '/stats');
     document.getElementById('statUsers').textContent = fmt(stats.users);
     document.getElementById('statDeals').textContent = fmt(stats.deals);
     document.getElementById('statTurnover').textContent = fmt(stats.turnover) + ' ₽';
     document.getElementById('statRating').textContent = stats.avgRating;
-  } catch (e) {
-    console.error('Ошибка статистики', e);
-  }
+  } catch (e) {}
 }
 
 async function loadMarket() {
   const filters = {};
-  const s = document.querySelector('#filterSide .chip.active')?.dataset.val; if (s) filters.side = s;
-  const f = document.querySelector('#filterFace .chip.active')?.dataset.val; if (f) filters.face_type = f;
-  const a = document.querySelector('#filterAsset .chip.active')?.dataset.val; if (a) filters.asset = a;
+  const activeTab = document.querySelector('.tabs .tab.active[data-side]');
+  if (activeTab && activeTab.dataset.side) filters.side = activeTab.dataset.side;
+  const activeAsset = document.querySelector('#filterAsset .asset-chip.active');
+  if (activeAsset && activeAsset.dataset.val) filters.asset = activeAsset.dataset.val;
+  
   document.getElementById('adsList').innerHTML = '<p style="text-align:center;padding:20px;color:var(--dim)">Загрузка...</p>';
   try {
     const { items } = await API.req('GET', '/ads?' + new URLSearchParams(filters));
@@ -179,15 +145,27 @@ async function loadMarket() {
 }
 
 function renderAd(ad) {
-  const isSell = ad.side === 'sell';
+  const isSell = ad.side === 'sell'; // Если продажа, значит мы покупаем
   const faceLabel = ad.faceType === 'first' ? '1-е лицо' : '3-е лицо';
   const faceClass = ad.faceType === 'first' ? 'first' : 'third';
   window._ads = window._ads || {}; window._ads[ad.id] = ad;
   const pays = (ad.paymentMethods || []).map(p => `<span class="pay-tag">${p}</span>`).join('');
+  const coinClass = ad.asset.toLowerCase();
   
   return `<div class="ad-card">
-    <div class="ad-head"><div class="avatar">${ad.username[0].toUpperCase()}</div><div class="ad-user"><div class="ad-name">${ad.username} <span class="badge-face ${faceClass}">${faceLabel}</span></div><div class="ad-meta"><span>★ ${ad.ratingAvg || '—'}</span><span>${ad.successRate !== null ? ad.successRate + '%' : '—'}</span><span>${ad.dealsCompleted || 0} сделок</span></div></div></div>
-    <div class="ad-body"><div><div class="ad-lbl">Курс</div><div class="ad-val">${fmt(ad.price)} ₽</div></div><div><div class="ad-lbl">Доступно</div><div class="ad-val">${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div></div><div><div class="ad-lbl">Лимит</div><div class="ad-val" style="font-size:13px">${fmt(ad.minRub)} - ${fmt(ad.maxRub)} ₽</div></div><div><div class="ad-lbl">Объем</div><div class="ad-val" style="font-size:13px">${fmt(ad.totalRub)} ₽</div></div></div>
+    <div class="ad-head">
+      <div class="avatar">${ad.username[0].toUpperCase()}</div>
+      <div class="ad-user">
+        <div class="ad-name">${ad.username} <span class="badge-face ${faceClass}">${faceLabel}</span></div>
+        <div class="ad-meta"><span>★ ${ad.ratingAvg || '—'}</span><span>${ad.successRate !== null ? ad.successRate + '%' : '—'}</span><span>${ad.dealsCompleted || 0} сделок</span></div>
+      </div>
+    </div>
+    <div class="ad-body">
+      <div><div class="ad-lbl">Курс</div><div class="ad-val">${fmt(ad.price)} ₽</div></div>
+      <div><div class="ad-lbl">Доступно</div><div class="ad-val" style="display:flex;align-items:center;gap:4px;"><div class="coin-icon ${coinClass}" style="width:18px;height:18px;font-size:10px;">${ad.asset[0]}</div> ${fmtDec(ad.amountLeft, 2)}</div></div>
+      <div><div class="ad-lbl">Лимит</div><div class="ad-val" style="font-size:13px">${fmt(ad.minRub)} - ${fmt(ad.maxRub)} ₽</div></div>
+      <div><div class="ad-lbl">Объем</div><div class="ad-val" style="font-size:13px">${fmt(ad.totalRub)} ₽</div></div>
+    </div>
     ${pays ? `<div style="margin-bottom:14px">${pays}</div>` : ''}
     <button class="btn ${isSell ? 'btn-buy' : 'btn-sell'} btn-block btn-sm" data-ad-id="${ad.id}">${isSell ? 'Купить' : 'Продать'} ${ad.asset}</button>
   </div>`;
@@ -200,12 +178,18 @@ function bindAdButtons() {
   });
 }
 
-document.querySelectorAll('#filterSide .chip, #filterFace .chip, #filterAsset .chip').forEach(c => c.onclick = () => {
-  c.parentElement.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
+document.querySelectorAll('.tabs .tab[data-side]').forEach(c => c.onclick = () => {
+  document.querySelectorAll('.tabs .tab[data-side]').forEach(x => x.classList.remove('active'));
+  c.classList.add('active');
+  loadMarket();
+});
+document.querySelectorAll('#filterAsset .asset-chip').forEach(c => c.onclick = () => {
+  document.querySelectorAll('#filterAsset .asset-chip').forEach(x => x.classList.remove('active'));
   c.classList.add('active');
   loadMarket();
 });
 
+// Форма создания
 const fPrice = document.getElementById('f-price'), fAmount = document.getElementById('f-amount'), fMax = document.getElementById('f-max');
 function recalc() {
   const total = (parseFloat(fAmount.value) || 0) * (parseFloat(fPrice.value) || 0);
@@ -216,10 +200,14 @@ function recalc() {
 }
 [fPrice, fAmount, fMax].forEach(el => el.oninput = recalc); recalc();
 
-document.getElementById('f-asset').onchange = e => document.getElementById('f-asset-label').textContent = e.target.value;
 document.querySelectorAll('#f-side .seg-btn').forEach(b => b.onclick = () => { document.querySelectorAll('#f-side .seg-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); });
 document.querySelectorAll('#f-face .seg-btn').forEach(b => b.onclick = () => { document.querySelectorAll('#f-face .seg-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); });
 document.querySelectorAll('#f-payments .pay-chip').forEach(c => c.onclick = () => c.classList.toggle('active'));
+document.querySelectorAll('#f-asset-select .asset-chip').forEach(c => c.onclick = () => {
+  document.querySelectorAll('#f-asset-select .asset-chip').forEach(x => x.classList.remove('active'));
+  c.classList.add('active');
+  document.getElementById('f-asset-label').textContent = c.dataset.val;
+});
 
 document.getElementById('createBtn').onclick = async () => {
   const errEl = document.getElementById('createError'); errEl.textContent = '';
@@ -227,22 +215,26 @@ document.getElementById('createBtn').onclick = async () => {
   const payments = [...document.querySelectorAll('#f-payments .pay-chip.active')].map(c => c.dataset.val);
   if (!payments.length) { errEl.textContent = 'Выберите способ оплаты'; return; }
   const btn = document.getElementById('createBtn'); btn.disabled = true; btn.textContent = 'Публикация...';
+  
+  const asset = document.querySelector('#f-asset-select .asset-chip.active').dataset.val;
+  
   try {
     await API.req('POST', '/ads', {
       side: document.querySelector('#f-side .seg-btn.active').dataset.val,
       face_type: document.querySelector('#f-face .seg-btn.active').dataset.val,
-      asset: document.getElementById('f-asset').value,
+      asset: asset,
       price: fPrice.value, amount_total: fAmount.value,
       min_rub: document.getElementById('f-min').value, max_rub: fMax.value,
       payment_methods: payments, terms: document.getElementById('f-terms').value
     });
     toast('Объявление опубликовано!', 'success'); show('market');
   } catch (err) {
-    const map = { max_exceeds_total: 'Максимальный лимит больше общего объёма', min_gt_max: 'Минимум больше максимума', bad_amounts: 'Проверьте числа', unauthorized: 'Войдите' };
+    const map = { max_exceeds_total: 'Максимальный лимит больше общего объёма', min_gt_max: 'Минимум больше максимума', bad_amounts: 'Проверьте числа' };
     errEl.textContent = map[err.code] || err.message;
   } finally { btn.disabled = false; btn.textContent = 'Опубликовать'; }
 };
 
+// Модалка Ордера
 let currentAd = null, selectedPay = null;
 function openOrderModal(adId) {
   const ad = (window._ads || {})[adId]; if (!ad) return;
@@ -255,9 +247,7 @@ function openOrderModal(adId) {
   document.getElementById('orderUserMeta').textContent = (ad.faceType === 'first' ? '1-е лицо' : '3-е лицо') + ' · ★ ' + (ad.ratingAvg || '—');
   document.getElementById('orderRate').textContent = fmt(ad.price) + ' ₽';
   document.getElementById('orderAvailable').textContent = fmtDec(ad.amountLeft, 2) + ' ' + ad.asset;
-  
   document.getElementById('orderLimit').textContent = `Лимит: ${fmt(ad.minRub)} - ${fmt(ad.maxRub)} ₽`;
-  
   document.getElementById('orderAmount').value = '';
   document.getElementById('orderResultLabel').textContent = isBuy ? 'Вы получите' : 'Вы отдадите';
   document.getElementById('orderResult').textContent = '0 ' + ad.asset;
@@ -299,18 +289,35 @@ async function submitOrder() {
   } finally { btn.disabled = false; btn.textContent = currentAd ? (currentAd.side === 'sell' ? 'Купить ' : 'Продать ') + currentAd.asset : 'OK'; }
 }
 
+// Ордера
 async function loadOrders(filter) {
   if (!API.user()) { document.getElementById('ordersList').innerHTML = '<p style="text-align:center;color:var(--dim);padding:30px">Войдите, чтобы увидеть ордера</p>'; return; }
   try {
     const { items } = await API.req('GET', '/orders/my?status=' + filter);
-    const sc = { waiting: '#FFD60A', paid: '#22c55e', completed: '#22c55e', cancelled: '#ef4444', dispute: '#D4AF37' };
-    document.getElementById('ordersList').innerHTML = items.length ? items.map(o => `<div class="ad-card" style="cursor:pointer" data-order-id="${o.id}"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><strong style="font-family:'Inter',monospace">#${o.publicId}</strong><span style="color:${sc[o.status]};font-size:11px;font-weight:700">${o.statusLabel}</span></div><div class="ad-body"><div><div class="ad-lbl">Сумма</div><div class="ad-val">${fmt(o.amountRub)} ₽</div></div><div><div class="ad-lbl">Актив</div><div class="ad-val">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div></div><div style="font-size:11px;color:var(--dim)">${new Date(o.createdAt).toLocaleString('ru-RU')}</div></div>`).join('') : '<p style="text-align:center;color:var(--dim);padding:30px">Ордеров нет</p>';
+    const sc = { waiting: 'var(--yellow)', paid: 'var(--grn)', completed: 'var(--grn)', cancelled: 'var(--red)', dispute: 'var(--gold)' };
+    
+    document.getElementById('ordersList').innerHTML = items.length ? items.map(o => `
+      <div class="ad-card" style="cursor:pointer;border-left:4px solid ${sc[o.status]}" data-order-id="${o.id}">
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+          <strong style="font-family:'Inter',monospace">#${o.publicId}</strong>
+          <span style="color:${sc[o.status]};font-size:11px;font-weight:700">${o.statusLabel}</span>
+        </div>
+        <div class="ad-body">
+          <div><div class="ad-lbl">Сумма</div><div class="ad-val">${fmt(o.amountRub)} ₽</div></div>
+          <div><div class="ad-lbl">Актив</div><div class="ad-val">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--dim);display:flex;justify-content:space-between">
+          <span>${new Date(o.createdAt).toLocaleString('ru-RU')}</span>
+          <span>${o.buyer.username} ↔ ${o.seller.username}</span>
+        </div>
+      </div>`).join('') : '<p style="text-align:center;color:var(--dim);padding:30px">Ордеров нет</p>';
+    
     document.querySelectorAll('[data-order-id]').forEach(el => el.onclick = () => openOrderPage(+el.dataset.orderId));
   } catch (e) { document.getElementById('ordersList').innerHTML = 'Ошибка'; }
 }
 
-document.querySelectorAll('#ordersFilter .chip').forEach(c => c.onclick = () => {
-  document.querySelectorAll('#ordersFilter .chip').forEach(x => x.classList.remove('active'));
+document.querySelectorAll('#ordersFilter .tab').forEach(c => c.onclick = () => {
+  document.querySelectorAll('#ordersFilter .tab').forEach(x => x.classList.remove('active'));
   c.classList.add('active'); loadOrders(c.dataset.val);
 });
 
@@ -328,8 +335,13 @@ async function openOrderPage(orderId) {
 function renderOrderPage(order, history) {
   const u = API.user(), isBuyer = order.buyer.id === u.id, isSeller = order.seller.id === u.id;
   const sc = { waiting: '#FFD60A', paid: '#22c55e', completed: '#22c55e', cancelled: '#ef4444', dispute: '#D4AF37' };
-  let timerHtml = '';
-  if (order.status === 'waiting' && order.expiresAt) timerHtml = `<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,214,10,.1);border:1px solid rgba(255,214,10,.3);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;color:var(--yellow);margin-top:12px">⏱ <span id="timerText">--:--</span> до оплаты</div>`;
+  
+  // Визуальный прогресс
+  let progress = 20;
+  if (order.status === 'paid') progress = 60;
+  if (order.status === 'completed') progress = 100;
+  if (order.status === 'cancelled' || order.status === 'dispute') progress = 0;
+
   let actionsHtml = '';
   if (order.status === 'waiting' && isBuyer) actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px"><button class="btn btn-primary" onclick="doAction(${order.id},'paid')">Я оплатил</button><button class="btn btn-ghost" style="color:var(--red)" onclick="doAction(${order.id},'cancel')">Отменить</button></div>`;
   else if (order.status === 'waiting' && isSeller) actionsHtml = `<div style="background:var(--surf2);border:1px solid var(--brd);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:13px;margin-bottom:16px">Ожидайте оплаты от покупателя</div>`;
@@ -345,11 +357,15 @@ function renderOrderPage(order, history) {
   
   document.getElementById('orderDetailContent').innerHTML = `
     <div style="background:linear-gradient(135deg,#1a1608,#0f0f0f);border:1px solid #2a2410;border-radius:16px;padding:20px;margin-bottom:16px">
-      <div style="font-size:12px;color:var(--dim);font-family:monospace;margin-bottom:8px">#${order.publicId}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:12px;color:var(--dim);font-family:monospace">#${order.publicId}</div>
+        <div style="background:rgba(255,255,255,.05);color:${sc[order.status]};font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px">${order.statusLabel}</div>
+      </div>
       <h2 style="font-size:20px;font-weight:800;margin-bottom:8px">${isBuyer ? 'Покупка ' : 'Продажа '}${order.asset}</h2>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span style="color:${sc[order.status]};font-size:11px;font-weight:600;background:rgba(255,255,255,.05);padding:3px 10px;border-radius:6px">${order.statusLabel}</span></div>
       <div style="font-size:32px;font-weight:800;color:var(--yellow)">${fmt(order.amountRub)}<span style="font-size:14px;color:var(--dim);font-weight:500;margin-left:4px">₽</span></div>
-      ${timerHtml}
+      <div style="width:100%;height:4px;background:rgba(255,255,255,.1);border-radius:2px;margin-top:16px;overflow:hidden">
+        <div style="height:100%;width:${progress}%;background:${sc[order.status]};transition:0.3s"></div>
+      </div>
     </div>
     
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
@@ -374,19 +390,7 @@ function renderOrderPage(order, history) {
       ${timelineHtml}
     </div>
   `;
-  if (order.status === 'waiting' && order.expiresAt) startTimer(order.expiresAt);
   loadChat(order.id, true);
-}
-
-function startTimer(expiresAt) {
-  const tick = () => {
-    const el = document.getElementById('timerText'); if (!el) return;
-    const left = new Date(expiresAt).getTime() - Date.now();
-    if (left <= 0) { el.textContent = '00:00'; return; }
-    const m = Math.floor(left / 60000), s = Math.floor((left % 60000) / 1000);
-    el.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  };
-  tick(); setInterval(tick, 1000);
 }
 
 async function doAction(orderId, action) {
@@ -396,6 +400,7 @@ async function doAction(orderId, action) {
   catch (e) { toast(e.message, 'error'); }
 }
 
+// Чат
 let currentChatOrderId = null, chatPollTimer = null, lastChatCount = 0;
 
 async function openChatModal(orderId, username) {
@@ -449,6 +454,7 @@ async function loadChat(orderId, reset = true) {
   } catch (e) {}
 }
 
+// Отзывы
 let currentReviewOrderId = null, currentRating = 5;
 
 function openReview(orderId) {
@@ -474,6 +480,7 @@ document.getElementById('reviewSubmitBtn').onclick = async () => {
   finally { btn.disabled = false; }
 };
 
+// Профиль
 async function loadProfile() {
   const u = API.user();
   if (!u) { document.getElementById('profileContent').innerHTML = '<div style="text-align:center;padding:40px"><p style="color:var(--dim);margin-bottom:20px">Войдите в аккаунт</p><button class="btn btn-primary" onclick="document.getElementById(\'authModal\').classList.add(\'active\')">Войти</button></div>'; return; }
@@ -541,7 +548,7 @@ async function logoutAction() {
   }
 }
 
-// ========== ЛОГИКА ПЕРЕКЛЮЧЕНИЯ ТЕМ ==========
+// Темы
 const themes = ['dark', 'light', 'dark-gray', 'light-gray'];
 let currentTheme = localStorage.getItem('vexo_theme') || 'dark';
 
@@ -566,4 +573,4 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 updateAuthUI();
-loadHome();
+loadHome();dHome();
