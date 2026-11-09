@@ -1,37 +1,353 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-<title>VEXO TEST</title>
-<style>
-body{background:#000;color:#fff;font-family:sans-serif;padding:20px}
-button{background:#FFD60A;color:#000;padding:15px 30px;border:none;border-radius:10px;font-size:16px;font-weight:bold;margin:10px;display:block;width:100%;max-width:300px}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>VEXO P2P</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<h1>VEXO TEST</h1>
-<p>Если видишь эту страницу — HTML работает.</p>
 
-<button onclick="alert('INLINE JS РАБОТАЕТ!')">Тест 1: Inline JS</button>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><div class="logo-mark">V</div><span>VEXO</span></div>
+    <button class="nav-btn active" data-screen="home">Главная</button>
+    <button class="nav-btn" data-screen="market">Маркет</button>
+    <button class="nav-btn" data-screen="create">Создать объявление</button>
+    <button class="nav-btn" data-screen="orders">Мои ордера</button>
+    <button class="nav-btn" data-screen="wallet">Кошелёк</button>
+    <button class="nav-btn" data-screen="profile">Профиль</button>
+  </aside>
 
-<button id="test2">Тест 2: DOM ready</button>
+  <div class="main">
+    <header class="topbar">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button class="btn btn-sm btn-ghost hidden" id="backBtn" style="padding: 6px; border-radius: 50%; width: 32px; height: 32px;">←</button>
+        <div style="display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 18px;">
+          <div class="logo-mark" style="width: 24px; height: 24px; font-size: 12px;">V</div>
+          <span>VEXO</span>
+        </div>
+      </div>
+      <div class="topbar-title" id="topbarTitle" style="display: none;">Главная</div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button class="btn btn-sm btn-ghost" id="themeBtn" style="padding: 6px; border-radius: 50%; width: 32px; height: 32px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        </button>
+        <button class="btn btn-sm btn-primary" id="loginBtn">Войти</button>
+        <button class="avatar-btn hidden" id="avatarBtn" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 13px;"></button>
+      </div>
+    </header>
 
-<button id="test3">Тест 3: app.js загрузился?</button>
+    <main class="content">
+      <section class="screen active" id="screen-home">
+        <div class="banner-carousel">
+          <div class="banner-viewport">
+            <div class="banner-track" id="bannerTrack">
+              <div class="banner">
+                <div class="banner-tag">VEXO P2P</div>
+                <h2>Покупайте и продавайте <span>цифровые активы</span> безопасно</h2>
+                <p>USDT · BTC · TON за рубли. Проверенные продавцы, эскроу-сделки.</p>
+                <button class="btn btn-primary" data-screen="market">Перейти в Маркет</button>
+              </div>
+              <div class="banner banner-tg">
+                <div class="banner-tag tg-tag">Официальный канал</div>
+                <h2>Новости, курсы<br>и <span>розыгрыши</span></h2>
+                <p>Подпишитесь на наш Telegram — анонсы обновлений и полезные материалы.</p>
+                <a href="https://t.me/vexoio_bot" target="_blank" class="btn btn-tg">Подписаться</a>
+                <div class="tg-icon">✈</div>
+              </div>
+            </div>
+          </div>
+          <div class="banner-dots">
+            <button class="banner-dot active" data-slide="0"></button>
+            <button class="banner-dot" data-slide="1"></button>
+          </div>
+        </div>
 
-<script>
-document.getElementById('test2').onclick = function(){
-  alert('DOM READY РАБОТАЕТ!');
-};
+        <div class="stats">
+          <div class="stat"><div class="stat-lbl">Пользователи</div><div class="stat-val" id="statUsers">0</div></div>
+          <div class="stat"><div class="stat-lbl">Сделки</div><div class="stat-val" id="statDeals">0</div></div>
+          <div class="stat"><div class="stat-lbl">Оборот</div><div class="stat-val" id="statTurnover">0 ₽</div></div>
+          <div class="stat"><div class="stat-lbl">Рейтинг</div><div class="stat-val" id="statRating">—</div></div>
+        </div>
+      </section>
 
-document.getElementById('test3').onclick = function(){
-  if (typeof API !== 'undefined') {
-    alert('APP.JS ЗАГРУЖЕН!');
-  } else {
-    alert('APP.JS НЕ ЗАГРУЖЕН!');
-  }
-};
+      <section class="screen" id="screen-market">
+        <h2 style="margin-bottom: 12px; font-size: 18px;">P2P Маркет</h2>
+        <div class="trade-tabs" id="marketSideTabs">
+          <button class="trade-tab active" data-side="buy">Купить</button>
+          <button class="trade-tab" data-side="sell">Продать</button>
+        </div>
 
-console.log('INLINE SCRIPT WORKS');
-</script>
+        <div class="filter-label">Тип лица</div>
+        <div class="chips" id="filterFace">
+          <button class="chip active" data-val="">Все</button>
+          <button class="chip" data-val="first">1-е лицо</button>
+          <button class="chip" data-val="third">3-е лицо</button>
+        </div>
+
+        <div class="filter-label">Сумма (₽)</div>
+        <div class="filter-inputs">
+          <input type="number" class="input" id="filterMinAmount" placeholder="От">
+          <input type="number" class="input" id="filterMaxAmount" placeholder="До">
+        </div>
+
+        <div class="filter-label">Актив</div>
+        <div class="icon-scroll" id="filterAsset">
+          <div class="icon-chip active" data-val="">Все</div>
+          <div class="icon-chip" data-val="USDT"><div class="coin-icon usdt">₮</div> USDT</div>
+          <div class="icon-chip" data-val="BTC"><div class="coin-icon btc">₿</div> BTC</div>
+          <div class="icon-chip" data-val="TON"><div class="coin-icon ton">T</div> TON</div>
+        </div>
+
+        <div class="filter-label">Оплата</div>
+        <div class="icon-scroll" id="filterPayment">
+          <div class="icon-chip active" data-val="">Все</div>
+          <div class="icon-chip" data-val="СБП">🏦 СБП</div>
+          <div class="icon-chip" data-val="Тинькофф">🟡 Тинькофф</div>
+          <div class="icon-chip" data-val="Сбербанк">🟢 Сбер</div>
+        </div>
+
+        <div id="adsList" style="margin-top: 12px;">Загрузка...</div>
+      </section>
+
+      <section class="screen" id="screen-create">
+        <h2 style="margin-bottom: 16px; font-size: 18px;">Создать объявление</h2>
+        
+        <div class="field">
+          <label>Тип сделки</label>
+          <div class="segmented" id="f-side">
+            <button type="button" class="seg-btn buy active" data-val="sell">Я продаю</button>
+            <button type="button" class="seg-btn sell" data-val="buy">Я покупаю</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Тип лица</label>
+          <div class="segmented" id="f-face">
+            <button type="button" class="seg-btn active" data-val="first">1-е лицо</button>
+            <button type="button" class="seg-btn" data-val="third">3-е лицо</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Актив</label>
+          <div class="icon-scroll" id="f-asset-select">
+            <div class="icon-chip active" data-val="USDT"><div class="coin-icon usdt">₮</div> USDT</div>
+            <div class="icon-chip" data-val="BTC"><div class="coin-icon btc">₿</div> BTC</div>
+            <div class="icon-chip" data-val="TON"><div class="coin-icon ton">T</div> TON</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Способы оплаты</label>
+          <div class="icon-scroll" id="f-payments">
+            <div class="pay-chip" data-val="СБП">🏦 СБП</div>
+            <div class="pay-chip" data-val="Тинькофф">🟡 Тинькофф</div>
+            <div class="pay-chip" data-val="Сбербанк">🟢 Сбер</div>
+            <div class="pay-chip" data-val="Альфа-Банк">🔴 Альфа</div>
+          </div>
+        </div>
+
+        <div class="field"><label>Цена за 1 <span id="f-asset-label">USDT</span> (₽)</label><input class="input" type="number" id="f-price" placeholder="Пример: 90"></div>
+        <div class="field"><label>Общий объем</label><input class="input" type="number" id="f-amount" placeholder="Пример: 500"></div>
+
+        <div class="calc-box">
+          <div class="calc-row"><span style="color: var(--dim);">Объем × Цена</span><span id="calcTotal">0 ₽</span></div>
+          <div class="calc-row total"><span>Эквивалент</span><span class="val" id="calcTotal2" style="color: var(--yellow);">0 ₽</span></div>
+        </div>
+
+        <div class="field"><label>Мин. лимит (₽)</label><input class="input" type="number" id="f-min" placeholder="Пример: 3000"></div>
+        <div class="field"><label>Макс. лимит (₽)</label><input class="input" type="number" id="f-max" placeholder="Пример: 45000"><div class="hint" id="maxHint">Введите данные для расчета</div></div>
+        <div class="field"><label>Условия</label><textarea class="input" id="f-terms" placeholder="Пример: ПРИНИМАЮ ТОЛЬКО СБП..." style="min-height: 60px;"></textarea></div>
+
+        <div class="error-msg" id="createError"></div>
+        <button class="btn btn-primary btn-block" id="createBtn">Опубликовать</button>
+      </section>
+
+      <section class="screen" id="screen-orders">
+        <h2 style="margin-bottom: 16px; font-size: 18px;">Мои ордера</h2>
+        <div class="tabs" id="ordersFilter">
+          <button class="tab active" data-val="active">Активные</button>
+          <button class="tab" data-val="completed">Завершённые</button>
+          <button class="tab" data-val="cancelled">Отменённые</button>
+        </div>
+        <div id="ordersList">Загрузка...</div>
+      </section>
+
+      <section class="screen" id="screen-order"><div id="orderDetailContent"></div></section>
+
+      <section class="screen" id="screen-wallet">
+        <h2 style="margin-bottom: 4px; font-size: 18px;">Кошелёк</h2>
+        <p style="color: var(--dim); font-size: 12px; margin-bottom: 16px;">Балансы и история операций</p>
+
+        <div class="wallet-hero">
+          <div class="lbl">Общий баланс в рублях</div>
+          <div class="amount">0,00 <span>₽</span></div>
+          <div class="wallet-actions">
+            <button class="btn btn-primary" id="btnDeposit" style="flex:1;">Пополнить</button>
+            <button class="btn btn-ghost" id="btnWithdraw" style="flex:1;">Вывести</button>
+          </div>
+        </div>
+
+        <div class="notice">
+          <div style="font-size: 16px;">🛡</div>
+          <div><strong style="color: var(--yellow);">Платёжные интеграции через Telegram.</strong><br>Пополнение и вывод происходят через официального бота @vexoio_bot.</div>
+        </div>
+
+        <h3 style="margin-top: 16px; font-size: 14px; margin-bottom: 12px;">Активы</h3>
+        <div class="wallet-list">
+          <div class="wallet-item"><div class="coin-icon rub">₽</div><div class="w-info"><div class="w-name">Российский рубль</div><div class="w-sub">RUB · фиат</div></div><div class="w-bal">0,00 ₽</div></div>
+          <div class="wallet-item"><div class="coin-icon usdt">₮</div><div class="w-info"><div class="w-name">Tether</div><div class="w-sub">USDT · TRC-20</div></div><div class="w-bal">0,00 <span>≈ 0 ₽</span></div></div>
+          <div class="wallet-item"><div class="coin-icon btc">₿</div><div class="w-info"><div class="w-name">Bitcoin</div><div class="w-sub">BTC · Bitcoin</div></div><div class="w-bal">0,00000000 <span>≈ 0 ₽</span></div></div>
+          <div class="wallet-item"><div class="coin-icon ton">T</div><div class="w-info"><div class="w-name">Toncoin</div><div class="w-sub">TON · The Open Network</div></div><div class="w-bal">0,000 <span>≈ 0 ₽</span></div></div>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-profile">
+        <h2 style="margin-bottom: 16px; font-size: 18px;">Профиль</h2>
+        <div id="profileContent">Загрузка...</div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="bn-btn active" data-screen="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Главная</button>
+      <button class="bn-btn" data-screen="market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Маркет</button>
+      <button class="bn-btn" data-screen="create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Создать</button>
+      <button class="bn-btn" data-screen="orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>Ордера</button>
+      <button class="bn-btn" data-screen="wallet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M16 12h4"/></svg>Кошелёк</button>
+      <button class="bn-btn" data-screen="profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Профиль</button>
+    </nav>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<div class="modal-overlay" id="dialogOverlay"><div class="modal" id="dialogContent"></div></div>
+
+<!-- МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ (ТО САМОЕ, КОТОРОГО НЕ ХВАТАЛО) -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal">
+    <div style="display: flex; border-bottom: 1px solid var(--brd); margin-bottom: 16px;">
+      <button class="tab active" id="tabLogin" style="flex: 1; padding: 10px;">Вход</button>
+      <button class="tab" id="tabRegister" style="flex: 1; padding: 10px;">Регистрация</button>
+    </div>
+    <form id="authForm">
+      <div class="field">
+        <label id="loginLabel">Логин или Email</label>
+        <input class="input" type="text" id="authLogin" required>
+      </div>
+      <div class="field hidden" id="emailField">
+        <label>Email</label>
+        <input class="input" type="email" id="authEmail">
+      </div>
+      <div class="field">
+        <label>Пароль</label>
+        <input class="input" type="password" id="authPass" required>
+      </div>
+      <div class="error-msg" id="authError"></div>
+      <button type="submit" class="btn btn-primary btn-block" id="authSubmit">Войти</button>
+      <button type="button" class="btn btn-ghost btn-block btn-sm" onclick="closeModal('authModal')" style="margin-top: 8px;">Отмена</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="walletActionModal">
+  <div class="modal">
+    <h3 id="walletActionTitle" style="font-size: 16px;">Пополнение</h3>
+    <div class="field">
+      <label>Выберите актив</label>
+      <div class="icon-scroll" id="walletActionAsset">
+        <div class="icon-chip active" data-val="RUB"><div class="coin-icon rub">₽</div> RUB</div>
+        <div class="icon-chip" data-val="USDT"><div class="coin-icon usdt">₮</div> USDT</div>
+        <div class="icon-chip" data-val="BTC"><div class="coin-icon btc">₿</div> BTC</div>
+        <div class="icon-chip" data-val="TON"><div class="coin-icon ton">T</div> TON</div>
+      </div>
+    </div>
+    <div class="field"><label>Сумма</label><input type="number" class="input" id="walletActionAmount" placeholder="Введите сумму"></div>
+    <div class="field" id="walletRequisitesField" style="display:none;"><label>Реквизиты</label><input type="text" class="input" id="walletActionRequisites" placeholder="Номер карты или адрес кошелька"></div>
+    <button class="btn btn-primary btn-block" id="walletActionSubmit">Перейти в Telegram</button>
+    <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('walletActionModal')">Отмена</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="editAdModal">
+  <div class="modal">
+    <h3 style="font-size: 16px;">Редактировать объявление</h3>
+    <div class="field"><label>Цена за 1 единицу (₽)</label><input class="input" type="number" id="edit-price"></div>
+    <div class="field"><label>Мин. лимит (₽)</label><input class="input" type="number" id="edit-min"></div>
+    <div class="field"><label>Макс. лимит (₽)</label><input class="input" type="number" id="edit-max"></div>
+    <div class="field"><label>Условия</label><textarea class="input" id="edit-terms" style="min-height: 60px;"></textarea></div>
+    <div class="error-msg" id="editError"></div>
+    <button class="btn btn-primary btn-block" id="editSaveBtn">Сохранить</button>
+    <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('editAdModal')">Отмена</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="orderModal">
+  <div class="modal" style="padding: 16px; gap: 10px; max-width: 400px;">
+    <h3 id="orderTitle" style="font-size: 16px; text-align: center;">Покупка USDT</h3>
+    <div style="display: flex; align-items: center; gap: 10px; background: var(--surf2); padding: 10px; border-radius: 8px;">
+      <div class="avatar" id="orderAvatar" style="width: 32px; height: 32px; font-size: 12px;">?</div>
+      <div><div style="font-weight: 800; font-size: 14px;" id="orderUsername">-</div><div style="font-size: 11px; color: var(--dim);" id="orderUserMeta">-</div></div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+      <div style="background: var(--surf2); padding: 8px 12px; border-radius: 8px;"><div style="font-size: 10px; color: var(--dim); margin-bottom: 2px;">Курс</div><strong id="orderRate" style="color: var(--yellow); font-size: 15px;">0 ₽</strong></div>
+      <div style="background: var(--surf2); padding: 8px 12px; border-radius: 8px;"><div style="font-size: 10px; color: var(--dim); margin-bottom: 2px;">Доступно</div><strong id="orderAvailable" style="font-size: 15px;">0</strong></div>
+    </div>
+    <div class="field" style="margin-bottom: 0;">
+      <label style="font-size: 12px; margin-bottom: 4px;">Сумма в рублях</label>
+      <input class="input" type="number" id="orderAmount" placeholder="Введите сумму..." style="font-size: 16px; font-weight: 800; padding: 10px 12px;">
+      <div class="hint" id="orderLimit" style="margin-top: 4px;">Лимит: 0 - 0 ₽</div>
+    </div>
+    <div style="background: var(--surf2); padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+      <span style="color: var(--dim); font-size: 12px;" id="orderResultLabel">Вы получите</span>
+      <strong id="orderResult" style="font-size: 16px;">0 USDT</strong>
+    </div>
+    <div style="background: rgba(255,214,10,0.05); border: 1px dashed rgba(255,214,10,0.3); border-radius: 8px; padding: 10px;">
+      <div style="font-size: 10px; font-weight: 800; color: var(--yellow); text-transform: uppercase; margin-bottom: 4px;">Условия мейкера</div>
+      <div id="orderTerms" style="font-size: 12px; color: var(--dim); line-height: 1.4; max-height: 50px; overflow-y: auto;"></div>
+    </div>
+    <div class="field" style="margin-bottom: 0;">
+      <label style="font-size: 12px; margin-bottom: 4px;">Способ оплаты</label>
+      <div class="icon-scroll" id="orderPayments" style="margin-bottom: 0;"></div>
+    </div>
+    <div class="error-msg" id="orderError"></div>
+    <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
+      <button class="btn btn-primary btn-block" id="orderSubmit">Подтвердить</button>
+      <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('orderModal')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="chatModal">
+  <div class="modal" style="padding: 0; gap: 0;">
+    <div style="padding: 12px 16px; border-bottom: 1px solid var(--brd); display: flex; align-items: center; gap: 10px;"><div class="avatar" id="chatAvatar">?</div><div style="flex: 1;"><div style="font-size: 14px; font-weight: 700;" id="chatTitle">Чат</div><div style="font-size: 10px; color: var(--dim);" id="chatSub">Собеседник</div></div><button style="background: none; border: none; color: var(--dim); font-size: 20px;" onclick="closeChatModal()">×</button></div>
+    <div class="chat-body" id="chatBody"></div>
+    <div class="chat-input-row"><input type="text" id="chatInput" placeholder="Сообщение..." maxlength="500"><button style="width: 32px; height: 32px; border-radius: 50%; background: var(--yellow); color: #000; border: none; display: flex; align-items: center; justify-content: center;" id="chatSend">➤</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <h3 style="font-size: 16px;">Настройки профиля</h3>
+    <div class="field"><label>Email</label><input class="input" type="email" id="settingsEmail"></div>
+    <div class="error-msg" id="settingsError"></div>
+    <button class="btn btn-primary btn-block" id="settingsSaveBtn">Сохранить</button>
+    <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('settingsModal')">Отмена</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="reviewModal">
+  <div class="modal">
+    <h3 style="font-size: 16px;">Оставить отзыв</h3>
+    <div class="rating-stars" id="ratingStars"><span class="rating-star" data-r="1">★</span><span class="rating-star" data-r="2">★</span><span class="rating-star" data-r="3">★</span><span class="rating-star" data-r="4">★</span><span class="rating-star" data-r="5">★</span></div>
+    <textarea class="input" id="reviewComment" placeholder="Комментарий (необязательно)" style="min-height: 60px;"></textarea>
+    <div class="error-msg" id="reviewError"></div>
+    <button class="btn btn-primary btn-block" id="reviewSubmitBtn">Отправить</button>
+    <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('reviewModal')">Отмена</button>
+  </div>
+</div>
 
 <script src="app.js"></script>
 </body>
