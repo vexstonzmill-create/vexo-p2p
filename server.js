@@ -25,21 +25,32 @@ function loadDB() {
       counters: { user: 0, ad: 0, order: 0, message: 0, review: 0, platformReview: 0 }
     };
   }
-  try { return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); } 
-  catch { console.error('❌ db.json corrupted'); process.exit(1); }
+  try { 
+    return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); 
+  } catch { 
+    console.error('❌ db.json corrupted'); 
+    process.exit(1); 
+  }
 }
 
 let DB = loadDB();
-if (!DB.platformReviews) DB.platformReviews = []; // Миграция для старых баз
+if (!DB.platformReviews) DB.platformReviews = []; 
 
-function saveDB() { fs.writeFileSync(DATA_FILE, JSON.stringify(DB, null, 2), 'utf8'); }
-function nextId(kind) { DB.counters[kind] = (DB.counters[kind] || 0) + 1; return DB.counters[kind]; }
+function saveDB() { 
+  fs.writeFileSync(DATA_FILE, JSON.stringify(DB, null, 2), 'utf8'); 
+}
+
+function nextId(kind) { 
+  DB.counters[kind] = (DB.counters[kind] || 0) + 1; 
+  return DB.counters[kind]; 
+}
 
 if (process.argv.includes('--seed-admin')) {
   const username = process.env.ADMIN_USERNAME || 'admin';
   const password = process.env.ADMIN_PASSWORD || 'ChangeMe123!';
   if (DB.users.find(u => u.username === username)) {
-    console.log('✓ Admin already exists'); process.exit(0);
+    console.log('✓ Admin already exists'); 
+    process.exit(0);
   }
   const hash = bcrypt.hashSync(password, 10);
   DB.users.push({
@@ -72,7 +83,9 @@ function auth(req, res, next) {
     if (!user || user.blocked) return res.status(401).json({ error: 'unauthorized' });
     req.user = user;
     next();
-  } catch { res.status(401).json({ error: 'unauthorized' }); }
+  } catch { 
+    res.status(401).json({ error: 'unauthorized' }); 
+  }
 }
 
 function publicUser(u) {
@@ -119,6 +132,7 @@ app.post('/api/auth/login', (req, res) => {
 });
 
 app.get('/api/users/me', auth, (req, res) => res.json({ user: publicUser(req.user), stats: userStats(req.user.id) }));
+
 app.patch('/api/users/me', auth, (req, res) => {
   const { email } = req.body || {};
   if (!email || !email.includes('@')) return res.status(400).json({ error: 'bad_email' });
@@ -262,16 +276,19 @@ app.post('/api/orders/:id/paid', auth, (req, res) => {
   if (o.buyerId !== req.user.id || o.status !== 'waiting') return res.status(409).json({ error: 'bad' });
   transition(o.id, 'paid', 'Оплата отмечена'); res.json({ ok: true });
 });
+
 app.post('/api/orders/:id/confirm', auth, (req, res) => {
   const o = DB.orders.find(o => o.id === Number(req.params.id));
   if (o.sellerId !== req.user.id || o.status !== 'paid') return res.status(409).json({ error: 'bad' });
   transition(o.id, 'completed', 'Завершён'); res.json({ ok: true });
 });
+
 app.post('/api/orders/:id/cancel', auth, (req, res) => {
   const o = DB.orders.find(o => o.id === Number(req.params.id));
   if (o.status !== 'waiting') return res.status(409).json({ error: 'bad' });
   transition(o.id, 'cancelled', 'Отменён'); res.json({ ok: true });
 });
+
 app.post('/api/orders/:id/dispute', auth, (req, res) => {
   const o = DB.orders.find(o => o.id === Number(req.params.id));
   if (o.status !== 'paid') return res.status(409).json({ error: 'bad' });
@@ -298,7 +315,6 @@ app.post('/api/chat/:orderId', auth, (req, res) => {
   res.status(201).json({ id: m.id, senderId: m.senderId, senderUsername: req.user.username, text: m.text, createdAt: m.createdAt, isMine: true });
 });
 
-// Отзывы (для пользователей)
 app.post('/api/reviews', auth, (req, res) => {
   const { order_id, rating, comment } = req.body || {};
   const o = DB.orders.find(o => o.id === Number(order_id));
@@ -325,17 +341,14 @@ app.get('/api/reviews/user/:userId', (req, res) => {
   res.json({ items });
 });
 
-// Отзывы о ПЛАТФОРМЕ (Один раз, после 1-й сделки)
 app.post('/api/platform-reviews', auth, (req, res) => {
   const { rating, comment } = req.body || {};
   const r = Number(rating);
   if (!(r >= 1 && r <= 5)) return res.status(400).json({ error: 'bad_rating' });
   
-  // Проверка: есть ли хотя бы 1 завершенная сделка
   const hasCompleted = DB.orders.some(o => o.status === 'completed' && (o.buyerId === req.user.id || o.sellerId === req.user.id));
   if (!hasCompleted) return res.status(403).json({ error: 'no_completed_deals' });
   
-  // Проверка: не оставлял ли уже
   if (DB.platformReviews.find(r => r.userId === req.user.id)) return res.status(409).json({ error: 'already_reviewed' });
 
   const review = {
@@ -356,7 +369,6 @@ app.get('/api/stats', (req, res) => {
   const deals = completedOrders.length;
   const turnover = completedOrders.reduce((sum, o) => sum + o.amountRub, 0);
   
-  // Средний рейтинг берем из отзывов о ПЛАТФОРМЕ
   const reviews = DB.platformReviews;
   const avgRating = reviews.length ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(2) : '—';
   
@@ -365,6 +377,7 @@ app.get('/api/stats', (req, res) => {
 
 const FRONTEND = path.join(__dirname);
 app.use(express.static(FRONTEND));
+
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
   res.sendFile(path.join(FRONTEND, 'index.html'));

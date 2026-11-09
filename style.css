@@ -224,4 +224,4 @@ body[data-theme="light"] .notice { background: rgba(184,134,11,.05); border-colo
 .profile-tabs { display: flex; border-bottom: 1px solid var(--brd); margin-bottom: 16px; overflow-x: auto; }
 .profile-tab { padding: 10px 16px; background: none; border: none; color: var(--dim); font-weight: 800; font-size: 13px; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; }
 .profile-tab.active { color: var(--yellow); border-bottom-color: var(--yellow); }
-body[data-theme="light"] .profile-tab.active { color: #B8860B; border-bottom-color: #B8860B; }e-tab.active { color: #B8860B; border-bottom-color: #B8860B; }
+body[data-theme="light"] .profile-tab.active { color: #B8860B; border-bottom-color: #B8860B; }

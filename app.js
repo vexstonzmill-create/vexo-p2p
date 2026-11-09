@@ -9,8 +9,6 @@ window.addEventListener('error', (e) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('VEXO: DOM готов, инициализация...');
-
   try {
     const API = {
       token: () => localStorage.getItem('vexo_token'),
@@ -911,12 +909,10 @@ document.addEventListener('DOMContentLoaded', () => {
     updateAuthUI();
     try { loadHome(); } catch(e) { console.error('Initial loadHome:', e); }
 
-    console.log('VEXO: ✅ ВСЁ ЗАГРУЖЕНО И РАБОТАЕТ');
+    console.log('VEXO: ВСЁ ЗАГРУЖЕНО И РАБОТАЕТ');
 
   } catch (err) {
     console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
     alert('Ошибка инициализации VEXO: ' + err.message);
-  }
-});�ции VEXO: ' + err.message + '\n\nСкинь скриншот разработчику.');
   }
 });
