@@ -302,11 +302,18 @@ app.post('/api/orders', auth, (req, res) => {
 });
 
 app.get('/api/orders/my', auth, (req, res) => {
-  let list = DB.orders.filter(o => o.buyerId === req.user.id || o.sellerId === req.user.id);
+  let list = [];
+  if (req.user.role === 'admin') {
+    list = DB.orders; // Админ видит все ордера
+  } else {
+    list = DB.orders.filter(o => o.buyerId === req.user.id || o.sellerId === req.user.id);
+  }
+  
   const f = req.query.status;
-  if (f === 'active') list = list.filter(o => ['waiting', 'paid'].includes(o.status));
+  if (f === 'active') list = list.filter(o => ['waiting', 'paid', 'dispute'].includes(o.status));
   else if (f === 'completed') list = list.filter(o => o.status === 'completed');
   else if (f === 'cancelled') list = list.filter(o => o.status === 'cancelled');
+  
   list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   res.json({ items: list.map(shapeOrder) });
 });
@@ -321,7 +328,10 @@ app.get('/api/orders/:id', auth, (req, res) => {
 function transition(orderId, to, note) {
   const o = DB.orders.find(o => o.id === orderId);
   o.status = to; o.history.push({ status: to, at: new Date().toISOString(), note });
-  if (to === 'cancelled') { const ad = DB.ads.find(a => a.id === o.adId); if (ad) ad.amountLeft += o.amountAsset; }
+  if (to === 'cancelled') { 
+    const ad = DB.ads.find(a => a.id === o.adId); 
+    if (ad) ad.amountLeft += o.amountAsset; 
+  }
   saveDB(); return o;
 }
 
@@ -339,14 +349,30 @@ app.post('/api/orders/:id/confirm', auth, (req, res) => {
 
 app.post('/api/orders/:id/cancel', auth, (req, res) => {
   const o = DB.orders.find(o => o.id === Number(req.params.id));
-  if (o.status !== 'waiting') return res.status(409).json({ error: 'bad' });
+  if (!['waiting', 'paid'].includes(o.status)) return res.status(409).json({ error: 'bad' });
+  if (o.buyerId !== req.user.id && o.sellerId !== req.user.id) return res.status(403).json({ error: 'forbidden' });
   transition(o.id, 'cancelled', 'Отменён'); res.json({ ok: true });
 });
 
 app.post('/api/orders/:id/dispute', auth, (req, res) => {
   const o = DB.orders.find(o => o.id === Number(req.params.id));
-  if (o.status !== 'paid') return res.status(409).json({ error: 'bad' });
-  transition(o.id, 'dispute', 'Спор: ' + (req.body?.reason || '')); res.json({ ok: true });
+  if (!o || !['waiting', 'paid'].includes(o.status)) return res.status(409).json({ error: 'bad' });
+  if (o.buyerId !== req.user.id && o.sellerId !== req.user.id) return res.status(403).json({ error: 'forbidden' });
+  transition(o.id, 'dispute', 'Открыт спор: ' + (req.body?.reason || '')); res.json({ ok: true });
+});
+
+// АДМИН: Решение спора
+app.post('/api/orders/:id/resolve', auth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
+  const o = DB.orders.find(o => o.id === Number(req.params.id));
+  if (!o || o.status !== 'dispute') return res.status(409).json({ error: 'bad' });
+  
+  const { resolution } = req.body; // 'completed' (продавцу) или 'cancelled' (покупателю)
+  if (!['completed', 'cancelled'].includes(resolution)) return res.status(400).json({ error: 'bad_resolution' });
+  
+  const note = resolution === 'completed' ? 'Спор решен: в пользу продавца' : 'Спор решен: в пользу покупателя';
+  transition(o.id, resolution, note);
+  res.json({ ok: true });
 });
 
 app.get('/api/chat/:orderId', auth, (req, res) => {

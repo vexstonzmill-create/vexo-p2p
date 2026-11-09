@@ -55,7 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // ГЛОБАЛЬНАЯ ФУНКЦИЯ ЗАКРЫТИЯ (ИСПРАВЛЯЕТ КНОПКУ ОТМЕНА)
     function closeModal(id) { 
       const el = document.getElementById(id); 
       if (el) el.classList.remove('active');
@@ -84,6 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (name === 'orders') loadOrders('active');
         if (name === 'profile') loadProfile();
         if (name === 'home') loadHome();
+        if (name === 'wallet') loadWallet(); // ДОБАВЛЕНО
       } catch(e) { console.error('show error:', e); }
       
       window.scrollTo(0, 0);
@@ -220,12 +220,84 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch(e) { console.error('loadHome:', e); }
     }
 
+    // КОШЕЛЕК (ЗАЩИТА ОТ ГОСТЕЙ)
+    function loadWallet() {
+      const u = API.user();
+      const walletContent = document.getElementById('walletContent');
+      const walletAuthPrompt = document.getElementById('walletAuthPrompt');
+      
+      // Наш HTML в index.html содержит элементы, но мы их скроем/покажем через JS
+      // Так как в index.html нет разделителей, найдем все элементы кошелька внутри screen-wallet
+      const screen = document.getElementById('screen-wallet');
+      
+      if (!u) {
+        // Если не авторизован, очищаем содержимое и показываем заглушку
+        screen.innerHTML = `
+          <h2 style="margin-bottom: 4px; font-size: 18px;">Кошелёк</h2>
+          <div class="empty-state" style="margin-top:20px;">
+            <div style="font-size:40px;margin-bottom:10px;">🔒</div>
+            Войдите в аккаунт, чтобы просмотреть баланс и историю операций.<br><br>
+            <button class="btn btn-primary" onclick="document.getElementById('authModal').classList.add('active')">Войти</button>
+          </div>
+        `;
+      } else {
+        // Восстанавливаем оригинальный HTML кошелька, если он был перезаписан
+        if (!document.getElementById('btnDeposit')) {
+          screen.innerHTML = `
+            <h2 style="margin-bottom: 4px; font-size: 18px;">Кошелёк</h2>
+            <p style="color: var(--dim); font-size: 12px; margin-bottom: 16px;">Балансы и история операций</p>
+            <div class="wallet-hero">
+              <div class="lbl">Общий баланс в рублях</div>
+              <div class="amount">0,00 <span>₽</span></div>
+              <div class="wallet-actions">
+                <button class="btn btn-primary" id="btnDeposit" style="flex:1;">Пополнить</button>
+                <button class="btn btn-ghost" id="btnWithdraw" style="flex:1;">Вывести</button>
+              </div>
+            </div>
+            <div class="notice">
+              <div style="font-size: 16px;">🛡</div>
+              <div><strong style="color: var(--yellow);">Платёжные интеграции через Telegram.</strong><br>Пополнение и вывод происходят через официального бота @vexoio_bot.</div>
+            </div>
+            <h3 style="margin-top: 16px; font-size: 14px; margin-bottom: 12px;">Активы</h3>
+            <div class="wallet-list">
+              <div class="wallet-item"><div class="coin-icon rub">₽</div><div class="w-info"><div class="w-name">Российский рубль</div><div class="w-sub">RUB · фиат</div></div><div class="w-bal">0,00 ₽</div></div>
+              <div class="wallet-item"><div class="coin-icon usdt">₮</div><div class="w-info"><div class="w-name">Tether</div><div class="w-sub">USDT · TRC-20</div></div><div class="w-bal">0,00 <span>≈ 0 ₽</span></div></div>
+              <div class="wallet-item"><div class="coin-icon btc">₿</div><div class="w-info"><div class="w-name">Bitcoin</div><div class="w-sub">BTC · Bitcoin</div></div><div class="w-bal">0,00000000 <span>≈ 0 ₽</span></div></div>
+              <div class="wallet-item"><div class="coin-icon ton">T</div><div class="w-info"><div class="w-name">Toncoin</div><div class="w-sub">TON · The Open Network</div></div><div class="w-bal">0,000 <span>≈ 0 ₽</span></div></div>
+            </div>
+          `;
+          // Перепривязываем события
+          const bD = document.getElementById('btnDeposit');
+          if (bD) bD.onclick = openDepositModal;
+          const bW = document.getElementById('btnWithdraw');
+          if (bW) bW.onclick = openWithdrawModal;
+        }
+      }
+    }
+
+    function openDepositModal() {
+      walletActionType = 'deposit';
+      document.getElementById('walletActionTitle').textContent = 'Пополнение';
+      document.getElementById('walletRequisitesField').style.display = 'none';
+      document.getElementById('walletActionAmount').value = '';
+      document.getElementById('walletActionRequisites').value = '';
+      document.getElementById('walletActionModal').classList.add('active');
+    }
+
+    function openWithdrawModal() {
+      walletActionType = 'withdraw';
+      document.getElementById('walletActionTitle').textContent = 'Вывод';
+      document.getElementById('walletRequisitesField').style.display = 'block';
+      document.getElementById('walletActionAmount').value = '';
+      document.getElementById('walletActionRequisites').value = '';
+      document.getElementById('walletActionModal').classList.add('active');
+    }
+
     // МАРКЕТ
     async function loadMarket() {
       const filters = {};
       const activeTab = document.querySelector('#marketSideTabs .trade-tab.active');
       if (activeTab && activeTab.dataset.side) {
-        // Инвертируем: "Купить" значит показываем "sell" (кто продает)
         filters.side = activeTab.dataset.side === 'buy' ? 'sell' : 'buy';
       }
 
@@ -527,7 +599,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderOrderPage(order, history, terms) {
-      const u = API.user(), isBuyer = order.buyer.id === u.id, isSeller = order.seller.id === u.id;
+      const u = API.user(), isBuyer = order.buyer.id === u.id, isSeller = order.seller.id === u.id, isAdmin = u.role === 'admin';
       const sc = { waiting: '#FFD60A', paid: '#22c55e', completed: '#22c55e', cancelled: '#ef4444', dispute: '#D4AF37' };
       let progress = 20;
       if (order.status === 'paid') progress = 60;
@@ -535,14 +607,39 @@ document.addEventListener('DOMContentLoaded', () => {
       if (order.status === 'cancelled' || order.status === 'dispute') progress = 0;
 
       let actionsHtml = '';
-      if (order.status === 'waiting' && isBuyer) actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px"><button class="btn btn-primary" onclick="doAction(${order.id},'paid')">Я оплатил</button><button class="btn btn-ghost" style="color:var(--red)" onclick="doAction(${order.id},'cancel')">Отменить</button></div>`;
-      else if (order.status === 'waiting' && isSeller) actionsHtml = `<div style="background:var(--surf2);border:1px solid var(--brd);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:13px;margin-bottom:16px;font-weight:600;">Ожидайте оплаты от покупателя</div>`;
-      else if (order.status === 'paid') {
-        if (isSeller) actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px"><button class="btn btn-primary" onclick="doAction(${order.id},'confirm')">Оплата получена</button><button class="btn btn-ghost" style="color:var(--red)" onclick="doAction(${order.id},'dispute')">Спор</button></div>`;
-        else actionsHtml = `<div style="background:var(--surf2);border:1px solid var(--brd);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:13px;margin-bottom:16px;font-weight:600;">Ожидайте подтверждения от продавца</div>`;
-      } else if (order.status === 'completed') actionsHtml = `<div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:14px;text-align:center;color:var(--grn);font-size:13px;font-weight:700;margin-bottom:10px">✓ Сделка завершена</div><button class="btn btn-ghost btn-block" onclick="openReview(${order.id})" style="margin-bottom:16px">Оставить отзыв</button>`;
-      else if (order.status === 'dispute') actionsHtml = `<div style="background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:14px;text-align:center;color:var(--gold);font-size:13px;margin-bottom:16px;font-weight:700;">Спор рассматривается администратором</div>`;
-      else if (order.status === 'cancelled') actionsHtml = `<div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:14px;text-align:center;color:var(--red);font-size:13px;margin-bottom:16px;font-weight:700;">Ордер отменён</div>`;
+      
+      // Логика для обычных пользователей
+      if (order.status === 'waiting' && isBuyer) {
+        actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><button class="btn btn-primary" onclick="doAction(${order.id},'paid')">Я оплатил</button><button class="btn btn-ghost" style="color:var(--red)" onclick="doAction(${order.id},'cancel')">Отменить</button></div>
+        <button class="btn btn-ghost btn-block btn-sm" style="color:var(--gold);" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
+      } else if (order.status === 'waiting' && isSeller) {
+        actionsHtml = `<div style="background:var(--surf2);border:1px solid var(--brd);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:13px;margin-bottom:8px;font-weight:600;">Ожидайте оплаты от покупателя</div>
+        <button class="btn btn-ghost btn-block btn-sm" style="color:var(--gold);" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
+      } else if (order.status === 'paid') {
+        if (isSeller) {
+          actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><button class="btn btn-primary" onclick="doAction(${order.id},'confirm')">Оплата получена</button><button class="btn btn-ghost" style="color:var(--red)" onclick="doAction(${order.id},'dispute')">Спор</button></div>`;
+        } else {
+          actionsHtml = `<div style="background:var(--surf2);border:1px solid var(--brd);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:13px;margin-bottom:8px;font-weight:600;">Ожидайте подтверждения от продавца</div>
+          <button class="btn btn-ghost btn-block btn-sm" style="color:var(--red);" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
+        }
+      } else if (order.status === 'completed') {
+        actionsHtml = `<div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:14px;text-align:center;color:var(--grn);font-size:13px;font-weight:700;margin-bottom:10px">✓ Сделка завершена</div><button class="btn btn-ghost btn-block" onclick="openReview(${order.id})" style="margin-bottom:16px">Оставить отзыв</button>`;
+      } else if (order.status === 'cancelled') {
+        actionsHtml = `<div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:14px;text-align:center;color:var(--red);font-size:13px;margin-bottom:16px;font-weight:700;">Ордер отменён</div>`;
+      } else if (order.status === 'dispute') {
+        if (isAdmin) {
+          // Кнопки для админа
+          actionsHtml = `
+            <div style="background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:14px;text-align:center;color:var(--gold);font-size:13px;margin-bottom:12px;font-weight:700;">Вы админ. Решите спор:</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+              <button class="btn btn-primary" onclick="resolveDispute(${order.id}, 'completed')">Завершить (Продавцу)</button>
+              <button class="btn btn-ghost" style="color:var(--red)" onclick="resolveDispute(${order.id}, 'cancelled')">Отменить (Покупателю)</button>
+            </div>
+          `;
+        } else {
+          actionsHtml = `<div style="background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:14px;text-align:center;color:var(--gold);font-size:13px;margin-bottom:16px;font-weight:700;">Спор рассматривается администратором</div>`;
+        }
+      }
 
       const timelineHtml = (history || []).map(h => `<div style="display:flex;gap:12px;padding:8px 0"><div style="width:13px;height:13px;border-radius:50%;background:var(--yellow);flex-shrink:0;margin-top:3px"></div><div style="flex:1"><div style="font-size:13px;font-weight:700">${h.note || h.status}</div><div style="font-size:11px;color:var(--dim);font-weight:600;">${new Date(h.at).toLocaleString('ru-RU')}</div></div></div>`).join('');
       const otherUser = isBuyer ? order.seller : order.buyer;
@@ -550,14 +647,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const container = document.getElementById('orderDetailContent');
       if (!container) return;
       container.innerHTML = `
-        <div style="background:linear-gradient(135deg,#1a1608,#0f0f0f);border:1px solid #2a2410;border-radius:16px;padding:20px;margin-bottom:16px">
+        <div style="background: var(--hero-grad); border: 1px solid var(--hero-border); border-radius: 16px; padding: 20px; margin-bottom: 16px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div style="font-size:12px;color:var(--dim);font-family:monospace;font-weight:700;">#${order.publicId}</div>
             <div style="background:rgba(255,255,255,.05);color:${sc[order.status]};font-size:11px;font-weight:800;padding:4px 10px;border-radius:6px">${order.statusLabel}</div>
           </div>
-          <h2 style="font-size:20px;font-weight:800;margin-bottom:8px">${isBuyer ? 'Покупка ' : 'Продажа '}${order.asset}</h2>
+          <h2 style="font-size:20px;font-weight:800;margin-bottom:8px;color:var(--txt)">${isBuyer ? 'Покупка ' : 'Продажа '}${order.asset}</h2>
           <div style="font-size:32px;font-weight:800;color:var(--yellow);font-variant-numeric:tabular-nums;">${fmt(order.amountRub)}<span style="font-size:14px;color:var(--dim);font-weight:500;margin-left:4px">₽</span></div>
-          <div style="width:100%;height:4px;background:rgba(255,255,255,.1);border-radius:2px;margin-top:16px;overflow:hidden">
+          <div style="width:100%;height:4px;background:var(--brd);border-radius:2px;margin-top:16px;overflow:hidden">
             <div style="height:100%;width:${progress}%;background:${sc[order.status]};transition:0.3s"></div>
           </div>
         </div>
@@ -567,7 +664,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="background:var(--surf);border:1px solid var(--brd);border-radius:12px;padding:12px 14px"><div style="font-size:11px;color:var(--dim);font-weight:700;">Оплата</div><div style="font-size:14px;font-weight:800;margin-top:4px">${order.paymentMethod}</div></div>
           <div style="background:var(--surf);border:1px solid var(--brd);border-radius:12px;padding:12px 14px"><div style="font-size:11px;color:var(--dim);font-weight:700;">Тип лица</div><div style="font-size:14px;font-weight:800;margin-top:4px">${order.faceType === 'first' ? '1-е лицо' : '3-е лицо'}</div></div>
         </div>
-        <div style="background: rgba(255,214,10,0.05); border: 1px dashed rgba(255,214,10,0.3); border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+        <div style="background: var(--notice-bg); border: 1px dashed var(--notice-border); border-radius: 12px; padding: 14px; margin-bottom: 16px;">
           <div style="font-size: 11px; font-weight: 800; color: var(--yellow); text-transform: uppercase; margin-bottom: 6px;">Условия сделки</div>
           <div style="font-size: 13px; color: var(--dim); line-height: 1.5; font-weight: 600;">${terms || 'Стандартные условия сделки.'}</div>
         </div>
@@ -592,8 +689,21 @@ document.addEventListener('DOMContentLoaded', () => {
     window.doAction = async function(orderId, action) {
       if (action === 'cancel' && !await confirmAsync('Отмена', 'Отменить ордер?', 'Да')) return;
       if (action === 'confirm' && !await confirmAsync('Подтверждение', 'Подтвердить оплату?', 'Да')) return;
-      try { await API.req('POST', `/orders/${orderId}/${action}`); toast('Статус обновлён', 'success'); openOrderPage(orderId); }
-      catch (e) { toast(e.message, 'error'); }
+      if (action === 'dispute' && !await confirmAsync('Спор', 'Вы уверены, что хотите открыть спор?', 'Да')) return;
+      try { 
+        await API.req('POST', `/orders/${orderId}/${action}`); 
+        toast('Статус обновлён', 'success'); 
+        openOrderPage(orderId); 
+      } catch (e) { toast(e.message, 'error'); }
+    };
+
+    window.resolveDispute = async function(orderId, resolution) {
+      if (!await confirmAsync('Решение спора', 'Вы уверены в решении?', 'Да')) return;
+      try {
+        await API.req('POST', `/orders/${orderId}/resolve`, { resolution });
+        toast('Спор решен', 'success'); 
+        openOrderPage(orderId);
+      } catch (e) { toast(e.message, 'error'); }
     };
 
     // ЧАТ
@@ -988,33 +1098,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
 
-    // КОШЕЛЕК
+    // КОШЕЛЕК (События)
     let walletActionType = 'deposit';
-
-    const btnDeposit = document.getElementById('btnDeposit');
-    if (btnDeposit) {
-      btnDeposit.onclick = () => {
-        walletActionType = 'deposit';
-        document.getElementById('walletActionTitle').textContent = 'Пополнение';
-        document.getElementById('walletRequisitesField').style.display = 'none';
-        document.getElementById('walletActionAmount').value = '';
-        document.getElementById('walletActionRequisites').value = '';
-        document.getElementById('walletActionModal').classList.add('active');
-      };
-    }
-
-    const btnWithdraw = document.getElementById('btnWithdraw');
-    if (btnWithdraw) {
-      btnWithdraw.onclick = () => {
-        walletActionType = 'withdraw';
-        document.getElementById('walletActionTitle').textContent = 'Вывод';
-        document.getElementById('walletRequisitesField').style.display = 'block';
-        document.getElementById('walletActionAmount').value = '';
-        document.getElementById('walletActionRequisites').value = '';
-        document.getElementById('walletActionModal').classList.add('active');
-      };
-    }
-
+    
+    // Обработчики для кнопок внутри кошелька мы привязываем динамически в loadWallet()
+    // Поэтому здесь оставляем только обработку самой модалки пополнения/вывода
     document.querySelectorAll('#walletActionAsset .icon-chip').forEach(c => {
       c.onclick = () => {
         document.querySelectorAll('#walletActionAsset .icon-chip').forEach(x => x.classList.remove('active'));
@@ -1067,7 +1155,6 @@ document.addEventListener('DOMContentLoaded', () => {
       
       dots.forEach((d, i) => d.onclick = () => { go(i); auto(); });
 
-      // Свайпы
       let startX = 0;
       viewport.addEventListener('touchstart', e => {
         startX = e.touches[0].clientX;
@@ -1077,8 +1164,8 @@ document.addEventListener('DOMContentLoaded', () => {
       viewport.addEventListener('touchend', e => {
         const endX = e.changedTouches[0].clientX;
         const diff = startX - endX;
-        if (diff > 50) go(idx + 1); // Свайп влево
-        if (diff < -50) go(idx - 1); // Свайп вправо
+        if (diff > 50) go(idx + 1);
+        if (diff < -50) go(idx - 1);
         auto();
       });
 
