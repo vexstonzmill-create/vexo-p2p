@@ -34,7 +34,7 @@ function toast(msg, type = 'info') {
 function confirmAsync(title, message, okText = 'OK') {
   return new Promise(resolve => {
     const overlay = document.getElementById('dialogOverlay'), content = document.getElementById('dialogContent');
-    content.innerHTML = `<h3 style="font-size:17px;font-weight:800">${title}</h3><p style="font-size:14px;color:var(--dim);margin:10px 0;font-weight:500;">${message}</p><div style="display:flex;gap:10px;margin-top:4px"><button class="btn btn-ghost" style="flex:1" id="dlgCancel">Отмена</button><button class="btn btn-primary" style="flex:1" id="dlgOk">${okText}</button></div>`;
+    content.innerHTML = `<h3 style="font-size:16px;font-weight:800">${title}</h3><p style="font-size:13px;color:var(--dim);margin:10px 0;font-weight:500;">${message}</p><div style="display:flex;gap:8px;margin-top:4px"><button class="btn btn-ghost" style="flex:1" id="dlgCancel">Отмена</button><button class="btn btn-primary" style="flex:1" id="dlgOk">${okText}</button></div>`;
     overlay.classList.add('active');
     document.getElementById('dlgCancel').onclick = () => { overlay.classList.remove('active'); resolve(false); };
     document.getElementById('dlgOk').onclick = () => { overlay.classList.remove('active'); resolve(true); };
@@ -53,6 +53,7 @@ function show(name) {
   document.querySelectorAll(`[data-screen="${name}"]`).forEach(b => b.classList.add('active'));
   document.getElementById('topbarTitle').textContent = titles[name] || '';
   document.getElementById('backBtn').classList.toggle('hidden', !['order'].includes(name));
+  
   if (name === 'market') loadMarket();
   if (name === 'orders') loadOrders('active');
   if (name === 'profile') loadProfile();
@@ -63,209 +64,221 @@ function show(name) {
 document.querySelectorAll('[data-screen]').forEach(b => b.onclick = e => { e.preventDefault(); const s = b.dataset.screen; if (!['order'].includes(s)) previousScreen = s; show(s); });
 document.getElementById('backBtn').onclick = () => show(previousScreen);
 
-// Карусель
-(function() {
-  const track = document.getElementById('bannerTrack');
-  const dots = document.querySelectorAll('.banner-dot');
-  let idx = 0, timer;
-  function go(i) { idx = (i + dots.length) % dots.length; track.style.transform = `translateX(-${idx * 100}%)`; dots.forEach((d, k) => d.classList.toggle('active', k === idx)); }
-  function auto() { clearInterval(timer); timer = setInterval(() => go(idx + 1), 4500); }
-  dots.forEach((d, i) => d.onclick = () => { go(i); auto(); });
-  let sx = 0; const vp = track.parentElement;
-  vp.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, { passive: true });
-  vp.addEventListener('touchend', e => { const d = sx - e.changedTouches[0].clientX; if (Math.abs(d) > 40) { go(d > 0 ? idx + 1 : idx - 1); auto(); } else { go(idx); } });
-  auto();
-})();
+// ИНИЦИАЛИЗАЦИЯ ВСЕГО ПОСЛЕ ЗАГРУЗКИ DOM
+document.addEventListener('DOMContentLoaded', () => {
+  // 1. Тема
+  let currentTheme = localStorage.getItem('vexo_theme') || 'dark';
+  const applyTheme = (theme) => {
+    document.body.setAttribute('data-theme', theme);
+    localStorage.setItem('vexo_theme', theme);
+  };
+  applyTheme(currentTheme);
 
-// Авторизация
-let authMode = 'login';
-function setAuthMode(mode) {
-  authMode = mode;
-  document.getElementById('tabLogin').classList.toggle('active', mode === 'login');
-  document.getElementById('tabRegister').classList.toggle('active', mode === 'register');
-  document.getElementById('emailField').classList.toggle('hidden', mode !== 'register');
-  document.getElementById('loginLabel').textContent = mode === 'register' ? 'Никнейм' : 'Логин или Email';
-  document.getElementById('authSubmit').textContent = mode === 'login' ? 'Войти' : 'Зарегистрироваться';
-  document.getElementById('authError').textContent = '';
-}
-
-document.getElementById('tabLogin').onclick = () => setAuthMode('login');
-document.getElementById('tabRegister').onclick = () => setAuthMode('register');
-document.getElementById('loginBtn').onclick = () => { setAuthMode('login'); document.getElementById('authModal').classList.add('active'); };
-document.getElementById('avatarBtn').onclick = () => show('profile');
-
-document.getElementById('authForm').onsubmit = async (e) => {
-  e.preventDefault();
-  const errEl = document.getElementById('authError'), btn = document.getElementById('authSubmit');
-  errEl.textContent = ''; btn.disabled = true; btn.textContent = '...';
-  try {
-    const body = { password: document.getElementById('authPass').value };
-    let path;
-    if (authMode === 'login') { path = '/auth/login'; body.login = document.getElementById('authLogin').value; }
-    else { path = '/auth/register'; body.username = document.getElementById('authLogin').value; body.email = document.getElementById('authEmail').value; }
-    const data = await API.req('POST', path, body);
-    localStorage.setItem('vexo_token', data.token);
-    localStorage.setItem('vexo_user', JSON.stringify(data.user));
-    closeModal('authModal');
-    updateAuthUI();
-    toast(authMode === 'login' ? 'Добро пожаловать, ' + data.user.username : 'Аккаунт создан!', 'success');
-    show('market');
-  } catch (err) {
-    const map = { invalid_credentials: 'Неверный логин или пароль', user_exists: 'Никнейм уже занят', email_exists: 'Email занят', short_password: 'Пароль мин. 8 символов', short_username: 'Никнейм мин. 3 символа', bad_email: 'Неверный email' };
-    errEl.textContent = map[err.code] || err.message;
-  } finally { btn.disabled = false; btn.textContent = authMode === 'login' ? 'Войти' : 'Зарегистрироваться'; }
-};
-
-function updateAuthUI() {
-  const u = API.user(), loginBtn = document.getElementById('loginBtn'), avatarBtn = document.getElementById('avatarBtn');
-  if (u) { 
-    loginBtn.classList.add('hidden'); 
-    avatarBtn.classList.remove('hidden'); 
-    avatarBtn.textContent = u.username[0].toUpperCase(); 
-  } else { 
-    loginBtn.classList.remove('hidden'); 
-    avatarBtn.classList.add('hidden'); 
-  }
-}
-
-// Главная
-async function loadHome() {
-  try {
-    const stats = await API.req('GET', '/stats');
-    document.getElementById('statUsers').textContent = fmt(stats.users);
-    document.getElementById('statDeals').textContent = fmt(stats.deals);
-    document.getElementById('statTurnover').textContent = fmt(stats.turnover) + ' ₽';
-    document.getElementById('statRating').textContent = stats.avgRating;
-  } catch (e) {}
-}
-
-// Маркет
-async function loadMarket() {
-  const filters = {};
-  
-  // По умолчанию выбран "Купить" (buy)
-  const activeTab = document.querySelector('#marketSideTabs .tab.active');
-  if (activeTab) filters.side = activeTab.dataset.side; 
-  
-  const faceChip = document.querySelector('#filterFace .chip.active');
-  if (faceChip && faceChip.dataset.val) filters.face_type = faceChip.dataset.val;
-  
-  const assetChip = document.querySelector('#filterAsset .icon-chip.active');
-  if (assetChip && assetChip.dataset.val) filters.asset = assetChip.dataset.val;
-
-  const payChip = document.querySelector('#filterPayment .icon-chip.active');
-  if (payChip && payChip.dataset.val) filters.payment = payChip.dataset.val;
-  
-  const minAmt = document.getElementById('filterMinAmount').value;
-  const maxAmt = document.getElementById('filterMaxAmount').value;
-  if (minAmt) filters.min_amount = minAmt;
-  if (maxAmt) filters.max_amount = maxAmt;
-
-  document.getElementById('adsList').innerHTML = '<p style="text-align:center;padding:20px;color:var(--dim);font-weight:600;">Загрузка...</p>';
-  try {
-    const { items } = await API.req('GET', '/ads?' + new URLSearchParams(filters));
-    document.getElementById('adsList').innerHTML = items.length ? items.map(renderAd).join('') : '<div class="empty-state">Объявлений не найдено</div>';
-    bindAdButtons();
-  } catch (e) { document.getElementById('adsList').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
-}
-
-function renderAd(ad) {
-  const isSell = ad.side === 'sell';
-  const faceLabel = ad.faceType === 'first' ? '1-е лицо' : '3-е лицо';
-  const faceClass = ad.faceType === 'first' ? 'first' : 'third';
-  window._ads = window._ads || {}; window._ads[ad.id] = ad;
-  const pays = (ad.paymentMethods || []).map(p => `<span class="pay-tag">${p}</span>`).join('');
-  const coinClass = ad.asset.toLowerCase();
-  
-  return `<div class="ad-card">
-    <div class="ad-head">
-      <div class="avatar">${ad.username[0].toUpperCase()}</div>
-      <div class="ad-user">
-        <div class="ad-name">${ad.username} <span class="badge-face ${faceClass}">${faceLabel}</span></div>
-        <div class="ad-meta"><span>★ ${ad.ratingAvg || '—'}</span><span>${ad.successRate !== null ? ad.successRate + '%' : '—'}</span><span>${ad.dealsCompleted || 0} сделок</span></div>
-      </div>
-    </div>
-    <div class="ad-body">
-      <div><div class="ad-lbl">Курс</div><div class="ad-val">${fmt(ad.price)} ₽</div></div>
-      <div><div class="ad-lbl">Доступно</div><div class="ad-val" style="display:flex;align-items:center;gap:4px;"><div class="coin-icon ${coinClass}" style="width:18px;height:18px;font-size:10px;">${ad.asset[0]}</div> ${fmtDec(ad.amountLeft, 2)}</div></div>
-      <div><div class="ad-lbl">Лимит</div><div class="ad-val" style="font-size:14px">${fmt(ad.minRub)} - ${fmt(ad.maxRub)} ₽</div></div>
-      <div><div class="ad-lbl">Объем</div><div class="ad-val" style="font-size:14px">${fmt(ad.totalRub)} ₽</div></div>
-    </div>
-    ${pays ? `<div style="margin-bottom:14px">${pays}</div>` : ''}
-    <button class="btn ${isSell ? 'btn-buy' : 'btn-sell'} btn-block btn-sm" data-ad-id="${ad.id}">${isSell ? 'Купить' : 'Продать'} ${ad.asset}</button>
-  </div>`;
-} 
-
-function bindAdButtons() {
-  document.querySelectorAll('[data-ad-id]').forEach(b => b.onclick = () => {
-    if (!API.user()) { document.getElementById('authModal').classList.add('active'); return; }
-    openOrderModal(+b.dataset.adId);
+  document.getElementById('themeBtn')?.addEventListener('click', () => {
+    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    applyTheme(currentTheme);
+    toast('Тема: ' + (currentTheme === 'dark' ? 'Тёмная' : 'Светлая'), 'info');
   });
-}
 
-document.querySelectorAll('#marketSideTabs .tab').forEach(c => c.onclick = () => {
-  document.querySelectorAll('#marketSideTabs .tab').forEach(x => x.classList.remove('active'));
-  c.classList.add('active'); loadMarket();
-});
-document.querySelectorAll('#filterFace .chip').forEach(c => c.onclick = () => {
-  document.querySelectorAll('#filterFace .chip').forEach(x => x.classList.remove('active'));
-  c.classList.add('active'); loadMarket();
-});
-document.querySelectorAll('#filterAsset .icon-chip').forEach(c => c.onclick = () => {
-  document.querySelectorAll('#filterAsset .icon-chip').forEach(x => x.classList.remove('active'));
-  c.classList.add('active'); loadMarket();
-});
-document.querySelectorAll('#filterPayment .icon-chip').forEach(c => c.onclick = () => {
-  document.querySelectorAll('#filterPayment .icon-chip').forEach(x => x.classList.remove('active'));
-  c.classList.add('active'); loadMarket();
-});
-document.getElementById('filterMinAmount').oninput = loadMarket;
-document.getElementById('filterMaxAmount').oninput = loadMarket;
+  // 2. Авторизация
+  let authMode = 'login';
+  window.setAuthMode = (mode) => {
+    authMode = mode;
+    document.getElementById('tabLogin')?.classList.toggle('active', mode === 'login');
+    document.getElementById('tabRegister')?.classList.toggle('active', mode === 'register');
+    document.getElementById('emailField')?.classList.toggle('hidden', mode !== 'register');
+    document.getElementById('loginLabel').textContent = mode === 'register' ? 'Никнейм' : 'Логин или Email';
+    document.getElementById('authSubmit').textContent = mode === 'login' ? 'Войти' : 'Зарегистрироваться';
+    document.getElementById('authError').textContent = '';
+  };
 
-// Создание объявления
-const fPrice = document.getElementById('f-price'), fAmount = document.getElementById('f-amount'), fMax = document.getElementById('f-max');
-function recalc() {
-  const total = (parseFloat(fAmount.value) || 0) * (parseFloat(fPrice.value) || 0);
-  document.getElementById('calcTotal').textContent = fmt(total) + ' ₽';
-  document.getElementById('calcTotal2').textContent = fmt(total) + ' ₽';
-  document.getElementById('maxHint').textContent = total > 0 ? 'Не больше ' + fmt(total) + ' ₽' : 'Введите данные для расчета';
-  fMax.style.borderColor = parseFloat(fMax.value) > total ? 'var(--red)' : 'var(--brd)';
-}
-[fPrice, fAmount, fMax].forEach(el => el.oninput = recalc); recalc();
-
-document.querySelectorAll('#f-side .seg-btn').forEach(b => b.onclick = () => { document.querySelectorAll('#f-side .seg-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); });
-document.querySelectorAll('#f-face .seg-btn').forEach(b => b.onclick = () => { document.querySelectorAll('#f-face .seg-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); });
-document.querySelectorAll('#f-payments .pay-chip').forEach(c => c.onclick = () => c.classList.toggle('active'));
-document.querySelectorAll('#f-asset-select .icon-chip').forEach(c => c.onclick = () => {
-  document.querySelectorAll('#f-asset-select .icon-chip').forEach(x => x.classList.remove('active'));
-  c.classList.add('active');
-  document.getElementById('f-asset-label').textContent = c.dataset.val;
-});
-
-document.getElementById('createBtn').onclick = async () => {
-  const errEl = document.getElementById('createError'); errEl.textContent = '';
-  if (!API.user()) { errEl.textContent = 'Войдите в аккаунт'; setTimeout(() => document.getElementById('authModal').classList.add('active'), 500); return; }
-  const payments = [...document.querySelectorAll('#f-payments .pay-chip.active')].map(c => c.dataset.val);
-  if (!payments.length) { errEl.textContent = 'Выберите способ оплаты'; return; }
-  if (!fPrice.value || !fAmount.value || !document.getElementById('f-min').value || !fMax.value) { errEl.textContent = 'Заполните все поля'; return; }
+  document.getElementById('tabLogin')?.addEventListener('click', () => setAuthMode('login'));
+  document.getElementById('tabRegister')?.addEventListener('click', () => setAuthMode('register'));
   
-  const btn = document.getElementById('createBtn'); btn.disabled = true; btn.textContent = 'Публикация...';
-  const asset = document.querySelector('#f-asset-select .icon-chip.active').dataset.val;
+  document.getElementById('loginBtn')?.addEventListener('click', () => { 
+    setAuthMode('login'); 
+    document.getElementById('authModal').classList.add('active'); 
+  });
   
-  try {
-    await API.req('POST', '/ads', {
-      side: document.querySelector('#f-side .seg-btn.active').dataset.val,
-      face_type: document.querySelector('#f-face .seg-btn.active').dataset.val,
-      asset: asset,
-      price: fPrice.value, amount_total: fAmount.value,
-      min_rub: document.getElementById('f-min').value, max_rub: fMax.value,
-      payment_methods: payments, terms: document.getElementById('f-terms').value
-    });
-    toast('Объявление опубликовано!', 'success'); show('market');
-  } catch (err) {
-    const map = { max_exceeds_total: 'Максимальный лимит больше общего объёма', min_gt_max: 'Минимум больше максимума', bad_amounts: 'Проверьте числа' };
-    errEl.textContent = map[err.code] || err.message;
-  } finally { btn.disabled = false; btn.textContent = 'Опубликовать'; }
+  document.getElementById('avatarBtn')?.addEventListener('click', () => show('profile'));
+
+  document.getElementById('authForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errEl = document.getElementById('authError'), btn = document.getElementById('authSubmit');
+    errEl.textContent = ''; btn.disabled = true; btn.textContent = '...';
+    try {
+      const body = { password: document.getElementById('authPass').value };
+      let path;
+      if (authMode === 'login') { path = '/auth/login'; body.login = document.getElementById('authLogin').value; }
+      else { path = '/auth/register'; body.username = document.getElementById('authLogin').value; body.email = document.getElementById('authEmail').value; }
+      const data = await API.req('POST', path, body);
+      localStorage.setItem('vexo_token', data.token);
+      localStorage.setItem('vexo_user', JSON.stringify(data.user));
+      closeModal('authModal');
+      updateAuthUI();
+      toast(authMode === 'login' ? 'Добро пожаловать, ' + data.user.username : 'Аккаунт создан!', 'success');
+      show('market');
+    } catch (err) {
+      const map = { invalid_credentials: 'Неверный логин или пароль', user_exists: 'Никнейм уже занят', email_exists: 'Email занят', short_password: 'Пароль мин. 8 символов', short_username: 'Никнейм мин. 3 символа', bad_email: 'Неверный email' };
+      errEl.textContent = map[err.code] || err.message;
+    } finally { btn.disabled = false; btn.textContent = authMode === 'login' ? 'Войти' : 'Зарегистрироваться'; }
+  });
+
+  function updateAuthUI() {
+    const u = API.user(), loginBtn = document.getElementById('loginBtn'), avatarBtn = document.getElementById('avatarBtn');
+    if (u) { 
+      loginBtn.classList.add('hidden'); 
+      avatarBtn.classList.remove('hidden'); 
+      avatarBtn.textContent = u.username[0].toUpperCase(); 
+    } else { 
+      loginBtn.classList.remove('hidden'); 
+      avatarBtn.classList.add('hidden'); 
+    }
+  }
+
+  // 3. Карусель
+  (function() {
+    const track = document.getElementById('bannerTrack');
+    const dots = document.querySelectorAll('.banner-dot');
+    if(!track) return;
+    let idx = 0, timer;
+    function go(i) { idx = (i + dots.length) % dots.length; track.style.transform = `translateX(-${idx * 100}%)`; dots.forEach((d, k) => d.classList.toggle('active', k === idx)); }
+    function auto() { clearInterval(timer); timer = setInterval(() => go(idx + 1), 4500); }
+    dots.forEach((d, i) => d.onclick = () => { go(i); auto(); });
+    let sx = 0; const vp = track.parentElement;
+    vp.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, { passive: true });
+    vp.addEventListener('touchend', e => { const d = sx - e.changedTouches[0].clientX; if (Math.abs(d) > 40) { go(d > 0 ? idx + 1 : idx - 1); auto(); } else { go(idx); } });
+    auto();
+  })();
+
+  // 4. Блоки фильтров Маркета
+  document.querySelectorAll('#marketSideTabs .trade-tab').forEach(c => c.onclick = () => {
+    document.querySelectorAll('#marketSideTabs .trade-tab').forEach(x => x.classList.remove('active'));
+    c.classList.add('active'); loadMarket();
+  });
+  document.querySelectorAll('#filterFace .chip').forEach(c => c.onclick = () => {
+    document.querySelectorAll('#filterFace .chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active'); loadMarket();
+  });
+  document.querySelectorAll('#filterAsset .icon-chip').forEach(c => c.onclick = () => {
+    document.querySelectorAll('#filterAsset .icon-chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active'); loadMarket();
+  });
+  document.querySelectorAll('#filterPayment .icon-chip').forEach(c => c.onclick = () => {
+    document.querySelectorAll('#filterPayment .icon-chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active'); loadMarket();
+  });
+  document.getElementById('filterMinAmount').oninput = loadMarket;
+  document.getElementById('filterMaxAmount').oninput = loadMarket;
+
+  // 5. Создание объявления
+  const fPrice = document.getElementById('f-price'), fAmount = document.getElementById('f-amount'), fMax = document.getElementById('f-max');
+  function recalc() {
+    const total = (parseFloat(fAmount.value) || 0) * (parseFloat(fPrice.value) || 0);
+    document.getElementById('calcTotal').textContent = fmt(total) + ' ₽';
+    document.getElementById('calcTotal2').textContent = fmt(total) + ' ₽';
+    document.getElementById('maxHint').textContent = total > 0 ? 'Не больше ' + fmt(total) + ' ₽' : 'Введите данные для расчета';
+    fMax.style.borderColor = parseFloat(fMax.value) > total ? 'var(--red)' : 'var(--brd)';
+  }
+  [fPrice, fAmount, fMax].forEach(el => el?.addEventListener('input', recalc)); recalc();
+
+  document.querySelectorAll('#f-side .seg-btn').forEach(b => b.onclick = () => { document.querySelectorAll('#f-side .seg-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); });
+  document.querySelectorAll('#f-face .seg-btn').forEach(b => b.onclick = () => { document.querySelectorAll('#f-face .seg-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); });
+  document.querySelectorAll('#f-payments .pay-chip').forEach(c => c.onclick = () => c.classList.toggle('active'));
+  document.querySelectorAll('#f-asset-select .icon-chip').forEach(c => c.onclick = () => {
+    document.querySelectorAll('#f-asset-select .icon-chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+    document.getElementById('f-asset-label').textContent = c.dataset.val;
+  });
+
+  document.getElementById('createBtn')?.addEventListener('click', async () => {
+    const errEl = document.getElementById('createError'); errEl.textContent = '';
+    if (!API.user()) { errEl.textContent = 'Войдите в аккаунт'; setTimeout(() => document.getElementById('authModal').classList.add('active'), 500); return; }
+    const payments = [...document.querySelectorAll('#f-payments .pay-chip.active')].map(c => c.dataset.val);
+    if (!payments.length) { errEl.textContent = 'Выберите способ оплаты'; return; }
+    if (!fPrice.value || !fAmount.value || !document.getElementById('f-min').value || !fMax.value) { errEl.textContent = 'Заполните все поля'; return; }
+    
+    const btn = document.getElementById('createBtn'); btn.disabled = true; btn.textContent = 'Публикация...';
+    const asset = document.querySelector('#f-asset-select .icon-chip.active').dataset.val;
+    
+    try {
+      await API.req('POST', '/ads', {
+        side: document.querySelector('#f-side .seg-btn.active').dataset.val,
+        face_type: document.querySelector('#f-face .seg-btn.active').dataset.val,
+        asset: asset,
+        price: fPrice.value, amount_total: fAmount.value,
+        min_rub: document.getElementById('f-min').value, max_rub: fMax.value,
+        payment_methods: payments, terms: document.getElementById('f-terms').value
+      });
+      toast('Объявление опубликовано!', 'success'); show('market');
+    } catch (err) {
+      const map = { max_exceeds_total: 'Максимальный лимит больше общего объёма', min_gt_max: 'Минимум больше максимума', bad_amounts: 'Проверьте числа' };
+      errEl.textContent = map[err.code] || err.message;
+    } finally { btn.disabled = false; btn.textContent = 'Опубликовать'; }
+  });
+
+  // 6. Ордера (Список)
+  document.querySelectorAll('#ordersFilter .tab').forEach(c => c.onclick = () => {
+    document.querySelectorAll('#ordersFilter .tab').forEach(x => x.classList.remove('active'));
+    c.classList.add('active'); loadOrders(c.dataset.val);
+  });
+
+  // 7. Кошелек
+  let walletActionType = 'deposit';
+  document.getElementById('btnDeposit')?.addEventListener('click', () => {
+    walletActionType = 'deposit';
+    document.getElementById('walletActionTitle').textContent = 'Пополнение';
+    document.getElementById('walletRequisitesField').style.display = 'none';
+    document.getElementById('walletActionAmount').value = '';
+    document.getElementById('walletActionRequisites').value = '';
+    document.getElementById('walletActionModal').classList.add('active');
+  });
+
+  document.getElementById('btnWithdraw')?.addEventListener('click', () => {
+    walletActionType = 'withdraw';
+    document.getElementById('walletActionTitle').textContent = 'Вывод';
+    document.getElementById('walletRequisitesField').style.display = 'block';
+    document.getElementById('walletActionAmount').value = '';
+    document.getElementById('walletActionRequisites').value = '';
+    document.getElementById('walletActionModal').classList.add('active');
+  });
+
+  document.querySelectorAll('#walletActionAsset .icon-chip').forEach(c => {
+    c.onclick = () => {
+      document.querySelectorAll('#walletActionAsset .icon-chip').forEach(x => x.classList.remove('active'));
+      c.classList.add('active');
+    };
+  });
+
+  document.getElementById('walletActionSubmit')?.addEventListener('click', () => {
+    if (!API.user()) {
+      closeModal('walletActionModal');
+      document.getElementById('authModal').classList.add('active');
+      return;
+    }
+    const asset = document.querySelector('#walletActionAsset .icon-chip.active').dataset.val;
+    const amount = document.getElementById('walletActionAmount').value;
+    const requisites = document.getElementById('walletActionRequisites').value;
+    
+    if (!amount || Number(amount) <= 0) return toast('Введите корректную сумму', 'error');
+    if (walletActionType === 'withdraw' && !requisites) return toast('Введите реквизиты для вывода', 'error');
+    
+    let payload = walletActionType === 'deposit' ? 'dep' : 'wth';
+    payload += `_${asset}_${amount}`;
+    if (walletActionType === 'withdraw') {
+      const cleanReq = requisites.replace(/[^a-zA-Z0-9]/g, '').slice(0, 20);
+      payload += `_${cleanReq}`;
+    }
+    
+    window.open(`https://t.me/vexoio_bot?start=${payload}`, '_blank');
+    closeModal('walletActionModal');
+    toast('Перенаправление в Telegram...', 'success');
+  });
+
+  // 8. Запуск загрузки данных
+  updateAuthUI();
+  loadHome();
+});extContent = 'Опубликовать'; }
 };
 
 // Модалка Редактирования
