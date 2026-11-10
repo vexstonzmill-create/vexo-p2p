@@ -11,7 +11,6 @@
   --pro-txt: #000000;
   --grn: #22c55e; 
   --red: #ef4444;
-  --gold: #D4AF37;
 }
 
 body[data-theme="light"] {
@@ -37,20 +36,31 @@ body {
   font-size: 13px; 
   font-weight: 500; 
   overflow-x: hidden; 
-  /* Топографический фон */
+  position: relative;
+}
+
+/* Топографический фон, который НЕ перехватывает клики */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none; /* ВАЖНО: пропускает клики сквозь себя */
   background-image: url("data:image/svg+xml,%3Csvg width='400' height='400' viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 100 Q 50 50 100 100 T 200 100 T 300 100 T 400 100 M0 200 Q 50 150 100 200 T 200 200 T 300 200 T 400 200 M0 300 Q 50 250 100 300 T 200 300 T 300 300 T 400 300 M100 0 Q 50 50 100 100 T 100 200 T 100 300 T 100 400 M200 0 Q 150 50 200 100 T 200 200 T 200 300 T 200 400 M300 0 Q 250 50 300 100 T 300 200 T 300 300 T 300 400' fill='none' stroke='rgba(255,255,255,0.03)' stroke-width='2'/%3E%3C/svg%3E");
   background-attachment: fixed;
+  background-position: center;
 }
-body[data-theme="light"] {
+
+body[data-theme="light"]::before {
   background-image: url("data:image/svg+xml,%3Csvg width='400' height='400' viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 100 Q 50 50 100 100 T 200 100 T 300 100 T 400 100 M0 200 Q 50 150 100 200 T 200 200 T 300 200 T 400 200 M0 300 Q 50 250 100 300 T 200 300 T 300 300 T 400 300 M100 0 Q 50 50 100 100 T 100 200 T 100 300 T 100 400 M200 0 Q 150 50 200 100 T 200 200 T 200 300 T 200 400 M300 0 Q 250 50 300 100 T 300 200 T 300 300 T 300 400' fill='none' stroke='rgba(0,0,0,0.03)' stroke-width='2'/%3E%3C/svg%3E");
 }
 
 input, textarea { user-select: text; font-family: inherit; }
 button { font-family: inherit; cursor: pointer; }
-.app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+.app { display: flex; min-height: 100vh; position: relative; z-index: 10; }
 
 /* Sidebar */
-.sidebar { display: none; width: 220px; background: var(--surf); border-right: 1px solid var(--brd); padding: 16px; flex-direction: column; position: sticky; top: 0; height: 100vh; z-index: 10; }
+.sidebar { display: none; width: 220px; background: var(--surf); border-right: 1px solid var(--brd); padding: 16px; flex-direction: column; position: sticky; top: 0; height: 100vh; z-index: 20; }
 @media(min-width: 1024px) { .sidebar { display: flex; } }
 .logo { display: flex; align-items: center; gap: 8px; padding-bottom: 20px; font-size: 20px; font-weight: 800; }
 .logo-mark { width: 28px; height: 28px; border-radius: 8px; background: var(--btn-bg); display: flex; align-items: center; justify-content: center; color: var(--btn-txt); font-weight: 900; }
@@ -229,9 +239,7 @@ body[data-theme="light"] .bottom-nav { background: rgba(255, 255, 255, 0.95); }
 .profile-tab.active { color: var(--txt); border-bottom-color: var(--txt); }
 
 /* PRO бейдж */
-.badge-pro { background: var(--txt); color: var(--bg); font-size: 9px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; margin-left: 6px; }ottom: 16px; overflow-x: auto; }
-.profile-tab { padding: 10px 16px; background: none; border: none; color: var(--dim); font-weight: 800; font-size: 13px; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; }
-.profile-tab.active { color: var(--txt); border-bottom-color: var(--txt); }ay: flex; gap: 10px; background: var(--notice-bg); border: 1px solid var(--notice-border); border-radius: 10px; padding: 12px; font-size: 12px; color: var(--dim); line-height: 1.4; font-weight: 600; }
+.badge-pro { background: var(--txt); color: var(--bg); font-size: 9px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; margin-left: 6px; }der-bottom-color: var(--txt); }ay: flex; gap: 10px; background: var(--notice-bg); border: 1px solid var(--notice-border); border-radius: 10px; padding: 12px; font-size: 12px; color: var(--dim); line-height: 1.4; font-weight: 600; }
 .wallet-list { display: flex; flex-direction: column; gap: 8px; }
 .wallet-item { display: flex; align-items: center; gap: 12px; background: var(--surf); border: 1px solid var(--brd); padding: 12px; border-radius: 10px; }
 .wallet-item .coin-icon { width: 32px; height: 32px; font-size: 14px; }

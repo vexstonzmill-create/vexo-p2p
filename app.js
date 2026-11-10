@@ -446,7 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="ad-card" style="margin-bottom:8px;">
             <div style="display:flex;justify-content:space-between;margin-bottom:6px">
               <strong style="font-size:13px;">${r.author}</strong>
-              <span style="color:var(--yellow);font-size:14px;">${'★'.repeat(r.rating)}</span>
+              <span style="color:var(--txt);font-size:14px;">${'★'.repeat(r.rating)}</span>
             </div>
             <p style="font-size:12px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p>
           </div>
@@ -1034,7 +1034,7 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch (err) {
     console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
   }
-});e');
+});});e');
       };
     });
 
