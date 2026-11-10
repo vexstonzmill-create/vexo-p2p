@@ -768,7 +768,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const proBadge = stats.isPro ? `<span class="badge-pro">PRO</span>` : '';
         const proConditions = stats.isPro 
           ? `<div style="font-size:11px; color:var(--grn); margin-top:5px;">✓ Условия PRO выполнены (Maker/Taker)</div>`
-          : `<div style="font-size:11px; color:var(--dim); margin-top:5px;">До PRO: Оборот $${fmt(stats.turnoverUsd)} / $100,000<br>Успешных: ${stats.successRate}% / 80%</div>`;
+          : `<div style="font-size:11px; color:var(--dim); margin-top:5px;">До PRO: Оборот $${fmt(stats.volumeUsd)} / $100,000<br>Успешных: ${stats.successRate}% / 80%</div>`;
 
         let contentHtml = '';
         if (profileTab === 'ads') contentHtml = '<div id="myAdsList">Загрузка...</div>';
@@ -1034,7 +1034,7 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch (err) {
     console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
   }
-});});e');
+}););});e');
       };
     });
 
