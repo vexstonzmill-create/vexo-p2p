@@ -10,12 +10,10 @@ const PORT = Number(process.env.PORT) || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_vexo_key_that_is_long_enough_12345';
 
 // --- ПОДКЛЮЧЕНИЕ К БАЗЕ ДАННЫХ NEON ---
+// --- ПОДКЛЮЧЕНИЕ К БАЗЕ ДАННЫХ NEON ---
 const pool = new Pool({
-  const pool = new Pool({
   connectionString: "postgresql://neondb_owner:npg_ISaDgoKXx3k8@ep-divine-sun-bawv1sl5-pooler.c-8.eu-central-1.aws.neon.tech/neondb?sslmode=require",
   ssl: { rejectUnauthorized: false }
-});
-  ssl: { rejectUnauthorized: false } // Обязательно для Neon
 });
 
 if (process.env.DATABASE_URL) {
@@ -378,4 +376,4 @@ app.get('*', (req, res, next) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.listen(PORT, () => console.log('VEXO P2P running on port ' + PORT));
+app.listen(PORT, () => console.log('VEXO P2P running on port ' + PORT));log('VEXO P2P running on port ' + PORT));
