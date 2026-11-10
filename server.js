@@ -375,4 +375,4 @@ app.get('*', (req, res, next) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.listen(PORT, () => console.log('VEXO P2P running on port ' + PORT));ng on port ' + PORT));log('VEXO P2P running on port ' + PORT));
+app.listen(PORT, () => console.log('VEXO P2P running on port ' + PORT));
