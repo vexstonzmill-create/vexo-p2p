@@ -45,22 +45,23 @@
           <div class="banner-viewport" id="bannerViewport">
             <div class="banner-track" id="bannerTrack">
               <div class="banner">
-                <div class="banner-tag">VEXO P2P</div>
-                <h2>Покупайте и продавайте <span>цифровые активы</span> безопасно</h2>
-                <p>USDT · BTC · TON за рубли. Проверенные продавцы, эскроу-сделки.</p>
-                <button class="btn btn-primary" data-screen="market">Перейти в Маркет</button>
+                <div class="banner-text-content">
+                  <h2>Покупайте и продавайте <span>цифровые активы</span> безопасно</h2>
+                  <p>USDT · BTC · TON за рубли. Проверенные продавцы, эскроу-сделки.</p>
+                  <button class="btn btn-primary" data-screen="market">Перейти в Маркет</button>
+                </div>
                 <div class="coin-decoration">
-                  <div class="coin-icon usdt float-1">₮</div>
-                  <div class="coin-icon btc float-2">₿</div>
-                  <div class="coin-icon ton float-3">T</div>
+                  <div class="coin-icon float-1">₮</div>
+                  <div class="coin-icon float-2">₿</div>
+                  <div class="coin-icon float-3">T</div>
                 </div>
               </div>
-              <div class="banner banner-tg">
-                <div class="banner-tag tg-tag">Официальный канал</div>
-                <h2>Новости, курсы<br>и <span>розыгрыши</span></h2>
-                <p>Подпишитесь на наш Telegram — анонсы обновлений и полезные материалы.</p>
-                <a href="https://t.me/vexoio_bot" target="_blank" class="btn btn-tg">Подписаться</a>
-                <div class="tg-icon">✈</div>
+              <div class="banner" style="justify-content: flex-start;">
+                <div class="banner-text-content">
+                  <h2>Официальный канал</h2>
+                  <p>Новости, курсы и розыгрыши. Подпишитесь на наш Telegram.</p>
+                  <a href="https://t.me/vexoio_bot" target="_blank" class="btn btn-primary">Подписаться</a>
+                </div>
               </div>
             </div>
           </div>
@@ -157,15 +158,8 @@
 
         <div class="field"><label>Цена за 1 <span id="f-asset-label">USDT</span> (₽)</label><input class="input" type="number" id="f-price" placeholder="Пример: 90"></div>
         <div class="field"><label>Общий объем</label><input class="input" type="number" id="f-amount" placeholder="Пример: 500"></div>
-
-        <div class="calc-box">
-          <div class="calc-row"><span style="color: var(--dim);">Объем × Цена</span><span id="calcTotal">0 ₽</span></div>
-          <div class="calc-row total"><span>Эквивалент</span><span class="val" id="calcTotal2" style="color: var(--txt);">0 ₽</span></div>
-        </div>
-
         <div class="field"><label>Мин. лимит (₽)</label><input class="input" type="number" id="f-min" placeholder="Пример: 3000"></div>
-        <div class="field"><label>Макс. лимит (₽)</label><input class="input" type="number" id="f-max" placeholder="Пример: 45000"><div class="hint" id="maxHint">Введите данные для расчета</div></div>
-        <div class="field"><label>Условия</label><textarea class="input" id="f-terms" placeholder="Пример: ПРИНИМАЮ ТОЛЬКО СБП..." style="min-height: 60px;"></textarea></div>
+        <div class="field"><label>Макс. лимит (₽)</label><input class="input" type="number" id="f-max" placeholder="Пример: 45000"></div>
 
         <div class="error-msg" id="createError"></div>
         <button class="btn btn-primary btn-block" id="createBtn">Опубликовать</button>
@@ -183,9 +177,7 @@
 
       <section class="screen" id="screen-order"><div id="orderDetailContent"></div></section>
 
-      <section class="screen" id="screen-wallet">
-        <!-- Контент рендерится динамически в app.js -->
-      </section>
+      <section class="screen" id="screen-wallet"></section>
 
       <section class="screen" id="screen-profile">
         <h2 style="margin-bottom: 16px; font-size: 18px;">Профиль</h2>
@@ -207,7 +199,6 @@
 <div class="toast-container" id="toastContainer"></div>
 <div class="modal-overlay" id="dialogOverlay"><div class="modal" id="dialogContent"></div></div>
 
-<!-- МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ -->
 <div class="modal-overlay" id="authModal">
   <div class="modal">
     <div style="display: flex; border-bottom: 1px solid var(--brd); margin-bottom: 16px;">
@@ -234,23 +225,38 @@
   </div>
 </div>
 
-<!-- НАСТРОЙКИ ПРОФИЛЯ -->
 <div class="modal-overlay" id="settingsModal">
   <div class="modal">
     <h3 style="font-size: 16px;">Настройки профиля</h3>
-    
-    <div style="text-align: center; margin-bottom: 10px;">
-      <div class="avatar lg" id="settingsAvatarPreview" style="margin: 0 auto 10px;"></div>
-      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('settingsAvatarUrl').focus()">Сменить аватар (URL)</button>
-    </div>
-
     <div class="field"><label>Ссылка на аватар (URL)</label><input class="input" type="url" id="settingsAvatarUrl" placeholder="https://..."></div>
-    <div class="field"><label>Имя (отображается на площадке)</label><input class="input" type="text" id="settingsName" maxlength="50"></div>
+    <div class="field"><label>Имя</label><input class="input" type="text" id="settingsName" maxlength="50"></div>
     <div class="field"><label>Email</label><input class="input" type="email" id="settingsEmail"></div>
-    
-    <hr style="border: 0; border-top: 1px solid var(--brd); margin: 10px 0;">
-    
-    <div class="field"><label>Текущий пароль (для смены)</label><input class="input" type="password" id="settingsCurrentPass" placeholder="Обязательно при смене пароля"></div>
+    <div class="error-msg" id="settingsError"></div>
+    <button class="btn btn-primary btn-block" id="settingsSaveBtn">Сохранить</button>
+    <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('settingsModal')">Отмена</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="publicProfileModal">
+  <div class="modal" style="padding: 20px;">
+    <button style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: var(--dim); font-size: 20px;" onclick="closeModal('publicProfileModal')">×</button>
+    <div id="publicProfileContent">Загрузка...</div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="walletActionModal">
+  <div class="modal">
+    <h3 id="walletActionTitle" style="font-size: 16px;">Пополнение</h3>
+    <div class="field"><label>Сумма</label><input type="number" class="input" id="walletActionAmount" placeholder="Введите сумму"></div>
+    <div class="field" id="walletRequisitesField" style="display:none;"><label>Реквизиты</label><input type="text" class="input" id="walletActionRequisites" placeholder="Номер карты или адрес"></div>
+    <button class="btn btn-primary btn-block" id="walletActionSubmit">Перейти в Telegram</button>
+    <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('walletActionModal')">Отмена</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>ssword" id="settingsCurrentPass" placeholder="Обязательно при смене пароля"></div>
     <div class="field"><label>Новый пароль</label><input class="input" type="password" id="settingsNewPass" placeholder="Оставьте пустым, чтобы не менять"></div>
 
     <div class="error-msg" id="settingsError"></div>
