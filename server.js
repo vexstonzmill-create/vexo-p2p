@@ -15,6 +15,13 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false } // Обязательно для Neon
 });
 
+if (process.env.DATABASE_URL) {
+  console.log("=== БАЗА ДАННЫХ ===");
+  console.log("Хост из переменной:", process.env.DATABASE_URL.split('@')[1] || "ОШИБКА ПАРСИНГА");
+} else {
+  console.log("=== DATABASE_URL ПУСТАЯ ИЛИ НЕ НАЙДЕНА ===");
+}
+
 // --- ИНИЦИАЛИЗАЦИЯ ТАБЛИЦ ---
 async function initDB() {
   try {
