@@ -98,7 +98,10 @@ app.post('/api/auth/register', async (req, res) => {
     const user = result.rows[0];
     const token = jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: '7d' });
     res.status(201).json({ token, user: publicUser(user) });
-  } catch (err) { res.status(500).json({ error: 'db_error' }); }
+} catch (err) { 
+  console.error("КРИТИЧЕСКАЯ ОШИБКА БД:", err.message); 
+  res.status(500).json({ error: err.message }); 
+}
 });
 
 app.post('/api/auth/login', async (req, res) => {
