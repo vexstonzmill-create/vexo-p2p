@@ -11,7 +11,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_vexo_key_that_is_long
 
 // --- ПОДКЛЮЧЕНИЕ К БАЗЕ ДАННЫХ NEON ---
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  const pool = new Pool({
+  connectionString: "postgresql://neondb_owner:npg_ISaDgoKXx3k8@ep-divine-sun-bawv1sl5-pooler.c-8.eu-central-1.aws.neon.tech/neondb?sslmode=require",
+  ssl: { rejectUnauthorized: false }
+});
   ssl: { rejectUnauthorized: false } // Обязательно для Neon
 });
 
