@@ -191,11 +191,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (lb) lb.classList.add('hidden');
         if (ab) {
           ab.classList.remove('hidden');
-          if (u.avatarUrl) {
-            ab.innerHTML = `<img src="${u.avatarUrl}" alt="">`;
-          } else {
-            ab.innerHTML = (u.displayName || u.username || '?')[0].toUpperCase();
-          }
+          if (u.avatarUrl) ab.innerHTML = `<img src="${u.avatarUrl}" alt="">`;
+          else ab.innerHTML = (u.displayName || u.username || '?')[0].toUpperCase();
         }
       } else {
         if (lb) lb.classList.remove('hidden');
@@ -207,14 +204,10 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadHome() {
       try {
         const stats = await API.req('GET', '/stats');
-        const su = document.getElementById('statUsers');
-        const sd = document.getElementById('statDeals');
-        const st = document.getElementById('statTurnover');
-        const sr = document.getElementById('statRating');
-        if (su) su.textContent = fmt(stats.users);
-        if (sd) sd.textContent = fmt(stats.deals);
-        if (st) st.textContent = fmt(stats.turnover) + ' ₽';
-        if (sr) sr.textContent = stats.avgRating;
+        const su = document.getElementById('statUsers'); if (su) su.textContent = fmt(stats.users);
+        const sd = document.getElementById('statDeals'); if (sd) sd.textContent = fmt(stats.deals);
+        const st = document.getElementById('statTurnover'); if (st) st.textContent = fmt(stats.turnover) + ' ₽';
+        const sr = document.getElementById('statRating'); if (sr) sr.textContent = stats.avgRating;
       } catch(e) { console.error('loadHome:', e); }
     }
 
@@ -222,16 +215,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadWallet() {
       const u = API.user();
       const screen = document.getElementById('screen-wallet');
-      
       if (!u) {
-        screen.innerHTML = `
-          <h2 style="margin-bottom: 4px; font-size: 18px;">Кошелёк</h2>
-          <div class="empty-state" style="margin-top:20px;">
-            <div style="font-size:40px;margin-bottom:10px;">🔒</div>
-            Войдите в аккаунт, чтобы просмотреть баланс и историю операций.<br><br>
-            <button class="btn btn-primary" onclick="document.getElementById('authModal').classList.add('active')">Войти</button>
-          </div>
-        `;
+        screen.innerHTML = `<h2 style="margin-bottom: 4px; font-size: 18px;">Кошелёк</h2><div class="empty-state" style="margin-top:20px;"><div style="font-size:40px;margin-bottom:10px;">🔒</div>Войдите в аккаунт, чтобы просмотреть баланс.<br><br><button class="btn btn-primary" onclick="document.getElementById('authModal').classList.add('active')">Войти</button></div>`;
       } else {
         if (!document.getElementById('btnDeposit')) {
           screen.innerHTML = `
@@ -245,49 +230,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button class="btn btn-ghost" id="btnWithdraw" style="flex:1;">Вывести</button>
               </div>
             </div>
-            <div class="notice">
-              <div style="font-size: 16px;">🛡</div>
-              <div><strong style="color: var(--txt);">Платёжные интеграции через Telegram.</strong><br>Пополнение и вывод происходят через официального бота @vexoio_bot.</div>
-            </div>
+            <div class="notice"><div style="font-size: 16px;">🛡</div><div><strong style="color: var(--txt);">Платёжные интеграции через Telegram.</strong><br>Пополнение и вывод происходят через @vexoio_bot.</div></div>
             <h3 style="margin-top: 20px; font-size: 14px; margin-bottom: 12px;">Активы</h3>
             <div class="wallet-list">
               <div class="wallet-item"><div class="coin-icon rub">₽</div><div class="w-info"><div class="w-name">Российский рубль</div><div class="w-sub">RUB · фиат</div></div><div class="w-bal">0,00 ₽</div></div>
               <div class="wallet-item"><div class="coin-icon usdt">₮</div><div class="w-info"><div class="w-name">Tether</div><div class="w-sub">USDT · TRC-20</div></div><div class="w-bal">0,00 <span>≈ 0 ₽</span></div></div>
-              <div class="wallet-item"><div class="coin-icon btc">₿</div><div class="w-info"><div class="w-name">Bitcoin</div><div class="w-sub">BTC · Bitcoin</div></div><div class="w-bal">0,00000000 <span>≈ 0 ₽</span></div></div>
-              <div class="wallet-item"><div class="coin-icon ton">T</div><div class="w-info"><div class="w-name">Toncoin</div><div class="w-sub">TON · The Open Network</div></div><div class="w-bal">0,000 <span>≈ 0 ₽</span></div></div>
-            </div>
-          `;
-          document.getElementById('btnDeposit').onclick = openDepositModal;
-          document.getElementById('btnWithdraw').onclick = openWithdrawModal;
+            </div>`;
+          document.getElementById('btnDeposit').onclick = () => { walletActionType = 'deposit'; document.getElementById('walletActionTitle').textContent = 'Пополнение'; document.getElementById('walletRequisitesField').style.display = 'none'; document.getElementById('walletActionModal').classList.add('active'); };
+          document.getElementById('btnWithdraw').onclick = () => { walletActionType = 'withdraw'; document.getElementById('walletActionTitle').textContent = 'Вывод'; document.getElementById('walletRequisitesField').style.display = 'block'; document.getElementById('walletActionModal').classList.add('active'); };
         }
       }
-    }
-
-    function openDepositModal() {
-      walletActionType = 'deposit';
-      document.getElementById('walletActionTitle').textContent = 'Пополнение';
-      document.getElementById('walletRequisitesField').style.display = 'none';
-      document.getElementById('walletActionAmount').value = '';
-      document.getElementById('walletActionRequisites').value = '';
-      document.getElementById('walletActionModal').classList.add('active');
-    }
-
-    function openWithdrawModal() {
-      walletActionType = 'withdraw';
-      document.getElementById('walletActionTitle').textContent = 'Вывод';
-      document.getElementById('walletRequisitesField').style.display = 'block';
-      document.getElementById('walletActionAmount').value = '';
-      document.getElementById('walletActionRequisites').value = '';
-      document.getElementById('walletActionModal').classList.add('active');
     }
 
     // МАРКЕТ
     async function loadMarket() {
       const filters = {};
       const activeTab = document.querySelector('#marketSideTabs .trade-tab.active');
-      if (activeTab && activeTab.dataset.side) {
-        filters.side = activeTab.dataset.side === 'buy' ? 'sell' : 'buy';
-      }
+      if (activeTab && activeTab.dataset.side) filters.side = activeTab.dataset.side === 'buy' ? 'sell' : 'buy';
 
       const faceChip = document.querySelector('#filterFace .chip.active');
       if (faceChip && faceChip.dataset.val) filters.face_type = faceChip.dataset.val;
@@ -316,10 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const faceLabel = ad.faceType === 'first' ? '1-е лицо' : '3-е лицо';
       window._ads = window._ads || {}; window._ads[ad.id] = ad;
       const pays = (ad.paymentMethods || []).map(p => `<span class="pay-tag">${p}</span>`).join('');
-      
-      const avatarHtml = ad.avatarUrl 
-        ? `<div class="avatar"><img src="${ad.avatarUrl}" alt=""></div>` 
-        : `<div class="avatar">${ad.displayName[0].toUpperCase()}</div>`;
+      const avatarHtml = ad.avatarUrl ? `<div class="avatar"><img src="${ad.avatarUrl}" alt=""></div>` : `<div class="avatar">${ad.displayName[0].toUpperCase()}</div>`;
 
       return `<div class="ad-card">
         <div class="ad-head" onclick="openPublicProfile(${ad.userId})">
@@ -331,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div class="ad-body">
           <div><div class="ad-lbl">Курс</div><div class="ad-val">${fmt(ad.price)} ₽</div></div>
-          <div><div class="ad-lbl">Доступно</div><div class="ad-val" style="display:flex;align-items:center;gap:4px;"><div class="coin-icon ${ad.asset.toLowerCase()}" style="width:18px;height:18px;font-size:10px;">${ad.asset[0]}</div> ${fmtDec(ad.amountLeft, 2)}</div></div>
+          <div><div class="ad-lbl">Доступно</div><div class="ad-val">${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div></div>
           <div><div class="ad-lbl">Лимит</div><div class="ad-val" style="font-size:14px">${fmt(ad.minRub)} - ${fmt(ad.maxRub)} ₽</div></div>
           <div><div class="ad-lbl">Объем</div><div class="ad-val" style="font-size:14px">${fmt(ad.totalRub)} ₽</div></div>
         </div>
@@ -349,38 +305,10 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    document.querySelectorAll('#marketSideTabs .trade-tab').forEach(c => {
-      c.onclick = () => {
-        document.querySelectorAll('#marketSideTabs .trade-tab').forEach(x => x.classList.remove('active'));
-        c.classList.add('active');
-        loadMarket();
-      };
-    });
-    document.querySelectorAll('#filterFace .chip').forEach(c => {
-      c.onclick = () => {
-        document.querySelectorAll('#filterFace .chip').forEach(x => x.classList.remove('active'));
-        c.classList.add('active');
-        loadMarket();
-      };
-    });
-    document.querySelectorAll('#filterAsset .icon-chip').forEach(c => {
-      c.onclick = () => {
-        document.querySelectorAll('#filterAsset .icon-chip').forEach(x => x.classList.remove('active'));
-        c.classList.add('active');
-        loadMarket();
-      };
-    });
-    document.querySelectorAll('#filterPayment .icon-chip').forEach(c => {
-      c.onclick = () => {
-        document.querySelectorAll('#filterPayment .icon-chip').forEach(x => x.classList.remove('active'));
-        c.classList.add('active');
-        loadMarket();
-      };
-    });
-    const fMinA = document.getElementById('filterMinAmount');
-    if (fMinA) fMinA.oninput = loadMarket;
-    const fMaxA = document.getElementById('filterMaxAmount');
-    if (fMaxA) fMaxA.oninput = loadMarket;
+    document.querySelectorAll('#marketSideTabs .trade-tab').forEach(c => c.onclick = () => { document.querySelectorAll('#marketSideTabs .trade-tab').forEach(x => x.classList.remove('active')); c.classList.add('active'); loadMarket(); });
+    document.querySelectorAll('#filterFace .chip').forEach(c => c.onclick = () => { document.querySelectorAll('#filterFace .chip').forEach(x => x.classList.remove('active')); c.classList.add('active'); loadMarket(); });
+    document.querySelectorAll('#filterAsset .icon-chip').forEach(c => c.onclick = () => { document.querySelectorAll('#filterAsset .icon-chip').forEach(x => x.classList.remove('active')); c.classList.add('active'); loadMarket(); });
+    document.querySelectorAll('#filterPayment .icon-chip').forEach(c => c.onclick = () => { document.querySelectorAll('#filterPayment .icon-chip').forEach(x => x.classList.remove('active')); c.classList.add('active'); loadMarket(); });
 
     // ПУБЛИЧНЫЙ ПРОФИЛЬ
     window.openPublicProfile = async function(userId) {
@@ -389,34 +317,25 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!m || !c) return;
       c.innerHTML = '<div style="text-align:center;padding:20px;">Загрузка...</div>';
       m.classList.add('active');
-      
       try {
         const { user, stats, isFavorite } = await API.req('GET', '/users/' + userId);
-        const avatarHtml = user.avatarUrl 
-          ? `<div class="avatar lg" style="margin:0 auto 10px;"><img src="${user.avatarUrl}" alt=""></div>` 
-          : `<div class="avatar lg" style="margin:0 auto 10px;">${user.displayName[0].toUpperCase()}</div>`;
+        const avatarHtml = user.avatarUrl ? `<div class="avatar lg" style="margin:0 auto 10px;"><img src="${user.avatarUrl}" alt=""></div>` : `<div class="avatar lg" style="margin:0 auto 10px;">${user.displayName[0].toUpperCase()}</div>`;
         let favBtn = '';
-        if (API.user() && API.user().id !== user.id) {
-          favBtn = `<button class="btn-fav ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(${user.id}, this)">${isFavorite ? '❤️' : '🤍'}</button>`;
-        }
+        if (API.user() && API.user().id !== user.id) favBtn = `<button class="btn-fav ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(${user.id}, this)">${isFavorite ? '❤️' : '🤍'}</button>`;
         c.innerHTML = `
           ${favBtn}
           <div style="text-align:center; margin-bottom: 20px;">
             ${avatarHtml}
             <h2 style="font-size:20px;font-weight:800;margin-bottom:4px">${user.displayName} ${stats.isPro ? '<span class="badge-pro">PRO</span>' : ''}</h2>
             <div style="font-size:12px;color:var(--dim);font-weight:600;">@${user.username}</div>
-            <div style="font-size:12px;color:var(--dim);margin-top:4px;font-weight:500;">С нами с ${new Date(user.createdAt).toLocaleDateString('ru-RU')}</div>
           </div>
-          
           <div class="stats">
             <div class="stat"><div class="stat-lbl">Сделок</div><div class="stat-val">${stats.dealsTotal}</div></div>
             <div class="stat"><div class="stat-lbl">Успешных</div><div class="stat-val">${stats.successRate}%</div></div>
             <div class="stat"><div class="stat-lbl">Отзывов</div><div class="stat-val">${stats.reviewsCount}</div></div>
             <div class="stat"><div class="stat-lbl">Рейтинг</div><div class="stat-val">${stats.ratingAvg}</div></div>
           </div>
-          
-          <div id="publicReviewsList" style="margin-top:16px;">Загрузка отзывов...</div>
-        `;
+          <div id="publicReviewsList" style="margin-top:16px;">Загрузка отзывов...</div>`;
         loadPublicReviews(user.id);
       } catch(e) { c.innerHTML = '<div class="empty-state">Ошибка загрузки профиля</div>'; }
     };
@@ -425,13 +344,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!API.user()) { document.getElementById('authModal')?.classList.add('active'); return; }
       try {
         const res = await API.req('POST', '/users/' + targetId + '/favorite');
-        if (res.isFavorite) {
-          btnEl.classList.add('active'); btnEl.innerHTML = '❤️';
-          toast('Добавлено в избранное', 'success');
-        } else {
-          btnEl.classList.remove('active'); btnEl.innerHTML = '🤍';
-          toast('Удалено из избранного', 'info');
-        }
+        if (res.isFavorite) { btnEl.classList.add('active'); btnEl.innerHTML = '❤️'; toast('Добавлено в избранное', 'success'); }
+        else { btnEl.classList.remove('active'); btnEl.innerHTML = '🤍'; toast('Удалено из избранного', 'info'); }
       } catch(e) { toast('Ошибка', 'error'); }
     };
 
@@ -442,36 +356,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await API.req('GET', '/reviews/user/' + userId);
         const items = data.items || [];
         list.innerHTML = `<div style="font-size:12px;font-weight:800;margin-bottom:10px;color:var(--dim);text-transform:uppercase;">Отзывы</div>` + 
-          (items.length ? items.map(r => `
-          <div class="ad-card" style="margin-bottom:8px;">
-            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-              <strong style="font-size:13px;">${r.author}</strong>
-              <span style="color:var(--txt);font-size:14px;">${'★'.repeat(r.rating)}</span>
-            </div>
-            <p style="font-size:12px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p>
-          </div>
-        `).join('') : '<div class="empty-state">Отзывов пока нет</div>');
+          (items.length ? items.map(r => `<div class="ad-card" style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong style="font-size:13px;">${r.author}</strong><span style="color:var(--txt);font-size:14px;">${'★'.repeat(r.rating)}</span></div><p style="font-size:12px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p></div>`).join('') : '<div class="empty-state">Отзывов пока нет</div>');
       } catch(e) { list.innerHTML = ''; }
     }
 
     // СОЗДАНИЕ ОБЪЯВЛЕНИЯ
-    const fPrice = document.getElementById('f-price');
-    const fAmount = document.getElementById('f-amount');
-    const fMax = document.getElementById('f-max');
-
-    function recalc() {
-      const total = (parseFloat(fAmount?.value) || 0) * (parseFloat(fPrice?.value) || 0);
-      const ct = document.getElementById('calcTotal');
-      const ct2 = document.getElementById('calcTotal2');
-      const mh = document.getElementById('maxHint');
-      if (ct) ct.textContent = fmt(total) + ' ₽';
-      if (ct2) ct2.textContent = fmt(total) + ' ₽';
-      if (mh) mh.textContent = total > 0 ? 'Не больше ' + fmt(total) + ' ₽' : 'Введите данные для расчета';
-      if (fMax) fMax.style.borderColor = parseFloat(fMax.value) > total ? 'var(--red)' : 'var(--brd)';
-    }
-    [fPrice, fAmount, fMax].forEach(el => { if (el) el.oninput = recalc; });
-    recalc();
-
     document.querySelectorAll('#f-side .seg-btn').forEach(b => { b.onclick = () => { document.querySelectorAll('#f-side .seg-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); }; });
     document.querySelectorAll('#f-face .seg-btn').forEach(b => { b.onclick = () => { document.querySelectorAll('#f-face .seg-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); }; });
     document.querySelectorAll('#f-payments .pay-chip').forEach(c => { c.onclick = () => c.classList.toggle('active'); });
@@ -489,25 +378,23 @@ document.addEventListener('DOMContentLoaded', () => {
       createBtn.onclick = async () => {
         const errEl = document.getElementById('createError');
         if (errEl) errEl.textContent = '';
-        if (!API.user()) { 
-          if (errEl) errEl.textContent = 'Войдите в аккаунт';
-          setTimeout(() => document.getElementById('authModal')?.classList.add('active'), 500);
-          return;
-        }
+        if (!API.user()) { if (errEl) errEl.textContent = 'Войдите в аккаунт'; setTimeout(() => document.getElementById('authModal')?.classList.add('active'), 500); return; }
         const payments = [...document.querySelectorAll('#f-payments .pay-chip.active')].map(c => c.dataset.val);
         if (!payments.length) { if (errEl) errEl.textContent = 'Выберите способ оплаты'; return; }
-        if (!fPrice?.value || !fAmount?.value || !document.getElementById('f-min')?.value || !fMax?.value) {
-          if (errEl) errEl.textContent = 'Заполните все поля'; return;
-        }
+        const price = document.getElementById('f-price')?.value;
+        const amount = document.getElementById('f-amount')?.value;
+        const min = document.getElementById('f-min')?.value;
+        const max = document.getElementById('f-max')?.value;
+        if (!price || !amount || !min || !max) { if (errEl) errEl.textContent = 'Заполните все поля'; return; }
+        
         const btn = createBtn; btn.disabled = true; btn.textContent = 'Публикация...';
         const asset = document.querySelector('#f-asset-select .icon-chip.active')?.dataset.val;
         try {
           await API.req('POST', '/ads', {
             side: document.querySelector('#f-side .seg-btn.active')?.dataset.val,
             face_type: document.querySelector('#f-face .seg-btn.active')?.dataset.val,
-            asset: asset,
-            price: fPrice.value, amount_total: fAmount.value,
-            min_rub: document.getElementById('f-min').value, max_rub: fMax.value,
+            asset: asset, price: price, amount_total: amount,
+            min_rub: min, max_rub: max,
             payment_methods: payments, terms: document.getElementById('f-terms')?.value || ''
           });
           toast('Объявление опубликовано!', 'success');
@@ -515,9 +402,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
           const map = { max_exceeds_total: 'Максимальный лимит больше общего объёма', min_gt_max: 'Минимум больше максимума', bad_amounts: 'Проверьте числа' };
           if (errEl) errEl.textContent = map[err.code] || err.message;
-        } finally {
-          btn.disabled = false; btn.textContent = 'Опубликовать';
-        }
+        } finally { btn.disabled = false; btn.textContent = 'Опубликовать'; }
       };
     }
 
@@ -579,36 +464,20 @@ document.addEventListener('DOMContentLoaded', () => {
       if (order.status === 'cancelled' || order.status === 'dispute') progress = 0;
 
       let actionsHtml = '';
-      
       if (order.status === 'waiting' && isBuyer) {
-        actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><button class="btn btn-primary" onclick="doAction(${order.id},'paid')">Я оплатил</button><button class="btn btn-ghost" style="color:var(--red)" onclick="doAction(${order.id},'cancel')">Отменить</button></div>
-        <button class="btn btn-ghost btn-block btn-sm" style="color:var(--gold);" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
+        actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><button class="btn btn-primary" onclick="doAction(${order.id},'paid')">Я оплатил</button><button class="btn btn-ghost" style="color:var(--red)" onclick="doAction(${order.id},'cancel')">Отменить</button></div><button class="btn btn-ghost btn-block btn-sm" style="color:var(--gold);" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
       } else if (order.status === 'waiting' && isSeller) {
-        actionsHtml = `<div style="background:var(--surf2);border:1px solid var(--brd);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:13px;margin-bottom:8px;font-weight:600;">Ожидайте оплаты от покупателя</div>
-        <button class="btn btn-ghost btn-block btn-sm" style="color:var(--gold);" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
+        actionsHtml = `<div style="background:var(--surf2);border:1px solid var(--brd);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:13px;margin-bottom:8px;font-weight:600;">Ожидайте оплаты от покупателя</div><button class="btn btn-ghost btn-block btn-sm" style="color:var(--gold);" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
       } else if (order.status === 'paid') {
-        if (isSeller) {
-          actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><button class="btn btn-primary" onclick="doAction(${order.id},'confirm')">Оплата получена</button><button class="btn btn-ghost" style="color:var(--red)" onclick="doAction(${order.id},'dispute')">Спор</button></div>`;
-        } else {
-          actionsHtml = `<div style="background:var(--surf2);border:1px solid var(--brd);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:13px;margin-bottom:8px;font-weight:600;">Ожидайте подтверждения от продавца</div>
-          <button class="btn btn-ghost btn-block btn-sm" style="color:var(--red);" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
-        }
+        if (isSeller) actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><button class="btn btn-primary" onclick="doAction(${order.id},'confirm')">Оплата получена</button><button class="btn btn-ghost" style="color:var(--red)" onclick="doAction(${order.id},'dispute')">Спор</button></div>`;
+        else actionsHtml = `<div style="background:var(--surf2);border:1px solid var(--brd);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:13px;margin-bottom:8px;font-weight:600;">Ожидайте подтверждения от продавца</div><button class="btn btn-ghost btn-block btn-sm" style="color:var(--red);" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
       } else if (order.status === 'completed') {
         actionsHtml = `<div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:14px;text-align:center;color:var(--grn);font-size:13px;font-weight:700;margin-bottom:10px">✓ Сделка завершена</div><button class="btn btn-ghost btn-block" onclick="openReview(${order.id})" style="margin-bottom:16px">Оставить отзыв</button>`;
       } else if (order.status === 'cancelled') {
         actionsHtml = `<div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:14px;text-align:center;color:var(--red);font-size:13px;margin-bottom:16px;font-weight:700;">Ордер отменён</div>`;
       } else if (order.status === 'dispute') {
-        if (isAdmin) {
-          actionsHtml = `
-            <div style="background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:14px;text-align:center;color:var(--gold);font-size:13px;margin-bottom:12px;font-weight:700;">Вы админ. Решите спор:</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-              <button class="btn btn-primary" onclick="resolveDispute(${order.id}, 'completed')">Завершить (Продавцу)</button>
-              <button class="btn btn-ghost" style="color:var(--red)" onclick="resolveDispute(${order.id}, 'cancelled')">Отменить (Покупателю)</button>
-            </div>
-          `;
-        } else {
-          actionsHtml = `<div style="background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:14px;text-align:center;color:var(--gold);font-size:13px;margin-bottom:16px;font-weight:700;">Спор рассматривается администратором</div>`;
-        }
+        if (isAdmin) actionsHtml = `<div style="background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:14px;text-align:center;color:var(--gold);font-size:13px;margin-bottom:12px;font-weight:700;">Вы админ. Решите спор:</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px"><button class="btn btn-primary" onclick="resolveDispute(${order.id}, 'completed')">Завершить (Продавцу)</button><button class="btn btn-ghost" style="color:var(--red)" onclick="resolveDispute(${order.id}, 'cancelled')">Отменить (Покупателю)</button></div>`;
+        else actionsHtml = `<div style="background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:14px;text-align:center;color:var(--gold);font-size:13px;margin-bottom:16px;font-weight:700;">Спор рассматривается администратором</div>`;
       }
 
       const timelineHtml = (history || []).map(h => `<div style="display:flex;gap:12px;padding:8px 0"><div style="width:13px;height:13px;border-radius:50%;background:var(--txt);flex-shrink:0;margin-top:3px"></div><div style="flex:1"><div style="font-size:13px;font-weight:700">${h.note || h.status}</div><div style="font-size:11px;color:var(--dim);font-weight:600;">${new Date(h.at).toLocaleString('ru-RU')}</div></div></div>`).join('');
@@ -617,67 +486,42 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!container) return;
       container.innerHTML = `
         <div style="background: var(--surf); border: 1px solid var(--brd); border-radius: 16px; padding: 20px; margin-bottom: 16px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <div style="font-size:12px;color:var(--dim);font-family:monospace;font-weight:700;">#${order.public_id}</div>
-            <div style="background:var(--surf2);color:${sc[order.status]};font-size:11px;font-weight:800;padding:4px 10px;border-radius:6px">${order.status}</div>
-          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:12px;color:var(--dim);font-family:monospace;font-weight:700;">#${order.public_id}</div><div style="background:var(--surf2);color:${sc[order.status]};font-size:11px;font-weight:800;padding:4px 10px;border-radius:6px">${order.status}</div></div>
           <h2 style="font-size:20px;font-weight:800;margin-bottom:8px;color:var(--txt)">${isBuyer ? 'Покупка ' : 'Продажа '}${order.asset}</h2>
           <div style="font-size:32px;font-weight:800;color:var(--txt);font-variant-numeric:tabular-nums;">${fmt(order.amount_rub)}<span style="font-size:14px;color:var(--dim);font-weight:500;margin-left:4px">₽</span></div>
-          <div style="width:100%;height:4px;background:var(--brd);border-radius:2px;margin-top:16px;overflow:hidden">
-            <div style="height:100%;width:${progress}%;background:${sc[order.status]};transition:0.3s"></div>
-          </div>
+          <div style="width:100%;height:4px;background:var(--brd);border-radius:2px;margin-top:16px;overflow:hidden"><div style="height:100%;width:${progress}%;background:${sc[order.status]};transition:0.3s"></div></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
           <div style="background:var(--surf);border:1px solid var(--brd);border-radius:12px;padding:12px 14px"><div style="font-size:11px;color:var(--dim);font-weight:700;">Количество</div><div style="font-size:14px;font-weight:800;margin-top:4px">${fmtDec(order.amount_asset, 4)} ${order.asset}</div></div>
           <div style="background:var(--surf);border:1px solid var(--brd);border-radius:12px;padding:12px 14px"><div style="font-size:11px;color:var(--dim);font-weight:700;">Курс</div><div style="font-size:14px;font-weight:800;margin-top:4px">${fmt(order.price)} ₽</div></div>
-          <div style="background:var(--surf);border:1px solid var(--brd);border-radius:12px;padding:12px 14px"><div style="font-size:11px;color:var(--dim);font-weight:700;">Оплата</div><div style="font-size:14px;font-weight:800;margin-top:4px">${order.payment_method}</div></div>
-          <div style="background:var(--surf);border:1px solid var(--brd);border-radius:12px;padding:12px 14px"><div style="font-size:11px;color:var(--dim);font-weight:700;">Тип лица</div><div style="font-size:14px;font-weight:800;margin-top:4px">${order.face_type === 'first' ? '1-е лицо' : '3-е лицо'}</div></div>
         </div>
-        <div style="background: var(--surf2); border: 1px dashed var(--brd); border-radius: 12px; padding: 14px; margin-bottom: 16px;">
-          <div style="font-size: 11px; font-weight: 800; color: var(--txt); text-transform: uppercase; margin-bottom: 6px;">Условия сделки</div>
-          <div style="font-size: 13px; color: var(--dim); line-height: 1.5; font-weight: 600;">${terms || 'Стандартные условия сделки.'}</div>
-        </div>
+        <div style="background: var(--surf2); border: 1px dashed var(--brd); border-radius: 12px; padding: 14px; margin-bottom: 16px;"><div style="font-size: 11px; font-weight: 800; color: var(--txt); text-transform: uppercase; margin-bottom: 6px;">Условия сделки</div><div style="font-size: 13px; color: var(--dim); line-height: 1.5; font-weight: 600;">${terms || 'Стандартные условия сделки.'}</div></div>
         ${actionsHtml}
         <button style="width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--surf);border:1px solid var(--brd);border-radius:14px;padding:16px;margin-bottom:16px;color:var(--txt);font-size:14px" onclick="openChatModal(${order.id})">
-          <div style="display:flex;align-items:center;gap:12px">
-            <div class="avatar" style="width:36px;height:36px;font-size:14px">💬</div>
-            <div><div style="font-weight:800">Чат по сделке</div><div style="font-size:11px;color:var(--dim);font-weight:600;">Обсудить детали</div></div>
-          </div>
+          <div style="display:flex;align-items:center;gap:12px"><div class="avatar" style="width:36px;height:36px;font-size:14px">💬</div><div><div style="font-weight:800">Чат по сделке</div><div style="font-size:11px;color:var(--dim);font-weight:600;">Обсудить детали</div></div></div>
         </button>
-        <div style="background:var(--surf);border:1px solid var(--brd);border-radius:14px;padding:16px">
-          <div style="font-size:12px;font-weight:800;margin-bottom:14px;color:var(--dim);text-transform:uppercase">История</div>
-          ${timelineHtml}
-        </div>
-      `;
+        <div style="background:var(--surf);border:1px solid var(--brd);border-radius:14px;padding:16px"><div style="font-size:12px;font-weight:800;margin-bottom:14px;color:var(--dim);text-transform:uppercase">История</div>${timelineHtml}</div>`;
     }
 
     window.doAction = async function(orderId, action) {
       if (action === 'cancel' && !await confirmAsync('Отмена', 'Отменить ордер?', 'Да')) return;
       if (action === 'confirm' && !await confirmAsync('Подтверждение', 'Подтвердить оплату?', 'Да')) return;
       if (action === 'dispute' && !await confirmAsync('Спор', 'Вы уверены, что хотите открыть спор?', 'Да')) return;
-      try { 
-        await API.req('POST', `/orders/${orderId}/${action}`); 
-        toast('Статус обновлён', 'success'); 
-        openOrderPage(orderId); 
-      } catch (e) { toast(e.message, 'error'); }
+      try { await API.req('POST', `/orders/${orderId}/${action}`); toast('Статус обновлён', 'success'); openOrderPage(orderId); }
+      catch (e) { toast(e.message, 'error'); }
     };
 
     window.resolveDispute = async function(orderId, resolution) {
       if (!await confirmAsync('Решение спора', 'Вы уверены в решении?', 'Да')) return;
-      try {
-        await API.req('POST', `/orders/${orderId}/resolve`, { resolution });
-        toast('Спор решен', 'success'); 
-        openOrderPage(orderId);
-      } catch (e) { toast(e.message, 'error'); }
+      try { await API.req('POST', `/orders/${orderId}/resolve`, { resolution }); toast('Спор решен', 'success'); openOrderPage(orderId); }
+      catch (e) { toast(e.message, 'error'); }
     };
 
     // ЧАТ
-    let currentChatOrderId = null, chatPollTimer = null, lastChatCount = 0;
-
+    let currentChatOrderId = null, chatPollTimer = null;
     window.openChatModal = async function(orderId) {
       currentChatOrderId = orderId;
       const m = document.getElementById('chatModal'); if (m) m.classList.add('active');
-      lastChatCount = 0;
       await loadChat(orderId, true);
       if (chatPollTimer) clearInterval(chatPollTimer);
       chatPollTimer = setInterval(() => loadChat(orderId, false), 3000);
@@ -685,8 +529,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.closeChatModal = function() {
       const m = document.getElementById('chatModal'); if (m) m.classList.remove('active');
-      if (chatPollTimer) clearInterval(chatPollTimer);
-      chatPollTimer = null;
+      if (chatPollTimer) clearInterval(chatPollTimer); chatPollTimer = null;
     };
 
     const chatSend = document.getElementById('chatSend');
@@ -723,7 +566,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ОТЗЫВЫ
     let currentReviewOrderId = null, currentRating = 5;
-
     window.openReview = function(orderId) {
       currentReviewOrderId = orderId; currentRating = 5;
       const c = document.getElementById('reviewComment'); if (c) c.value = '';
@@ -732,13 +574,8 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('reviewModal')?.classList.add('active');
     };
 
-    function updateStars() {
-      document.querySelectorAll('#ratingStars .rating-star').forEach(s => s.classList.toggle('active', +s.dataset.r <= currentRating));
-    }
-
-    document.querySelectorAll('#ratingStars .rating-star').forEach(s => {
-      s.onclick = () => { currentRating = +s.dataset.r; updateStars(); };
-    });
+    function updateStars() { document.querySelectorAll('#ratingStars .rating-star').forEach(s => s.classList.toggle('active', +s.dataset.r <= currentRating)); }
+    document.querySelectorAll('#ratingStars .rating-star').forEach(s => { s.onclick = () => { currentRating = +s.dataset.r; updateStars(); }; });
 
     const reviewSubmitBtn = document.getElementById('reviewSubmitBtn');
     if (reviewSubmitBtn) {
@@ -748,36 +585,27 @@ document.addEventListener('DOMContentLoaded', () => {
           await API.req('POST', '/reviews', { order_id: currentReviewOrderId, rating: currentRating, comment: document.getElementById('reviewComment')?.value || '' });
           toast('Отзыв добавлен!', 'success');
           closeModal('reviewModal'); loadProfile();
-        } catch (e) {
-          const er = document.getElementById('reviewError'); if (er) er.textContent = e.message;
-        } finally { reviewSubmitBtn.disabled = false; }
+        } catch (e) { const er = document.getElementById('reviewError'); if (er) er.textContent = e.message; }
+        finally { reviewSubmitBtn.disabled = false; }
       };
     }
 
     // ПРОФИЛЬ
     let profileTab = 'ads';
-
     async function loadProfile() {
       const u = API.user();
       const content = document.getElementById('profileContent');
       if (!content) return;
       if (!u) { content.innerHTML = '<div class="empty-state"><button class="btn btn-primary" onclick="document.getElementById(\'authModal\').classList.add(\'active\')">Войти</button></div>'; return; }
-      
       try {
         const { user, stats } = await API.req('GET', '/users/me');
         const proBadge = stats.isPro ? `<span class="badge-pro">PRO</span>` : '';
-        const proConditions = stats.isPro 
-          ? `<div style="font-size:11px; color:var(--grn); margin-top:5px;">✓ Условия PRO выполнены (Maker/Taker)</div>`
-          : `<div style="font-size:11px; color:var(--dim); margin-top:5px;">До PRO: Оборот $${fmt(stats.volumeUsd)} / $100,000<br>Успешных: ${stats.successRate}% / 80%</div>`;
-
+        const proConditions = stats.isPro ? `<div style="font-size:11px; color:var(--grn); margin-top:5px;">✓ Условия PRO выполнены</div>` : `<div style="font-size:11px; color:var(--dim); margin-top:5px;">До PRO: Оборот $${fmt(stats.volumeUsd)} / $100,000<br>Успешных: ${stats.successRate}% / 80%</div>`;
         let contentHtml = '';
         if (profileTab === 'ads') contentHtml = '<div id="myAdsList">Загрузка...</div>';
         else if (profileTab === 'history') contentHtml = '<div id="myHistoryList">Загрузка...</div>';
         else if (profileTab === 'reviews') contentHtml = '<div id="myReviewsList">Загрузка...</div>';
-
-        const avatarHtml = user.avatarUrl 
-          ? `<div class="avatar lg"><img src="${user.avatarUrl}" alt=""></div>` 
-          : `<div class="avatar lg">${user.displayName[0].toUpperCase()}</div>`;
+        const avatarHtml = user.avatarUrl ? `<div class="avatar lg"><img src="${user.avatarUrl}" alt=""></div>` : `<div class="avatar lg">${user.displayName[0].toUpperCase()}</div>`;
 
         content.innerHTML = `
           <div style="display:flex;align-items:center;gap:16px;padding:20px;background:var(--surf);border:1px solid var(--brd);border-radius:16px;margin-bottom:20px;position:relative;">
@@ -789,22 +617,19 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <button class="btn btn-ghost btn-sm" style="position:absolute;top:16px;right:16px;" onclick="openSettings()">⚙️</button>
           </div>
-          
           <div class="stats">
             <div class="stat"><div class="stat-lbl">Сделок</div><div class="stat-val">${stats.dealsTotal}</div></div>
             <div class="stat"><div class="stat-lbl">Успешных</div><div class="stat-val">${stats.successRate}%</div></div>
             <div class="stat"><div class="stat-lbl">Отзывов</div><div class="stat-val">${stats.reviewsCount}</div></div>
             <div class="stat"><div class="stat-lbl">Рейтинг</div><div class="stat-val">${stats.ratingAvg}</div></div>
           </div>
-          
           <div class="profile-tabs">
             <button class="profile-tab ${profileTab === 'ads' ? 'active' : ''}" onclick="switchProfileTab('ads')">Объявления</button>
             <button class="profile-tab ${profileTab === 'history' ? 'active' : ''}" onclick="switchProfileTab('history')">История</button>
             <button class="profile-tab ${profileTab === 'reviews' ? 'active' : ''}" onclick="switchProfileTab('reviews')">Отзывы</button>
           </div>
           <div id="profileTabContent">${contentHtml}</div>
-          <div style="margin-top:24px"><button class="btn btn-ghost btn-block" onclick="logoutAction()" style="color:var(--red)">Выйти из аккаунта</button></div>
-        `;
+          <div style="margin-top:24px"><button class="btn btn-ghost btn-block" onclick="logoutAction()" style="color:var(--red)">Выйти из аккаунта</button></div>`;
 
         if (profileTab === 'ads') loadMyAds();
         else if (profileTab === 'history') loadMyHistory();
@@ -812,30 +637,14 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (e) { content.innerHTML = '<div class="empty-state">Ошибка загрузки профиля</div>'; }
     }
 
-    window.switchProfileTab = function(tab) {
-      profileTab = tab;
-      loadProfile();
-    };
+    window.switchProfileTab = function(tab) { profileTab = tab; loadProfile(); };
 
     async function loadMyAds() {
       try {
         const { items } = await API.req('GET', '/ads/my');
-        window._myAds = {};
-        items.forEach(ad => window._myAds[ad.id] = ad);
         const list = document.getElementById('myAdsList');
         if (!list) return;
-        list.innerHTML = items.length ? items.map(ad => `
-          <div class="ad-card">
-            <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-              <strong style="font-size:15px;">${ad.side === 'sell' ? 'Продажа' : 'Покупка'} ${ad.asset}</strong>
-              <span style="color:${ad.active ? 'var(--grn)' : 'var(--red)'};font-size:12px;font-weight:700;">${ad.active ? 'Активно' : 'Неактивно'}</span>
-            </div>
-            <div class="ad-body">
-              <div><div class="ad-lbl">Курс</div><div class="ad-val">${fmt(ad.price)} ₽</div></div>
-              <div><div class="ad-lbl">Остаток</div><div class="ad-val">${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div></div>
-            </div>
-          </div>
-        `).join('') : '<div class="empty-state">У вас нет объявлений</div>';
+        list.innerHTML = items.length ? items.map(ad => `<div class="ad-card"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><strong style="font-size:15px;">${ad.side === 'sell' ? 'Продажа' : 'Покупка'} ${ad.asset}</strong><span style="color:${ad.active ? 'var(--grn)' : 'var(--red)'};font-size:12px;font-weight:700;">${ad.active ? 'Активно' : 'Неактивно'}</span></div><div class="ad-body"><div><div class="ad-lbl">Курс</div><div class="ad-val">${fmt(ad.price)} ₽</div></div><div><div class="ad-lbl">Остаток</div><div class="ad-val">${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div></div></div></div>`).join('') : '<div class="empty-state">У вас нет объявлений</div>';
       } catch (e) { const l = document.getElementById('myAdsList'); if (l) l.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     }
 
@@ -844,18 +653,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const { items } = await API.req('GET', '/orders/my?status=completed');
         const list = document.getElementById('myHistoryList');
         if (!list) return;
-        list.innerHTML = items.length ? items.map(o => `
-          <div class="ad-card" style="border-left:4px solid var(--grn);">
-            <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-              <strong style="font-size:15px;">#${o.publicId}</strong>
-              <span style="color:var(--grn);font-size:12px;font-weight:700;">Завершен</span>
-            </div>
-            <div class="ad-body">
-              <div><div class="ad-lbl">Сумма</div><div class="ad-val">${fmt(o.amountRub)} ₽</div></div>
-              <div><div class="ad-lbl">Актив</div><div class="ad-val">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div>
-            </div>
-          </div>
-        `).join('') : '<div class="empty-state">История пуста</div>';
+        list.innerHTML = items.length ? items.map(o => `<div class="ad-card" style="border-left:4px solid var(--grn);"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><strong style="font-size:15px;">#${o.publicId}</strong><span style="color:var(--grn);font-size:12px;font-weight:700;">Завершен</span></div><div class="ad-body"><div><div class="ad-lbl">Сумма</div><div class="ad-val">${fmt(o.amountRub)} ₽</div></div><div><div class="ad-lbl">Актив</div><div class="ad-val">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div></div></div>`).join('') : '<div class="empty-state">История пуста</div>';
       } catch (e) { const l = document.getElementById('myHistoryList'); if (l) l.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     }
 
@@ -866,15 +664,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const items = data.items || [];
         const list = document.getElementById('myReviewsList');
         if (!list) return;
-        list.innerHTML = items.length ? items.map(r => `
-          <div class="ad-card">
-            <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-              <strong style="font-size:14px;">${r.author}</strong>
-              <span style="color:var(--txt);font-size:16px;">${'★'.repeat(r.rating)}</span>
-            </div>
-            <p style="font-size:13px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p>
-          </div>
-        `).join('') : '<div class="empty-state">Отзывов нет</div>';
+        list.innerHTML = items.length ? items.map(r => `<div class="ad-card"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><strong style="font-size:14px;">${r.author}</strong><span style="color:var(--txt);font-size:16px;">${'★'.repeat(r.rating)}</span></div><p style="font-size:13px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p></div>`).join('') : '<div class="empty-state">Отзывов нет</div>';
       } catch (e) { const l = document.getElementById('myReviewsList'); if (l) l.innerHTML = '<div class="empty-state">Отзывов нет</div>'; }
     }
 
@@ -893,27 +683,16 @@ document.addEventListener('DOMContentLoaded', () => {
       settingsSaveBtn.onclick = async () => {
         const btn = settingsSaveBtn; btn.disabled = true;
         try {
-          const payload = {
-            displayName: document.getElementById('settingsName').value,
-            avatarUrl: document.getElementById('settingsAvatarUrl').value,
-            email: document.getElementById('settingsEmail').value
-          };
-          const { user } = await API.req('PATCH', '/users/me', payload);
+          const { user } = await API.req('PATCH', '/users/me', { displayName: document.getElementById('settingsName').value, avatarUrl: document.getElementById('settingsAvatarUrl').value, email: document.getElementById('settingsEmail').value });
           localStorage.setItem('vexo_user', JSON.stringify(user));
-          closeModal('settingsModal'); 
-          toast('Настройки сохранены', 'success'); 
-          updateAuthUI();
-          loadProfile();
-        } catch (e) {
-          const er = document.getElementById('settingsError');
-          if (er) er.textContent = e.message;
-        } finally { btn.disabled = false; }
+          closeModal('settingsModal'); toast('Настройки сохранены', 'success'); updateAuthUI(); loadProfile();
+        } catch (e) { const er = document.getElementById('settingsError'); if (er) er.textContent = e.message; }
+        finally { btn.disabled = false; }
       };
     }
 
-    // МОДАЛКА ОРДЕРА
+    // ОРДЕР МОДАЛКА
     let currentAd = null, selectedPay = null;
-
     window.openOrderModal = function(adId) {
       const ad = (window._ads || {})[adId];
       if (!ad) return;
@@ -960,18 +739,12 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const order = await API.req('POST', '/orders', { ad_id: currentAd.id, amount_rub: rub, payment_method: selectedPay });
         closeModal('orderModal'); toast('Ордер создан!', 'success'); openOrderPage(order.id);
-      } catch (err) {
-        if (errEl) errEl.textContent = err.message;
-      } finally {
-        btn.disabled = false;
-        btn.textContent = currentAd ? (currentAd.side === 'sell' ? 'Купить ' : 'Продать ') + currentAd.asset : 'OK';
-      }
+      } catch (err) { if (errEl) errEl.textContent = err.message; }
+      finally { btn.disabled = false; btn.textContent = currentAd ? (currentAd.side === 'sell' ? 'Купить ' : 'Продать ') + currentAd.asset : 'OK'; }
     }
 
     window.logoutAction = async function() {
-      if (await confirmAsync('Выход', 'Выйти из аккаунта?', 'Выйти')) {
-        localStorage.removeItem('vexo_token'); localStorage.removeItem('vexo_user'); location.reload();
-      }
+      if (await confirmAsync('Выход', 'Выйти из аккаунта?', 'Выйти')) { localStorage.removeItem('vexo_token'); localStorage.removeItem('vexo_user'); location.reload(); }
     };
 
     // КОШЕЛЕК (События)
@@ -979,16 +752,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const walletActionSubmit = document.getElementById('walletActionSubmit');
     if (walletActionSubmit) {
       walletActionSubmit.onclick = () => {
-        if (!API.user()) {
-          closeModal('walletActionModal');
-          document.getElementById('authModal')?.classList.add('active');
-          return;
-        }
+        if (!API.user()) { closeModal('walletActionModal'); document.getElementById('authModal')?.classList.add('active'); return; }
         const amount = document.getElementById('walletActionAmount')?.value;
         if (!amount || Number(amount) <= 0) return toast('Введите корректную сумму', 'error');
         window.open(`https://t.me/vexoio_bot?start=${walletActionType === 'deposit' ? 'dep' : 'wth'}_${amount}`, '_blank');
-        closeModal('walletActionModal');
-        toast('Перенаправление в Telegram...', 'success');
+        closeModal('walletActionModal'); toast('Перенаправление в Telegram...', 'success');
       };
     }
 
@@ -999,30 +767,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const viewport = document.getElementById('bannerViewport');
       if (!track || !dots.length) return;
       let idx = 0, timer;
-      
-      function go(i) { 
-        idx = (i + dots.length) % dots.length; 
-        track.style.transform = `translateX(-${idx * 100}%)`; 
-        dots.forEach((d, k) => d.classList.toggle('active', k === idx)); 
-      }
+      function go(i) { idx = (i + dots.length) % dots.length; track.style.transform = `translateX(-${idx * 100}%)`; dots.forEach((d, k) => d.classList.toggle('active', k === idx)); }
       function auto() { clearInterval(timer); timer = setInterval(() => go(idx + 1), 4500); }
-      
       dots.forEach((d, i) => d.onclick = () => { go(i); auto(); });
-
       let startX = 0;
-      viewport.addEventListener('touchstart', e => {
-        startX = e.touches[0].clientX;
-        clearInterval(timer);
-      }, { passive: true });
-
-      viewport.addEventListener('touchend', e => {
-        const endX = e.changedTouches[0].clientX;
-        const diff = startX - endX;
-        if (diff > 50) go(idx + 1);
-        if (diff < -50) go(idx - 1);
-        auto();
-      });
-
+      viewport.addEventListener('touchstart', e => { startX = e.touches[0].clientX; clearInterval(timer); }, { passive: true });
+      viewport.addEventListener('touchend', e => { const endX = e.changedTouches[0].clientX; const diff = startX - endX; if (diff > 50) go(idx + 1); if (diff < -50) go(idx - 1); auto(); });
       auto();
     })();
 
@@ -1033,206 +783,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
   } catch (err) {
     console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
-  }
-}););});e');
-      };
-    });
-
-    const walletActionSubmit = document.getElementById('walletActionSubmit');
-    if (walletActionSubmit) {
-      walletActionSubmit.onclick = () => {
-        if (!API.user()) {
-          closeModal('walletActionModal');
-          document.getElementById('authModal')?.classList.add('active');
-          return;
-        }
-        const asset = document.querySelector('#walletActionAsset .icon-chip.active')?.dataset.val;
-        const amount = document.getElementById('walletActionAmount')?.value;
-        const requisites = document.getElementById('walletActionRequisites')?.value;
-
-        if (!amount || Number(amount) <= 0) return toast('Введите корректную сумму', 'error');
-        if (walletActionType === 'withdraw' && !requisites) return toast('Введите реквизиты', 'error');
-
-        let payload = walletActionType === 'deposit' ? 'dep' : 'wth';
-        payload += `_${asset}_${amount}`;
-        if (walletActionType === 'withdraw') {
-          const cleanReq = requisites.replace(/[^a-zA-Z0-9]/g, '').slice(0, 20);
-          payload += `_${cleanReq}`;
-        }
-
-        window.open(`https://t.me/vexoio_bot?start=${payload}`, '_blank');
-        closeModal('walletActionModal');
-        toast('Перенаправление в Telegram...', 'success');
-      };
-    }
-
-    // КАРУСЕЛЬ (СВАЙПЫ)
-    (function() {
-      const track = document.getElementById('bannerTrack');
-      const dots = document.querySelectorAll('.banner-dot');
-      const viewport = document.getElementById('bannerViewport');
-      if (!track || !dots.length) return;
-      let idx = 0, timer;
-      
-      function go(i) { 
-        idx = (i + dots.length) % dots.length; 
-        track.style.transform = `translateX(-${idx * 100}%)`; 
-        dots.forEach((d, k) => d.classList.toggle('active', k === idx)); 
-      }
-      function auto() { clearInterval(timer); timer = setInterval(() => go(idx + 1), 4500); }
-      
-      dots.forEach((d, i) => d.onclick = () => { go(i); auto(); });
-
-      let startX = 0;
-      viewport.addEventListener('touchstart', e => {
-        startX = e.touches[0].clientX;
-        clearInterval(timer);
-      }, { passive: true });
-
-      viewport.addEventListener('touchend', e => {
-        const endX = e.changedTouches[0].clientX;
-        const diff = startX - endX;
-        if (diff > 50) go(idx + 1);
-        if (diff < -50) go(idx - 1);
-        auto();
-      });
-
-      auto();
-    })();
-
-    // СТАРТ
-    updateAuthUI();
-    try { loadHome(); } catch(e) { console.error('Initial loadHome:', e); }
-
-    console.log('VEXO: ВСЁ ЗАГРУЖЕНО И РАБОТАЕТ');
-
-  } catch (err) {
-    console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
-    alert('Ошибка инициализации VEXO: ' + err.message);
-  }
-});lementById('orderPayments');
-      if (!payBox) return;
-      payBox.innerHTML = '';
-      (ad.paymentMethods || []).forEach(p => {
-        const el = document.createElement('div');
-        el.className = 'pay-chip' + (p === selectedPay ? ' active' : ''); el.textContent = p;
-        el.onclick = () => { payBox.querySelectorAll('.pay-chip').forEach(x => x.classList.remove('active')); el.classList.add('active'); selectedPay = p; };
-        payBox.appendChild(el);
-      });
-      const btn = document.getElementById('orderSubmit');
-      btn.className = 'btn btn-block ' + (isBuy ? 'btn-buy' : 'btn-sell');
-      btn.textContent = isBuy ? 'Купить ' + ad.asset : 'Продать ' + ad.asset;
-      btn.onclick = submitOrder;
-      document.getElementById('orderModal').classList.add('active');
-    };
-
-    async function submitOrder() {
-      const errEl = document.getElementById('orderError'); if (errEl) errEl.textContent = '';
-      const rub = parseFloat(document.getElementById('orderAmount').value) || 0;
-      if (!selectedPay) { if (errEl) errEl.textContent = 'Выберите способ оплаты'; return; }
-      if (rub < currentAd.minRub) { if (errEl) errEl.textContent = 'Минимум ' + fmt(currentAd.minRub) + ' ₽'; return; }
-      if (rub > currentAd.maxRub) { if (errEl) errEl.textContent = 'Максимум ' + fmt(currentAd.maxRub) + ' ₽'; return; }
-      const btn = document.getElementById('orderSubmit'); btn.disabled = true; btn.textContent = '...';
-      try {
-        const order = await API.req('POST', '/orders', { ad_id: currentAd.id, amount_rub: rub, payment_method: selectedPay });
-        closeModal('orderModal'); toast('Ордер создан!', 'success'); openOrderPage(order.id);
-      } catch (err) {
-        const map = { self_trade: 'Нельзя торговать с собой.', insufficient_asset: 'Недостаточно актива', ad_inactive: 'Объявление неактивно', bad_payment: 'Способ оплаты недоступен' };
-        if (errEl) errEl.textContent = map[err.code] || err.message;
-      } finally {
-        btn.disabled = false;
-        btn.textContent = currentAd ? (currentAd.side === 'sell' ? 'Купить ' : 'Продать ') + currentAd.asset : 'OK';
-      }
-    }
-
-    window.logoutAction = async function() {
-      if (await confirmAsync('Выход', 'Выйти из аккаунта?', 'Выйти')) {
-        localStorage.removeItem('vexo_token'); localStorage.removeItem('vexo_user'); location.reload();
-      }
-    };
-
-    // КОШЕЛЕК (События)
-    let walletActionType = 'deposit';
-    
-    // Обработчики для кнопок внутри кошелька мы привязываем динамически в loadWallet()
-    // Поэтому здесь оставляем только обработку самой модалки пополнения/вывода
-    document.querySelectorAll('#walletActionAsset .icon-chip').forEach(c => {
-      c.onclick = () => {
-        document.querySelectorAll('#walletActionAsset .icon-chip').forEach(x => x.classList.remove('active'));
-        c.classList.add('active');
-      };
-    });
-
-    const walletActionSubmit = document.getElementById('walletActionSubmit');
-    if (walletActionSubmit) {
-      walletActionSubmit.onclick = () => {
-        if (!API.user()) {
-          closeModal('walletActionModal');
-          document.getElementById('authModal')?.classList.add('active');
-          return;
-        }
-        const asset = document.querySelector('#walletActionAsset .icon-chip.active')?.dataset.val;
-        const amount = document.getElementById('walletActionAmount')?.value;
-        const requisites = document.getElementById('walletActionRequisites')?.value;
-
-        if (!amount || Number(amount) <= 0) return toast('Введите корректную сумму', 'error');
-        if (walletActionType === 'withdraw' && !requisites) return toast('Введите реквизиты', 'error');
-
-        let payload = walletActionType === 'deposit' ? 'dep' : 'wth';
-        payload += `_${asset}_${amount}`;
-        if (walletActionType === 'withdraw') {
-          const cleanReq = requisites.replace(/[^a-zA-Z0-9]/g, '').slice(0, 20);
-          payload += `_${cleanReq}`;
-        }
-
-        window.open(`https://t.me/vexoio_bot?start=${payload}`, '_blank');
-        closeModal('walletActionModal');
-        toast('Перенаправление в Telegram...', 'success');
-      };
-    }
-
-    // КАРУСЕЛЬ (СВАЙПЫ)
-    (function() {
-      const track = document.getElementById('bannerTrack');
-      const dots = document.querySelectorAll('.banner-dot');
-      const viewport = document.getElementById('bannerViewport');
-      if (!track || !dots.length) return;
-      let idx = 0, timer;
-      
-      function go(i) { 
-        idx = (i + dots.length) % dots.length; 
-        track.style.transform = `translateX(-${idx * 100}%)`; 
-        dots.forEach((d, k) => d.classList.toggle('active', k === idx)); 
-      }
-      function auto() { clearInterval(timer); timer = setInterval(() => go(idx + 1), 4500); }
-      
-      dots.forEach((d, i) => d.onclick = () => { go(i); auto(); });
-
-      let startX = 0;
-      viewport.addEventListener('touchstart', e => {
-        startX = e.touches[0].clientX;
-        clearInterval(timer);
-      }, { passive: true });
-
-      viewport.addEventListener('touchend', e => {
-        const endX = e.changedTouches[0].clientX;
-        const diff = startX - endX;
-        if (diff > 50) go(idx + 1);
-        if (diff < -50) go(idx - 1);
-        auto();
-      });
-
-      auto();
-    })();
-
-    // СТАРТ
-    updateAuthUI();
-    try { loadHome(); } catch(e) { console.error('Initial loadHome:', e); }
-
-    console.log('VEXO: ВСЁ ЗАГРУЖЕНО И РАБОТАЕТ');
-
-  } catch (err) {
-    console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
-    alert('Ошибка инициализации VEXO: ' + err.message);
   }
 });

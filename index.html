@@ -2,72 +2,63 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Диагностика VEXO</title>
-  
-  <!-- Подключаем твой style.css с проверкой на ошибку -->
-  <link rel="stylesheet" href="style.css" onerror="document.getElementById('css-status').innerHTML = '❌ Ошибка загрузки style.css'; document.getElementById('css-status').className = 'box fail';">
-  
-  <style>
-    body { background: #000; color: #fff; font-family: monospace, sans-serif; padding: 20px; }
-    h2 { font-size: 18px; margin-bottom: 20px; }
-    .box { padding: 15px; margin-bottom: 10px; border-radius: 8px; font-size: 14px; border-left: 5px solid #888; background: #1a1a1a; }
-    .ok { border-color: #22c55e; color: #22c55e; }
-    .fail { border-color: #ef4444; color: #ef4444; }
-    .wait { border-color: #eab308; color: #eab308; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>VEXO P2P</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h2>🛠 Диагностика VEXO</h2>
-  
-  <div class="box wait" id="css-status">⏳ Проверка style.css...</div>
-  <div class="box wait" id="js-status">⏳ Проверка app.js...</div>
-  <div class="box wait" id="api-status">⏳ Проверка Базы Данных (API)...</div>
 
-  <!-- Подключаем app.js с проверкой на ошибку -->
-  <script src="app.js" onerror="document.getElementById('js-status').innerHTML = '❌ Ошибка загрузки app.js (файл не найден)'; document.getElementById('js-status').className = 'box fail';"></script>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><div class="logo-mark">V</div><span>VEXO</span></div>
+    <button class="nav-btn active" data-screen="home">Главная</button>
+    <button class="nav-btn" data-screen="market">Маркет</button>
+    <button class="nav-btn" data-screen="create">Создать объявление</button>
+    <button class="nav-btn" data-screen="orders">Мои ордера</button>
+    <button class="nav-btn" data-screen="wallet">Кошелёк</button>
+    <button class="nav-btn" data-screen="profile">Профиль</button>
+  </aside>
 
-  <script>
-    window.addEventListener('load', () => {
-      // 1. Проверка CSS
-      const cssStatus = document.getElementById('css-status');
-      if (!cssStatus.className.includes('fail')) {
-        cssStatus.innerHTML = '✅ style.css успешно загружен';
-        cssStatus.className = 'box ok';
-      }
+  <div class="main">
+    <header class="topbar">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button class="btn btn-sm btn-ghost hidden" id="backBtn" style="padding: 6px; border-radius: 50%; width: 32px; height: 32px;">←</button>
+        <div style="display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 18px;">
+          <div class="logo-mark" style="width: 24px; height: 24px; font-size: 12px;">V</div>
+          <span>VEXO</span>
+        </div>
+      </div>
+      <div class="topbar-title" id="topbarTitle" style="display: none;">Главная</div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button class="btn btn-sm btn-ghost" id="themeBtn" style="padding: 6px; border-radius: 50%; width: 32px; height: 32px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        </button>
+        <button class="btn btn-sm btn-primary" id="loginBtn">Войти</button>
+        <button class="avatar-btn hidden" id="avatarBtn"></button>
+      </div>
+    </header>
 
-      // 2. Проверка JS (выполнился ли код)
-      const jsStatus = document.getElementById('js-status');
-      if (!jsStatus.className.includes('fail')) {
-        // В твоем app.js объявляется window.closeModal. Если он есть, значит скрипт сработал.
-        if (typeof window.closeModal === 'function') {
-          jsStatus.innerHTML = '✅ app.js успешно загружен и выполнен без критических ошибок';
-          jsStatus.className = 'box ok';
-        } else {
-          jsStatus.innerHTML = '⚠️ app.js загрузился, но выдал ошибку при выполнении (проверь консоль F12)';
-          jsStatus.className = 'box fail';
-        }
-      }
-
-      // 3. Проверка сервера (API)
-      const apiStatus = document.getElementById('api-status');
-      fetch('/api/stats')
-        .then(res => {
-          if (res.ok) return res.json();
-          throw new Error('Сервер ответил ошибкой ' + res.status);
-        })
-        .then(data => {
-          apiStatus.innerHTML = '✅ Бэкенд и База Данных работают!<br><span style="font-size:12px;color:#888">Ответ: ' + JSON.stringify(data) + '</span>';
-          apiStatus.className = 'box ok';
-        })
-        .catch(err => {
-          apiStatus.innerHTML = '❌ Ошибка бэкенда (server.js): ' + err.message + '<br><span style="font-size:12px;">Возможно, упала база данных или не хватает переменных окружения на Render.</span>';
-          apiStatus.className = 'box fail';
-        });
-    });
-  </script>
-</body>
-</html>циальный канал</h2>
+    <main class="content">
+      <section class="screen active" id="screen-home">
+        <div class="banner-carousel">
+          <div class="banner-viewport" id="bannerViewport">
+            <div class="banner-track" id="bannerTrack">
+              <div class="banner">
+                <div class="banner-text-content">
+                  <h2>Покупайте и продавайте <span>цифровые активы</span> безопасно</h2>
+                  <p>USDT · BTC · TON за рубли. Проверенные продавцы, эскроу-сделки.</p>
+                  <button class="btn btn-primary" data-screen="market">Перейти в Маркет</button>
+                </div>
+                <div class="coin-decoration">
+                  <div class="coin-icon float-1">₮</div>
+                  <div class="coin-icon float-2">₿</div>
+                  <div class="coin-icon float-3">T</div>
+                </div>
+              </div>
+              <div class="banner" style="justify-content: flex-start;">
+                <div class="banner-text-content">
+                  <h2>Официальный канал</h2>
                   <p>Новости, курсы и розыгрыши. Подпишитесь на наш Telegram.</p>
                   <a href="https://t.me/vexoio_bot" target="_blank" class="btn btn-primary">Подписаться</a>
                 </div>
@@ -167,7 +158,6 @@
 
         <div class="field"><label>Цена за 1 <span id="f-asset-label">USDT</span> (₽)</label><input class="input" type="number" id="f-price" placeholder="Пример: 90"></div>
         <div class="field"><label>Общий объем</label><input class="input" type="number" id="f-amount" placeholder="Пример: 500"></div>
-
         <div class="field"><label>Мин. лимит (₽)</label><input class="input" type="number" id="f-min" placeholder="Пример: 3000"></div>
         <div class="field"><label>Макс. лимит (₽)</label><input class="input" type="number" id="f-max" placeholder="Пример: 45000"></div>
         <div class="field"><label>Условия</label><textarea class="input" id="f-terms" placeholder="ПРИНИМАЮ ТОЛЬКО СБП..." style="min-height: 60px;"></textarea></div>
@@ -187,7 +177,6 @@
       </section>
 
       <section class="screen" id="screen-order"><div id="orderDetailContent"></div></section>
-
       <section class="screen" id="screen-wallet"></section>
 
       <section class="screen" id="screen-profile">
@@ -269,20 +258,6 @@
   </div>
 </div>
 
-<!-- МОДАЛКА РЕДАКТИРОВАНИЯ ОБЪЯВЛЕНИЯ -->
-<div class="modal-overlay" id="editAdModal">
-  <div class="modal">
-    <h3 style="font-size: 16px;">Редактировать объявление</h3>
-    <div class="field"><label>Цена за 1 единицу (₽)</label><input class="input" type="number" id="edit-price"></div>
-    <div class="field"><label>Мин. лимит (₽)</label><input class="input" type="number" id="edit-min"></div>
-    <div class="field"><label>Макс. лимит (₽)</label><input class="input" type="number" id="edit-max"></div>
-    <div class="field"><label>Условия</label><textarea class="input" id="edit-terms" style="min-height: 60px;"></textarea></div>
-    <div class="error-msg" id="editError"></div>
-    <button class="btn btn-primary btn-block" id="editSaveBtn">Сохранить</button>
-    <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('editAdModal')">Отмена</button>
-  </div>
-</div>
-
 <!-- МОДАЛКА СОЗДАНИЯ ОРДЕРА -->
 <div class="modal-overlay" id="orderModal">
   <div class="modal" style="padding: 16px; gap: 10px; max-width: 400px;">
@@ -346,53 +321,6 @@
     <div class="rating-stars" id="ratingStars" style="display: flex; gap: 8px; font-size: 24px; cursor: pointer; justify-content: center; margin-bottom: 10px;">
       <span class="rating-star" data-r="1">★</span><span class="rating-star" data-r="2">★</span><span class="rating-star" data-r="3">★</span><span class="rating-star" data-r="4">★</span><span class="rating-star" data-r="5">★</span>
     </div>
-    <textarea class="input" id="reviewComment" placeholder="Комментарий (необязательно)" style="min-height: 60px;"></textarea>
-    <div class="error-msg" id="reviewError"></div>
-    <button class="btn btn-primary btn-block" id="reviewSubmitBtn">Отправить</button>
-    <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('reviewModal')">Отмена</button>
-  </div>
-</div>
-
-<script src="app.js"></script>
-</body>
-</html>e="flex: 1;"><div style="font-size: 14px; font-weight: 700;" id="chatTitle">Чат</div><div style="font-size: 10px; color: var(--dim);" id="chatSub">Собеседник</div></div><button style="background: none; border: none; color: var(--dim); font-size: 20px;" onclick="closeChatModal()">×</button></div>
-    <div class="chat-body" id="chatBody"></div>
-    <div class="chat-input-row"><input type="text" id="chatInput" placeholder="Сообщение..." maxlength="500"><button style="width: 32px; height: 32px; border-radius: 50%; background: var(--txt); color: var(--bg); border: none; display: flex; align-items: center; justify-content: center;" id="chatSend">➤</button></div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="reviewModal">
-  <div class="modal">
-    <h3 style="font-size: 16px;">Оставить отзыв</h3>
-    <div class="rating-stars" id="ratingStars"><span class="rating-star" data-r="1">★</span><span class="rating-star" data-r="2">★</span><span class="rating-star" data-r="3">★</span><span class="rating-star" data-r="4">★</span><span class="rating-star" data-r="5">★</span></div>
-    <textarea class="input" id="reviewComment" placeholder="Комментарий (необязательно)" style="min-height: 60px;"></textarea>
-    <div class="error-msg" id="reviewError"></div>
-    <button class="btn btn-primary btn-block" id="reviewSubmitBtn">Отправить</button>
-    <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('reviewModal')">Отмена</button>
-  </div>
-</div>
-
-<script src="app.js"></script>
-</body>
-</html> 6px;">
-      <button class="btn btn-primary btn-block" id="orderSubmit">Подтвердить</button>
-      <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('orderModal')">Отмена</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="chatModal">
-  <div class="modal" style="padding: 0; gap: 0;">
-    <div style="padding: 12px 16px; border-bottom: 1px solid var(--brd); display: flex; align-items: center; gap: 10px;"><div class="avatar" id="chatAvatar">?</div><div style="flex: 1;"><div style="font-size: 14px; font-weight: 700;" id="chatTitle">Чат</div><div style="font-size: 10px; color: var(--dim);" id="chatSub">Собеседник</div></div><button style="background: none; border: none; color: var(--dim); font-size: 20px;" onclick="closeChatModal()">×</button></div>
-    <div class="chat-body" id="chatBody"></div>
-    <div class="chat-input-row"><input type="text" id="chatInput" placeholder="Сообщение..." maxlength="500"><button style="width: 32px; height: 32px; border-radius: 50%; background: var(--yellow); color: #000; border: none; display: flex; align-items: center; justify-content: center;" id="chatSend">➤</button></div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="reviewModal">
-  <div class="modal">
-    <h3 style="font-size: 16px;">Оставить отзыв</h3>
-    <div class="rating-stars" id="ratingStars"><span class="rating-star" data-r="1">★</span><span class="rating-star" data-r="2">★</span><span class="rating-star" data-r="3">★</span><span class="rating-star" data-r="4">★</span><span class="rating-star" data-r="5">★</span></div>
     <textarea class="input" id="reviewComment" placeholder="Комментарий (необязательно)" style="min-height: 60px;"></textarea>
     <div class="error-msg" id="reviewError"></div>
     <button class="btn btn-primary btn-block" id="reviewSubmitBtn">Отправить</button>
