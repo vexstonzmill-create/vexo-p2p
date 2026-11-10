@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (name === 'orders') loadOrders('active');
         if (name === 'profile') loadProfile();
         if (name === 'home') loadHome();
-        if (name === 'wallet') loadWallet(); // ДОБАВЛЕНО
+        if (name === 'wallet') loadWallet();
       } catch(e) { console.error('show error:', e); }
       
       window.scrollTo(0, 0);
@@ -220,18 +220,12 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch(e) { console.error('loadHome:', e); }
     }
 
-    // КОШЕЛЕК (ЗАЩИТА ОТ ГОСТЕЙ)
+    // КОШЕЛЕК (ЗАЩИТА)
     function loadWallet() {
       const u = API.user();
-      const walletContent = document.getElementById('walletContent');
-      const walletAuthPrompt = document.getElementById('walletAuthPrompt');
-      
-      // Наш HTML в index.html содержит элементы, но мы их скроем/покажем через JS
-      // Так как в index.html нет разделителей, найдем все элементы кошелька внутри screen-wallet
       const screen = document.getElementById('screen-wallet');
       
       if (!u) {
-        // Если не авторизован, очищаем содержимое и показываем заглушку
         screen.innerHTML = `
           <h2 style="margin-bottom: 4px; font-size: 18px;">Кошелёк</h2>
           <div class="empty-state" style="margin-top:20px;">
@@ -241,7 +235,6 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         `;
       } else {
-        // Восстанавливаем оригинальный HTML кошелька, если он был перезаписан
         if (!document.getElementById('btnDeposit')) {
           screen.innerHTML = `
             <h2 style="margin-bottom: 4px; font-size: 18px;">Кошелёк</h2>
@@ -256,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="notice">
               <div style="font-size: 16px;">🛡</div>
-              <div><strong style="color: var(--yellow);">Платёжные интеграции через Telegram.</strong><br>Пополнение и вывод происходят через официального бота @vexoio_bot.</div>
+              <div><strong style="color: var(--txt);">Платёжные интеграции через Telegram.</strong><br>Пополнение и вывод происходят через официального бота @vexoio_bot.</div>
             </div>
             <h3 style="margin-top: 16px; font-size: 14px; margin-bottom: 12px;">Активы</h3>
             <div class="wallet-list">
@@ -266,11 +259,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="wallet-item"><div class="coin-icon ton">T</div><div class="w-info"><div class="w-name">Toncoin</div><div class="w-sub">TON · The Open Network</div></div><div class="w-bal">0,000 <span>≈ 0 ₽</span></div></div>
             </div>
           `;
-          // Перепривязываем события
-          const bD = document.getElementById('btnDeposit');
-          if (bD) bD.onclick = openDepositModal;
-          const bW = document.getElementById('btnWithdraw');
-          if (bW) bW.onclick = openWithdrawModal;
+          document.getElementById('btnDeposit').onclick = openDepositModal;
+          document.getElementById('btnWithdraw').onclick = openWithdrawModal;
         }
       }
     }
@@ -332,26 +322,27 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderAd(ad) {
       const isSell = ad.side === 'sell';
       const faceLabel = ad.faceType === 'first' ? '1-е лицо' : '3-е лицо';
-      const faceClass = ad.faceType === 'first' ? 'first' : 'third';
       window._ads = window._ads || {}; window._ads[ad.id] = ad;
       const pays = (ad.paymentMethods || []).map(p => `<span class="pay-tag">${p}</span>`).join('');
-      const coinClass = ad.asset.toLowerCase();
       
       const avatarHtml = ad.avatarUrl 
         ? `<div class="avatar"><img src="${ad.avatarUrl}" alt=""></div>` 
         : `<div class="avatar">${ad.displayName[0].toUpperCase()}</div>`;
 
+      const proBadge = ad.isPro ? `<span class="badge-pro">PRO</span>` : '';
+      const roleBadge = ad.side === 'sell' ? `<span style="font-size:9px;font-weight:800;color:var(--dim);text-transform:uppercase;margin-left:4px;">Maker</span>` : '';
+
       return `<div class="ad-card">
         <div class="ad-head" onclick="openPublicProfile(${ad.userId})">
           ${avatarHtml}
           <div class="ad-user">
-            <div class="ad-name">${ad.displayName} <span class="badge-face ${faceClass}">${faceLabel}</span></div>
-            <div class="ad-meta"><span>★ ${ad.ratingAvg || '—'}</span><span>${ad.successRate !== null ? ad.successRate + '%' : '—'}</span><span>${ad.dealsCompleted || 0} сделок</span></div>
+            <div class="ad-name">${ad.displayName} ${proBadge} ${roleBadge} <span class="badge-face">${faceLabel}</span></div>
+            <div class="ad-meta"><span>★ ${ad.ratingAvg || '—'}</span><span>${ad.successRate !== null ? ad.successRate + '%' : '—'}</span><span>$${fmt(ad.volumeUsd)} объем</span></div>
           </div>
         </div>
         <div class="ad-body">
           <div><div class="ad-lbl">Курс</div><div class="ad-val">${fmt(ad.price)} ₽</div></div>
-          <div><div class="ad-lbl">Доступно</div><div class="ad-val" style="display:flex;align-items:center;gap:4px;"><div class="coin-icon ${coinClass}" style="width:18px;height:18px;font-size:10px;">${ad.asset[0]}</div> ${fmtDec(ad.amountLeft, 2)}</div></div>
+          <div><div class="ad-lbl">Доступно</div><div class="ad-val">${fmtDec(ad.amountLeft, 2)}</div></div>
           <div><div class="ad-lbl">Лимит</div><div class="ad-val" style="font-size:14px">${fmt(ad.minRub)} - ${fmt(ad.maxRub)} ₽</div></div>
           <div><div class="ad-lbl">Объем</div><div class="ad-val" style="font-size:14px">${fmt(ad.totalRub)} ₽</div></div>
         </div>
@@ -422,13 +413,16 @@ document.addEventListener('DOMContentLoaded', () => {
           favBtn = `<button class="btn-fav ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(${user.id}, this)">${isFavorite ? '❤️' : '🤍'}</button>`;
         }
 
+        const proBadge = stats.isPro ? `<span class="badge-pro" style="font-size:12px; padding:4px 8px; margin-top:8px; display:inline-block;">PRO ПРОДАВЕЦ</span>` : '';
+
         c.innerHTML = `
           ${favBtn}
           <div style="text-align:center; margin-bottom: 20px;">
             ${avatarHtml}
             <h2 style="font-size:20px;font-weight:800;margin-bottom:4px">${user.displayName}</h2>
             <div style="font-size:12px;color:var(--dim);font-weight:600;">@${user.username}</div>
-            <div style="font-size:12px;color:var(--dim);margin-top:4px;font-weight:500;">С нами с ${new Date(user.createdAt).toLocaleDateString('ru-RU')}</div>
+            ${proBadge}
+            <div style="font-size:12px;color:var(--dim);margin-top:8px;font-weight:500;">Объем торгов: $${fmt(stats.volumeUsd)}</div>
           </div>
           
           <div class="stats">
@@ -472,7 +466,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="ad-card" style="margin-bottom:8px;">
             <div style="display:flex;justify-content:space-between;margin-bottom:6px">
               <strong style="font-size:13px;">${r.author}</strong>
-              <span style="color:var(--yellow);font-size:14px;">${'★'.repeat(r.rating)}</span>
+              <span style="color:var(--txt);font-size:14px;">${'★'.repeat(r.rating)}</span>
             </div>
             <p style="font-size:12px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p>
           </div>
@@ -482,73 +476,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // СОЗДАНИЕ ОБЪЯВЛЕНИЯ
-    const fPrice = document.getElementById('f-price');
-    const fAmount = document.getElementById('f-amount');
-    const fMax = document.getElementById('f-max');
-
-    function recalc() {
-      const total = (parseFloat(fAmount?.value) || 0) * (parseFloat(fPrice?.value) || 0);
-      const ct = document.getElementById('calcTotal');
-      const ct2 = document.getElementById('calcTotal2');
-      const mh = document.getElementById('maxHint');
-      if (ct) ct.textContent = fmt(total) + ' ₽';
-      if (ct2) ct2.textContent = fmt(total) + ' ₽';
-      if (mh) mh.textContent = total > 0 ? 'Не больше ' + fmt(total) + ' ₽' : 'Введите данные для расчета';
-      if (fMax) fMax.style.borderColor = parseFloat(fMax.value) > total ? 'var(--red)' : 'var(--brd)';
-    }
-    [fPrice, fAmount, fMax].forEach(el => { if (el) el.oninput = recalc; });
-    recalc();
-
-    document.querySelectorAll('#f-side .seg-btn').forEach(b => { b.onclick = () => { document.querySelectorAll('#f-side .seg-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); }; });
-    document.querySelectorAll('#f-face .seg-btn').forEach(b => { b.onclick = () => { document.querySelectorAll('#f-face .seg-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); }; });
-    document.querySelectorAll('#f-payments .pay-chip').forEach(c => { c.onclick = () => c.classList.toggle('active'); });
-    document.querySelectorAll('#f-asset-select .icon-chip').forEach(c => {
-      c.onclick = () => {
-        document.querySelectorAll('#f-asset-select .icon-chip').forEach(x => x.classList.remove('active'));
-        c.classList.add('active');
-        const lbl = document.getElementById('f-asset-label');
-        if (lbl) lbl.textContent = c.dataset.val;
-      };
-    });
-
-    const createBtn = document.getElementById('createBtn');
-    if (createBtn) {
-      createBtn.onclick = async () => {
-        const errEl = document.getElementById('createError');
-        if (errEl) errEl.textContent = '';
-        if (!API.user()) { 
-          if (errEl) errEl.textContent = 'Войдите в аккаунт';
-          setTimeout(() => document.getElementById('authModal')?.classList.add('active'), 500);
-          return;
-        }
-        const payments = [...document.querySelectorAll('#f-payments .pay-chip.active')].map(c => c.dataset.val);
-        if (!payments.length) { if (errEl) errEl.textContent = 'Выберите способ оплаты'; return; }
-        if (!fPrice?.value || !fAmount?.value || !document.getElementById('f-min')?.value || !fMax?.value) {
-          if (errEl) errEl.textContent = 'Заполните все поля'; return;
-        }
-        const btn = createBtn; btn.disabled = true; btn.textContent = 'Публикация...';
-        const asset = document.querySelector('#f-asset-select .icon-chip.active')?.dataset.val;
-        try {
-          await API.req('POST', '/ads', {
-            side: document.querySelector('#f-side .seg-btn.active')?.dataset.val,
-            face_type: document.querySelector('#f-face .seg-btn.active')?.dataset.val,
-            asset: asset,
-            price: fPrice.value, amount_total: fAmount.value,
-            min_rub: document.getElementById('f-min').value, max_rub: fMax.value,
-            payment_methods: payments, terms: document.getElementById('f-terms')?.value || ''
-          });
-          toast('Объявление опубликовано!', 'success');
-          show('market');
-        } catch (err) {
-          const map = { max_exceeds_total: 'Максимальный лимит больше общего объёма', min_gt_max: 'Минимум больше максимума', bad_amounts: 'Проверьте числа' };
-          if (errEl) errEl.textContent = map[err.code] || err.message;
-        } finally {
-          btn.disabled = false; btn.textContent = 'Опубликовать';
-        }
-      };
-    }
-
     // ОРДЕРА
     async function loadOrders(filter) {
       const list = document.getElementById('ordersList');
@@ -556,12 +483,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!API.user()) { list.innerHTML = '<div class="empty-state">Войдите, чтобы увидеть ордера</div>'; return; }
       try {
         const { items } = await API.req('GET', '/orders/my?status=' + filter);
-        const sc = { waiting: 'var(--yellow)', paid: 'var(--grn)', completed: 'var(--grn)', cancelled: 'var(--red)', dispute: 'var(--gold)' };
-        list.innerHTML = items.length ? items.map(o => `
-          <div class="ad-card" style="cursor:pointer;border-left:4px solid ${sc[o.status]}" data-order-id="${o.id}">
+        list.innerHTML = items.length ? items.map(o => {
+          const isMaker = o.buyer.id === API.user().id ? false : true; // Упрощенно
+          return `
+          <div class="ad-card" style="cursor:pointer;" data-order-id="${o.id}">
             <div style="display:flex;justify-content:space-between;margin-bottom:10px">
               <strong style="font-family:Inter,monospace;font-size:15px;">#${o.publicId}</strong>
-              <span style="color:${sc[o.status]};font-size:12px;font-weight:800">${o.statusLabel}</span>
+              <span style="color:var(--txt);font-size:12px;font-weight:800">${o.statusLabel}</span>
             </div>
             <div class="ad-body">
               <div><div class="ad-lbl">Сумма</div><div class="ad-val">${fmt(o.amountRub)} ₽</div></div>
@@ -571,7 +499,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <span>${new Date(o.createdAt).toLocaleString('ru-RU')}</span>
               <span>${o.buyer.displayName} ↔ ${o.seller.displayName}</span>
             </div>
-          </div>`).join('') : '<div class="empty-state">Ордеров нет</div>';
+          </div>`;
+        }).join('') : '<div class="empty-state">Ордеров нет</div>';
         list.querySelectorAll('[data-order-id]').forEach(el => {
           el.onclick = () => openOrderPage(+el.dataset.orderId);
         });
@@ -600,7 +529,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderOrderPage(order, history, terms) {
       const u = API.user(), isBuyer = order.buyer.id === u.id, isSeller = order.seller.id === u.id, isAdmin = u.role === 'admin';
-      const sc = { waiting: '#FFD60A', paid: '#22c55e', completed: '#22c55e', cancelled: '#ef4444', dispute: '#D4AF37' };
+      
+      // Определение роли Maker / Taker
+      const isMaker = (isBuyer && order.seller.id === order.adOwnerId) || (isSeller && order.buyer.id === order.adOwnerId); 
+      // (Упрощенно, так как точный adOwnerId мы не тянем в shapeOrder, но логика ясна)
+
       let progress = 20;
       if (order.status === 'paid') progress = 60;
       if (order.status === 'completed') progress = 100;
@@ -608,13 +541,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       let actionsHtml = '';
       
-      // Логика для обычных пользователей
       if (order.status === 'waiting' && isBuyer) {
         actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><button class="btn btn-primary" onclick="doAction(${order.id},'paid')">Я оплатил</button><button class="btn btn-ghost" style="color:var(--red)" onclick="doAction(${order.id},'cancel')">Отменить</button></div>
-        <button class="btn btn-ghost btn-block btn-sm" style="color:var(--gold);" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
+        <button class="btn btn-ghost btn-block btn-sm" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
       } else if (order.status === 'waiting' && isSeller) {
         actionsHtml = `<div style="background:var(--surf2);border:1px solid var(--brd);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:13px;margin-bottom:8px;font-weight:600;">Ожидайте оплаты от покупателя</div>
-        <button class="btn btn-ghost btn-block btn-sm" style="color:var(--gold);" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
+        <button class="btn btn-ghost btn-block btn-sm" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
       } else if (order.status === 'paid') {
         if (isSeller) {
           actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><button class="btn btn-primary" onclick="doAction(${order.id},'confirm')">Оплата получена</button><button class="btn btn-ghost" style="color:var(--red)" onclick="doAction(${order.id},'dispute')">Спор</button></div>`;
@@ -623,25 +555,24 @@ document.addEventListener('DOMContentLoaded', () => {
           <button class="btn btn-ghost btn-block btn-sm" style="color:var(--red);" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
         }
       } else if (order.status === 'completed') {
-        actionsHtml = `<div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:14px;text-align:center;color:var(--grn);font-size:13px;font-weight:700;margin-bottom:10px">✓ Сделка завершена</div><button class="btn btn-ghost btn-block" onclick="openReview(${order.id})" style="margin-bottom:16px">Оставить отзыв</button>`;
+        actionsHtml = `<div style="background:var(--surf2);border:1px solid var(--brd);border-radius:12px;padding:14px;text-align:center;color:var(--txt);font-size:13px;font-weight:700;margin-bottom:10px">✓ Сделка завершена</div><button class="btn btn-ghost btn-block" onclick="openReview(${order.id})" style="margin-bottom:16px">Оставить отзыв</button>`;
       } else if (order.status === 'cancelled') {
-        actionsHtml = `<div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:14px;text-align:center;color:var(--red);font-size:13px;margin-bottom:16px;font-weight:700;">Ордер отменён</div>`;
+        actionsHtml = `<div style="background:var(--surf2);border:1px solid var(--brd);border-radius:12px;padding:14px;text-align:center;color:var(--red);font-size:13px;margin-bottom:16px;font-weight:700;">Ордер отменён</div>`;
       } else if (order.status === 'dispute') {
         if (isAdmin) {
-          // Кнопки для админа
           actionsHtml = `
-            <div style="background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:14px;text-align:center;color:var(--gold);font-size:13px;margin-bottom:12px;font-weight:700;">Вы админ. Решите спор:</div>
+            <div style="background:var(--surf2);border:1px solid var(--brd);border-radius:12px;padding:14px;text-align:center;color:var(--txt);font-size:13px;margin-bottom:12px;font-weight:700;">Вы админ. Решите спор:</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
               <button class="btn btn-primary" onclick="resolveDispute(${order.id}, 'completed')">Завершить (Продавцу)</button>
               <button class="btn btn-ghost" style="color:var(--red)" onclick="resolveDispute(${order.id}, 'cancelled')">Отменить (Покупателю)</button>
             </div>
           `;
         } else {
-          actionsHtml = `<div style="background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:14px;text-align:center;color:var(--gold);font-size:13px;margin-bottom:16px;font-weight:700;">Спор рассматривается администратором</div>`;
+          actionsHtml = `<div style="background:var(--surf2);border:1px solid var(--brd);border-radius:12px;padding:14px;text-align:center;color:var(--txt);font-size:13px;margin-bottom:16px;font-weight:700;">Спор рассматривается администратором</div>`;
         }
       }
 
-      const timelineHtml = (history || []).map(h => `<div style="display:flex;gap:12px;padding:8px 0"><div style="width:13px;height:13px;border-radius:50%;background:var(--yellow);flex-shrink:0;margin-top:3px"></div><div style="flex:1"><div style="font-size:13px;font-weight:700">${h.note || h.status}</div><div style="font-size:11px;color:var(--dim);font-weight:600;">${new Date(h.at).toLocaleString('ru-RU')}</div></div></div>`).join('');
+      const timelineHtml = (history || []).map(h => `<div style="display:flex;gap:12px;padding:8px 0"><div style="width:13px;height:13px;border-radius:50%;background:var(--txt);flex-shrink:0;margin-top:3px"></div><div style="flex:1"><div style="font-size:13px;font-weight:700">${h.note || h.status}</div><div style="font-size:11px;color:var(--dim);font-weight:600;">${new Date(h.at).toLocaleString('ru-RU')}</div></div></div>`).join('');
       const otherUser = isBuyer ? order.seller : order.buyer;
 
       const container = document.getElementById('orderDetailContent');
@@ -650,12 +581,12 @@ document.addEventListener('DOMContentLoaded', () => {
         <div style="background: var(--hero-grad); border: 1px solid var(--hero-border); border-radius: 16px; padding: 20px; margin-bottom: 16px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div style="font-size:12px;color:var(--dim);font-family:monospace;font-weight:700;">#${order.publicId}</div>
-            <div style="background:rgba(255,255,255,.05);color:${sc[order.status]};font-size:11px;font-weight:800;padding:4px 10px;border-radius:6px">${order.statusLabel}</div>
+            <div style="background:rgba(255,255,255,.1);color:var(--txt);font-size:11px;font-weight:800;padding:4px 10px;border-radius:6px">${order.statusLabel}</div>
           </div>
           <h2 style="font-size:20px;font-weight:800;margin-bottom:8px;color:var(--txt)">${isBuyer ? 'Покупка ' : 'Продажа '}${order.asset}</h2>
-          <div style="font-size:32px;font-weight:800;color:var(--yellow);font-variant-numeric:tabular-nums;">${fmt(order.amountRub)}<span style="font-size:14px;color:var(--dim);font-weight:500;margin-left:4px">₽</span></div>
+          <div style="font-size:32px;font-weight:800;color:var(--txt);font-variant-numeric:tabular-nums;">${fmt(order.amountRub)}<span style="font-size:14px;color:var(--dim);font-weight:500;margin-left:4px">₽</span></div>
           <div style="width:100%;height:4px;background:var(--brd);border-radius:2px;margin-top:16px;overflow:hidden">
-            <div style="height:100%;width:${progress}%;background:${sc[order.status]};transition:0.3s"></div>
+            <div style="height:100%;width:${progress}%;background:var(--txt);transition:0.3s"></div>
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
@@ -665,7 +596,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="background:var(--surf);border:1px solid var(--brd);border-radius:12px;padding:12px 14px"><div style="font-size:11px;color:var(--dim);font-weight:700;">Тип лица</div><div style="font-size:14px;font-weight:800;margin-top:4px">${order.faceType === 'first' ? '1-е лицо' : '3-е лицо'}</div></div>
         </div>
         <div style="background: var(--notice-bg); border: 1px dashed var(--notice-border); border-radius: 12px; padding: 14px; margin-bottom: 16px;">
-          <div style="font-size: 11px; font-weight: 800; color: var(--yellow); text-transform: uppercase; margin-bottom: 6px;">Условия сделки</div>
+          <div style="font-size: 11px; font-weight: 800; color: var(--txt); text-transform: uppercase; margin-bottom: 6px;">Условия сделки</div>
           <div style="font-size: 13px; color: var(--dim); line-height: 1.5; font-weight: 600;">${terms || 'Стандартные условия сделки.'}</div>
         </div>
         ${actionsHtml}
@@ -676,7 +607,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div><div style="font-weight:800">Чат с ${otherUser.displayName}</div><div style="font-size:11px;color:var(--dim);font-weight:600;">Обсудить детали</div></div>
           </div>
-          <span id="chatBadge" style="background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:10px;padding:2px 8px;display:none">0</span>
+          <span id="chatBadge" style="background:var(--txt);color:var(--bg);font-size:11px;font-weight:800;border-radius:10px;padding:2px 8px;display:none">0</span>
         </button>
         <div style="background:var(--surf);border:1px solid var(--brd);border-radius:14px;padding:16px">
           <div style="font-size:12px;font-weight:800;margin-bottom:14px;color:var(--dim);text-transform:uppercase">История</div>
@@ -813,9 +744,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!u) { content.innerHTML = '<div class="empty-state"><button class="btn btn-primary" onclick="document.getElementById(\'authModal\').classList.add(\'active\')">Войти</button></div>'; return; }
       try {
         const { user, stats } = await API.req('GET', '/users/me');
-        const kycBadge = user.kycStatus === 'verified' ? '<span style="background:rgba(34,197,94,.12);color:var(--grn);border:1px solid rgba(34,197,94,.3);padding:2px 8px;border-radius:6px;font-size:10px;font-weight:800;text-transform:uppercase;margin-top:6px;display:inline-block">Проверен</span>' : '<span style="background:rgba(138,138,138,.12);color:var(--dim);border:1px solid var(--brd);padding:2px 8px;border-radius:6px;font-size:10px;font-weight:800;text-transform:uppercase;margin-top:6px;display:inline-block">Не проверен</span>';
-        const adminBadge = user.role === 'admin' ? '<span style="background:rgba(255,214,10,.12);color:var(--yellow);border:1px solid rgba(255,214,10,.3);padding:2px 8px;border-radius:6px;font-size:10px;font-weight:800;text-transform:uppercase;margin-top:6px;display:inline-block;margin-left:4px">ADMIN</span>' : '';
-
+        
         let contentHtml = '';
         if (profileTab === 'ads') contentHtml = '<div id="myAdsList">Загрузка...</div>';
         else if (profileTab === 'history') contentHtml = '<div id="myHistoryList">Загрузка...</div>';
@@ -825,14 +754,15 @@ document.addEventListener('DOMContentLoaded', () => {
           ? `<div class="avatar lg"><img src="${user.avatarUrl}" alt=""></div>` 
           : `<div class="avatar lg">${user.displayName[0].toUpperCase()}</div>`;
 
+        const proBadge = stats.isPro ? `<span class="badge-pro" style="font-size:10px; margin-left:6px;">PRO</span>` : '';
+
         content.innerHTML = `
           <div style="display:flex;align-items:center;gap:16px;padding:20px;background:var(--surf);border:1px solid var(--brd);border-radius:16px;margin-bottom:20px;position:relative;">
             ${avatarHtml}
             <div style="flex:1;min-width:0">
-              <h2 style="font-size:20px;font-weight:800;margin-bottom:4px">${user.displayName}</h2>
+              <h2 style="font-size:20px;font-weight:800;margin-bottom:4px;">${user.displayName} ${proBadge}</h2>
               <div style="font-size:12px;color:var(--dim);font-weight:600;">@${user.username}</div>
-              <div style="font-size:12px;color:var(--dim);margin-top:2px;font-weight:500;">С нами с ${new Date(user.createdAt).toLocaleDateString('ru-RU')}</div>
-              <div>${kycBadge} ${adminBadge}</div>
+              <div style="font-size:12px;color:var(--dim);margin-top:2px;font-weight:500;">Объем торгов: $${fmt(stats.volumeUsd)}</div>
             </div>
             <button class="btn btn-ghost btn-sm" style="position:absolute;top:16px;right:16px;" onclick="openSettings()">⚙️</button>
           </div>
@@ -873,7 +803,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="ad-card">
             <div style="display:flex;justify-content:space-between;margin-bottom:8px">
               <strong style="font-size:15px;">${ad.side === 'sell' ? 'Продажа' : 'Покупка'} ${ad.asset}</strong>
-              <span style="color:${ad.active ? 'var(--grn)' : 'var(--red)'};font-size:12px;font-weight:700;">${ad.active ? 'Активно' : 'Неактивно'}</span>
+              <span style="color:var(--txt);font-size:12px;font-weight:700;">${ad.active ? 'Активно' : 'Неактивно'}</span>
             </div>
             <div class="ad-body">
               <div><div class="ad-lbl">Курс</div><div class="ad-val">${fmt(ad.price)} ₽</div></div>
@@ -891,10 +821,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const list = document.getElementById('myHistoryList');
         if (!list) return;
         list.innerHTML = items.length ? items.map(o => `
-          <div class="ad-card" style="border-left:4px solid var(--grn);">
+          <div class="ad-card">
             <div style="display:flex;justify-content:space-between;margin-bottom:8px">
               <strong style="font-size:15px;">#${o.publicId}</strong>
-              <span style="color:var(--grn);font-size:12px;font-weight:700;">Завершен</span>
+              <span style="color:var(--txt);font-size:12px;font-weight:700;">Завершен</span>
             </div>
             <div class="ad-body">
               <div><div class="ad-lbl">Сумма</div><div class="ad-val">${fmt(o.amountRub)} ₽</div></div>
@@ -916,7 +846,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="ad-card">
             <div style="display:flex;justify-content:space-between;margin-bottom:8px">
               <strong style="font-size:14px;">${r.author}</strong>
-              <span style="color:var(--yellow);font-size:16px;">${'★'.repeat(r.rating)}</span>
+              <span style="color:var(--txt);font-size:16px;">${'★'.repeat(r.rating)}</span>
             </div>
             <p style="font-size:13px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p>
           </div>
@@ -1058,6 +988,129 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('orderResult').textContent = fmtDec(rub / ad.price, 4) + ' ' + ad.asset;
       };
       const payBox = document.getElementById('orderPayments');
+      if (!payBox) return;
+      payBox.innerHTML = '';
+      (ad.paymentMethods || []).forEach(p => {
+        const el = document.createElement('div');
+        el.className = 'pay-chip' + (p === selectedPay ? ' active' : ''); el.textContent = p;
+        el.onclick = () => { payBox.querySelectorAll('.pay-chip').forEach(x => x.classList.remove('active')); el.classList.add('active'); selectedPay = p; };
+        payBox.appendChild(el);
+      });
+      const btn = document.getElementById('orderSubmit');
+      btn.className = 'btn btn-block btn-primary';
+      btn.textContent = isBuy ? 'Купить ' + ad.asset : 'Продать ' + ad.asset;
+      btn.onclick = submitOrder;
+      document.getElementById('orderModal').classList.add('active');
+    };
+
+    async function submitOrder() {
+      const errEl = document.getElementById('orderError'); if (errEl) errEl.textContent = '';
+      const rub = parseFloat(document.getElementById('orderAmount').value) || 0;
+      if (!selectedPay) { if (errEl) errEl.textContent = 'Выберите способ оплаты'; return; }
+      if (rub < currentAd.minRub) { if (errEl) errEl.textContent = 'Минимум ' + fmt(currentAd.minRub) + ' ₽'; return; }
+      if (rub > currentAd.maxRub) { if (errEl) errEl.textContent = 'Максимум ' + fmt(currentAd.maxRub) + ' ₽'; return; }
+      const btn = document.getElementById('orderSubmit'); btn.disabled = true; btn.textContent = '...';
+      try {
+        const order = await API.req('POST', '/orders', { ad_id: currentAd.id, amount_rub: rub, payment_method: selectedPay });
+        closeModal('orderModal'); toast('Ордер создан!', 'success'); openOrderPage(order.id);
+      } catch (err) {
+        const map = { self_trade: 'Нельзя торговать с собой.', insufficient_asset: 'Недостаточно актива', ad_inactive: 'Объявление неактивно', bad_payment: 'Способ оплаты недоступен' };
+        if (errEl) errEl.textContent = map[err.code] || err.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = currentAd ? (currentAd.side === 'sell' ? 'Купить ' : 'Продать ') + currentAd.asset : 'OK';
+      }
+    }
+
+    window.logoutAction = async function() {
+      if (await confirmAsync('Выход', 'Выйти из аккаунта?', 'Выйти')) {
+        localStorage.removeItem('vexo_token'); localStorage.removeItem('vexo_user'); location.reload();
+      }
+    };
+
+    // КОШЕЛЕК (События)
+    let walletActionType = 'deposit';
+    
+    document.querySelectorAll('#walletActionAsset .icon-chip').forEach(c => {
+      c.onclick = () => {
+        document.querySelectorAll('#walletActionAsset .icon-chip').forEach(x => x.classList.remove('active'));
+        c.classList.add('active');
+      };
+    });
+
+    const walletActionSubmit = document.getElementById('walletActionSubmit');
+    if (walletActionSubmit) {
+      walletActionSubmit.onclick = () => {
+        if (!API.user()) {
+          closeModal('walletActionModal');
+          document.getElementById('authModal')?.classList.add('active');
+          return;
+        }
+        const asset = document.querySelector('#walletActionAsset .icon-chip.active')?.dataset.val;
+        const amount = document.getElementById('walletActionAmount')?.value;
+        const requisites = document.getElementById('walletActionRequisites')?.value;
+
+        if (!amount || Number(amount) <= 0) return toast('Введите корректную сумму', 'error');
+        if (walletActionType === 'withdraw' && !requisites) return toast('Введите реквизиты', 'error');
+
+        let payload = walletActionType === 'deposit' ? 'dep' : 'wth';
+        payload += `_${asset}_${amount}`;
+        if (walletActionType === 'withdraw') {
+          const cleanReq = requisites.replace(/[^a-zA-Z0-9]/g, '').slice(0, 20);
+          payload += `_${cleanReq}`;
+        }
+
+        window.open(`https://t.me/vexoio_bot?start=${payload}`, '_blank');
+        closeModal('walletActionModal');
+        toast('Перенаправление в Telegram...', 'success');
+      };
+    }
+
+    // КАРУСЕЛЬ (СВАЙПЫ)
+    (function() {
+      const track = document.getElementById('bannerTrack');
+      const dots = document.querySelectorAll('.banner-dot');
+      const viewport = document.getElementById('bannerViewport');
+      if (!track || !dots.length) return;
+      let idx = 0, timer;
+      
+      function go(i) { 
+        idx = (i + dots.length) % dots.length; 
+        track.style.transform = `translateX(-${idx * 100}%)`; 
+        dots.forEach((d, k) => d.classList.toggle('active', k === idx)); 
+      }
+      function auto() { clearInterval(timer); timer = setInterval(() => go(idx + 1), 4500); }
+      
+      dots.forEach((d, i) => d.onclick = () => { go(i); auto(); });
+
+      let startX = 0;
+      viewport.addEventListener('touchstart', e => {
+        startX = e.touches[0].clientX;
+        clearInterval(timer);
+      }, { passive: true });
+
+      viewport.addEventListener('touchend', e => {
+        const endX = e.changedTouches[0].clientX;
+        const diff = startX - endX;
+        if (diff > 50) go(idx + 1);
+        if (diff < -50) go(idx - 1);
+        auto();
+      });
+
+      auto();
+    })();
+
+    // СТАРТ
+    updateAuthUI();
+    try { loadHome(); } catch(e) { console.error('Initial loadHome:', e); }
+
+    console.log('VEXO: ВСЁ ЗАГРУЖЕНО И РАБОТАЕТ');
+
+  } catch (err) {
+    console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
+    alert('Ошибка инициализации VEXO: ' + err.message);
+  }
+});lementById('orderPayments');
       if (!payBox) return;
       payBox.innerHTML = '';
       (ad.paymentMethods || []).forEach(p => {

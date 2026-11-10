@@ -2,66 +2,100 @@ require('dotenv').config();
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { Pool } = require('pg');
 
 const PORT = Number(process.env.PORT) || 3000;
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_vexo_key_that_is_long_enough_12345';
 
-if (!JWT_SECRET || JWT_SECRET.length < 32) {
-  console.error('❌ JWT_SECRET must be at least 32 chars');
-  process.exit(1);
-}
+// --- ПОДКЛЮЧЕНИЕ К БАЗЕ ДАННЫХ NEON ---
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false } // Обязательно для Neon
+});
 
-const DATA_DIR = path.join(__dirname, 'data');
-const DATA_FILE = path.join(DATA_DIR, 'db.json');
-
-function loadDB() {
-  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-  if (!fs.existsSync(DATA_FILE)) {
-    return {
-      users: [], ads: [], orders: [], messages: [], reviews: [], platformReviews: [],
-      counters: { user: 0, ad: 0, order: 0, message: 0, review: 0, platformReview: 0 }
-    };
+// --- ИНИЦИАЛИЗАЦИЯ ТАБЛИЦ ---
+async function initDB() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(50) UNIQUE NOT NULL,
+        display_name VARCHAR(50),
+        email VARCHAR(100) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        role VARCHAR(20) DEFAULT 'user',
+        kyc_status VARCHAR(20) DEFAULT 'none',
+        avatar_url TEXT,
+        favorites INT[] DEFAULT '{}',
+        volume_usd NUMERIC DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS ads (
+        id SERIAL PRIMARY KEY,
+        user_id INT REFERENCES users(id),
+        side VARCHAR(10),
+        face_type VARCHAR(20),
+        asset VARCHAR(20),
+        price NUMERIC,
+        amount_total NUMERIC,
+        amount_left NUMERIC,
+        min_rub NUMERIC,
+        max_rub NUMERIC,
+        payment_methods TEXT[],
+        terms TEXT,
+        active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS orders (
+        id SERIAL PRIMARY KEY,
+        public_id VARCHAR(20) UNIQUE,
+        ad_id INT REFERENCES ads(id),
+        buyer_id INT REFERENCES users(id),
+        seller_id INT REFERENCES users(id),
+        asset VARCHAR(20),
+        price NUMERIC,
+        amount_rub NUMERIC,
+        amount_asset NUMERIC,
+        face_type VARCHAR(20),
+        payment_method VARCHAR(50),
+        status VARCHAR(20) DEFAULT 'waiting',
+        history JSONB DEFAULT '[]',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        expires_at TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS messages (
+        id SERIAL PRIMARY KEY,
+        order_id INT REFERENCES orders(id),
+        sender_id INT REFERENCES users(id),
+        text TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS reviews (
+        id SERIAL PRIMARY KEY,
+        order_id INT REFERENCES orders(id),
+        author_id INT REFERENCES users(id),
+        target_id INT REFERENCES users(id),
+        rating INT,
+        comment TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS platform_reviews (
+        id SERIAL PRIMARY KEY,
+        user_id INT REFERENCES users(id),
+        username VARCHAR(50),
+        rating INT,
+        comment TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('✓ Database tables initialized');
+  } catch (err) {
+    console.error('❌ DB Init Error:', err);
   }
-  try { 
-    return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); 
-  } catch { 
-    console.error('❌ db.json corrupted'); 
-    process.exit(1); 
-  }
 }
-
-let DB = loadDB();
-if (!DB.platformReviews) DB.platformReviews = []; 
-
-function saveDB() { 
-  fs.writeFileSync(DATA_FILE, JSON.stringify(DB, null, 2), 'utf8'); 
-}
-
-function nextId(kind) { 
-  DB.counters[kind] = (DB.counters[kind] || 0) + 1; 
-  return DB.counters[kind]; 
-}
-
-if (process.argv.includes('--seed-admin')) {
-  const username = process.env.ADMIN_USERNAME || 'admin';
-  const password = process.env.ADMIN_PASSWORD || 'ChangeMe123!';
-  if (DB.users.find(u => u.username === username)) {
-    console.log('✓ Admin already exists'); 
-    process.exit(0);
-  }
-  const hash = bcrypt.hashSync(password, 10);
-  DB.users.push({
-    id: nextId('user'), username, displayName: 'Admin', email: username + '@vexo.local',
-    passwordHash: hash, role: 'admin', kycStatus: 'verified',
-    blocked: false, favorites: [], avatarUrl: '', createdAt: new Date().toISOString()
-  });
-  saveDB();
-  console.log('✓ Admin created: ' + username + ' / ' + password);
-  process.exit(0);
-}
+initDB();
 
 const app = express();
 app.use(express.json());
@@ -73,13 +107,15 @@ app.use((req, res, next) => {
   next();
 });
 
-function auth(req, res, next) {
+// --- АВТОРИЗАЦИЯ ---
+async function auth(req, res, next) {
   const h = req.headers.authorization || '';
   const token = h.startsWith('Bearer ') ? h.slice(7) : null;
   if (!token) return res.status(401).json({ error: 'unauthorized' });
   try {
     const p = jwt.verify(token, JWT_SECRET);
-    const user = DB.users.find(u => u.id === p.sub);
+    const result = await pool.query('SELECT * FROM users WHERE id = $1', [p.sub]);
+    const user = result.rows[0];
     if (!user || user.blocked) return res.status(401).json({ error: 'unauthorized' });
     req.user = user;
     next();
@@ -90,382 +126,430 @@ function auth(req, res, next) {
 
 function publicUser(u) {
   return { 
-    id: u.id, 
-    username: u.username, 
-    displayName: u.displayName || u.username, 
-    email: u.email, 
-    role: u.role, 
-    kycStatus: u.kycStatus, 
-    avatarUrl: u.avatarUrl || '', 
-    createdAt: u.createdAt 
+    id: u.id, username: u.username, displayName: u.display_name || u.username, 
+    email: u.email, role: u.role, kycStatus: u.kyc_status, 
+    avatarUrl: u.avatar_url || '', volumeUsd: Number(u.volume_usd), createdAt: u.created_at 
   };
 }
 
-function userStats(userId) {
-  const completed = DB.orders.filter(o => o.status === 'completed' && (o.buyerId === userId || o.sellerId === userId)).length;
-  const cancelled = DB.orders.filter(o => o.status === 'cancelled' && (o.buyerId === userId || o.sellerId === userId)).length;
-  const reviews = DB.reviews.filter(r => r.targetId === userId);
-  const avg = reviews.length ? Number((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(2)) : null;
-  return {
-    dealsTotal: completed + cancelled, 
-    dealsCompleted: completed,
-    successRate: (completed + cancelled) ? Math.round((completed / (completed + cancelled)) * 100) : null,
-    reviewsCount: reviews.length, 
-    ratingAvg: avg
-  };
+// --- ПОДСЧЕТ СТАТИСТИКИ И СТАТУСА PRO ---
+async function getUserStats(userId) {
+  const completedRes = await pool.query("SELECT COUNT(*) FROM orders WHERE status = 'completed' AND (buyer_id = $1 OR seller_id = $1)", [userId]);
+  const cancelledRes = await pool.query("SELECT COUNT(*) FROM orders WHERE status = 'cancelled' AND (buyer_id = $1 OR seller_id = $1)", [userId]);
+  const reviewsRes = await pool.query("SELECT rating FROM reviews WHERE target_id = $1", [userId]);
+  const volumeRes = await pool.query("SELECT volume_usd FROM users WHERE id = $1", [userId]);
+
+  const completed = parseInt(completedRes.rows[0].count);
+  const cancelled = parseInt(cancelledRes.rows[0].count);
+  const total = completed + cancelled;
+  const successRate = total > 0 ? Math.round((completed / total) * 100) : null;
+  
+  const ratings = reviewsRes.rows.map(r => r.rating);
+  const avg = ratings.length ? Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)) : null;
+  const volumeUsd = Number(volumeRes.rows[0]?.volume_usd || 0);
+
+  // Условия для PRO: Объем от $100k, успешность от 80%, минимум 10 сделок
+  const isPro = volumeUsd >= 100000 && successRate >= 80 && completed >= 10;
+
+  return { dealsTotal: total, dealsCompleted: completed, successRate, reviewsCount: ratings.length, ratingAvg: avg, volumeUsd, isPro };
 }
 
-app.post('/api/auth/register', (req, res) => {
+// --- АУТЕНТИФИКАЦИЯ ---
+app.post('/api/auth/register', async (req, res) => {
   const { username, email, password } = req.body || {};
   if (!username || username.length < 3) return res.status(400).json({ error: 'short_username' });
   if (!email || !email.includes('@')) return res.status(400).json({ error: 'bad_email' });
   if (!password || password.length < 8) return res.status(400).json({ error: 'short_password' });
-  if (DB.users.find(u => u.username === username)) return res.status(409).json({ error: 'user_exists' });
-  if (DB.users.find(u => u.email === email.toLowerCase())) return res.status(409).json({ error: 'email_exists' });
+  
+  try {
+    const exists = await pool.query('SELECT id FROM users WHERE username = $1 OR email = $2', [username, email.toLowerCase()]);
+    if (exists.rows.length > 0) return res.status(409).json({ error: 'user_exists' });
 
-  const user = {
-    id: nextId('user'), username, displayName: username, email: email.toLowerCase(),
-    passwordHash: bcrypt.hashSync(password, 10), role: 'user',
-    kycStatus: 'none', blocked: false, favorites: [], avatarUrl: '', createdAt: new Date().toISOString()
-  };
-  DB.users.push(user); saveDB();
-  const token = jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: '7d' });
-  res.status(201).json({ token, user: publicUser(user) });
+    const hash = await bcrypt.hash(password, 10);
+    const result = await pool.query(
+      'INSERT INTO users (username, display_name, email, password_hash) VALUES ($1, $2, $3, $4) RETURNING *',
+      [username, username, email.toLowerCase(), hash]
+    );
+    const user = result.rows[0];
+    const token = jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: '7d' });
+    res.status(201).json({ token, user: publicUser(user) });
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   const { login, password } = req.body || {};
-  const user = DB.users.find(u => u.email === String(login).toLowerCase() || u.username === login);
-  if (!user || !bcrypt.compareSync(password, user.passwordHash)) return res.status(401).json({ error: 'invalid_credentials' });
-  if (user.blocked) return res.status(403).json({ error: 'blocked' });
-  const token = jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: '7d' });
-  res.json({ token, user: publicUser(user) });
+  try {
+    const result = await pool.query('SELECT * FROM users WHERE email = $1 OR username = $1', [String(login).toLowerCase()]);
+    const user = result.rows[0];
+    if (!user || !(await bcrypt.compare(password, user.password_hash))) return res.status(401).json({ error: 'invalid_credentials' });
+    
+    const token = jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: publicUser(user) });
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
-app.get('/api/users/me', auth, (req, res) => res.json({ user: publicUser(req.user), stats: userStats(req.user.id) }));
+app.get('/api/users/me', auth, async (req, res) => {
+  const stats = await getUserStats(req.user.id);
+  res.json({ user: publicUser(req.user), stats });
+});
 
-app.get('/api/users/:id', auth, (req, res) => {
-  const u = DB.users.find(x => x.id === Number(req.params.id));
+app.get('/api/users/:id', auth, async (req, res) => {
+  const result = await pool.query('SELECT * FROM users WHERE id = $1', [req.params.id]);
+  const u = result.rows[0];
   if (!u) return res.status(404).json({ error: 'not_found' });
+  const stats = await getUserStats(u.id);
   const isFavorite = req.user.favorites?.includes(u.id) || false;
-  res.json({ user: publicUser(u), stats: userStats(u.id), isFavorite });
+  res.json({ user: publicUser(u), stats, isFavorite });
 });
 
-app.patch('/api/users/me', auth, (req, res) => {
+app.patch('/api/users/me', auth, async (req, res) => {
   const { email, displayName, avatarUrl, password, currentPassword } = req.body || {};
-  
-  if (email && email !== req.user.email) {
-    if (!email.includes('@')) return res.status(400).json({ error: 'bad_email' });
-    if (DB.users.find(u => u.email === email.toLowerCase() && u.id !== req.user.id)) return res.status(409).json({ error: 'email_taken' });
-    req.user.email = email.toLowerCase();
-  }
-  
-  if (displayName) req.user.displayName = displayName.slice(0, 50);
-  if (avatarUrl !== undefined) req.user.avatarUrl = avatarUrl;
-
-  if (password) {
-    if (!currentPassword || !bcrypt.compareSync(currentPassword, req.user.passwordHash)) {
-      return res.status(400).json({ error: 'wrong_password' });
+  try {
+    if (email && email !== req.user.email) {
+      const check = await pool.query('SELECT id FROM users WHERE email = $1 AND id != $2', [email.toLowerCase(), req.user.id]);
+      if (check.rows.length > 0) return res.status(409).json({ error: 'email_taken' });
     }
-    if (password.length < 8) return res.status(400).json({ error: 'short_password' });
-    req.user.passwordHash = bcrypt.hashSync(password, 10);
-  }
+    
+    let newHash = req.user.password_hash;
+    if (password) {
+      if (!currentPassword || !(await bcrypt.compare(currentPassword, req.user.password_hash))) {
+        return res.status(400).json({ error: 'wrong_password' });
+      }
+      newHash = await bcrypt.hash(password, 10);
+    }
 
-  saveDB(); res.json({ user: publicUser(req.user) });
+    const result = await pool.query(
+      'UPDATE users SET email = COALESCE($1, email), display_name = COALESCE($2, display_name), avatar_url = COALESCE($3, avatar_url), password_hash = $4 WHERE id = $5 RETURNING *',
+      [email ? email.toLowerCase() : null, displayName, avatarUrl, newHash, req.user.id]
+    );
+    res.json({ user: publicUser(result.rows[0]) });
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
-app.post('/api/users/:id/favorite', auth, (req, res) => {
+app.post('/api/users/:id/favorite', auth, async (req, res) => {
   const targetId = Number(req.params.id);
   if (targetId === req.user.id) return res.status(400).json({ error: 'self_fav' });
-  
-  if (!req.user.favorites) req.user.favorites = [];
-  const idx = req.user.favorites.indexOf(targetId);
-  
-  if (idx > -1) {
-    req.user.favorites.splice(idx, 1);
-  } else {
-    req.user.favorites.push(targetId);
-  }
-  saveDB();
+  let favs = req.user.favorites || [];
+  const idx = favs.indexOf(targetId);
+  if (idx > -1) favs.splice(idx, 1); else favs.push(targetId);
+  await pool.query('UPDATE users SET favorites = $1 WHERE id = $2', [favs, req.user.id]);
   res.json({ isFavorite: idx === -1 });
 });
 
-function shapeAd(a) {
-  const u = DB.users.find(x => x.id === a.userId);
-  const stats = userStats(a.userId);
-  const realMaxRub = Math.min(a.maxRub, a.amountLeft * a.price);
+// --- ОБЪЯВЛЕНИЯ ---
+async function shapeAd(a) {
+  const uRes = await pool.query('SELECT * FROM users WHERE id = $1', [a.user_id]);
+  const u = uRes.rows[0];
+  const stats = await getUserStats(a.user_id);
+  const realMaxRub = Math.min(Number(a.max_rub), Number(a.amount_left) * Number(a.price));
   return {
-    id: a.id, userId: a.userId, 
-    username: u?.username || '?', 
-    displayName: u?.displayName || u?.username || '?', 
-    avatarUrl: u?.avatarUrl || '',
-    kycStatus: u?.kycStatus || 'none',
-    side: a.side, faceType: a.faceType, asset: a.asset, price: a.price,
-    amountTotal: a.amountTotal, amountLeft: a.amountLeft, 
-    totalRub: (a.amountLeft * a.price).toFixed(2), 
-    minRub: a.minRub, maxRub: realMaxRub.toFixed(2), 
-    paymentMethods: a.paymentMethods, terms: a.terms,
-    active: a.active, createdAt: a.createdAt, ...stats
+    id: a.id, userId: a.user_id, username: u?.username || '?', displayName: u?.display_name || u?.username || '?',
+    avatarUrl: u?.avatar_url || '', kycStatus: u?.kyc_status || 'none',
+    side: a.side, faceType: a.face_type, asset: a.asset, price: Number(a.price),
+    amountTotal: Number(a.amount_total), amountLeft: Number(a.amount_left),
+    totalRub: (Number(a.amount_left) * Number(a.price)).toFixed(2),
+    minRub: Number(a.min_rub), maxRub: realMaxRub.toFixed(2),
+    paymentMethods: a.payment_methods, terms: a.terms, active: a.active, createdAt: a.created_at,
+    ...stats
   };
 }
 
-app.get('/api/ads', (req, res) => {
-  let list = DB.ads.filter(a => a.active && a.amountLeft > 0);
-  if (req.query.side) list = list.filter(a => a.side === req.query.side);
-  if (req.query.asset) list = list.filter(a => a.asset === req.query.asset);
-  if (req.query.face_type) list = list.filter(a => a.faceType === req.query.face_type);
-  if (req.query.payment) list = list.filter(a => a.paymentMethods.includes(req.query.payment));
-  if (req.query.min_amount) list = list.filter(a => a.maxRub >= Number(req.query.min_amount));
-  if (req.query.max_amount) list = list.filter(a => a.minRub <= Number(req.query.max_amount));
-  list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  res.json({ items: list.map(shapeAd) });
+app.get('/api/ads', async (req, res) => {
+  let query = "SELECT * FROM ads WHERE active = true AND amount_left > 0";
+  const params = [];
+  if (req.query.side) { params.push(req.query.side); query += ` AND side = $${params.length}`; }
+  if (req.query.asset) { params.push(req.query.asset); query += ` AND asset = $${params.length}`; }
+  if (req.query.face_type) { params.push(req.query.face_type); query += ` AND face_type = $${params.length}`; }
+  if (req.query.payment) { params.push(req.query.payment); query += ` AND $${params.length} = ANY(payment_methods)`; }
+  
+  query += " ORDER BY created_at DESC LIMIT 50";
+  
+  try {
+    const result = await pool.query(query, params);
+    const items = await Promise.all(result.rows.map(shapeAd));
+    res.json({ items });
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
-app.post('/api/ads', auth, (req, res) => {
-  const { side, face_type, asset, price, amount_total, min_rub, max_rub, payment_methods, terms } = req.body || {};
-  if (!['buy', 'sell'].includes(side)) return res.status(400).json({ error: 'bad_side' });
+app.post('/api/ads', auth, async (req, res) => {
+  const { side, face_type, asset, price, amount_total, min_rub, max_rub, payment_methods, terms } = req.body;
   const p = Number(price), at = Number(amount_total), mn = Number(min_rub), mx = Number(max_rub);
-  if (!(p > 0) || !(at > 0) || !(mn > 0) || !(mx > 0)) return res.status(400).json({ error: 'bad_amounts' });
-  if (mn > mx) return res.status(400).json({ error: 'min_gt_max' });
-  const totalRub = at * p;
-  if (mx > totalRub) return res.status(400).json({ error: 'max_exceeds_total' });
-  
-  const ad = {
-    id: nextId('ad'), userId: req.user.id, side, faceType: face_type, asset,
-    price: p, amountTotal: at, amountLeft: at, minRub: mn, maxRub: mx,
-    paymentMethods: payment_methods, terms: (terms || '').slice(0, 2000),
-    active: true, createdAt: new Date().toISOString()
-  };
-  DB.ads.push(ad); saveDB(); res.status(201).json(shapeAd(ad));
+  if (!(p > 0) || !(at > 0) || !(mn > 0) || !(mx > 0) || mn > mx || mx > at * p) return res.status(400).json({ error: 'bad_amounts' });
+
+  try {
+    const result = await pool.query(
+      'INSERT INTO ads (user_id, side, face_type, asset, price, amount_total, amount_left, min_rub, max_rub, payment_methods, terms) VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $8, $9, $10) RETURNING *',
+      [req.user.id, side, face_type, asset, p, at, mn, mx, payment_methods, terms]
+    );
+    res.status(201).json(await shapeAd(result.rows[0]));
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
-app.patch('/api/ads/:id', auth, (req, res) => {
-  const ad = DB.ads.find(a => a.id === Number(req.params.id));
-  if (!ad) return res.status(404).json({ error: 'not_found' });
-  if (ad.userId !== req.user.id) return res.status(403).json({ error: 'forbidden' });
-
-  const { price, min_rub, max_rub, payment_methods, terms } = req.body || {};
-  const p = Number(price), mn = Number(min_rub), mx = Number(max_rub);
-  
-  if (!(p > 0) || !(mn > 0) || !(mx > 0)) return res.status(400).json({ error: 'bad_amounts' });
-  if (mn > mx) return res.status(400).json({ error: 'min_gt_max' });
-  const totalRub = ad.amountLeft * p;
-  if (mx > totalRub) return res.status(400).json({ error: 'max_exceeds_total' });
-
-  ad.price = p; ad.minRub = mn; ad.maxRub = mx;
-  ad.paymentMethods = payment_methods; ad.terms = (terms || '').slice(0, 2000);
-  saveDB(); res.json(shapeAd(ad));
+app.patch('/api/ads/:id', auth, async (req, res) => {
+  const { price, min_rub, max_rub, payment_methods, terms } = req.body;
+  try {
+    const adRes = await pool.query('SELECT * FROM ads WHERE id = $1', [req.params.id]);
+    const ad = adRes.rows[0];
+    if (!ad || ad.user_id !== req.user.id) return res.status(403).json({ error: 'forbidden' });
+    
+    const result = await pool.query(
+      'UPDATE ads SET price = $1, min_rub = $2, max_rub = $3, payment_methods = $4, terms = $5 WHERE id = $6 RETURNING *',
+      [Number(price), Number(min_rub), Number(max_rub), payment_methods, terms, req.params.id]
+    );
+    res.json(await shapeAd(result.rows[0]));
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
-app.get('/api/ads/my', auth, (req, res) => res.json({ items: DB.ads.filter(a => a.userId === req.user.id).map(shapeAd) }));
+app.get('/api/ads/my', auth, async (req, res) => {
+  const result = await pool.query('SELECT * FROM ads WHERE user_id = $1 ORDER BY created_at DESC', [req.user.id]);
+  const items = await Promise.all(result.rows.map(shapeAd));
+  res.json({ items });
+});
 
+// --- ОРДЕРА ---
 const STATUS_LABEL = { waiting: 'Ожидает оплаты', paid: 'Оплата отмечена', completed: 'Завершён', cancelled: 'Отменён', dispute: 'Спор' };
 
-function shapeOrder(o) {
-  const buyer = DB.users.find(u => u.id === o.buyerId);
-  const seller = DB.users.find(u => u.id === o.sellerId);
+async function shapeOrder(o) {
+  const bRes = await pool.query('SELECT * FROM users WHERE id = $1', [o.buyer_id]);
+  const sRes = await pool.query('SELECT * FROM users WHERE id = $1', [o.seller_id]);
+  const buyer = bRes.rows[0];
+  const seller = sRes.rows[0];
+  
   return {
-    id: o.id, publicId: o.publicId, adId: o.adId, asset: o.asset, price: o.price,
-    amountRub: o.amountRub, amountAsset: o.amountAsset, faceType: o.faceType,
-    paymentMethod: o.paymentMethod, status: o.status, statusLabel: STATUS_LABEL[o.status] || o.status,
-    buyer: { id: o.buyerId, username: buyer?.username || '?', displayName: buyer?.displayName || buyer?.username || '?', avatarUrl: buyer?.avatarUrl || '' },
-    seller: { id: o.sellerId, username: seller?.username || '?', displayName: seller?.displayName || seller?.username || '?', avatarUrl: seller?.avatarUrl || '' },
-    createdAt: o.createdAt, expiresAt: o.expiresAt
+    id: o.id, publicId: o.public_id, adId: o.ad_id, asset: o.asset, price: Number(o.price),
+    amountRub: Number(o.amount_rub), amountAsset: Number(o.amount_asset), faceType: o.face_type,
+    paymentMethod: o.payment_method, status: o.status, statusLabel: STATUS_LABEL[o.status] || o.status,
+    buyer: { id: o.buyer_id, username: buyer?.username, displayName: buyer?.display_name || buyer?.username, avatarUrl: buyer?.avatar_url },
+    seller: { id: o.seller_id, username: seller?.username, displayName: seller?.display_name || seller?.username, avatarUrl: seller?.avatar_url },
+    createdAt: o.created_at, expiresAt: o.expires_at
   };
 }
 
-app.post('/api/orders', auth, (req, res) => {
-  const { ad_id, amount_rub, payment_method } = req.body || {};
-  const ad = DB.ads.find(a => a.id === Number(ad_id));
-  if (!ad || !ad.active) return res.status(409).json({ error: 'ad_inactive' });
-  if (ad.userId === req.user.id) return res.status(409).json({ error: 'self_trade' });
-  if (!ad.paymentMethods.includes(payment_method)) return res.status(400).json({ error: 'bad_payment' });
-  const rub = Number(amount_rub);
-  if (!(rub > 0) || rub < ad.minRub) return res.status(400).json({ error: 'below_min' });
-  if (rub > ad.maxRub) return res.status(400).json({ error: 'above_max' });
-  const assetQty = rub / ad.price;
-  if (assetQty > ad.amountLeft) return res.status(400).json({ error: 'insufficient_asset' });
-  
-  const buyerId = ad.side === 'sell' ? req.user.id : ad.userId;
-  const sellerId = ad.side === 'sell' ? ad.userId : req.user.id;
-  ad.amountLeft -= assetQty;
-  
-  const order = {
-    id: nextId('order'), publicId: 'VX-' + crypto.randomBytes(3).toString('hex').toUpperCase(),
-    adId: ad.id, buyerId, sellerId, asset: ad.asset, price: ad.price,
-    amountRub: rub, amountAsset: Number(assetQty.toFixed(8)),
-    faceType: ad.faceType, paymentMethod: payment_method, status: 'waiting',
-    createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-    history: [{ status: 'waiting', at: new Date().toISOString(), note: 'Ордер создан' }]
-  };
-  DB.orders.push(order); saveDB(); res.status(201).json(shapeOrder(order));
+app.post('/api/orders', auth, async (req, res) => {
+  const { ad_id, amount_rub, payment_method } = req.body;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const adRes = await client.query('SELECT * FROM ads WHERE id = $1 FOR UPDATE', [ad_id]);
+    const ad = adRes.rows[0];
+    
+    if (!ad || !ad.active) throw new Error('ad_inactive');
+    if (ad.user_id === req.user.id) throw new Error('self_trade');
+    if (!ad.payment_methods.includes(payment_method)) throw new Error('bad_payment');
+    
+    const rub = Number(amount_rub);
+    if (rub < ad.min_rub) throw new Error('below_min');
+    if (rub > ad.max_rub) throw new Error('above_max');
+    
+    const assetQty = rub / ad.price;
+    if (assetQty > ad.amount_left) throw new Error('insufficient_asset');
+
+    const buyerId = ad.side === 'sell' ? req.user.id : ad.user_id;
+    const sellerId = ad.side === 'sell' ? ad.user_id : req.user.id;
+    
+    await client.query('UPDATE ads SET amount_left = amount_left - $1 WHERE id = $2', [assetQty, ad.id]);
+    
+    const publicId = 'VX-' + crypto.randomBytes(3).toString('hex').toUpperCase();
+    const history = JSON.stringify([{ status: 'waiting', at: new Date().toISOString(), note: 'Ордер создан' }]);
+    
+    const orderRes = await client.query(
+      'INSERT INTO orders (public_id, ad_id, buyer_id, seller_id, asset, price, amount_rub, amount_asset, face_type, payment_method, history) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
+      [publicId, ad.id, buyerId, sellerId, ad.asset, ad.price, rub, assetQty, ad.face_type, payment_method, history]
+    );
+    
+    await client.query('COMMIT');
+    res.status(201).json(await shapeOrder(orderRes.rows[0]));
+  } catch (err) {
+    await client.query('ROLLBACK');
+    res.status(400).json({ error: err.message || 'order_error' });
+  } finally {
+    client.release();
+  }
 });
 
-app.get('/api/orders/my', auth, (req, res) => {
-  let list = [];
-  if (req.user.role === 'admin') {
-    list = DB.orders; // Админ видит все ордера
+app.get('/api/orders/my', auth, async (req, res) => {
+  let query = "SELECT * FROM orders";
+  let params = [];
+  
+  if (req.user.role !== 'admin') {
+    query += " WHERE buyer_id = $1 OR seller_id = $1";
+    params.push(req.user.id);
   } else {
-    list = DB.orders.filter(o => o.buyerId === req.user.id || o.sellerId === req.user.id);
+    query += " WHERE 1=1";
   }
   
   const f = req.query.status;
-  if (f === 'active') list = list.filter(o => ['waiting', 'paid', 'dispute'].includes(o.status));
-  else if (f === 'completed') list = list.filter(o => o.status === 'completed');
-  else if (f === 'cancelled') list = list.filter(o => o.status === 'cancelled');
+  if (f === 'active') query += " AND status IN ('waiting', 'paid', 'dispute')";
+  else if (f === 'completed') query += " AND status = 'completed'";
+  else if (f === 'cancelled') query += " AND status = 'cancelled'";
   
-  list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  res.json({ items: list.map(shapeOrder) });
+  query += " ORDER BY created_at DESC";
+  
+  const result = await pool.query(query, params);
+  const items = await Promise.all(result.rows.map(shapeOrder));
+  res.json({ items });
 });
 
-app.get('/api/orders/:id', auth, (req, res) => {
-  const o = DB.orders.find(o => o.id === Number(req.params.id));
+app.get('/api/orders/:id', auth, async (req, res) => {
+  const result = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
+  const o = result.rows[0];
   if (!o) return res.status(404).json({ error: 'not_found' });
-  if (o.buyerId !== req.user.id && o.sellerId !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
-  res.json({ order: shapeOrder(o), history: o.history, terms: DB.ads.find(a => a.id === o.adId)?.terms });
+  if (o.buyer_id !== req.user.id && o.seller_id !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
+  
+  const adRes = await pool.query('SELECT terms FROM ads WHERE id = $1', [o.ad_id]);
+  res.json({ order: await shapeOrder(o), history: o.history, terms: adRes.rows[0]?.terms });
 });
 
-function transition(orderId, to, note) {
-  const o = DB.orders.find(o => o.id === orderId);
-  o.status = to; o.history.push({ status: to, at: new Date().toISOString(), note });
-  if (to === 'cancelled') { 
-    const ad = DB.ads.find(a => a.id === o.adId); 
-    if (ad) ad.amountLeft += o.amountAsset; 
+async function transition(orderId, to, note, client = pool) {
+  const oRes = await client.query('SELECT * FROM orders WHERE id = $1', [orderId]);
+  const o = oRes.rows[0];
+  
+  const newHistory = [...(o.history || []), { status: to, at: new Date().toISOString(), note }];
+  await client.query('UPDATE orders SET status = $1, history = $2 WHERE id = $3', [to, JSON.stringify(newHistory), orderId]);
+  
+  if (to === 'cancelled') {
+    await client.query('UPDATE ads SET amount_left = amount_left + $1 WHERE id = $2', [o.amount_asset, o.ad_id]);
   }
-  saveDB(); return o;
+  return o;
 }
 
-app.post('/api/orders/:id/paid', auth, (req, res) => {
-  const o = DB.orders.find(o => o.id === Number(req.params.id));
-  if (o.buyerId !== req.user.id || o.status !== 'waiting') return res.status(409).json({ error: 'bad' });
-  transition(o.id, 'paid', 'Оплата отмечена'); res.json({ ok: true });
+app.post('/api/orders/:id/paid', auth, async (req, res) => {
+  const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
+  const o = oRes.rows[0];
+  if (o.buyer_id !== req.user.id || o.status !== 'waiting') return res.status(409).json({ error: 'bad' });
+  await transition(o.id, 'paid', 'Оплата отмечена'); res.json({ ok: true });
 });
 
-app.post('/api/orders/:id/confirm', auth, (req, res) => {
-  const o = DB.orders.find(o => o.id === Number(req.params.id));
-  if (o.sellerId !== req.user.id || o.status !== 'paid') return res.status(409).json({ error: 'bad' });
-  transition(o.id, 'completed', 'Завершён'); res.json({ ok: true });
+app.post('/api/orders/:id/confirm', auth, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const oRes = await client.query('SELECT * FROM orders WHERE id = $1 FOR UPDATE', [req.params.id]);
+    const o = oRes.rows[0];
+    if (o.seller_id !== req.user.id || o.status !== 'paid') throw new Error('bad');
+    
+    await transition(o.id, 'completed', 'Завершён', client);
+    
+    // Начисление объема торгов (приблизительно в USD)
+    const volumeToAdd = Number(o.amount_rub) / 90; // Условный курс
+    await client.query('UPDATE users SET volume_usd = volume_usd + $1 WHERE id = $2', [volumeToAdd, o.buyer_id]);
+    await client.query('UPDATE users SET volume_usd = volume_usd + $1 WHERE id = $2', [volumeToAdd, o.seller_id]);
+    
+    await client.query('COMMIT');
+    res.json({ ok: true });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    res.status(409).json({ error: 'bad' });
+  } finally {
+    client.release();
+  }
 });
 
-app.post('/api/orders/:id/cancel', auth, (req, res) => {
-  const o = DB.orders.find(o => o.id === Number(req.params.id));
+app.post('/api/orders/:id/cancel', auth, async (req, res) => {
+  const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
+  const o = oRes.rows[0];
   if (!['waiting', 'paid'].includes(o.status)) return res.status(409).json({ error: 'bad' });
-  if (o.buyerId !== req.user.id && o.sellerId !== req.user.id) return res.status(403).json({ error: 'forbidden' });
-  transition(o.id, 'cancelled', 'Отменён'); res.json({ ok: true });
+  if (o.buyer_id !== req.user.id && o.seller_id !== req.user.id) return res.status(403).json({ error: 'forbidden' });
+  await transition(o.id, 'cancelled', 'Отменён'); res.json({ ok: true });
 });
 
-app.post('/api/orders/:id/dispute', auth, (req, res) => {
-  const o = DB.orders.find(o => o.id === Number(req.params.id));
+app.post('/api/orders/:id/dispute', auth, async (req, res) => {
+  const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
+  const o = oRes.rows[0];
   if (!o || !['waiting', 'paid'].includes(o.status)) return res.status(409).json({ error: 'bad' });
-  if (o.buyerId !== req.user.id && o.sellerId !== req.user.id) return res.status(403).json({ error: 'forbidden' });
-  transition(o.id, 'dispute', 'Открыт спор: ' + (req.body?.reason || '')); res.json({ ok: true });
+  if (o.buyer_id !== req.user.id && o.seller_id !== req.user.id) return res.status(403).json({ error: 'forbidden' });
+  await transition(o.id, 'dispute', 'Открыт спор: ' + (req.body?.reason || '')); res.json({ ok: true });
 });
 
-// АДМИН: Решение спора
-app.post('/api/orders/:id/resolve', auth, (req, res) => {
+app.post('/api/orders/:id/resolve', auth, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
-  const o = DB.orders.find(o => o.id === Number(req.params.id));
-  if (!o || o.status !== 'dispute') return res.status(409).json({ error: 'bad' });
+  const { resolution } = req.body;
+  if (!['completed', 'cancelled'].includes(resolution)) return res.status(400).json({ error: 'bad' });
   
-  const { resolution } = req.body; // 'completed' (продавцу) или 'cancelled' (покупателю)
-  if (!['completed', 'cancelled'].includes(resolution)) return res.status(400).json({ error: 'bad_resolution' });
-  
-  const note = resolution === 'completed' ? 'Спор решен: в пользу продавца' : 'Спор решен: в пользу покупателя';
-  transition(o.id, resolution, note);
-  res.json({ ok: true });
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const oRes = await client.query('SELECT * FROM orders WHERE id = $1 FOR UPDATE', [req.params.id]);
+    const o = oRes.rows[0];
+    if (o.status !== 'dispute') throw new Error('bad');
+    
+    const note = resolution === 'completed' ? 'Спор решен: в пользу продавца' : 'Спор решен: в пользу покупателя';
+    await transition(o.id, resolution, note, client);
+    
+    if (resolution === 'completed') {
+      const volumeToAdd = Number(o.amount_rub) / 90;
+      await client.query('UPDATE users SET volume_usd = volume_usd + $1 WHERE id = $2', [volumeToAdd, o.buyer_id]);
+      await client.query('UPDATE users SET volume_usd = volume_usd + $1 WHERE id = $2', [volumeToAdd, o.seller_id]);
+    }
+    
+    await client.query('COMMIT');
+    res.json({ ok: true });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    res.status(409).json({ error: 'bad' });
+  } finally {
+    client.release();
+  }
 });
 
-app.get('/api/chat/:orderId', auth, (req, res) => {
-  const o = DB.orders.find(o => o.id === Number(req.params.orderId));
-  if (!o || (o.buyerId !== req.user.id && o.sellerId !== req.user.id)) return res.status(403).json({ error: 'forbidden' });
-  const items = DB.messages.filter(m => m.orderId === o.id).map(m => ({
-    id: m.id, senderId: m.senderId, senderUsername: DB.users.find(u => u.id === m.senderId)?.username || '?',
-    text: m.text, createdAt: m.createdAt, isMine: m.senderId === req.user.id
-  }));
-  res.json({ items });
+// --- ЧАТ, ОТЗЫВЫ, СТАТИСТИКА ---
+app.get('/api/chat/:orderId', auth, async (req, res) => {
+  const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.orderId]);
+  const o = oRes.rows[0];
+  if (!o || (o.buyer_id !== req.user.id && o.seller_id !== req.user.id)) return res.status(403).json({ error: 'forbidden' });
+  
+  const result = await pool.query(`
+    SELECT m.*, u.username FROM messages m 
+    JOIN users u ON m.sender_id = u.id 
+    WHERE m.order_id = $1 ORDER BY m.created_at ASC
+  `, [o.id]);
+  
+  res.json({ items: result.rows.map(m => ({
+    id: m.id, senderId: m.sender_id, senderUsername: m.username, text: m.text, createdAt: m.created_at, isMine: m.sender_id === req.user.id
+  })) });
 });
 
-app.post('/api/chat/:orderId', auth, (req, res) => {
-  const o = DB.orders.find(o => o.id === Number(req.params.orderId));
+app.post('/api/chat/:orderId', auth, async (req, res) => {
+  const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.orderId]);
+  const o = oRes.rows[0];
   if (!o || ['completed', 'cancelled'].includes(o.status)) return res.status(409).json({ error: 'closed' });
-  const text = String(req.body?.text || '').trim().slice(0, 1000);
-  if (!text) return res.status(400).json({ error: 'empty' });
-  const m = { id: nextId('message'), orderId: o.id, senderId: req.user.id, text, createdAt: new Date().toISOString() };
-  DB.messages.push(m); saveDB();
-  res.status(201).json({ id: m.id, senderId: m.senderId, senderUsername: req.user.username, text: m.text, createdAt: m.createdAt, isMine: true });
+  
+  const result = await pool.query('INSERT INTO messages (order_id, sender_id, text) VALUES ($1, $2, $3) RETURNING *', [o.id, req.user.id, req.body.text]);
+  res.status(201).json({ ...result.rows[0], isMine: true });
 });
 
-app.post('/api/reviews', auth, (req, res) => {
-  const { order_id, rating, comment } = req.body || {};
-  const o = DB.orders.find(o => o.id === Number(order_id));
+app.post('/api/reviews', auth, async (req, res) => {
+  const { order_id, rating, comment } = req.body;
+  const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [order_id]);
+  const o = oRes.rows[0];
   if (!o || o.status !== 'completed') return res.status(409).json({ error: 'not_completed' });
-  const isBuyer = o.buyerId === req.user.id, isSeller = o.sellerId === req.user.id;
-  if (!isBuyer && !isSeller) return res.status(403).json({ error: 'not_party' });
-  if (DB.reviews.find(r => r.orderId === o.id && r.authorId === req.user.id)) return res.status(409).json({ error: 'already_reviewed' });
-  const r = Number(rating);
-  if (!(r >= 1 && r <= 5)) return res.status(400).json({ error: 'bad_rating' });
-  const review = {
-    id: nextId('review'), orderId: o.id, authorId: req.user.id, targetId: isBuyer ? o.sellerId : o.buyerId,
-    rating: r, comment: (comment || '').slice(0, 1000), createdAt: new Date().toISOString()
-  };
-  DB.reviews.push(review); saveDB(); res.status(201).json(review);
-});
-
-app.get('/api/reviews/user/:userId', (req, res) => {
-  const userId = Number(req.params.userId);
-  const items = DB.reviews.filter(r => r.targetId === userId).map(r => {
-    const author = DB.users.find(u => u.id === r.authorId);
-    return {
-      id: r.id, rating: r.rating, comment: r.comment,
-      author: author?.displayName || author?.username || '?',
-      createdAt: r.createdAt
-    };
-  });
-  res.json({ items });
-});
-
-app.post('/api/platform-reviews', auth, (req, res) => {
-  const { rating, comment } = req.body || {};
-  const r = Number(rating);
-  if (!(r >= 1 && r <= 5)) return res.status(400).json({ error: 'bad_rating' });
   
-  const hasCompleted = DB.orders.some(o => o.status === 'completed' && (o.buyerId === req.user.id || o.sellerId === req.user.id));
-  if (!hasCompleted) return res.status(403).json({ error: 'no_completed_deals' });
-  
-  if (DB.platformReviews.find(r => r.userId === req.user.id)) return res.status(409).json({ error: 'already_reviewed' });
-
-  const review = {
-    id: nextId('platformReview'), userId: req.user.id,
-    username: req.user.displayName || req.user.username, rating: r, comment: (comment || '').slice(0, 1000),
-    createdAt: new Date().toISOString()
-  };
-  DB.platformReviews.push(review); saveDB(); res.status(201).json(review);
+  const targetId = o.buyer_id === req.user.id ? o.seller_id : o.buyer_id;
+  await pool.query('INSERT INTO reviews (order_id, author_id, target_id, rating, comment) VALUES ($1, $2, $3, $4, $5)', [o.id, req.user.id, targetId, rating, comment]);
+  res.status(201).json({ ok: true });
 });
 
-app.get('/api/platform-reviews', (req, res) => {
-  res.json({ items: DB.platformReviews });
+app.get('/api/reviews/user/:userId', async (req, res) => {
+  const result = await pool.query(`
+    SELECT r.*, u.display_name FROM reviews r 
+    JOIN users u ON r.author_id = u.id 
+    WHERE r.target_id = $1 ORDER BY r.created_at DESC
+  `, [req.params.userId]);
+  res.json({ items: result.rows.map(r => ({ id: r.id, rating: r.rating, comment: r.comment, author: r.display_name, createdAt: r.created_at })) });
 });
 
-app.get('/api/stats', (req, res) => {
-  const users = DB.users.length;
-  const completedOrders = DB.orders.filter(o => o.status === 'completed');
-  const deals = completedOrders.length;
-  const turnover = completedOrders.reduce((sum, o) => sum + o.amountRub, 0);
-  
-  const reviews = DB.platformReviews;
-  const avgRating = reviews.length ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(2) : '—';
-  
-  res.json({ users, deals, turnover, avgRating });
+app.get('/api/stats', async (req, res) => {
+  const uCount = await pool.query('SELECT COUNT(*) FROM users');
+  const oCount = await pool.query("SELECT COUNT(*) FROM orders WHERE status = 'completed'");
+  const turnover = await pool.query("SELECT SUM(amount_rub) FROM orders WHERE status = 'completed'");
+  res.json({ users: parseInt(uCount.rows[0].count), deals: parseInt(oCount.rows[0].count), turnover: Number(turnover.rows[0].sum || 0), avgRating: '5.0' });
 });
 
-const FRONTEND = path.join(__dirname);
-app.use(express.static(FRONTEND));
-
+// --- СТАТИКА ---
+app.use(express.static(path.join(__dirname)));
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
-  res.sendFile(path.join(FRONTEND, 'index.html'));
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log('VEXO P2P started on http://localhost:' + PORT);
-});
+app.listen(PORT, () => console.log('VEXO P2P running on port ' + PORT));
