@@ -2,63 +2,72 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>VEXO P2P</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Диагностика VEXO</title>
+  
+  <!-- Подключаем твой style.css с проверкой на ошибку -->
+  <link rel="stylesheet" href="style.css" onerror="document.getElementById('css-status').innerHTML = '❌ Ошибка загрузки style.css'; document.getElementById('css-status').className = 'box fail';">
+  
+  <style>
+    body { background: #000; color: #fff; font-family: monospace, sans-serif; padding: 20px; }
+    h2 { font-size: 18px; margin-bottom: 20px; }
+    .box { padding: 15px; margin-bottom: 10px; border-radius: 8px; font-size: 14px; border-left: 5px solid #888; background: #1a1a1a; }
+    .ok { border-color: #22c55e; color: #22c55e; }
+    .fail { border-color: #ef4444; color: #ef4444; }
+    .wait { border-color: #eab308; color: #eab308; }
+  </style>
 </head>
 <body>
+  <h2>🛠 Диагностика VEXO</h2>
+  
+  <div class="box wait" id="css-status">⏳ Проверка style.css...</div>
+  <div class="box wait" id="js-status">⏳ Проверка app.js...</div>
+  <div class="box wait" id="api-status">⏳ Проверка Базы Данных (API)...</div>
 
-<div class="app">
-  <aside class="sidebar">
-    <div class="logo"><div class="logo-mark">V</div><span>VEXO</span></div>
-    <button class="nav-btn active" data-screen="home">Главная</button>
-    <button class="nav-btn" data-screen="market">Маркет</button>
-    <button class="nav-btn" data-screen="create">Создать объявление</button>
-    <button class="nav-btn" data-screen="orders">Мои ордера</button>
-    <button class="nav-btn" data-screen="wallet">Кошелёк</button>
-    <button class="nav-btn" data-screen="profile">Профиль</button>
-  </aside>
+  <!-- Подключаем app.js с проверкой на ошибку -->
+  <script src="app.js" onerror="document.getElementById('js-status').innerHTML = '❌ Ошибка загрузки app.js (файл не найден)'; document.getElementById('js-status').className = 'box fail';"></script>
 
-  <div class="main">
-    <header class="topbar">
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <button class="btn btn-sm btn-ghost hidden" id="backBtn" style="padding: 6px; border-radius: 50%; width: 32px; height: 32px;">←</button>
-        <div style="display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 18px;">
-          <div class="logo-mark" style="width: 24px; height: 24px; font-size: 12px;">V</div>
-          <span>VEXO</span>
-        </div>
-      </div>
-      <div class="topbar-title" id="topbarTitle" style="display: none;">Главная</div>
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <button class="btn btn-sm btn-ghost" id="themeBtn" style="padding: 6px; border-radius: 50%; width: 32px; height: 32px;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-        </button>
-        <button class="btn btn-sm btn-primary" id="loginBtn">Войти</button>
-        <button class="avatar-btn hidden" id="avatarBtn"></button>
-      </div>
-    </header>
+  <script>
+    window.addEventListener('load', () => {
+      // 1. Проверка CSS
+      const cssStatus = document.getElementById('css-status');
+      if (!cssStatus.className.includes('fail')) {
+        cssStatus.innerHTML = '✅ style.css успешно загружен';
+        cssStatus.className = 'box ok';
+      }
 
-    <main class="content">
-      <section class="screen active" id="screen-home">
-        <div class="banner-carousel">
-          <div class="banner-viewport" id="bannerViewport">
-            <div class="banner-track" id="bannerTrack">
-              <div class="banner">
-                <div class="banner-text-content">
-                  <h2>Покупайте и продавайте <span>цифровые активы</span> безопасно</h2>
-                  <p>USDT · BTC · TON за рубли. Проверенные продавцы, эскроу-сделки.</p>
-                  <button class="btn btn-primary" data-screen="market">Перейти в Маркет</button>
-                </div>
-                <div class="coin-decoration">
-                  <div class="coin-icon float-1">₮</div>
-                  <div class="coin-icon float-2">₿</div>
-                  <div class="coin-icon float-3">T</div>
-                </div>
-              </div>
-              <div class="banner" style="justify-content: flex-start;">
-                <div class="banner-text-content">
-                  <h2>Официальный канал</h2>
+      // 2. Проверка JS (выполнился ли код)
+      const jsStatus = document.getElementById('js-status');
+      if (!jsStatus.className.includes('fail')) {
+        // В твоем app.js объявляется window.closeModal. Если он есть, значит скрипт сработал.
+        if (typeof window.closeModal === 'function') {
+          jsStatus.innerHTML = '✅ app.js успешно загружен и выполнен без критических ошибок';
+          jsStatus.className = 'box ok';
+        } else {
+          jsStatus.innerHTML = '⚠️ app.js загрузился, но выдал ошибку при выполнении (проверь консоль F12)';
+          jsStatus.className = 'box fail';
+        }
+      }
+
+      // 3. Проверка сервера (API)
+      const apiStatus = document.getElementById('api-status');
+      fetch('/api/stats')
+        .then(res => {
+          if (res.ok) return res.json();
+          throw new Error('Сервер ответил ошибкой ' + res.status);
+        })
+        .then(data => {
+          apiStatus.innerHTML = '✅ Бэкенд и База Данных работают!<br><span style="font-size:12px;color:#888">Ответ: ' + JSON.stringify(data) + '</span>';
+          apiStatus.className = 'box ok';
+        })
+        .catch(err => {
+          apiStatus.innerHTML = '❌ Ошибка бэкенда (server.js): ' + err.message + '<br><span style="font-size:12px;">Возможно, упала база данных или не хватает переменных окружения на Render.</span>';
+          apiStatus.className = 'box fail';
+        });
+    });
+  </script>
+</body>
+</html>циальный канал</h2>
                   <p>Новости, курсы и розыгрыши. Подпишитесь на наш Telegram.</p>
                   <a href="https://t.me/vexoio_bot" target="_blank" class="btn btn-primary">Подписаться</a>
                 </div>
