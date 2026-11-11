@@ -234,7 +234,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const lb = document.getElementById('loginBtn');
       const ab = document.getElementById('avatarBtn');
       
-      // Включаем/выключаем режим админа (влияет на CSS)
       if (u && u.role === 'admin') {
         document.body.classList.add('admin-mode');
       } else {
@@ -255,7 +254,6 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
         
-        // Показываем кнопку админки
         if (u.role === 'admin') {
           document.getElementById('adminNavBtn').style.display = 'block';
           document.getElementById('adminBnBtn').style.display = 'flex';
@@ -353,13 +351,15 @@ document.addEventListener('DOMContentLoaded', () => {
       let avatarHtml = `<div class="avatar">${ad.displayName[0].toUpperCase()}</div>`;
       if (ad.avatarUrl) avatarHtml = `<div class="avatar"><img src="${ad.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${ad.displayName[0].toUpperCase()}'"></div>`;
       
-      const merchantBadge = ad.isMerchant ? `<span class="badge-merchant" title="Проверенный мерчант">✓</span>` : '';
+      // БЕЙДЖИ С ОБВОДКОЙ
+      const merchantBadge = ad.isMerchant ? `<span class="badge-merchant" title="Мерчант">MERCHANT</span>` : '';
+      const makerBadge = ad.isMaker ? `<span class="badge-maker" title="Мейкер">MAKER</span>` : '';
 
       return `<div class="ad-card">
         <div class="ad-head" onclick="openPublicProfile(${ad.userId})">
           ${avatarHtml}
           <div class="ad-user">
-            <div class="ad-name">${ad.displayName} ${merchantBadge} <span class="badge-face">${faceLabel}</span> ${ad.isPro ? '<span class="badge-pro">PRO</span>' : ''}</div>
+            <div class="ad-name">${ad.displayName} ${merchantBadge} ${makerBadge} <span class="badge-face">${faceLabel}</span> ${ad.isPro ? '<span class="badge-pro">PRO</span>' : ''}</div>
             <div class="ad-meta"><span>★ ${ad.ratingAvg || '—'}</span> <span>${ad.dealsCompleted || 0} сделок</span></div>
           </div>
         </div>
@@ -402,13 +402,15 @@ document.addEventListener('DOMContentLoaded', () => {
         let favBtn = '';
         if (API.user() && API.user().id !== user.id) favBtn = `<button class="btn-fav ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(${user.id}, this)" style="position:absolute;top:20px;right:20px;font-size:24px;background:none;border:none;">${isFavorite ? '❤️' : '🤍'}</button>`;
         
-        const merchantBadge = stats.isMerchant ? `<span class="badge-merchant" style="width:20px;height:20px;font-size:12px;margin-left:6px;" title="Проверенный мерчант">✓</span>` : '';
+        const merchantBadge = user.isMerchant ? `<span class="badge-merchant" style="margin-left:6px;">MERCHANT</span>` : '';
+        const makerBadge = user.isMaker ? `<span class="badge-maker" style="margin-left:6px;">MAKER</span>` : '';
+        const proBadge = user.isPro ? `<span class="badge-pro" style="margin-left:6px;">PRO</span>` : '';
 
         c.innerHTML = `
           ${favBtn}
           <div style="text-align:center; margin-bottom: 20px; margin-top:10px;">
             ${avatarHtml}
-            <h2 style="font-size:20px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;justify-content:center;">${user.displayName} ${merchantBadge} ${stats.isPro ? '<span class="badge-pro">PRO</span>' : ''}</h2>
+            <h2 style="font-size:20px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;justify-content:center;">${user.displayName} ${merchantBadge} ${makerBadge} ${proBadge}</h2>
             <div style="font-size:12px;color:var(--dim);font-weight:600;">@${user.username}</div>
           </div>
           <div class="stats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
@@ -594,7 +596,6 @@ document.addEventListener('DOMContentLoaded', () => {
         else actionsHtml = `<div style="background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:14px;text-align:center;color:var(--gold);font-size:14px;margin-bottom:16px;font-weight:800;">Спор рассматривается администратором</div>`;
       }
 
-      // БЛОК ЧЕКА ДЛЯ АДМИНА
       let adminReceiptHtml = '';
       if (isAdmin && ['paid', 'dispute'].includes(order.status)) {
         adminReceiptHtml = `
@@ -798,12 +799,14 @@ document.addEventListener('DOMContentLoaded', () => {
       
       try {
         const { user, stats } = await API.req('GET', '/users/me');
-        const proBadge = stats.isPro ? `<span class="badge-pro">PRO</span>` : '';
-        const merchantBadge = stats.isMerchant ? `<span class="badge-merchant" style="width:20px;height:20px;font-size:12px;margin-left:6px;" title="Мерчант">✓</span>` : '';
         
-        const successRateStr = stats.successRate !== null ? `${stats.successRate}%` : '—';
+        // БЕЙДЖИ С ОБВОДКОЙ
+        const proBadge = user.isPro ? `<span class="badge-pro" style="margin-left:6px;">PRO</span>` : '';
+        const merchantBadge = user.isMerchant ? `<span class="badge-merchant" style="margin-left:6px;">MERCHANT</span>` : '';
+        const makerBadge = user.isMaker ? `<span class="badge-maker" style="margin-left:6px;">MAKER</span>` : '';
+
+        const successRateStr = stats.successRate !== null ? `${stats.successRate}%` : '0%';
         const ratingAvgStr = stats.ratingAvg !== null ? stats.ratingAvg : '—';
-        const proConditions = stats.isPro ? `<div style="font-size:11px; color:var(--grn); margin-top:8px; font-weight:600;">✓ Условия PRO выполнены</div>` : `<div style="font-size:11px; color:var(--dim); margin-top:8px;">До PRO: Оборот $${fmt(stats.volumeUsd)} / $100,000<br>Успешных: ${successRateStr} / 80%<br>Сделок: ${stats.dealsCompleted} / 10</div>`;
 
         let contentHtml = '';
         if (profileTab === 'ads') contentHtml = '<div id="myAdsList"><div class="empty-state">Загрузка...</div></div>';
@@ -813,13 +816,13 @@ document.addEventListener('DOMContentLoaded', () => {
         let avatarHtml = `<div class="avatar lg">${user.displayName[0].toUpperCase()}</div>`;
         if (user.avatarUrl) avatarHtml = `<div class="avatar lg"><img src="${user.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${user.displayName[0].toUpperCase()}'"></div>`;
 
+        // Убрали прогресс из главного экрана профиля
         content.innerHTML = `
           <div class="glass-card" style="display:flex;align-items:center;gap:16px;padding:20px;margin-bottom:20px;position:relative;">
             ${avatarHtml}
             <div style="flex:1;min-width:0">
-              <h2 style="font-size:20px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;">${user.displayName} ${merchantBadge} ${proBadge}</h2>
+              <h2 style="font-size:20px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;flex-wrap:wrap;">${user.displayName} ${merchantBadge} ${makerBadge} ${proBadge}</h2>
               <div style="font-size:12px;color:var(--dim);font-weight:600;">@${user.username}</div>
-              ${proConditions}
             </div>
             <button class="btn btn-ghost btn-sm" style="position:absolute;top:16px;right:16px;font-size:18px;" onclick="openSettings()">⚙️</button>
           </div>
@@ -881,7 +884,6 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки объявлений</div>'; }
     }
 
-    // ЛОГИКА РЕДАКТИРОВАНИЯ И СТАТУСА
     window.toggleAdStatus = async function(adId, currentStatus) {
       try {
         await API.req('PATCH', '/ads/' + adId, { active: !currentStatus });
@@ -904,7 +906,7 @@ document.addEventListener('DOMContentLoaded', () => {
               price: document.getElementById('edit-price').value,
               min_rub: document.getElementById('edit-min').value,
               max_rub: document.getElementById('edit-max').value,
-              payment_methods: ad.paymentMethods, // keep old
+              payment_methods: ad.paymentMethods, 
               terms: document.getElementById('edit-terms').value
             });
             toast('Объявление обновлено!', 'success');
@@ -938,16 +940,66 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
     }
 
-    // НАСТРОЙКИ
-    window.openSettings = function() {
+    // НАСТРОЙКИ (С ПРОГРЕССОМ СТАТУСОВ)
+    window.openSettings = async function() {
       const u = API.user(); if (!u) return;
+      
       document.getElementById('settingsAvatarUrl').value = u.avatarUrl || '';
       document.getElementById('settingsName').value = u.displayName || '';
       document.getElementById('settingsEmail').value = u.email;
       document.getElementById('settingsCurrentPass').value = '';
       document.getElementById('settingsNewPass').value = '';
       document.getElementById('settingsError').textContent = '';
+      
+      // Загружаем актуальный прогресс
+      try {
+        const { user, stats } = await API.req('GET', '/users/me');
+        const container = document.getElementById('statusProgressContainer');
+        
+        let progressHtml = '';
+        
+        // Прогресс до Мейкера
+        if (user.isMaker) {
+          progressHtml += `<div style="font-size:13px; color:var(--gold); font-weight:700;">✓ Статус Мейкера активен</div>`;
+        } else {
+          const vol = stats.volumeUsd;
+          const sr = stats.successRate || 0;
+          const volPercent = Math.min(100, Math.round((vol / 3000) * 100));
+          const srPercent = Math.min(100, Math.round((sr / 80) * 100));
+          
+          progressHtml += `
+            <div style="background:var(--glass-bg); padding:12px; border-radius:12px; border:1px solid var(--glass-border);">
+              <div style="font-size:13px; font-weight:800; margin-bottom:8px; color:var(--gold);">Статус Мейкера</div>
+              <div style="font-size:12px; color:var(--dim); margin-bottom:6px;">Оборот: $${fmt(vol)} / $3,000</div>
+              <div style="width:100%; height:6px; background:rgba(0,0,0,0.3); border-radius:3px; margin-bottom:10px;">
+                <div style="width:${volPercent}%; height:100%; background:var(--gold); border-radius:3px;"></div>
+              </div>
+              <div style="font-size:12px; color:var(--dim); margin-bottom:6px;">Успешных сделок: ${sr}% / 80%</div>
+              <div style="width:100%; height:6px; background:rgba(0,0,0,0.3); border-radius:3px; margin-bottom:12px;">
+                <div style="width:${srPercent}%; height:100%; background:var(--gold); border-radius:3px;"></div>
+              </div>
+              ${vol >= 3000 && sr >= 80 ? `<button class="btn btn-primary btn-sm" onclick="applyMaker()" style="width:100%;">Подать заявку на Мейкера</button>` : `<div style="font-size:11px; color:var(--dim);">Выполните все условия для подачи заявки</div>`}
+            </div>
+          `;
+        }
+        
+        container.innerHTML = progressHtml;
+      } catch (e) { console.error(e); }
+
       document.getElementById('settingsModal').classList.add('active');
+    };
+
+    window.applyMaker = async function() {
+      try {
+        await API.req('POST', '/users/apply-maker');
+        toast('Заявка одобрена! Статус Мейкера получен.', 'success');
+        const { user } = await API.req('GET', '/users/me');
+        localStorage.setItem('vexo_user', JSON.stringify(user));
+        closeModal('settingsModal');
+        loadProfile();
+      } catch(e) {
+        toast(e.message, 'error');
+      }
     };
 
     document.getElementById('settingsSaveBtn')?.addEventListener('click', async () => {
@@ -977,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } finally { btn.disabled = false; btn.textContent = 'Сохранить'; }
     });
 
-    // ОРДЕР МОДАЛКА (С ТАЙМЕРОМ НА ЦЕНУ И КНОПКОЙ МАКС)
+    // ОРДЕР МОДАЛКА
     let currentAd = null, selectedPay = null, priceTimerInterval = null;
     window.openOrderModal = function(adId) {
       const ad = (window._ads || {})[adId];
@@ -1004,7 +1056,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (amountInput) {
         amountInput.value = '';
         
-        // Считаем реальный максимум
         const realMaxRub = Math.min(ad.maxRub, ad.amountLeft * ad.price);
         setText('orderLimit', `Лимит: ${fmt(ad.minRub)} - ${fmt(realMaxRub)} ₽`);
 
@@ -1028,7 +1079,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
       }
       
-      // ЛОГИКА КНОПКИ МАКС (тоже привязываем к реальному максимуму)
       document.getElementById('btnOrderMax').onclick = () => {
         const realMaxRub = Math.min(ad.maxRub, ad.amountLeft * ad.price);
         amountInput.value = realMaxRub.toFixed(2);
@@ -1052,7 +1102,6 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.style.opacity = '1';
       btn.onclick = submitOrder;
       
-      // ТАЙМЕР НА ЦЕНУ (60 СЕКУНД)
       let timeLeft = 60;
       const timerEl = document.getElementById('priceTimer');
       if (timerEl) timerEl.textContent = timeLeft + 's';
@@ -1118,7 +1167,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ==========================================
-    // ЛОГИКА АДМИНКИ
+    // АДМИНКА
     // ==========================================
     let adminTab = 'users';
 
@@ -1138,12 +1187,12 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="admin-user-info">
                 <div class="admin-user-name">${user.displayName} (@${user.username})</div>
                 <div class="admin-user-meta">Email: ${user.email} | Роль: ${user.role}</div>
+                <div class="admin-status-btns">
+                  <button class="admin-badge-btn ${user.isPro ? 'active-pro' : ''}" onclick="toggleUserStatus(${user.id}, 'is_pro', ${user.isPro})">PRO</button>
+                  <button class="admin-badge-btn ${user.isMerchant ? 'active-merchant' : ''}" onclick="toggleUserStatus(${user.id}, 'is_merchant', ${user.isMerchant})">MERCHANT</button>
+                  <button class="admin-badge-btn ${user.isMaker ? 'active-maker' : ''}" onclick="toggleUserStatus(${user.id}, 'is_maker', ${user.isMaker})">MAKER</button>
+                </div>
               </div>
-              <select class="admin-role-select" onchange="changeUserRole(${user.id}, this.value)">
-                <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
-                <option value="merchant" ${user.role === 'merchant' ? 'selected' : ''}>Merchant</option>
-                <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
-              </select>
             </div>
           `).join('');
         } 
@@ -1184,16 +1233,13 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     });
 
-    window.changeUserRole = async function(userId, role) {
+    window.toggleUserStatus = async function(userId, field, currentVal) {
       try {
-        await API.req('PATCH', '/admin/users/' + userId + '/role', { role });
-        toast('Роль обновлена', 'success');
-        const u = API.user();
-        if (u.id === userId) { // Если меняем себе роль, обновляем UI
-          u.role = role;
-          localStorage.setItem('vexo_user', JSON.stringify(u));
-          updateAuthUI();
-        }
+        const payload = {};
+        payload[field] = !currentVal;
+        await API.req('PATCH', '/admin/users/' + userId + '/status', payload);
+        toast('Статус обновлен', 'success');
+        loadAdmin(); // Перерисовываем админку
       } catch(e) { toast('Ошибка', 'error'); }
     };
 

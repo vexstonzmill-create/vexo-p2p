@@ -9,8 +9,9 @@ const { Pool } = require('pg');
 const PORT = Number(process.env.PORT) || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_vexo_key_that_is_long_enough_12345';
 
+// --- ПОДКЛЮЧЕНИЕ К БАЗЕ ДАННЫХ NEON (СТРОКА КАК ТЫ ДАЛ) ---
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_UDtaHhd5Zr6s@ep-divine-sun-bawvlsl5-pooler.c-8.eu-central-1.aws.neon.tech/neondb?sslmode=require",
+  connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_UDtaHhd5Zr6s@ep-divine-sun-bawvlsl5-pooler.c-8.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
   ssl: { rejectUnauthorized: false }
 });
 
@@ -28,6 +29,9 @@ async function initDB() {
     await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_time INT DEFAULT 30;`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS balance_rub NUMERIC DEFAULT 0;`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS balance_usdt NUMERIC DEFAULT 0;`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_pro BOOLEAN DEFAULT false;`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_merchant BOOLEAN DEFAULT false;`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_maker BOOLEAN DEFAULT false;`);
     
     console.log('✓ Database tables initialized');
   } catch (err) {
@@ -65,7 +69,8 @@ function publicUser(u) {
     id: u.id, username: u.username, displayName: u.display_name || u.username, 
     email: u.email, role: u.role, kycStatus: u.kyc_status, avatarUrl: u.avatar_url || '', 
     volumeUsd: Number(u.volume_usd), createdAt: u.created_at,
-    balanceRub: Number(u.balance_rub || 0), balanceUsdt: Number(u.balance_usdt || 0)
+    balanceRub: Number(u.balance_rub || 0), balanceUsdt: Number(u.balance_usdt || 0),
+    isPro: u.is_pro || false, isMerchant: u.is_merchant || false, isMaker: u.is_maker || false
   };
 }
 
@@ -77,16 +82,12 @@ async function getUserStats(userId) {
   const completed = parseInt(completedRes.rows[0].count);
   const cancelled = parseInt(cancelledRes.rows[0].count);
   const total = completed + cancelled;
-  const successRate = total > 0 ? Math.round((completed / total) * 100) : null;
+  const successRate = total > 0 ? Math.round((completed / total) * 100) : 0;
   const ratings = reviewsRes.rows.map(r => r.rating);
-  const avg = ratings.length ? Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)) : null;
+  const avg = ratings.length ? Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)) : 0;
   const volumeUsd = Number(volumeRes.rows[0]?.volume_usd || 0);
   
-  // УСЛОВИЯ ДЛЯ ПОЛУЧЕНИЯ СТАТУСА PRO
-  const isPro = volumeUsd >= 100000 && successRate >= 80 && completed >= 10;
-  const isMerchant = completed >= 5 || volumeUsd >= 10000;
-  
-  return { dealsTotal: total, dealsCompleted: completed, successRate, reviewsCount: ratings.length, ratingAvg: avg, volumeUsd, isPro, isMerchant };
+  return { dealsTotal: total, dealsCompleted: completed, successRate, reviewsCount: ratings.length, ratingAvg: avg, volumeUsd };
 }
 
 // АУТЕНТИФИКАЦИЯ
@@ -148,6 +149,19 @@ app.patch('/api/users/me', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
+// ЗАЯВКА НА МЕЙКЕРА
+app.post('/api/users/apply-maker', auth, async (req, res) => {
+  try {
+    const stats = await getUserStats(req.user.id);
+    if (req.user.is_maker) return res.status(400).json({ error: 'У вас уже есть статус Мейкера' });
+    if (stats.volumeUsd >= 3000 && stats.successRate >= 80) {
+      const result = await pool.query('UPDATE users SET is_maker = true WHERE id = $1 RETURNING *', [req.user.id]);
+      return res.json({ ok: true, user: publicUser(result.rows[0]) });
+    }
+    return res.status(400).json({ error: 'Условия не выполнены. Нужно $3000 оборота и 80% успешных сделок.' });
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
+});
+
 app.post('/api/users/:id/favorite', auth, async (req, res) => {
   const targetId = Number(req.params.id);
   if (targetId === req.user.id) return res.status(400).json({ error: 'self_fav' });
@@ -164,7 +178,7 @@ async function shapeAd(a) {
   const u = uRes.rows[0];
   const stats = await getUserStats(a.user_id);
   const realMaxRub = Math.min(Number(a.max_rub), Number(a.amount_left) * Number(a.price));
-  return { id: a.id, userId: a.user_id, username: u?.username || '?', displayName: u?.display_name || u?.username || '?', avatarUrl: u?.avatar_url || '', side: a.side, faceType: a.face_type, asset: a.asset, price: Number(a.price), amountTotal: Number(a.amount_total), amountLeft: Number(a.amount_left), totalRub: (Number(a.amount_left) * Number(a.price)).toFixed(2), minRub: Number(a.min_rub), maxRub: realMaxRub.toFixed(2), paymentMethods: a.payment_methods, terms: a.terms, active: a.active, paymentTime: Number(a.payment_time) || 30, createdAt: a.created_at, ...stats };
+  return { id: a.id, userId: a.user_id, username: u?.username || '?', displayName: u?.display_name || u?.username || '?', avatarUrl: u?.avatar_url || '', side: a.side, faceType: a.face_type, asset: a.asset, price: Number(a.price), amountTotal: Number(a.amount_total), amountLeft: Number(a.amount_left), totalRub: (Number(a.amount_left) * Number(a.price)).toFixed(2), minRub: Number(a.min_rub), maxRub: realMaxRub.toFixed(2), paymentMethods: a.payment_methods, terms: a.terms, active: a.active, paymentTime: Number(a.payment_time) || 30, createdAt: a.created_at, ...stats, isPro: u?.is_pro, isMerchant: u?.is_merchant, isMaker: u?.is_maker };
 }
 
 app.get('/api/ads', async (req, res) => {
@@ -200,6 +214,12 @@ app.get('/api/ads/:id', async (req, res) => {
 
 app.post('/api/ads', auth, async (req, res) => {
   const { side, face_type, asset, price, amount_total, min_rub, max_rub, payment_methods, terms, payment_time } = req.body;
+  
+  // Проверка на Мейкера для покупки
+  if (side === 'buy' && !req.user.is_maker && req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Для создания объявлений на покупку нужен статус Мейкера' });
+  }
+
   const p = Number(price), at = Number(amount_total), mn = Number(min_rub), mx = Number(max_rub);
   if (!(p > 0) || !(at > 0) || !(mn > 0) || !(mx > 0) || mn > mx || mx > at * p) return res.status(400).json({ error: 'bad_amounts' });
   try {
@@ -438,9 +458,8 @@ app.get('/api/stats', async (req, res) => {
 });
 
 // ==========================================
-// АДМИНКА (ТОЛЬКО ДЛЯ РОЛИ ADMIN)
+// АДМИНКА
 // ==========================================
-
 app.get('/api/admin/users', auth, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
   try {
@@ -449,28 +468,28 @@ app.get('/api/admin/users', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
-app.patch('/api/admin/users/:id/role', auth, async (req, res) => {
+app.patch('/api/admin/users/:id/status', auth, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
-  const { role } = req.body; // 'user', 'admin', 'merchant'
-  if (!['user', 'admin', 'merchant'].includes(role)) return res.status(400).json({ error: 'bad_role' });
+  const { is_pro, is_merchant, is_maker } = req.body;
   try {
-    await pool.query('UPDATE users SET role = $1 WHERE id = $2', [role, req.params.id]);
-    res.json({ ok: true });
+    const result = await pool.query(
+      'UPDATE users SET is_pro = COALESCE($1, is_pro), is_merchant = COALESCE($2, is_merchant), is_maker = COALESCE($3, is_maker) WHERE id = $4 RETURNING *',
+      [is_pro, is_merchant, is_maker, req.params.id]
+    );
+    res.json({ ok: true, user: publicUser(result.rows[0]) });
   } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
 app.get('/api/admin/orders', auth, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
   try {
-    // Показываем только споры или все ордера
     const result = await pool.query("SELECT * FROM orders WHERE status = 'dispute' OR status = 'pending' OR status = 'paid' ORDER BY created_at DESC");
     const items = await Promise.all(result.rows.map(shapeOrder));
     res.json({ items });
   } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
-// ==========================================
-
+// СТАТИКА
 app.use(express.static(path.join(__dirname)));
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();

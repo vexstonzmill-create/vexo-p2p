@@ -144,7 +144,7 @@
             <label>Тип сделки</label>
             <div class="segmented glass-panel" id="f-side">
               <button type="button" class="seg-btn buy active" data-val="sell">Я продаю</button>
-              <button type="button" class="seg-btn sell" data-val="buy">Я покупаю</button>
+              <button type="button" class="seg-btn sell" data-val="buy">Я покупаю (Мейкер)</button>
             </div>
           </div>
 
@@ -317,12 +317,22 @@
   </div>
 </div>
 
+<!-- НАСТРОЙКИ (С БЛОКОМ СТАТУСОВ) -->
 <div class="modal-overlay" id="settingsModal">
   <div class="modal glass-modal">
     <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Настройки</h3>
+    
     <div class="field"><label>Ссылка на аватар (URL)</label><input class="input" type="url" id="settingsAvatarUrl" placeholder="https://..."></div>
     <div class="field"><label>Имя</label><input class="input" type="text" id="settingsName" maxlength="50"></div>
     <div class="field"><label>Email</label><input class="input" type="email" id="settingsEmail"></div>
+    
+    <div style="border-top: 1px solid var(--glass-border); margin: 20px 0; padding-top: 20px;">
+      <h4 style="font-size: 14px; font-weight: 800; margin-bottom: 12px; color: var(--dim);">Статусы и Достижения</h4>
+      <div id="statusProgressContainer" style="display: flex; flex-direction: column; gap: 10px;">
+        <!-- Сюда JS вставит прогресс -->
+      </div>
+    </div>
+
     <div style="border-top: 1px solid var(--glass-border); margin: 20px 0; padding-top: 20px;">
       <h4 style="font-size: 14px; font-weight: 800; margin-bottom: 12px; color: var(--dim);">Смена пароля</h4>
       <div class="field"><label>Текущий пароль</label><input class="input" type="password" id="settingsCurrentPass" placeholder="Обязательно для смены"></div>
@@ -441,13 +451,6 @@
     <textarea class="input" id="reviewComment" placeholder="Комментарий (необязательно)" style="min-height: 80px;"></textarea>
     <div class="error-msg" id="reviewError"></div>
     <button class="btn btn-primary btn-block" id="reviewSubmitBtn">Отправить</button>
-    <button class="btn btn-ghost btn-block" onclick="closeModal('reviewModal')" style="margin-top: 8px;">Отмена</button>
-  </div>
-</div>
-
-<script src="app.js"></script>
-</body>
-</html></button>
     <button class="btn btn-ghost btn-block" onclick="closeModal('reviewModal')" style="margin-top: 8px;">Отмена</button>
   </div>
 </div>
