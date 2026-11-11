@@ -1,19 +1,14 @@
-/* =========================================
-   НОВАЯ ЦВЕТОВАЯ ПАЛИТРА (DEEP SPACE)
-   ========================================= */
 :root {
-  --bg: #050510; /* Глубокий темный фон */
+  --bg: #050510;
   --txt: #f8fafc;
   --dim: #94a3b8;
   
-  /* Жидкое стекло */
   --glass-bg: rgba(20, 25, 45, 0.45); 
-  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.15); 
   --glass-hover: rgba(255, 255, 255, 0.08);
   --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.1);
   
-  /* Акценты */
-  --primary: #38bdf8; /* Голубой */
+  --primary: #38bdf8; 
   --primary-hover: #0ea5e9;
   --btn-bg: #38bdf8; 
   --btn-txt: #000000;
@@ -26,14 +21,13 @@
 }
 
 body[data-theme="light"] {
-  --bg: #f0f4f8; /* Светлый фон */
+  --bg: #f0f4f8; 
   --txt: #0f172a; 
   --dim: #64748b; 
   
-  /* Стекло для светлой темы */
-  --glass-bg: rgba(255, 255, 255, 0.55); 
-  --glass-border: rgba(255, 255, 255, 0.9);
-  --glass-hover: rgba(255, 255, 255, 0.8);
+  --glass-bg: rgba(255, 255, 255, 0.65); 
+  --glass-border: rgba(0, 0, 0, 0.1); 
+  --glass-hover: rgba(255, 255, 255, 0.9);
   --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 1);
   
   --primary: #0284c7; 
@@ -61,30 +55,11 @@ body {
   transition: background-color 0.4s ease, color 0.4s ease;
 }
 
-/* =========================================
-   АНИМИРОВАННЫЙ ФОН (ЖИДКИЕ СФЕРЫ)
-   ========================================= */
-.bg-blobs {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  overflow: hidden;
-  background: var(--bg);
-  transition: background-color 0.4s ease;
-}
-
-.blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.6;
-  animation: float 20s infinite ease-in-out alternate;
-}
-
-.blob-1 { width: 50vw; height: 50vw; background: #4c1d95; top: -10%; left: -10%; animation-delay: 0s; }
+.bg-blobs { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: var(--bg); transition: background-color 0.4s ease; }
+.blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.6; animation: float 20s infinite ease-in-out alternate; }
+.blob-1 { width: 50vw; height: 50vw; background: #4c1d95; top: -10%; left: -10%; }
 .blob-2 { width: 60vw; height: 60vw; background: #0ea5e9; bottom: -20%; right: -10%; animation-delay: -5s; }
 .blob-3 { width: 40vw; height: 40vw; background: #10b981; top: 40%; left: 30%; animation-delay: -10s; }
-
 body[data-theme="light"] .blob { opacity: 0.3; filter: blur(100px); }
 body[data-theme="light"] .blob-1 { background: #c4b5fd; }
 body[data-theme="light"] .blob-2 { background: #7dd3fc; }
@@ -97,54 +72,19 @@ body[data-theme="light"] .blob-3 { background: #6ee7b7; }
   100% { transform: translate(5vw, -5vh) scale(1); }
 }
 
-/* =========================================
-   ЭФФЕКТ ЖИДКОГО СТЕКЛА
-   ========================================= */
-.glass-panel { 
-  background: var(--glass-bg); 
-  backdrop-filter: blur(24px) saturate(150%); 
-  -webkit-backdrop-filter: blur(24px) saturate(150%); 
-  border: 1px solid var(--glass-border); 
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15), var(--glass-highlight); 
-  transition: background 0.4s, border 0.4s;
-}
-
-.glass-card { 
-  background: var(--glass-bg); 
-  backdrop-filter: blur(20px) saturate(150%); 
-  -webkit-backdrop-filter: blur(20px) saturate(150%); 
-  border: 1px solid var(--glass-border); 
-  border-radius: 20px; 
-  padding: 20px; 
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1), var(--glass-highlight); 
-  transition: background 0.4s, border 0.4s;
-}
-
-.inner-card { 
-  background: var(--glass-hover); 
-  border-radius: 12px; 
-  padding: 12px; 
-  border: 1px solid var(--glass-border); 
-}
+.glass-panel { background: var(--glass-bg); backdrop-filter: blur(24px) saturate(150%); -webkit-backdrop-filter: blur(24px) saturate(150%); border: 1px solid var(--glass-border); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15), var(--glass-highlight); transition: background 0.4s, border 0.4s; }
+.glass-card { background: var(--glass-bg); backdrop-filter: blur(20px) saturate(150%); -webkit-backdrop-filter: blur(20px) saturate(150%); border: 1px solid var(--glass-border); border-radius: 20px; padding: 20px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1), var(--glass-highlight); transition: background 0.4s, border 0.4s; }
+.inner-card { background: var(--glass-hover); border-radius: 12px; padding: 12px; border: 1px solid var(--glass-border); }
 
 input, textarea { user-select: text; font-family: inherit; font-size: 16px !important; color: var(--txt); }
 input::placeholder, textarea::placeholder { color: var(--dim); font-size: 14px; }
 button { font-family: inherit; cursor: pointer; }
 .app { display: flex; min-height: 100vh; position: relative; z-index: 10; }
 
-/* ЛОГОТИП */
 .logo { display: flex; align-items: center; gap: 8px; padding-bottom: 20px; }
-.logo-mark { 
-  width: 32px; height: 32px; border-radius: 10px; 
-  background: linear-gradient(135deg, var(--primary), #8b5cf6); 
-  color: #fff; 
-  display: flex; align-items: center; justify-content: center; 
-  font-weight: 900; font-size: 18px; 
-  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.4);
-}
+.logo-mark { width: 32px; height: 32px; border-radius: 10px; background: linear-gradient(135deg, var(--primary), #8b5cf6); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; box-shadow: 0 4px 12px rgba(56, 189, 248, 0.4); }
 .logo-text { font-size: 22px; font-weight: 900; letter-spacing: -1px; color: var(--txt); }
 
-/* Sidebar & Topbar */
 .sidebar { display: none; width: 260px; padding: 20px; flex-direction: column; position: sticky; top: 0; height: 100vh; z-index: 20; border-radius: 0 30px 30px 0; border-left: none; }
 @media(min-width: 1024px) { .sidebar { display: flex; } }
 .nav-btn { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 14px; color: var(--dim); font-weight: 600; background: none; border: none; width: 100%; text-align: left; margin-bottom: 6px; font-size: 14px; transition: 0.2s;}
@@ -159,42 +99,26 @@ button { font-family: inherit; cursor: pointer; }
 .notification-btn { position: relative; }
 .notif-dot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background: var(--red); border-radius: 50%; border: 2px solid var(--bg); }
 
-/* Content */
-.content { flex: 1; padding: 20px; padding-bottom: 120px; max-width: 1000px; margin: 0 auto; width: 100%; position: relative; z-index: 10;}
+.content { flex: 1; padding: 20px; padding-bottom: 140px; max-width: 1000px; margin: 0 auto; width: 100%; position: relative; z-index: 10;}
 .screen { display: none; animation: fadeIn 0.4s ease; }
 .screen.active { display: block; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-/* Нижняя панель */
 .bottom-nav { position: fixed; bottom: 20px; left: 20px; right: 20px; z-index: 50; display: grid; grid-template-columns: repeat(6, 1fr); padding: 10px; border-radius: 28px; }
 @media(min-width: 1024px) { .bottom-nav { display: none; } }
 .bn-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: none; border: none; color: var(--dim); font-size: 10px; font-weight: 700; padding: 8px 0; border-radius: 16px; transition: 0.2s; }
 .bn-btn svg { width: 22px; height: 22px; }
 .bn-btn.active { color: var(--txt); background: var(--glass-hover); }
 
-/* =========================================
-   БАННЕРЫ (ИСПРАВЛЕНА ВЕРСТКА)
-   ========================================= */
 .banner-carousel { position: relative; margin-bottom: 24px; width: 100%; border-radius: 24px; overflow: hidden; }
 .banner-viewport { width: 100%; overflow: hidden; }
 .banner-track { display: flex; width: 100%; transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-.banner { 
-  min-width: 100%; 
-  width: 100%;
-  box-sizing: border-box;
-  flex-shrink: 0; 
-  padding: 28px; 
-  display: flex; 
-  flex-direction: column; 
-  justify-content: center; 
-  min-height: 180px; 
-}
+.banner { min-width: 100%; width: 100%; box-sizing: border-box; flex-shrink: 0; padding: 28px; display: flex; flex-direction: column; justify-content: center; min-height: 180px; }
 .banner h2 { font-size: 22px; margin-bottom: 10px; font-weight: 900; line-height: 1.2; color: var(--txt); }
 .banner p { color: var(--dim); font-size: 14px; margin-bottom: 20px; font-weight: 500; max-width: 80%; }
 
 .banner-platform { background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%); }
 body[data-theme="light"] .banner-platform { background: linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); }
-
 .banner-tg { background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%); }
 body[data-theme="light"] .banner-tg { background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%); }
 
@@ -203,9 +127,6 @@ body[data-theme="light"] .banner-tg { background: linear-gradient(135deg, rgba(1
 body[data-theme="light"] .banner-dot { background: rgba(0,0,0,0.2); }
 .banner-dot.active { width: 24px; border-radius: 4px; background: var(--txt); }
 
-/* =========================================
-   КНОПКИ И ИНПУТЫ
-   ========================================= */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 48px; padding: 0 20px; border-radius: 14px; font-size: 15px; font-weight: 700; border: 1px solid var(--glass-border); transition: 0.2s; text-decoration: none; background: var(--glass-hover); color: var(--txt); white-space: nowrap; }
 .btn:hover { background: var(--glass-border); }
 .btn-primary { background: var(--btn-bg); color: var(--btn-txt); border: none; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3); }
@@ -217,11 +138,10 @@ body[data-theme="light"] .banner-dot { background: rgba(0,0,0,0.2); }
 .btn-block { width: 100%; }
 .btn-sm { height: 36px; padding: 0 14px; font-size: 13px; border-radius: 10px; }
 
-.input { width: 100%; height: 52px; padding: 0 16px; background: var(--glass-hover); border: 1px solid var(--glass-border); border-radius: 14px; color: var(--txt); font-weight: 600; transition: 0.2s; }
+.input { width: 100%; height: 52px; padding: 0 16px; background: var(--glass-hover); border: 1px solid var(--glass-border); border-radius: 14px; color: var(--txt); font-weight: 600; transition: 0.2s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
 .input:focus { border-color: var(--primary); background: var(--glass-bg); box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15); }
 textarea.input { height: auto; padding: 16px; resize: vertical; }
 
-/* Вкладки */
 .trade-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 6px; border-radius: 18px; margin-bottom: 16px; }
 .trade-tab { background: transparent; border: none; height: 46px; border-radius: 14px; font-size: 15px; font-weight: 800; color: var(--dim); transition: 0.2s; }
 .trade-tab.active { background: var(--btn-bg); color: var(--btn-txt); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -229,7 +149,6 @@ textarea.input { height: auto; padding: 16px; resize: vertical; }
 .tab { flex: 1; height: 42px; text-align: center; background: none; border: none; color: var(--dim); font-weight: 800; font-size: 14px; border-radius: 14px; transition: 0.2s; }
 .tab.active { background: var(--glass-hover); color: var(--txt); }
 
-/* Фильтры-пилюли */
 .filter-label { font-size: 13px; color: var(--dim); font-weight: 600; margin-bottom: 10px; margin-top: 18px; }
 .chips, .icon-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; margin-bottom: 12px; }
 .chips::-webkit-scrollbar, .icon-scroll::-webkit-scrollbar { display: none; }
@@ -242,7 +161,6 @@ textarea.input { height: auto; padding: 16px; resize: vertical; }
 .coin-icon.rub { background: var(--glass-hover); border: 1px solid var(--glass-border); color: var(--txt); }
 .filter-inputs { display: flex; gap: 10px; margin-bottom: 0; }
 
-/* Карточка объявления */
 .ad-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 20px; padding: 20px; margin-bottom: 16px; transition: 0.2s; }
 .ad-card:hover { border-color: var(--dim); transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
 .ad-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; cursor: pointer; }
@@ -261,12 +179,10 @@ textarea.input { height: auto; padding: 16px; resize: vertical; }
 .ad-pay-methods { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .pay-tag { font-size: 11px; padding: 6px 10px; border-radius: 8px; background: var(--glass-hover); color: var(--dim); font-weight: 600; }
 
-/* БЕЙДЖИ */
 .badge-face { display: inline-flex; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase; border: 1px solid var(--glass-border); color: var(--dim); }
 .badge-pro { background: transparent; border: 1px solid var(--grn); color: var(--grn); font-size: 11px; font-weight: 900; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; }
 .badge-merchant { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: var(--blue); color: #fff; font-size: 11px; font-weight: 900; }
 
-/* Главная */
 .news-list { display: flex; flex-direction: column; gap: 16px; }
 .news-item { border-bottom: 1px solid var(--glass-border); padding-bottom: 16px; }
 .news-item:last-child { border-bottom: none; padding-bottom: 0; }
@@ -274,37 +190,20 @@ textarea.input { height: auto; padding: 16px; resize: vertical; }
 .news-title { font-size: 15px; font-weight: 800; margin-bottom: 6px; }
 .news-desc { font-size: 14px; color: var(--dim); line-height: 1.5; }
 
-/* Формы */
 .field { margin-bottom: 20px; }
 .field label { display: block; font-size: 13px; color: var(--dim); margin-bottom: 10px; font-weight: 600; }
 .segmented { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 6px; border-radius: 16px; }
 .seg-btn { height: 44px; border-radius: 12px; background: transparent; border: none; color: var(--dim); font-weight: 700; font-size: 14px; transition: 0.2s; }
 .seg-btn.active { background: var(--btn-bg); color: var(--btn-txt); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 
-/* Модалки */
 .modal-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,.6); backdrop-filter: blur(12px); display: none; align-items: center; justify-content: center; padding: 20px; }
 body[data-theme="light"] .modal-overlay { background: rgba(255,255,255,.4); }
 .modal-overlay.active { display: flex; }
-.modal { 
-  background: var(--bg); 
-  border: 1px solid var(--glass-border); 
-  border-radius: 28px; 
-  width: 100%; 
-  max-width: 420px; 
-  padding: 24px; 
-  display: flex; 
-  flex-direction: column; 
-  gap: 20px; 
-  max-height: 90vh; 
-  overflow-y: auto; 
-  position: relative; 
-  box-shadow: 0 24px 48px rgba(0,0,0,0.4), var(--glass-highlight); 
-}
+.modal { background: var(--bg); border: 1px solid var(--glass-border); border-radius: 28px; width: 100%; max-width: 420px; padding: 24px; display: flex; flex-direction: column; gap: 20px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 24px 48px rgba(0,0,0,0.4), var(--glass-highlight); }
 body[data-theme="light"] .modal { background: #ffffff; }
 .hidden { display: none !important; }
 .error-msg { color: var(--red); font-size: 13px; min-height: 18px; font-weight: 600; }
 
-/* ЧАТ */
 .chat-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; flex: 1; overflow-y: auto; background: transparent; }
 .msg { display: flex; gap: 10px; max-width: 85%; }
 .msg.me { margin-left: auto; flex-direction: row-reverse; }
@@ -314,10 +213,8 @@ body[data-theme="light"] .modal { background: #ffffff; }
 .chat-input-row input { flex: 1; height: 48px; padding: 0 20px; border: 1px solid var(--glass-border); border-radius: 24px; font-weight: 500; font-size: 15px; outline: none; background: var(--glass-bg); color: var(--txt); }
 .chat-input-row button { width: 48px; height: 48px; flex-shrink: 0; border: none; display: flex; align-items: center; justify-content: center; font-size: 20px; background: var(--btn-bg); color: var(--btn-txt); border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 
-/* Пустые состояния */
 .empty-state { text-align: center; padding: 40px 20px; font-size: 15px; color: var(--dim); font-weight: 500; }
 
-/* ТОСТЫ */
 .toast-container { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 400px; padding: 0 20px; pointer-events: none; }
 .toast { position: relative; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px 20px 16px 28px; color: var(--txt); font-size: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); font-weight: 600; text-align: left; animation: slideDown 0.3s ease; overflow: hidden; backdrop-filter: blur(30px); }
 .toast::before { content: ''; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 4px; height: 60%; border-radius: 2px; background: var(--dim); }
@@ -326,10 +223,24 @@ body[data-theme="light"] .modal { background: #ffffff; }
 .toast.info::before { background: var(--yellow); }
 @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
 
-/* Профиль */
 .profile-tabs { display: flex; padding: 6px; gap: 8px; margin-bottom: 20px; overflow-x: auto; scrollbar-width: none; }
 .profile-tab { height: 40px; padding: 0 18px; background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--dim); font-weight: 700; font-size: 14px; border-radius: 14px; cursor: pointer; white-space: nowrap; transition: 0.2s; display: inline-flex; align-items: center; }
 .profile-tab.active { background: var(--btn-bg); border-color: var(--btn-bg); color: var(--btn-txt); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+.wallet-hero { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 24px; padding: 28px; margin-bottom: 20px; }
+.wallet-hero .lbl { font-size: 14px; color: var(--dim); margin-bottom: 10px; font-weight: 600; }
+.wallet-hero .amount { font-size: 38px; font-weight: 900; color: var(--txt); margin-bottom: 28px; }
+.wallet-hero .amount span { font-size: 20px; color: var(--dim); }
+.wallet-actions { display: flex; gap: 12px; }
+.wallet-item { display: flex; align-items: center; gap: 16px; background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 20px; border-radius: 20px; margin-bottom: 12px; }
+.wallet-item .coin-icon { width: 40px; height: 40px; font-size: 18px; }
+
+/* СТИЛИ ДЛЯ АДМИНКИ */
+.admin-user-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.admin-user-info { display: flex; flex-direction: column; gap: 4px; }
+.admin-user-name { font-size: 16px; font-weight: 800; }
+.admin-user-meta { font-size: 12px; color: var(--dim); }
+.admin-role-select { background: var(--glass-bg); color: var(--txt); border: 1px solid var(--glass-border); padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }g); color: var(--btn-txt); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 
 /* Кошелек */
 .wallet-hero { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 24px; padding: 28px; margin-bottom: 20px; }

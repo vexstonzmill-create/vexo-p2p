@@ -33,18 +33,13 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const c = document.getElementById('toastContainer');
         if (!c) return;
-        
-        // Защита от дублей тостов
         const existing = Array.from(c.children).find(el => el.textContent === msg);
         if (existing) return;
-
         if (c.children.length >= 2) c.removeChild(c.firstElementChild);
-
         const el = document.createElement('div');
         el.className = 'toast ' + type;
         el.textContent = msg;
         c.appendChild(el);
-        
         setTimeout(() => { 
           el.style.opacity = '0'; 
           el.style.transition = '.3s'; 
@@ -89,16 +84,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- УВЕДОМЛЕНИЯ ---
     let notifications = JSON.parse(localStorage.getItem('vexo_notifs')) || [];
-    
-    // Очистка старых дублей при загрузке
     notifications = notifications.filter((v,i,a)=>a.findIndex(t=>(t.id === v.id))===i);
 
     function addNotification(text) {
-      // Защита от спама одинаковыми уведомлениями
       const now = Date.now();
       const isDuplicate = notifications.some(n => n.text === text && (now - new Date(n.date).getTime() < 3000));
       if (isDuplicate) return;
-
       notifications.unshift({ id: now, text, date: new Date().toISOString() });
       if (notifications.length > 20) notifications.pop();
       localStorage.setItem('vexo_notifs', JSON.stringify(notifications));
@@ -131,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- НАВИГАЦИЯ ---
-    const titles = { home: 'Главная', market: 'Маркет', create: 'Создать', orders: 'Ордера', order: 'Ордер', profile: 'Профиль', wallet: 'Кошелёк' };
+    const titles = { home: 'Главная', market: 'Маркет', create: 'Создать', orders: 'Ордера', order: 'Ордер', profile: 'Профиль', wallet: 'Кошелёк', admin: 'Админка' };
     let previousScreen = 'home';
 
     function show(name) {
@@ -154,6 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (name === 'profile') loadProfile();
         if (name === 'home') loadHome();
         if (name === 'wallet') loadWallet();
+        if (name === 'admin') loadAdmin();
       } catch(e) { console.error('show error:', e); }
       
       window.scrollTo(0, 0);
@@ -254,9 +246,20 @@ document.addEventListener('DOMContentLoaded', () => {
             ab.innerHTML = (u.displayName || u.username || '?')[0].toUpperCase();
           }
         }
+        
+        // Показываем кнопку админки
+        if (u.role === 'admin') {
+          document.getElementById('adminNavBtn').style.display = 'block';
+          document.getElementById('adminBnBtn').style.display = 'flex';
+        } else {
+          document.getElementById('adminNavBtn').style.display = 'none';
+          document.getElementById('adminBnBtn').style.display = 'none';
+        }
       } else {
         if (lb) lb.classList.remove('hidden');
         if (ab) ab.classList.add('hidden');
+        document.getElementById('adminNavBtn').style.display = 'none';
+        document.getElementById('adminBnBtn').style.display = 'none';
       }
     }
 
@@ -285,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <p style="color: var(--dim); font-size: 12px; margin-bottom: 16px;">Балансы и история операций</p>
           <div class="wallet-hero">
             <div class="lbl">Общий баланс в рублях</div>
-            <div class="amount">0,00 <span>₽</span></div>
+            <div class="amount">${fmt(u.balanceRub)} <span>₽</span></div>
             <div class="wallet-actions">
               <button class="btn btn-primary" id="btnDeposit" style="flex:1;">Пополнить</button>
               <button class="btn btn-ghost" id="btnWithdraw" style="flex:1;">Вывести</button>
@@ -293,8 +296,8 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <h3 style="margin-top: 20px; font-size: 14px; margin-bottom: 12px;">Активы</h3>
           <div class="wallet-list">
-            <div class="wallet-item"><div class="coin-icon rub">₽</div><div class="w-info"><div class="w-name">Российский рубль</div><div class="w-sub">RUB · фиат</div></div><div class="w-bal">0,00 ₽</div></div>
-            <div class="wallet-item"><div class="coin-icon usdt">₮</div><div class="w-info"><div class="w-name">Tether</div><div class="w-sub">USDT · TRC-20</div></div><div class="w-bal">0,00 <span>≈ 0 ₽</span></div></div>
+            <div class="wallet-item"><div class="coin-icon rub">₽</div><div class="w-info"><div class="w-name">Российский рубль</div><div class="w-sub">RUB · фиат</div></div><div class="w-bal">${fmt(u.balanceRub)} ₽</div></div>
+            <div class="wallet-item"><div class="coin-icon usdt">₮</div><div class="w-info"><div class="w-name">Tether</div><div class="w-sub">USDT · TRC-20</div></div><div class="w-bal">${fmtDec(u.balanceUsdt, 2)} <span>≈ 0 ₽</span></div></div>
           </div>`;
         document.getElementById('btnDeposit').onclick = () => { walletActionType = 'deposit'; document.getElementById('walletActionTitle').textContent = 'Пополнение'; document.getElementById('walletRequisitesField').style.display = 'none'; document.getElementById('walletActionModal').classList.add('active'); };
         document.getElementById('btnWithdraw').onclick = () => { walletActionType = 'withdraw'; document.getElementById('walletActionTitle').textContent = 'Вывод'; document.getElementById('walletRequisitesField').style.display = 'block'; document.getElementById('walletActionModal').classList.add('active'); };
@@ -425,8 +428,8 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const data = await API.req('GET', '/reviews/user/' + userId);
         const items = data.items || [];
-        list.innerHTML = `<div style="font-size:12px;font-weight:800;margin-bottom:10px;color:var(--dim);text-transform:uppercase;">Отзывы</div>` + 
-          (items.length ? items.map(r => `<div class="glass-card" style="padding:12px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong style="font-size:13px;">${r.author}</strong><span style="color:var(--txt);font-size:14px;">${'★'.repeat(r.rating)}</span></div><p style="font-size:12px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p></div>`).join('') : '<div class="empty-state">Отзывов пока нет</div>');
+        list.innerHTML = `<div style="font-size:13px;font-weight:800;margin-bottom:12px;color:var(--txt);text-transform:uppercase;">Отзывы</div>` + 
+          (items.length ? items.map(r => `<div class="glass-card" style="padding:12px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong style="font-size:13px;">${r.author}</strong><span style="color:var(--txt);font-size:14px;">${'★'.repeat(r.rating)}</span></div><p style="font-size:13px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p></div>`).join('') : '<div class="empty-state">Отзывов пока нет</div>');
       } catch(e) { list.innerHTML = ''; }
     }
 
@@ -776,7 +779,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const successRateStr = stats.successRate !== null ? `${stats.successRate}%` : '—';
         const ratingAvgStr = stats.ratingAvg !== null ? stats.ratingAvg : '—';
-        const proConditions = stats.isPro ? `<div style="font-size:11px; color:var(--grn); margin-top:8px; font-weight:600;">✓ Условия PRO выполнены</div>` : `<div style="font-size:11px; color:var(--dim); margin-top:8px;">До PRO: Оборот $${fmt(stats.volumeUsd)} / $100,000<br>Успешных: ${successRateStr} / 80%</div>`;
+        const proConditions = stats.isPro ? `<div style="font-size:11px; color:var(--grn); margin-top:8px; font-weight:600;">✓ Условия PRO выполнены</div>` : `<div style="font-size:11px; color:var(--dim); margin-top:8px;">До PRO: Оборот $${fmt(stats.volumeUsd)} / $100,000<br>Успешных: ${successRateStr} / 80%<br>Сделок: ${stats.dealsCompleted} / 10</div>`;
 
         let contentHtml = '';
         if (profileTab === 'ads') contentHtml = '<div id="myAdsList"><div class="empty-state">Загрузка...</div></div>';
@@ -835,9 +838,63 @@ document.addEventListener('DOMContentLoaded', () => {
       const list = document.getElementById('myAdsList'); if (!list) return;
       try {
         const { items } = await API.req('GET', '/ads/my');
-        list.innerHTML = items.length ? items.map(ad => `<div class="glass-card" style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;margin-bottom:12px"><strong style="font-size:16px;">${ad.side === 'sell' ? 'Продажа' : 'Покупка'} ${ad.asset}</strong><span style="color:${ad.active ? 'var(--grn)' : 'var(--red)'};font-size:12px;font-weight:700;background:rgba(255,255,255,0.05);padding:4px 8px;border-radius:6px;">${ad.active ? 'Активно' : 'Неактивно'}</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div style="font-size:11px;color:var(--dim);font-weight:600;">Курс</div><div style="font-size:15px;font-weight:800;">${fmt(ad.price)} ₽</div></div><div><div style="font-size:11px;color:var(--dim);font-weight:600;">Остаток</div><div style="font-size:15px;font-weight:800;">${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div></div></div></div>`).join('') : '<div class="empty-state">У вас нет объявлений</div>';
+        list.innerHTML = items.length ? items.map(ad => `
+          <div class="glass-card" style="margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+              <strong style="font-size:16px;">${ad.side === 'sell' ? 'Продажа' : 'Покупка'} ${ad.asset}</strong>
+              <span style="color:${ad.active ? 'var(--grn)' : 'var(--red)'};font-size:12px;font-weight:700;background:rgba(255,255,255,0.05);padding:4px 8px;border-radius:6px;">${ad.active ? 'Активно' : 'Неактивно'}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+              <div><div style="font-size:11px;color:var(--dim);font-weight:600;">Курс</div><div style="font-size:15px;font-weight:800;">${fmt(ad.price)} ₽</div></div>
+              <div><div style="font-size:11px;color:var(--dim);font-weight:600;">Остаток</div><div style="font-size:15px;font-weight:800;">${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div></div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-ghost btn-sm" style="flex:1; border:1px solid var(--glass-border);" onclick="toggleAdStatus(${ad.id}, ${ad.active})">${ad.active ? 'Снять' : 'Активировать'}</button>
+              <button class="btn btn-primary btn-sm" style="flex:1;" onclick="openEditAdModal(${ad.id})">Редактировать</button>
+            </div>
+          </div>
+        `).join('') : '<div class="empty-state">У вас нет объявлений</div>';
       } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки объявлений</div>'; }
     }
+
+    // ЛОГИКА РЕДАКТИРОВАНИЯ И СТАТУСА
+    window.toggleAdStatus = async function(adId, currentStatus) {
+      try {
+        await API.req('PATCH', '/ads/' + adId, { active: !currentStatus });
+        toast(currentStatus ? 'Объявление снято' : 'Объявление активировано', 'success');
+        loadMyAds();
+      } catch(e) { toast('Ошибка', 'error'); }
+    };
+
+    window.openEditAdModal = function(adId) {
+      API.req('GET', '/ads/' + adId).then(ad => {
+        document.getElementById('edit-price').value = ad.price;
+        document.getElementById('edit-min').value = ad.minRub;
+        document.getElementById('edit-max').value = ad.maxRub;
+        document.getElementById('edit-terms').value = ad.terms || '';
+        document.getElementById('editError').textContent = '';
+        document.getElementById('editSaveBtn').onclick = async () => {
+          const btn = document.getElementById('editSaveBtn'); btn.disabled = true; btn.textContent = 'Сохранение...';
+          try {
+            await API.req('PATCH', '/ads/' + adId, {
+              price: document.getElementById('edit-price').value,
+              min_rub: document.getElementById('edit-min').value,
+              max_rub: document.getElementById('edit-max').value,
+              payment_methods: ad.paymentMethods, // keep old
+              terms: document.getElementById('edit-terms').value
+            });
+            toast('Объявление обновлено!', 'success');
+            closeModal('editAdModal');
+            loadMyAds();
+          } catch (err) {
+            document.getElementById('editError').textContent = err.message;
+          } finally {
+            btn.disabled = false; btn.textContent = 'Сохранить';
+          }
+        };
+        document.getElementById('editAdModal').classList.add('active');
+      });
+    };
 
     async function loadMyHistory() {
       const list = document.getElementById('myHistoryList'); if (!list) return;
@@ -896,7 +953,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } finally { btn.disabled = false; btn.textContent = 'Сохранить'; }
     });
 
-    // ОРДЕР МОДАЛКА (С ТАЙМЕРОМ НА ЦЕНУ)
+    // ОРДЕР МОДАЛКА (С ТАЙМЕРОМ НА ЦЕНУ И КНОПКОЙ МАКС)
     let currentAd = null, selectedPay = null, priceTimerInterval = null;
     window.openOrderModal = function(adId) {
       const ad = (window._ads || {})[adId];
@@ -922,22 +979,38 @@ document.addEventListener('DOMContentLoaded', () => {
       const amountInput = document.getElementById('orderAmount');
       if (amountInput) {
         amountInput.value = '';
+        
+        // Считаем реальный максимум
+        const realMaxRub = Math.min(ad.maxRub, ad.amountLeft * ad.price);
+        setText('orderLimit', `Лимит: ${fmt(ad.minRub)} - ${fmt(realMaxRub)} ₽`);
+
         amountInput.oninput = e => {
           const rub = parseFloat(e.target.value) || 0;
           setText('orderResult', fmtDec(rub / ad.price, 4) + ' ' + ad.asset);
           setText('orderTotalBottom', fmt(rub) + ' RUB');
+          
           const errEl = document.getElementById('orderError');
           const btn = document.getElementById('orderSubmit');
-          if (rub > 0 && (rub < ad.minRub || rub > ad.maxRub)) {
-             if (errEl) errEl.textContent = `Сумма должна быть от ${fmt(ad.minRub)} до ${fmt(ad.maxRub)} ₽`;
+          
+          if (rub > 0 && (rub < ad.minRub || rub > realMaxRub)) {
+             if (errEl) errEl.textContent = `Сумма должна быть от ${fmt(ad.minRub)} до ${fmt(realMaxRub)} ₽`;
              if (btn) { btn.style.opacity = '0.5'; btn.disabled = true; }
+             amountInput.style.borderColor = 'var(--red)';
           } else {
              if (errEl) errEl.textContent = '';
              if (btn) { btn.style.opacity = '1'; btn.disabled = false; }
+             amountInput.style.borderColor = 'var(--primary)';
           }
         };
       }
       
+      // ЛОГИКА КНОПКИ МАКС (тоже привязываем к реальному максимуму)
+      document.getElementById('btnOrderMax').onclick = () => {
+        const realMaxRub = Math.min(ad.maxRub, ad.amountLeft * ad.price);
+        amountInput.value = realMaxRub.toFixed(2);
+        amountInput.dispatchEvent(new Event('input'));
+      };
+
       const payBox = document.getElementById('orderPayments');
       if (!payBox) return;
       payBox.innerHTML = '';
@@ -992,8 +1065,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const errEl = document.getElementById('orderError'); if (errEl) errEl.textContent = '';
       const rub = parseFloat(document.getElementById('orderAmount').value) || 0;
       if (!selectedPay) { if (errEl) errEl.textContent = 'Выберите способ оплаты'; return; }
+      
+      const realMaxRub = Math.min(currentAd.maxRub, currentAd.amountLeft * currentAd.price);
       if (rub < currentAd.minRub) { if (errEl) errEl.textContent = 'Минимум ' + fmt(currentAd.minRub) + ' ₽'; return; }
-      if (rub > currentAd.maxRub) { if (errEl) errEl.textContent = 'Максимум ' + fmt(currentAd.maxRub) + ' ₽'; return; }
+      if (rub > realMaxRub) { if (errEl) errEl.textContent = 'Максимум ' + fmt(realMaxRub) + ' ₽'; return; }
       
       const btn = document.getElementById('orderSubmit'); btn.disabled = true; btn.textContent = '...';
       try {
@@ -1017,6 +1092,86 @@ document.addEventListener('DOMContentLoaded', () => {
       window.open(`https://t.me/vexoio_bot?start=${walletActionType === 'deposit' ? 'dep' : 'wth'}_${amount}`, '_blank');
       closeModal('walletActionModal'); toast('Перенаправление в Telegram...', 'success');
     });
+
+    // ==========================================
+    // ЛОГИКА АДМИНКИ
+    // ==========================================
+    let adminTab = 'users';
+
+    async function loadAdmin() {
+      const u = API.user();
+      if (!u || u.role !== 'admin') return;
+      const content = document.getElementById('adminContent');
+      if (!content) return;
+      
+      try {
+        if (adminTab === 'users') {
+          content.innerHTML = 'Загрузка пользователей...';
+          const { items } = await API.req('GET', '/admin/users');
+          
+          content.innerHTML = items.map(user => `
+            <div class="admin-user-card">
+              <div class="admin-user-info">
+                <div class="admin-user-name">${user.displayName} (@${user.username})</div>
+                <div class="admin-user-meta">Email: ${user.email} | Роль: ${user.role}</div>
+              </div>
+              <select class="admin-role-select" onchange="changeUserRole(${user.id}, this.value)">
+                <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
+                <option value="merchant" ${user.role === 'merchant' ? 'selected' : ''}>Merchant</option>
+                <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+              </select>
+            </div>
+          `).join('');
+        } 
+        else if (adminTab === 'disputes') {
+          content.innerHTML = 'Загрузка ордеров...';
+          const { items } = await API.req('GET', '/admin/orders');
+          
+          if (!items.length) {
+             content.innerHTML = '<div class="empty-state">Нет активных споров или заявок</div>';
+             return;
+          }
+          
+          content.innerHTML = items.map(o => `
+            <div class="ad-card" style="cursor:pointer; border-left:4px solid ${o.status === 'dispute' ? 'var(--gold)' : 'var(--blue)'}" onclick="openOrderPage(${o.id})">
+              <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+                <strong style="font-family:Inter,monospace;font-size:15px;">#${o.publicId}</strong>
+                <span style="color:var(--txt);font-size:12px;font-weight:800">${o.statusLabel}</span>
+              </div>
+              <div class="ad-body">
+                <div><div class="ad-lbl">Сумма</div><div class="ad-val">${fmt(o.amountRub)} ₽</div></div>
+                <div><div class="ad-lbl">Актив</div><div class="ad-val">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div>
+              </div>
+              <div style="font-size:12px;color:var(--dim);display:flex;justify-content:space-between;font-weight:600;margin-top:12px;">
+                <span>${o.buyer.displayName} ↔ ${o.seller.displayName}</span>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch(e) { content.innerHTML = '<div class="empty-state">Ошибка загрузки данных</div>'; }
+    }
+
+    document.querySelectorAll('#adminTabs .tab').forEach(c => {
+      c.onclick = () => {
+        document.querySelectorAll('#adminTabs .tab').forEach(x => x.classList.remove('active'));
+        c.classList.add('active');
+        adminTab = c.dataset.val;
+        loadAdmin();
+      };
+    });
+
+    window.changeUserRole = async function(userId, role) {
+      try {
+        await API.req('PATCH', '/admin/users/' + userId + '/role', { role });
+        toast('Роль обновлена', 'success');
+        const u = API.user();
+        if (u.id === userId) { // Если меняем себе роль, обновляем UI
+          u.role = role;
+          localStorage.setItem('vexo_user', JSON.stringify(u));
+          updateAuthUI();
+        }
+      } catch(e) { toast('Ошибка', 'error'); }
+    };
 
     // СТАРТ
     updateAuthUI();

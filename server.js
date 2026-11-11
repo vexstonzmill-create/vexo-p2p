@@ -10,7 +10,7 @@ const PORT = Number(process.env.PORT) || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_vexo_key_that_is_long_enough_12345';
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_UDtaHhd5Zr6s@ep-divine-sun-bawvlsl5-pooler.c-8.eu-central-1.aws.neon.tech/neondb?sslmode=require",
+  connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_UDtaHhd5Zr6s@ep-divine-sun-bawvIsl5-pooler.c-8.eu-central-1.aws.neon.tech/neondb?sslmode=require",
   ssl: { rejectUnauthorized: false }
 });
 
@@ -26,6 +26,8 @@ async function initDB() {
     
     await pool.query(`ALTER TABLE ads ADD COLUMN IF NOT EXISTS payment_time INT DEFAULT 30;`);
     await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_time INT DEFAULT 30;`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS balance_rub NUMERIC DEFAULT 0;`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS balance_usdt NUMERIC DEFAULT 0;`);
     
     console.log('✓ Database tables initialized');
   } catch (err) {
@@ -59,7 +61,12 @@ async function auth(req, res, next) {
 }
 
 function publicUser(u) {
-  return { id: u.id, username: u.username, displayName: u.display_name || u.username, email: u.email, role: u.role, kycStatus: u.kyc_status, avatarUrl: u.avatar_url || '', volumeUsd: Number(u.volume_usd), createdAt: u.created_at };
+  return { 
+    id: u.id, username: u.username, displayName: u.display_name || u.username, 
+    email: u.email, role: u.role, kycStatus: u.kyc_status, avatarUrl: u.avatar_url || '', 
+    volumeUsd: Number(u.volume_usd), createdAt: u.created_at,
+    balanceRub: Number(u.balance_rub || 0), balanceUsdt: Number(u.balance_usdt || 0)
+  };
 }
 
 async function getUserStats(userId) {
@@ -74,14 +81,15 @@ async function getUserStats(userId) {
   const ratings = reviewsRes.rows.map(r => r.rating);
   const avg = ratings.length ? Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)) : null;
   const volumeUsd = Number(volumeRes.rows[0]?.volume_usd || 0);
-  const isPro = volumeUsd >= 100000 && successRate >= 80 && completed >= 10;
   
-  // Дополнительный статус для мерчантов
+  // УСЛОВИЯ ДЛЯ ПОЛУЧЕНИЯ СТАТУСА PRO
+  const isPro = volumeUsd >= 100000 && successRate >= 80 && completed >= 10;
   const isMerchant = completed >= 5 || volumeUsd >= 10000;
-
+  
   return { dealsTotal: total, dealsCompleted: completed, successRate, reviewsCount: ratings.length, ratingAvg: avg, volumeUsd, isPro, isMerchant };
 }
 
+// АУТЕНТИФИКАЦИЯ
 app.post('/api/auth/register', async (req, res) => {
   const { username, email, password } = req.body || {};
   if (!username || username.length < 3) return res.status(400).json({ error: 'short_username' });
@@ -150,6 +158,7 @@ app.post('/api/users/:id/favorite', auth, async (req, res) => {
   res.json({ isFavorite: idx === -1 });
 });
 
+// ОБЪЯВЛЕНИЯ
 async function shapeAd(a) {
   const uRes = await pool.query('SELECT * FROM users WHERE id = $1', [a.user_id]);
   const u = uRes.rows[0];
@@ -178,9 +187,7 @@ app.get('/api/ads/my', auth, async (req, res) => {
     const result = await pool.query('SELECT * FROM ads WHERE user_id = $1 ORDER BY created_at DESC', [req.user.id]);
     const items = await Promise.all(result.rows.map(shapeAd));
     res.json({ items });
-  } catch(e) { 
-    res.json({ items: [] }); 
-  }
+  } catch(e) { res.json({ items: [] }); }
 });
 
 app.get('/api/ads/:id', async (req, res) => {
@@ -204,16 +211,31 @@ app.post('/api/ads', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
-// СТАТУСЫ НА РУССКОМ
-const STATUS_LABEL = { 
-  pending: 'Ожидает одобрения', 
-  accepted: 'Ожидает оплаты', 
-  paid: 'Оплата отправлена', 
-  completed: 'Завершён', 
-  cancelled: 'Отменён', 
-  declined: 'Отклонён',
-  dispute: 'Спор' 
-};
+app.patch('/api/ads/:id', auth, async (req, res) => {
+  const { price, min_rub, max_rub, payment_methods, terms, active } = req.body;
+  try {
+    const adRes = await pool.query('SELECT * FROM ads WHERE id = $1', [req.params.id]);
+    const ad = adRes.rows[0];
+    if (!ad || ad.user_id !== req.user.id) return res.status(403).json({ error: 'forbidden' });
+    
+    if (active !== undefined && !price) {
+       const result = await pool.query('UPDATE ads SET active = $1 WHERE id = $2 RETURNING *', [active, req.params.id]);
+       return res.json(await shapeAd(result.rows[0]));
+    }
+
+    const p = Number(price), mn = Number(min_rub), mx = Number(max_rub);
+    if (!(p > 0) || !(mn > 0) || !(mx > 0) || mn > mx) return res.status(400).json({ error: 'bad_amounts' });
+
+    const result = await pool.query(
+      'UPDATE ads SET price = $1, min_rub = $2, max_rub = $3, payment_methods = $4, terms = $5 WHERE id = $6 RETURNING *',
+      [p, mn, mx, payment_methods, terms, req.params.id]
+    );
+    res.json(await shapeAd(result.rows[0]));
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
+});
+
+// ОРДЕРА
+const STATUS_LABEL = { pending: 'Ожидает', accepted: 'К оплате', paid: 'Оплачено', completed: 'Завершён', cancelled: 'Отменён', declined: 'Отклонён', dispute: 'Спор' };
 
 async function shapeOrder(o) {
   const bRes = await pool.query('SELECT * FROM users WHERE id = $1', [o.buyer_id]);
@@ -234,8 +256,10 @@ app.post('/api/orders', auth, async (req, res) => {
     if (!ad.payment_methods.includes(payment_method)) throw new Error('Способ оплаты недоступен');
     
     const rub = Number(amount_rub);
+    const realMaxRub = Math.min(Number(ad.max_rub), Number(ad.amount_left) * Number(ad.price));
+    
     if (rub < ad.min_rub) throw new Error('Сумма ниже минимума');
-    if (rub > ad.max_rub) throw new Error('Сумма выше максимума');
+    if (rub > realMaxRub) throw new Error('Сумма выше доступного лимита');
     
     const assetQty = rub / ad.price;
     if (assetQty > ad.amount_left) throw new Error('Недостаточно актива');
@@ -293,7 +317,6 @@ async function transition(orderId, to, note, client = pool) {
   return o;
 }
 
-// ПРИНЯТИЕ ЗАЯВКИ ПРОДАВЦОМ
 app.post('/api/orders/:id/accept', auth, async (req, res) => {
   const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
   const o = oRes.rows[0];
@@ -302,7 +325,6 @@ app.post('/api/orders/:id/accept', auth, async (req, res) => {
   res.json({ ok: true });
 });
 
-// ОТКЛОНЕНИЕ ЗАЯВКИ ПРОДАВЦОМ
 app.post('/api/orders/:id/decline', auth, async (req, res) => {
   const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
   const o = oRes.rows[0];
@@ -374,6 +396,7 @@ app.post('/api/orders/:id/resolve', auth, async (req, res) => {
   finally { client.release(); }
 });
 
+// ЧАТ, ОТЗЫВЫ, СТАТИСТИКА
 app.get('/api/chat/:orderId', auth, async (req, res) => {
   const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.orderId]);
   const o = oRes.rows[0];
@@ -414,10 +437,44 @@ app.get('/api/stats', async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'db_error' }); }
 });
 
+// ==========================================
+// АДМИНКА (ТОЛЬКО ДЛЯ РОЛИ ADMIN)
+// ==========================================
+
+app.get('/api/admin/users', auth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
+  try {
+    const result = await pool.query('SELECT * FROM users ORDER BY created_at DESC');
+    res.json({ items: result.rows.map(publicUser) });
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
+});
+
+app.patch('/api/admin/users/:id/role', auth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
+  const { role } = req.body; // 'user', 'admin', 'merchant'
+  if (!['user', 'admin', 'merchant'].includes(role)) return res.status(400).json({ error: 'bad_role' });
+  try {
+    await pool.query('UPDATE users SET role = $1 WHERE id = $2', [role, req.params.id]);
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
+});
+
+app.get('/api/admin/orders', auth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
+  try {
+    // Показываем только споры или все ордера
+    const result = await pool.query("SELECT * FROM orders WHERE status = 'dispute' OR status = 'pending' OR status = 'paid' ORDER BY created_at DESC");
+    const items = await Promise.all(result.rows.map(shapeOrder));
+    res.json({ items });
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
+});
+
+// ==========================================
+
 app.use(express.static(path.join(__dirname)));
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.listen(PORT, () => console.log('VEXO P2P running on port ' + PORT));;
+app.listen(PORT, () => console.log('VEXO P2P running on port ' + PORT));
