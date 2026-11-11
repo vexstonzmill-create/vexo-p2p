@@ -54,18 +54,24 @@ body {
   transition: background-color 0.3s, color 0.3s;
 }
 
-/* РАЗМЫТЫЙ ФОН */
+/* МАГИЯ ФОНА: Размытие и инверсия для светлой темы */
 body::before {
   content: '';
   position: fixed;
-  inset: -20px; /* Чуть больше экрана, чтобы не было видно краев при размытии */
+  inset: -20px; 
   background-image: url('bg.jpg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
   background-repeat: no-repeat;
-  filter: blur(15px); /* Вот тут задается размытие */
+  filter: blur(15px); 
   z-index: -2; 
+  transition: filter 0.3s;
+}
+
+/* Инвертируем цвета картинки для светлой темы (черное станет белым, белое - черным) */
+body[data-theme="light"]::before {
+  filter: blur(15px) invert(1) brightness(1.5); 
 }
 
 /* Оверлей для затемнения/осветления */
@@ -76,10 +82,11 @@ body::after {
   background: rgba(0, 0, 0, 0.5); /* Темная тема */
   z-index: -1;
   pointer-events: none;
+  transition: background-color 0.3s;
 }
 
 body[data-theme="light"]::after {
-  background: rgba(255, 255, 255, 0.4); /* Светлая тема */
+  background: rgba(255, 255, 255, 0.6); /* Светлая тема */
 }
 
 input, textarea { user-select: text; font-family: inherit; font-size: 16px !important; color: var(--txt); }
@@ -139,11 +146,21 @@ button { font-family: inherit; cursor: pointer; }
 .bn-btn svg { width: 20px; height: 20px; }
 .bn-btn.active { color: var(--txt); background: var(--glass-hover); }
 
-/* БАННЕРЫ */
-.banner-carousel { position: relative; margin-bottom: 20px; width: 100%; }
-.banner-viewport { overflow: hidden; border-radius: 16px; width: 100%; }
+/* БАННЕРЫ (Исправлена верстка карусели) */
+.banner-carousel { position: relative; margin-bottom: 20px; width: 100%; overflow: hidden; border-radius: 16px; }
+.banner-viewport { width: 100%; overflow: hidden; }
 .banner-track { display: flex; width: 100%; transition: transform 0.4s ease-in-out; }
-.banner { min-width: 100%; flex-shrink: 0; padding: 24px; display: flex; flex-direction: column; justify-content: center; min-height: 160px; border-radius: 16px; border: 1px solid var(--glass-border); }
+.banner { 
+  min-width: 100%; 
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0; 
+  padding: 24px; 
+  display: flex; 
+  flex-direction: column; 
+  justify-content: center; 
+  min-height: 160px; 
+}
 .banner h2 { font-size: 20px; margin-bottom: 8px; font-weight: 900; line-height: 1.2; color: var(--txt); }
 .banner p { color: var(--dim); font-size: 13px; margin-bottom: 16px; font-weight: 500; }
 
@@ -274,236 +291,4 @@ body[data-theme="light"] .modal-overlay { background: rgba(0,0,0,.2); }
 .wallet-hero .amount span { font-size: 18px; color: var(--dim); }
 .wallet-actions { display: flex; gap: 12px; }
 .wallet-item { display: flex; align-items: center; gap: 16px; background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 16px; border-radius: 16px; margin-bottom: 8px; backdrop-filter: blur(25px); }
-.wallet-item .coin-icon { width: 36px; height: 36px; font-size: 16px; }e {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.7);
-}
-.glass-price span {
-  font-size: 18px;
-  font-weight: 800;
-  color: #22c55e;
-  margin-left: 4px;
-}
-.glass-badges { display: flex; gap: 8px; }
-.glass-badge-time {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.6);
-  display: flex;
-  align-items: center;
-}
-.glass-badge-secure {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 4px 8px;
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-/* Карточка ввода */
-.glass-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: 16px;
-}
-
-.glass-tabs {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 8px;
-}
-.glass-tab {
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 14px;
-  font-weight: 600;
-  padding: 0 0 8px 0;
-  cursor: pointer;
-  position: relative;
-}
-.glass-tab.active { color: #fff; }
-.glass-tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: -9px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: #fff;
-  border-radius: 2px;
-}
-.glass-timer {
-  margin-left: auto;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.4);
-  background: rgba(0, 0, 0, 0.2);
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.glass-input-group {
-  display: flex;
-  align-items: center;
-  margin-bottom: 12px;
-  gap: 8px;
-}
-.glass-input {
-  background: transparent;
-  border: none;
-  color: #fff;
-  font-size: 32px;
-  font-weight: 800;
-  width: 100%;
-  outline: none;
-  padding: 0;
-}
-.glass-currency {
-  font-size: 14px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.6);
-}
-.glass-max-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: #f59e0b;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 6px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-.glass-max-btn:hover { background: rgba(255, 255, 255, 0.2); }
-
-.glass-limits {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
-  margin-bottom: 16px;
-}
-
-.glass-receive {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.7);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  padding-top: 12px;
-}
-.glass-receive strong { color: #fff; font-size: 16px; }
-
-/* Кнопка выбора оплаты (компактная, скругленная) */
-.glass-payment-btn {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #ef4444;
-  font-size: 14px;
-  font-weight: 700;
-  padding: 12px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-.glass-payment-btn:hover { background: rgba(239, 68, 68, 0.2); }
-
-/* Инфо мерчанта */
-.glass-maker-info { display: flex; flex-direction: column; gap: 4px; }
-.glass-maker-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.glass-maker-name {
-  font-size: 15px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.glass-maker-name span { color: rgba(255, 255, 255, 0.4); font-size: 12px; }
-.glass-maker-rating {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.6);
-}
-.glass-maker-rating svg { color: rgba(255, 255, 255, 0.6); }
-.glass-maker-stats { font-size: 12px; color: rgba(255, 255, 255, 0.4); }
-
-/* Условия */
-.glass-terms {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 12px;
-  padding: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-.glass-terms-title {
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-.glass-terms p {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
-  line-height: 1.4;
-  margin-bottom: 8px;
-}
-.glass-terms-text {
-  color: rgba(255, 255, 255, 0.7) !important;
-  font-style: italic;
-}
-
-/* Футер */
-.glass-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 8px;
-}
-.glass-total-amount { font-size: 20px; font-weight: 800; }
-.glass-total-label { font-size: 12px; color: rgba(255, 255, 255, 0.5); }
-
-/* Главная кнопка (скругленная, компактная) */
-.glass-submit-btn {
-  background: #fff;
-  color: #000;
-  border: none;
-  font-size: 15px;
-  font-weight: 800;
-  padding: 14px 32px;
-  border-radius: 16px;
-  cursor: pointer;
-  transition: 0.2s;
-  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
-}
-.glass-submit-btn:hover { background: #f0f0f0; transform: translateY(-2px); }
-.glass-submit-btn.disabled {
-  background: rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.5);
-  box-shadow: none;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Логотип в стиле VEXO (для шапки или баннера) */
-.vexo-logo-text {
-  font-family: 'Inter', -apple-system, sans-serif;
-  font-weight: 900;
-  letter-spacing: -1.5px;
-  font-size: 24px;
-  background: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-transform: lowercase; /* как на баннере vexo-p2p */
-}
+.wallet-item .coin-icon { width: 36px; height: 36px; font-size: 16px; }
