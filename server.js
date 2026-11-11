@@ -9,20 +9,11 @@ const { Pool } = require('pg');
 const PORT = Number(process.env.PORT) || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_vexo_key_that_is_long_enough_12345';
 
-// --- ПОДКЛЮЧЕНИЕ К БАЗЕ ДАННЫХ NEON ---
 const pool = new Pool({
-  connectionString: "postgresql://neondb_owner:npg_UDtaHhd5Zr6s@ep-divine-sun-bawvlsl5-pooler.c-8.eu-central-1.aws.neon.tech/neondb?sslmode=require",
+  connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_UDtaHhd5Zr6s@ep-divine-sun-bawvlsl5-pooler.c-8.eu-central-1.aws.neon.tech/neondb?sslmode=require",
   ssl: { rejectUnauthorized: false }
 });
 
-if (process.env.DATABASE_URL) {
-  console.log("=== БАЗА ДАННЫХ ===");
-  console.log("Хост из переменной:", process.env.DATABASE_URL.split('@')[1] || "ОШИБКА ПАРСИНГА");
-} else {
-  console.log("=== DATABASE_URL ПУСТАЯ ИЛИ НЕ НАЙДЕНА (используется хардкод) ===");
-}
-
-// --- ИНИЦИАЛИЗАЦИЯ ТАБЛИЦ ---
 async function initDB() {
   try {
     await pool.query(`
@@ -32,6 +23,11 @@ async function initDB() {
       CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, order_id INT REFERENCES orders(id), sender_id INT REFERENCES users(id), text TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS reviews (id SERIAL PRIMARY KEY, order_id INT REFERENCES orders(id), author_id INT REFERENCES users(id), target_id INT REFERENCES users(id), rating INT, comment TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
     `);
+    
+    // Безопасное добавление новых колонок, если их нет
+    await pool.query(`ALTER TABLE ads ADD COLUMN IF NOT EXISTS payment_time INT DEFAULT 30;`);
+    await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_time INT DEFAULT 30;`);
+    
     console.log('✓ Database tables initialized');
   } catch (err) {
     console.error('❌ DB Init Error:', err);
@@ -49,7 +45,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// --- АВТОРИЗАЦИЯ ---
 async function auth(req, res, next) {
   const h = req.headers.authorization || '';
   const token = h.startsWith('Bearer ') ? h.slice(7) : null;
@@ -84,7 +79,6 @@ async function getUserStats(userId) {
   return { dealsTotal: total, dealsCompleted: completed, successRate, reviewsCount: ratings.length, ratingAvg: avg, volumeUsd, isPro };
 }
 
-// --- АУТЕНТИФИКАЦИЯ ---
 app.post('/api/auth/register', async (req, res) => {
   const { username, email, password } = req.body || {};
   if (!username || username.length < 3) return res.status(400).json({ error: 'short_username' });
@@ -98,10 +92,7 @@ app.post('/api/auth/register', async (req, res) => {
     const user = result.rows[0];
     const token = jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: '7d' });
     res.status(201).json({ token, user: publicUser(user) });
-} catch (err) { 
-  console.error("КРИТИЧЕСКАЯ ОШИБКА БД:", err.message); 
-  res.status(500).json({ error: err.message }); 
-}
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
 app.post('/api/auth/login', async (req, res) => {
@@ -156,13 +147,12 @@ app.post('/api/users/:id/favorite', auth, async (req, res) => {
   res.json({ isFavorite: idx === -1 });
 });
 
-// --- ОБЪЯВЛЕНИЯ ---
 async function shapeAd(a) {
   const uRes = await pool.query('SELECT * FROM users WHERE id = $1', [a.user_id]);
   const u = uRes.rows[0];
   const stats = await getUserStats(a.user_id);
   const realMaxRub = Math.min(Number(a.max_rub), Number(a.amount_left) * Number(a.price));
-  return { id: a.id, userId: a.user_id, username: u?.username || '?', displayName: u?.display_name || u?.username || '?', avatarUrl: u?.avatar_url || '', side: a.side, faceType: a.face_type, asset: a.asset, price: Number(a.price), amountTotal: Number(a.amount_total), amountLeft: Number(a.amount_left), totalRub: (Number(a.amount_left) * Number(a.price)).toFixed(2), minRub: Number(a.min_rub), maxRub: realMaxRub.toFixed(2), paymentMethods: a.payment_methods, terms: a.terms, active: a.active, createdAt: a.created_at, ...stats };
+  return { id: a.id, userId: a.user_id, username: u?.username || '?', displayName: u?.display_name || u?.username || '?', avatarUrl: u?.avatar_url || '', side: a.side, faceType: a.face_type, asset: a.asset, price: Number(a.price), amountTotal: Number(a.amount_total), amountLeft: Number(a.amount_left), totalRub: (Number(a.amount_left) * Number(a.price)).toFixed(2), minRub: Number(a.min_rub), maxRub: realMaxRub.toFixed(2), paymentMethods: a.payment_methods, terms: a.terms, active: a.active, paymentTime: Number(a.payment_time) || 30, createdAt: a.created_at, ...stats };
 }
 
 app.get('/api/ads', async (req, res) => {
@@ -180,12 +170,24 @@ app.get('/api/ads', async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
+// НОВЫЙ ЭНДПОИНТ: Получить конкретное объявление (для проверки цены)
+app.get('/api/ads/:id', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM ads WHERE id = $1', [req.params.id]);
+    if (!result.rows[0]) return res.status(404).json({ error: 'not_found' });
+    res.json(await shapeAd(result.rows[0]));
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
+});
+
 app.post('/api/ads', auth, async (req, res) => {
-  const { side, face_type, asset, price, amount_total, min_rub, max_rub, payment_methods, terms } = req.body;
+  const { side, face_type, asset, price, amount_total, min_rub, max_rub, payment_methods, terms, payment_time } = req.body;
   const p = Number(price), at = Number(amount_total), mn = Number(min_rub), mx = Number(max_rub);
   if (!(p > 0) || !(at > 0) || !(mn > 0) || !(mx > 0) || mn > mx || mx > at * p) return res.status(400).json({ error: 'bad_amounts' });
   try {
-    const result = await pool.query('INSERT INTO ads (user_id, side, face_type, asset, price, amount_total, amount_left, min_rub, max_rub, payment_methods, terms) VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $8, $9, $10) RETURNING *', [req.user.id, side, face_type, asset, p, at, mn, mx, payment_methods, terms]);
+    const result = await pool.query(
+      'INSERT INTO ads (user_id, side, face_type, asset, price, amount_total, amount_left, min_rub, max_rub, payment_methods, terms, payment_time) VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $8, $9, $10, $11) RETURNING *', 
+      [req.user.id, side, face_type, asset, p, at, mn, mx, payment_methods, terms, payment_time || 30]
+    );
     res.status(201).json(await shapeAd(result.rows[0]));
   } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
@@ -196,14 +198,13 @@ app.get('/api/ads/my', auth, async (req, res) => {
   res.json({ items });
 });
 
-// --- ОРДЕРА ---
 const STATUS_LABEL = { waiting: 'Ожидает оплаты', paid: 'Оплата отмечена', completed: 'Завершён', cancelled: 'Отменён', dispute: 'Спор' };
 
 async function shapeOrder(o) {
   const bRes = await pool.query('SELECT * FROM users WHERE id = $1', [o.buyer_id]);
   const sRes = await pool.query('SELECT * FROM users WHERE id = $1', [o.seller_id]);
   const buyer = bRes.rows[0]; const seller = sRes.rows[0];
-  return { id: o.id, publicId: o.public_id, adId: o.ad_id, asset: o.asset, price: Number(o.price), amountRub: Number(o.amount_rub), amountAsset: Number(o.amount_asset), faceType: o.face_type, paymentMethod: o.payment_method, status: o.status, statusLabel: STATUS_LABEL[o.status] || o.status, buyer: { id: o.buyer_id, username: buyer?.username, displayName: buyer?.display_name || buyer?.username, avatarUrl: buyer?.avatar_url }, seller: { id: o.seller_id, username: seller?.username, displayName: seller?.display_name || seller?.username, avatarUrl: seller?.avatar_url }, createdAt: o.created_at, expiresAt: o.expires_at, buyer_id: o.buyer_id, seller_id: o.seller_id, amount_rub: o.amount_rub, amount_asset: o.amount_asset, public_id: o.public_id, payment_method: o.payment_method, face_type: o.face_type };
+  return { id: o.id, publicId: o.public_id, adId: o.ad_id, asset: o.asset, price: Number(o.price), amountRub: Number(o.amount_rub), amountAsset: Number(o.amount_asset), faceType: o.face_type, paymentMethod: o.payment_method, paymentTime: Number(o.payment_time) || 30, status: o.status, statusLabel: STATUS_LABEL[o.status] || o.status, buyer: { id: o.buyer_id, username: buyer?.username, displayName: buyer?.display_name || buyer?.username, avatarUrl: buyer?.avatar_url }, seller: { id: o.seller_id, username: seller?.username, displayName: seller?.display_name || seller?.username, avatarUrl: seller?.avatar_url }, createdAt: o.created_at, expiresAt: o.expires_at, buyer_id: o.buyer_id, seller_id: o.seller_id, amount_rub: o.amount_rub, amount_asset: o.amount_asset, public_id: o.public_id, payment_method: o.payment_method, face_type: o.face_type };
 }
 
 app.post('/api/orders', auth, async (req, res) => {
@@ -221,12 +222,20 @@ app.post('/api/orders', auth, async (req, res) => {
     if (rub > ad.max_rub) throw new Error('above_max');
     const assetQty = rub / ad.price;
     if (assetQty > ad.amount_left) throw new Error('insufficient_asset');
+    
     const buyerId = ad.side === 'sell' ? req.user.id : ad.user_id;
     const sellerId = ad.side === 'sell' ? ad.user_id : req.user.id;
+    
     await client.query('UPDATE ads SET amount_left = amount_left - $1 WHERE id = $2', [assetQty, ad.id]);
+    
     const publicId = 'VX-' + crypto.randomBytes(3).toString('hex').toUpperCase();
     const history = JSON.stringify([{ status: 'waiting', at: new Date().toISOString(), note: 'Ордер создан' }]);
-    const orderRes = await client.query('INSERT INTO orders (public_id, ad_id, buyer_id, seller_id, asset, price, amount_rub, amount_asset, face_type, payment_method, history) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *', [publicId, ad.id, buyerId, sellerId, ad.asset, ad.price, rub, assetQty, ad.face_type, payment_method, history]);
+    
+    const orderRes = await client.query(
+      'INSERT INTO orders (public_id, ad_id, buyer_id, seller_id, asset, price, amount_rub, amount_asset, face_type, payment_method, history, payment_time) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *', 
+      [publicId, ad.id, buyerId, sellerId, ad.asset, ad.price, rub, assetQty, ad.face_type, payment_method, history, ad.payment_time || 30]
+    );
+    
     await client.query('COMMIT');
     res.status(201).json(await shapeOrder(orderRes.rows[0]));
   } catch (err) {
@@ -330,7 +339,6 @@ app.post('/api/orders/:id/resolve', auth, async (req, res) => {
   finally { client.release(); }
 });
 
-// --- ЧАТ, ОТЗЫВЫ, СТАТИСТИКА ---
 app.get('/api/chat/:orderId', auth, async (req, res) => {
   const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.orderId]);
   const o = oRes.rows[0];
@@ -371,7 +379,6 @@ app.get('/api/stats', async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'db_error' }); }
 });
 
-// --- СТАТИКА ---
 app.use(express.static(path.join(__dirname)));
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
