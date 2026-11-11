@@ -78,34 +78,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const div = document.getElementById('screen-exchange');
       div.innerHTML = `
-        <div class="glass-card" style="padding: 20px;">
+        <div class="glass-panel" style="padding: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <h2 class="section-title" style="margin:0;">Обмен</h2>
-                <span id="exMarketStatus" style="font-size: 10px; color: var(--dim); background: var(--glass-bg); padding: 4px 8px; border-radius: 6px;">Загрузка...</span>
+                <span id="exMarketStatus" style="font-size: 11px; color: var(--dim); background: var(--glass-bg); padding: 6px 10px; border-radius: 8px;">Загрузка...</span>
             </div>
             
-            <div class="trade-tabs" style="margin-bottom: 16px;">
+            <div class="trade-tabs" style="margin-bottom: 20px;">
                 <button class="trade-tab active" id="exTabBuy">Купить USDT</button>
                 <button class="trade-tab" id="exTabSell">Продать USDT</button>
             </div>
             
             <div class="form-group">
                 <label class="label" id="exInputLabel">Сумма в RUB</label>
-                <input type="number" id="exAmount" class="input" style="font-size: 24px; font-weight: 800;" placeholder="0">
+                <input type="number" id="exAmount" class="input" style="font-size: 28px; font-weight: 800; padding: 16px;" placeholder="0">
             </div>
             
-            <div style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--glass-border);">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span style="font-size: 13px; color: var(--dim);">Курс обмена:</span>
-                    <span id="exRateDisplay" style="font-size: 13px; font-weight: 700; color: var(--txt);">-- ₽</span>
+            <div class="glass-panel" style="padding: 16px; margin-bottom: 24px; background:rgba(10, 20, 40, 0.4);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span style="font-size: 14px; color: var(--dim);">Курс обмена:</span>
+                    <span id="exRateDisplay" style="font-size: 14px; font-weight: 700; color: var(--txt);">-- ₽</span>
                 </div>
                 <div style="display: flex; justify-content: space-between;">
-                    <span style="font-size: 13px; color: var(--dim);">Вы получите:</span>
-                    <span id="exResultDisplay" style="font-size: 14px; font-weight: 800; color: var(--grn);">0 USDT</span>
+                    <span style="font-size: 14px; color: var(--dim);">Вы получите:</span>
+                    <span id="exResultDisplay" style="font-size: 16px; font-weight: 800; color: var(--grn);">0 USDT</span>
                 </div>
             </div>
 
-            <button class="btn btn-primary btn-block" id="exSubmitBtn" style="padding: 16px;">Обменять</button>
+            <button class="btn btn-primary btn-block" id="exSubmitBtn" style="padding: 16px; border-radius: 16px; font-size: 16px;">Обменять</button>
         </div>
       `;
 
@@ -242,9 +242,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (dot) dot.classList.toggle('hidden', notifications.length === 0);
       if (list) {
         list.innerHTML = notifications.length ? notifications.map(n => `
-          <div class="glass-card" style="padding:12px;">
-            <div style="font-size:10px;color:var(--dim);margin-bottom:4px;">${new Date(n.date).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'})}</div>
-            <div style="font-size:13px;font-weight:600;color:var(--txt);">${n.text}</div>
+          <div class="glass-panel" style="padding:12px; border-radius:16px;">
+            <div style="font-size:11px;color:var(--dim);margin-bottom:4px;">${new Date(n.date).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'})}</div>
+            <div style="font-size:14px;font-weight:600;color:var(--txt);">${n.text}</div>
           </div>
         `).join('') : '<div class="empty-state">Нет уведомлений</div>';
       }
@@ -398,29 +398,29 @@ document.addEventListener('DOMContentLoaded', () => {
         screen.innerHTML = `<div class="empty-state" style="margin-top:20px;"><div style="font-size:40px;margin-bottom:10px;">🔒</div>Войдите в аккаунт.<br><br><button class="btn btn-primary" onclick="document.getElementById('authModal').classList.add('active')">Войти</button></div>`;
       } else {
         screen.innerHTML = `
-          <div class="wallet-hero glass-card">
+          <div class="wallet-hero glass-panel">
             <div class="lbl">Общий баланс</div>
             <div class="amount">${fmt(u.balanceRub)} <span>₽</span></div>
             <div class="wallet-actions">
-              <button class="btn btn-primary" id="btnDeposit" style="flex:1;">Пополнить</button>
-              <button class="btn btn-ghost" id="btnWithdraw" style="flex:1; border: 1px solid var(--glass-border);">Вывести</button>
+              <button class="btn btn-primary" id="btnDeposit" style="flex:1; border-radius:16px;">Пополнить</button>
+              <button class="btn btn-ghost" id="btnWithdraw" style="flex:1; border: 1px solid var(--glass-border); border-radius:16px;">Вывести</button>
             </div>
           </div>
           <h3 class="section-title">Активы</h3>
           <div class="wallet-list">
-            <div class="glass-card" style="padding: 16px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+            <div class="glass-panel" style="padding: 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <div style="font-size:24px; font-weight:800;">₽</div>
-                    <div><div style="font-weight:700;">Российский рубль</div><div style="font-size:11px;color:var(--dim);">RUB · фиат</div></div>
+                    <div style="font-size:28px; font-weight:800; color:var(--txt);">₽</div>
+                    <div><div style="font-weight:700; font-size:16px;">Российский рубль</div><div style="font-size:12px;color:var(--dim);">RUB · фиат</div></div>
                 </div>
-                <div style="font-weight:800;">${fmt(u.balanceRub)} ₽</div>
+                <div style="font-weight:800; font-size:16px;">${fmt(u.balanceRub)} ₽</div>
             </div>
-            <div class="glass-card" style="padding: 16px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+            <div class="glass-panel" style="padding: 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <div style="font-size:24px; font-weight:800; color:#26A17B;">₮</div>
-                    <div><div style="font-weight:700;">Tether</div><div style="font-size:11px;color:var(--dim);">USDT · TRC-20</div></div>
+                    <div style="font-size:28px; font-weight:800; color:#26A17B;">₮</div>
+                    <div><div style="font-weight:700; font-size:16px;">Tether</div><div style="font-size:12px;color:var(--dim);">USDT · TRC-20</div></div>
                 </div>
-                <div style="font-weight:800;">${fmtDec(u.balanceUsdt, 2)} <span style="font-size:10px;color:var(--dim);">≈ 0 ₽</span></div>
+                <div style="font-weight:800; font-size:16px;">${fmtDec(u.balanceUsdt, 2)} <span style="font-size:10px;color:var(--dim);">≈ 0 ₽</span></div>
             </div>
           </div>`;
         document.getElementById('btnDeposit').onclick = () => { walletActionType = 'deposit'; document.getElementById('walletActionTitle').textContent = 'Пополнение'; document.getElementById('walletRequisitesField').classList.add('hidden'); document.getElementById('walletActionModal').classList.add('active'); };
@@ -504,7 +504,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const isSell = ad.side === 'sell';
       const faceLabel = ad.faceType === 'first' ? '1-е лицо' : '3-е лицо';
       window._ads = window._ads || {}; window._ads[ad.id] = ad;
-      const pays = (ad.paymentMethods || []).map(p => `<span class="pay-tag" style="font-size:10px;background:rgba(0,0,0,0.2);padding:4px 8px;border-radius:6px;border:1px solid var(--glass-border);">${p}</span>`).join('');
+      const pays = (ad.paymentMethods || []).map(p => `<span class="pay-tag" style="font-size:11px;background:rgba(0,0,0,0.3);padding:4px 10px;border-radius:8px;border:1px solid var(--glass-border); color:var(--txt);">${p}</span>`).join('');
       
       let avatarHtml = `<div class="avatar">${ad.displayName[0].toUpperCase()}</div>`;
       if (ad.avatarUrl) avatarHtml = `<div class="avatar"><img src="${ad.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${ad.displayName[0].toUpperCase()}'"></div>`;
@@ -512,7 +512,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const merchantBadge = ad.isMerchant ? `<span class="badge-merchant">MERCHANT</span>` : '';
       const makerBadge = ad.isMaker ? `<span class="badge-maker">MAKER</span>` : '';
 
-      return `<div class="ad-card glass-card">
+      return `<div class="ad-card glass-panel">
         <div class="ad-head" onclick="openPublicProfile(${ad.userId})">
           ${avatarHtml}
           <div class="ad-user">
@@ -529,10 +529,10 @@ document.addEventListener('DOMContentLoaded', () => {
              <div class="ad-price">${fmt(ad.price)} ₽</div>
              <div class="ad-limits">Лимит: ${fmt(ad.minRub)} - ${fmt(ad.maxRub)} RUB</div>
              <div class="ad-amount">Доступно: ${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div>
-             ${pays ? `<div class="ad-pay-methods" style="margin-top:10px;display:flex;gap:6px;">${pays}</div>` : ''}
+             ${pays ? `<div class="ad-pay-methods" style="margin-top:12px;display:flex;gap:6px;">${pays}</div>` : ''}
           </div>
           <div class="ad-action">
-             <button class="btn ${isSell ? 'btn-buy' : 'btn-sell'} btn-sm" data-ad-id="${ad.id}" style="min-width:110px;">${isSell ? 'Купить' : 'Продать'}</button>
+             <button class="btn ${isSell ? 'btn-buy' : 'btn-sell'} btn-sm" data-ad-id="${ad.id}" style="min-width:110px; border-radius:12px; font-size:14px;">${isSell ? 'Купить' : 'Продать'}</button>
           </div>
         </div>
       </div>`;
@@ -562,16 +562,16 @@ document.addEventListener('DOMContentLoaded', () => {
           ${favBtn}
           <div style="text-align:center; margin-bottom: 24px; margin-top:10px;">
             ${avatarHtml}
-            <h2 style="font-size:22px;font-weight:800;margin-bottom:4px;color:var(--txt);">${user.displayName}</h2>
-            <div style="font-size:13px;color:var(--dim);font-weight:600;">@${user.username}</div>
+            <h2 style="font-size:24px;font-weight:800;margin-bottom:4px;color:var(--txt);">${user.displayName}</h2>
+            <div style="font-size:14px;color:var(--dim);font-weight:600;">@${user.username}</div>
           </div>
-          <div class="stats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-            <div class="glass-card" style="padding:16px;text-align:center;"><div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Сделок</div><div style="font-size:20px;font-weight:800;color:var(--txt);">${stats.dealsTotal}</div></div>
-            <div class="glass-card" style="padding:16px;text-align:center;"><div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Успешных</div><div style="font-size:20px;font-weight:800;color:var(--txt);">${stats.successRate !== null ? stats.successRate + '%' : '—'}</div></div>
-            <div class="glass-card" style="padding:16px;text-align:center;"><div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Отзывов</div><div style="font-size:20px;font-weight:800;color:var(--txt);">${stats.reviewsCount}</div></div>
-            <div class="glass-card" style="padding:16px;text-align:center;"><div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Рейтинг</div><div style="font-size:20px;font-weight:800;color:var(--txt);">${stats.ratingAvg || '—'}</div></div>
+          <div class="stats" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="glass-panel" style="padding:16px;text-align:center; border-radius:16px;"><div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Сделок</div><div style="font-size:22px;font-weight:800;color:var(--txt);">${stats.dealsTotal}</div></div>
+            <div class="glass-panel" style="padding:16px;text-align:center; border-radius:16px;"><div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Успешных</div><div style="font-size:22px;font-weight:800;color:var(--txt);">${stats.successRate !== null ? stats.successRate + '%' : '—'}</div></div>
+            <div class="glass-panel" style="padding:16px;text-align:center; border-radius:16px;"><div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Отзывов</div><div style="font-size:22px;font-weight:800;color:var(--txt);">${stats.reviewsCount}</div></div>
+            <div class="glass-panel" style="padding:16px;text-align:center; border-radius:16px;"><div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Рейтинг</div><div style="font-size:22px;font-weight:800;color:var(--txt);">${stats.ratingAvg || '—'}</div></div>
           </div>
-          <div id="publicReviewsList" style="margin-top:20px;">Загрузка...</div>`;
+          <div id="publicReviewsList" style="margin-top:24px;">Загрузка...</div>`;
         loadPublicReviews(user.id);
       } catch(e) { c.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     };
@@ -590,8 +590,8 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const data = await API.req('GET', '/reviews/user/' + userId);
         const items = data.items || [];
-        list.innerHTML = `<div class="section-title" style="font-size:14px; margin-bottom:12px;">Отзывы</div>` + 
-          (items.length ? items.map(r => `<div class="glass-card" style="padding:14px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong style="font-size:13px;color:var(--txt);">${r.author}</strong><span style="color:var(--yellow);font-size:14px;">${'★'.repeat(r.rating)}</span></div><p style="font-size:13px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p></div>`).join('') : '<div class="empty-state" style="padding:20px 0;">Отзывов нет</div>');
+        list.innerHTML = `<div class="section-title" style="font-size:16px; margin-bottom:12px;">Отзывы</div>` + 
+          (items.length ? items.map(r => `<div class="glass-panel" style="padding:16px;margin-bottom:12px; border-radius:16px;"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><strong style="font-size:14px;color:var(--txt);">${r.author}</strong><span style="color:var(--yellow);font-size:14px;">${'★'.repeat(r.rating)}</span></div><p style="font-size:14px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p></div>`).join('') : '<div class="empty-state" style="padding:20px 0;">Отзывов нет</div>');
       } catch(e) { list.innerHTML = ''; }
     }
 
@@ -651,16 +651,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const { items } = await API.req('GET', '/orders/my?status=' + filter);
         const sc = { pending: 'var(--yellow)', accepted: 'var(--blue)', paid: 'var(--grn)', completed: 'var(--grn)', cancelled: 'var(--red)', declined: 'var(--red)', dispute: 'var(--gold)' };
         list.innerHTML = items.length ? items.map(o => `
-          <div class="ad-card glass-card" style="cursor:pointer;border-left:4px solid ${sc[o.status] || 'var(--dim)'};" data-order-id="${o.id}">
-            <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+          <div class="ad-card glass-panel" style="cursor:pointer;border-left:4px solid ${sc[o.status] || 'var(--dim)'};" data-order-id="${o.id}">
+            <div style="display:flex;justify-content:space-between;margin-bottom:16px">
               <strong style="font-family:monospace;font-size:16px;color:var(--txt);">#${o.publicId}</strong>
-              <span style="color:${sc[o.status] || 'var(--txt)'};font-size:12px;font-weight:800">${o.statusLabel}</span>
+              <span style="color:${sc[o.status] || 'var(--txt)'};font-size:13px;font-weight:800">${o.statusLabel}</span>
             </div>
             <div class="ad-body">
-              <div><div style="font-size:11px; color:var(--dim); font-weight:600;">Сумма</div><div style="font-size:16px; font-weight:800; color:var(--txt);">${fmt(o.amountRub)} ₽</div></div>
-              <div><div style="font-size:11px; color:var(--dim); font-weight:600;">Актив</div><div style="font-size:16px; font-weight:800; color:var(--txt);">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div>
+              <div><div style="font-size:12px; color:var(--dim); font-weight:600;">Сумма</div><div style="font-size:18px; font-weight:800; color:var(--txt);">${fmt(o.amountRub)} ₽</div></div>
+              <div><div style="font-size:12px; color:var(--dim); font-weight:600;">Актив</div><div style="font-size:18px; font-weight:800; color:var(--txt);">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div>
             </div>
-            <div style="font-size:12px;color:var(--dim);display:flex;justify-content:space-between;font-weight:600;margin-top:16px; border-top: 1px solid var(--glass-border); padding-top: 12px;">
+            <div style="font-size:13px;color:var(--dim);display:flex;justify-content:space-between;font-weight:600;margin-top:16px; border-top: 1px solid var(--glass-border); padding-top: 16px;">
               <span>${new Date(o.createdAt).toLocaleString('ru-RU')}</span>
               <span>${o.buyer.displayName} ↔ ${o.seller.displayName}</span>
             </div>
@@ -708,75 +708,79 @@ document.addEventListener('DOMContentLoaded', () => {
       let actionsHtml = '';
       if (order.status === 'pending') {
         if (isSeller) {
-          actionsHtml = `<div class="grid-2-col" style="margin-bottom:8px"><button class="btn btn-primary" onclick="doAction(${order.id},'accept')" style="background:var(--grn);border:none;">Принять</button><button class="btn btn-ghost" style="color:var(--red);border:1px solid var(--red);" onclick="doAction(${order.id},'decline')">Отклонить</button></div>`;
+          actionsHtml = `<div class="grid-2-col" style="margin-bottom:12px"><button class="btn btn-primary" onclick="doAction(${order.id},'accept')" style="background:var(--grn);border:none; border-radius:16px; padding:14px;">Принять</button><button class="btn btn-ghost" style="color:var(--red);border:1px solid var(--red); border-radius:16px; padding:14px;" onclick="doAction(${order.id},'decline')">Отклонить</button></div>`;
         } else {
-          actionsHtml = `<div style="background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:13px;margin-bottom:8px;font-weight:600;">Ожидайте подтверждения</div><button class="btn btn-ghost btn-block" style="color:var(--red);border:1px solid var(--glass-border);" onclick="doAction(${order.id},'cancel')">Отменить</button>`;
+          actionsHtml = `<div style="background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:16px;padding:18px;text-align:center;color:var(--dim);font-size:14px;margin-bottom:12px;font-weight:600;">Ожидайте подтверждения заявки продавцом</div><button class="btn btn-ghost btn-block" style="color:var(--red);border:1px solid rgba(239,68,68,0.5); border-radius:16px; padding:14px; font-size:15px;" onclick="doAction(${order.id},'cancel')">Отменить заявку</button>`;
         }
       } else if (order.status === 'accepted') {
         if (isBuyer) {
-          actionsHtml = `<div style="background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:12px;padding:16px;text-align:center;margin-bottom:16px;">
-            <div style="font-size:12px;color:var(--dim);margin-bottom:8px;">Время на оплату:</div>
-            <div id="paymentTimerDisplay" style="font-size:28px;font-weight:900;color:var(--yellow);margin-bottom:16px;">--:--</div>
-            <button class="btn btn-primary btn-block" onclick="doAction(${order.id},'paid')" style="margin-bottom:8px;">Я оплатил</button>
-            <button class="btn btn-ghost btn-block" style="color:var(--red);border:1px solid var(--glass-border);" onclick="doAction(${order.id},'cancel')">Отменить</button>
+          actionsHtml = `<div class="glass-panel" style="padding:20px;text-align:center;margin-bottom:16px; background:rgba(10, 20, 40, 0.4); border-radius:16px;">
+            <div style="font-size:13px;color:var(--dim);margin-bottom:8px;">Время на оплату:</div>
+            <div id="paymentTimerDisplay" style="font-size:32px;font-weight:900;color:var(--yellow);margin-bottom:20px;">--:--</div>
+            <button class="btn btn-primary btn-block" onclick="doAction(${order.id},'paid')" style="margin-bottom:12px; border-radius:16px; padding:14px;">Я оплатил</button>
+            <button class="btn btn-ghost btn-block" style="color:var(--red);border:1px solid rgba(239,68,68,0.5); border-radius:16px; padding:14px; font-size:14px;" onclick="doAction(${order.id},'cancel')">Отменить заявку</button>
           </div>`;
         } else {
-          actionsHtml = `<div style="background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:13px;margin-bottom:8px;font-weight:600;">Ожидайте оплаты</div><button class="btn btn-ghost btn-block" style="color:var(--gold);border:1px solid var(--glass-border);" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
+          actionsHtml = `<div style="background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:16px;padding:18px;text-align:center;color:var(--dim);font-size:14px;margin-bottom:12px;font-weight:600;">Ожидайте оплаты от покупателя</div><button class="btn btn-ghost btn-block" style="color:var(--yellow);border:1px solid rgba(251,191,36,0.5); border-radius:16px; padding:14px; font-size:15px;" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
         }
       } else if (order.status === 'paid') {
         if (isSeller) {
-          actionsHtml = `<div class="grid-2-col" style="margin-bottom:8px"><button class="btn btn-primary" onclick="doAction(${order.id},'confirm')">Оплата получена</button><button class="btn btn-ghost" style="color:var(--red);border:1px solid var(--glass-border);" onclick="doAction(${order.id},'dispute')">Спор</button></div>`;
+          actionsHtml = `<div class="grid-2-col" style="margin-bottom:12px"><button class="btn btn-primary" onclick="doAction(${order.id},'confirm')" style="border-radius:16px; padding:14px;">Оплата получена</button><button class="btn btn-ghost" style="color:var(--red);border:1px solid rgba(239,68,68,0.5); border-radius:16px; padding:14px;" onclick="doAction(${order.id},'dispute')">Спор</button></div>`;
         } else {
-          actionsHtml = `<div style="background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:13px;margin-bottom:8px;font-weight:600;">Ожидайте подтверждения</div>`;
+          actionsHtml = `<div style="background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:16px;padding:18px;text-align:center;color:var(--dim);font-size:14px;margin-bottom:12px;font-weight:600;">Ожидайте подтверждения от продавца</div>`;
         }
       } else if (order.status === 'completed') {
-        actionsHtml = `<div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:14px;text-align:center;color:var(--grn);font-size:14px;font-weight:800;margin-bottom:10px">✓ Сделка завершена</div><button class="btn btn-primary btn-block" onclick="openReview(${order.id})" style="margin-bottom:16px;">Оставить отзыв</button>`;
+        actionsHtml = `<div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:16px;padding:18px;text-align:center;color:var(--grn);font-size:15px;font-weight:800;margin-bottom:16px">✓ Сделка завершена</div><button class="btn btn-primary btn-block" onclick="openReview(${order.id})" style="margin-bottom:16px; border-radius:16px; padding:14px;">Оставить отзыв</button>`;
       } else if (order.status === 'dispute') {
-        if (isStaff) actionsHtml = `<div style="background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:14px;text-align:center;color:var(--gold);font-size:14px;margin-bottom:12px;font-weight:800;">Вы админ. Решите спор:</div><div class="grid-2-col" style="margin-bottom:16px"><button class="btn btn-primary" onclick="resolveDispute(${order.id}, 'completed')">Завершить</button><button class="btn btn-ghost" style="color:var(--red);border:1px solid var(--red);" onclick="resolveDispute(${order.id}, 'cancelled')">Отменить</button></div>`;
-        else actionsHtml = `<div style="background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:14px;text-align:center;color:var(--gold);font-size:14px;margin-bottom:16px;font-weight:800;">Спор рассматривается</div>`;
+        if (isStaff) actionsHtml = `<div style="background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.3);border-radius:16px;padding:18px;text-align:center;color:var(--gold);font-size:15px;margin-bottom:12px;font-weight:800;">Вы админ. Решите спор:</div><div class="grid-2-col" style="margin-bottom:16px"><button class="btn btn-primary" onclick="resolveDispute(${order.id}, 'completed')" style="border-radius:16px;">Завершить</button><button class="btn btn-ghost" style="color:var(--red);border:1px solid rgba(239,68,68,0.5); border-radius:16px;" onclick="resolveDispute(${order.id}, 'cancelled')">Отменить</button></div>`;
+        else actionsHtml = `<div style="background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.3);border-radius:16px;padding:18px;text-align:center;color:var(--gold);font-size:15px;margin-bottom:16px;font-weight:800;">Спор рассматривается администратором</div>`;
       }
 
-      const timelineHtml = (history || []).map(h => `<div style="display:flex;gap:12px;padding:10px 0; border-bottom:1px solid var(--glass-border);"><div style="width:13px;height:13px;border-radius:50%;background:var(--txt);flex-shrink:0;margin-top:3px"></div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--txt);">${h.note || h.status}</div><div style="font-size:11px;color:var(--dim);font-weight:600;">${new Date(h.at).toLocaleString('ru-RU')}</div></div></div>`).join('');
+      const timelineHtml = (history || []).map(h => `<div style="display:flex;gap:16px;padding:12px 0; border-bottom:1px solid var(--glass-border);"><div style="width:12px;height:12px;border-radius:50%;background:var(--primary);flex-shrink:0;margin-top:4px; box-shadow:0 0 8px var(--primary-glow);"></div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--txt);">${h.note || h.status}</div><div style="font-size:12px;color:var(--dim);font-weight:600;">${new Date(h.at).toLocaleString('ru-RU')}</div></div></div>`).join('');
       
       const container = document.getElementById('orderDetailContent');
       container.innerHTML = `
-        <div class="glass-card" style="padding: 24px; margin-bottom: 16px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-             <div style="font-size:13px;color:var(--dim);font-family:monospace;font-weight:700;">#${order.public_id}</div>
-             <div style="background:rgba(0,0,0,0.2);color:${sc[order.status]};font-size:12px;font-weight:800;padding:4px 10px;border-radius:6px;border:1px solid var(--glass-border);">${order.statusLabel}</div>
+        <div class="glass-panel" style="padding: 24px; margin-bottom: 16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+             <div style="font-size:14px;color:var(--dim);font-family:monospace;font-weight:700;">#${order.public_id}</div>
+             <div style="background:rgba(0,0,0,0.2);color:${sc[order.status]};font-size:13px;font-weight:800;padding:6px 12px;border-radius:8px;border:1px solid var(--glass-border);">${order.statusLabel}</div>
           </div>
-          <h2 style="font-size:24px;font-weight:900;margin-bottom:8px;color:var(--txt)">${isBuyer ? 'Покупка ' : 'Продажа '}${order.asset}</h2>
-          <div style="font-size:38px;font-weight:900;color:var(--txt);">${fmt(order.amount_rub)}<span style="font-size:18px;color:var(--dim);font-weight:600;margin-left:4px">₽</span></div>
-          <div style="width:100%;height:6px;background:rgba(0,0,0,0.2);border-radius:3px;margin-top:24px;overflow:hidden"><div style="height:100%;width:${progress}%;background:${sc[order.status]};transition:0.3s"></div></div>
+          <h2 style="font-size:26px;font-weight:900;margin-bottom:8px;color:var(--txt)">${isBuyer ? 'Покупка ' : 'Продажа '}${order.asset}</h2>
+          <div style="font-size:42px;font-weight:900;color:var(--txt); letter-spacing:-1px;">${fmt(order.amount_rub)}<span style="font-size:20px;color:var(--dim);font-weight:600;margin-left:6px">₽</span></div>
+          <div style="width:100%;height:8px;background:rgba(0,0,0,0.3);border-radius:4px;margin-top:24px;overflow:hidden"><div style="height:100%;width:${progress}%;background:${sc[order.status]};transition:0.3s; box-shadow: 0 0 10px ${sc[order.status]};"></div></div>
         </div>
         
-        <div class="glass-card" style="padding:16px;margin-bottom:16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;" onclick="openPublicProfile(${counterparty.id})">
-          <div style="display:flex;align-items:center;gap:12px;">
-             <div class="avatar" style="width:44px;height:44px;font-size:16px;">${counterparty.displayName[0].toUpperCase()}</div>
+        <div class="glass-panel" style="padding:16px;margin-bottom:16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;" onclick="openPublicProfile(${counterparty.id})">
+          <div style="display:flex;align-items:center;gap:16px;">
+             <div class="avatar" style="width:48px;height:48px;font-size:20px;">${counterparty.displayName[0].toUpperCase()}</div>
              <div>
-               <div style="font-size:12px;color:var(--dim);font-weight:600;">${counterpartyRole}</div>
-               <div style="font-size:16px;font-weight:800;color:var(--txt);">${counterparty.displayName}</div>
+               <div style="font-size:13px;color:var(--dim);font-weight:600; margin-bottom:2px;">${counterpartyRole}</div>
+               <div style="font-size:18px;font-weight:800;color:var(--txt);">${counterparty.displayName}</div>
              </div>
           </div>
-          <button class="btn btn-ghost btn-sm" style="border:1px solid var(--glass-border);">Профиль</button>
+          <button class="btn btn-ghost btn-sm" style="border:1px solid var(--glass-border); border-radius:12px; padding:8px 16px;">Профиль</button>
         </div>
 
         <div class="grid-2-col" style="margin-bottom:16px">
-          <div class="glass-card" style="padding:16px;"><div style="font-size:11px;color:var(--dim);font-weight:700;margin-bottom:4px;">Количество</div><div style="font-size:16px;font-weight:800;color:var(--txt);">${fmtDec(order.amount_asset, 4)} ${order.asset}</div></div>
-          <div class="glass-card" style="padding:16px;"><div style="font-size:11px;color:var(--dim);font-weight:700;margin-bottom:4px;">Курс</div><div style="font-size:16px;font-weight:800;color:var(--txt);">${fmt(order.price)} ₽</div></div>
+          <div class="glass-panel" style="padding:20px;"><div style="font-size:12px;color:var(--dim);font-weight:700;margin-bottom:6px;">Количество</div><div style="font-size:18px;font-weight:800;color:var(--txt);">${fmtDec(order.amount_asset, 4)} ${order.asset}</div></div>
+          <div class="glass-panel" style="padding:20px;"><div style="font-size:12px;color:var(--dim);font-weight:700;margin-bottom:6px;">Курс</div><div style="font-size:18px;font-weight:800;color:var(--txt);">${fmt(order.price)} ₽</div></div>
         </div>
         
-        <div class="glass-card" style="padding:16px;margin-bottom:16px;">
-          <div style="font-size: 11px; font-weight: 800; color: var(--dim); text-transform: uppercase; margin-bottom: 8px;">Условия сделки</div>
-          <div style="font-size: 14px; color: var(--txt); line-height: 1.5; font-weight: 500;">${terms || 'Стандартные условия.'}</div>
+        <div class="glass-panel" style="padding:20px;margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+             <div style="font-size: 12px; font-weight: 800; color: var(--dim); text-transform: uppercase;">Время на оплату</div>
+             <div style="font-size: 13px; font-weight: 800; color: var(--yellow);">${order.paymentTime} минут</div>
+          </div>
+          <div style="font-size: 12px; font-weight: 800; color: var(--dim); text-transform: uppercase; margin-bottom: 8px;">Условия сделки</div>
+          <div style="font-size: 15px; color: var(--txt); line-height: 1.5; font-weight: 500;">${terms || 'Стандартные условия сделки.'}</div>
         </div>
         
         ${actionsHtml}
         
-        <button style="width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;padding:16px;margin-bottom:16px;color:var(--txt);font-size:14px; cursor:pointer;" onclick="openChatModal(${order.id})">
-          <div style="display:flex;align-items:center;gap:12px"><div class="avatar" style="width:40px;height:40px;font-size:18px">💬</div><div style="text-align:left;"><div style="font-weight:800; color:var(--txt);">Чат по сделке</div><div style="font-size:11px;color:var(--dim);font-weight:600;">Обсудить детали</div></div></div>
+        <button style="width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:20px;padding:20px;margin-bottom:16px;color:var(--txt);font-size:15px; cursor:pointer;" onclick="openChatModal(${order.id})">
+          <div style="display:flex;align-items:center;gap:16px"><div class="avatar" style="width:44px;height:44px;font-size:20px">💬</div><div style="text-align:left;"><div style="font-weight:800; color:var(--txt); margin-bottom:2px;">Чат по сделке</div><div style="font-size:12px;color:var(--dim);font-weight:600;">Обсудить детали</div></div></div>
         </button>
-        <div class="glass-card" style="padding:16px;"><div style="font-size:12px;font-weight:800;margin-bottom:14px;color:var(--dim);text-transform:uppercase">История</div>${timelineHtml}</div>`;
+        <div class="glass-panel" style="padding:20px;"><div style="font-size:13px;font-weight:800;margin-bottom:16px;color:var(--dim);text-transform:uppercase; letter-spacing:1px;">История</div>${timelineHtml}</div>`;
 
       if (order.status === 'accepted') {
         const timerEl = document.getElementById('paymentTimerDisplay');
@@ -852,13 +856,13 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const { items } = await API.req('GET', '/chat/' + orderId);
         const body = document.getElementById('chatBody'); if (!body) return;
-        if (reset) body.innerHTML = '<div style="text-align:center;font-size:12px;color:var(--dim);font-weight:600;margin-bottom:10px;">Сделка создана.</div>';
+        if (reset) body.innerHTML = '<div style="text-align:center;font-size:12px;color:var(--dim);font-weight:600;margin-bottom:16px;">Сделка создана.</div>';
         const rendered = body.querySelectorAll('[data-msg-id]').length;
         items.slice(rendered).forEach(m => {
           const div = document.createElement('div');
           div.className = 'msg' + (m.isMine ? ' me' : '');
           div.dataset.msgId = m.id;
-          div.innerHTML = `<div class="avatar" style="width:28px;height:28px;font-size:11px">${m.senderUsername[0].toUpperCase()}</div><div><div class="msg-bubble">${m.text.replace(/</g, '&lt;')}</div><div style="font-size:10px;color:var(--dim);margin-top:4px;font-weight:600; text-align: ${m.isMine ? 'right' : 'left'}">${new Date(m.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div></div>`;
+          div.innerHTML = `<div class="avatar" style="width:32px;height:32px;font-size:12px">${m.senderUsername[0].toUpperCase()}</div><div><div class="msg-bubble">${m.text.replace(/</g, '&lt;')}</div><div style="font-size:11px;color:var(--dim);margin-top:6px;font-weight:600; text-align: ${m.isMine ? 'right' : 'left'}">${new Date(m.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div></div>`;
           body.appendChild(div);
         });
         body.scrollTop = body.scrollHeight;
@@ -918,31 +922,31 @@ document.addEventListener('DOMContentLoaded', () => {
         if (user.avatarUrl) avatarHtml = `<div class="avatar lg"><img src="${user.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${user.displayName[0].toUpperCase()}'"></div>`;
 
         content.innerHTML = `
-          <div class="glass-card" style="display:flex;align-items:center;gap:16px;padding:20px;margin-bottom:20px;">
+          <div class="glass-panel" style="display:flex;align-items:center;gap:16px;padding:20px;margin-bottom:24px;">
             ${avatarHtml}
             <div style="flex:1;min-width:0; padding-right: 4px;">
-              <h2 style="font-size:20px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;flex-wrap:wrap;color:var(--txt);line-height: 1.3;">${user.displayName} ${merchantBadge} ${makerBadge} ${proBadge}</h2>
-              <div style="font-size:13px;color:var(--dim);font-weight:600;">@${user.username}</div>
+              <h2 style="font-size:22px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;flex-wrap:wrap;color:var(--txt);line-height: 1.3;">${user.displayName} ${merchantBadge} ${makerBadge} ${proBadge}</h2>
+              <div style="font-size:14px;color:var(--dim);font-weight:600;">@${user.username}</div>
             </div>
-            <button class="btn btn-ghost btn-sm" style="align-self: flex-start; font-size:18px; background: var(--glass-bg); border: 1px solid var(--glass-border); width: 36px; height: 36px; border-radius: 8px; padding: 0;" onclick="openSettings()">⚙️</button>
+            <button class="btn btn-ghost btn-sm" style="align-self: flex-start; font-size:20px; background: var(--glass-bg); border: 1px solid var(--glass-border); width: 44px; height: 44px; border-radius: 12px; padding: 0;" onclick="openSettings()">⚙️</button>
           </div>
           
-          <div class="grid-2-col" style="margin-bottom:20px;">
-            <div class="glass-card" style="padding:16px;text-align:center;">
-              <div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Сделок</div>
-              <div style="font-size:20px;font-weight:800;color:var(--txt);">${stats.dealsTotal}</div>
+          <div class="grid-2-col" style="margin-bottom:24px;">
+            <div class="glass-panel" style="padding:20px;text-align:center;">
+              <div style="font-size:13px;color:var(--dim);font-weight:600;margin-bottom:6px;">Сделок</div>
+              <div style="font-size:24px;font-weight:800;color:var(--txt);">${stats.dealsTotal}</div>
             </div>
-            <div class="glass-card" style="padding:16px;text-align:center;">
-              <div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Успешных</div>
-              <div style="font-size:20px;font-weight:800;color:var(--txt);">${successRateStr}</div>
+            <div class="glass-panel" style="padding:20px;text-align:center;">
+              <div style="font-size:13px;color:var(--dim);font-weight:600;margin-bottom:6px;">Успешных</div>
+              <div style="font-size:24px;font-weight:800;color:var(--txt);">${successRateStr}</div>
             </div>
-            <div class="glass-card" style="padding:16px;text-align:center;">
-              <div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Отзывов</div>
-              <div style="font-size:20px;font-weight:800;color:var(--txt);">${stats.reviewsCount}</div>
+            <div class="glass-panel" style="padding:20px;text-align:center;">
+              <div style="font-size:13px;color:var(--dim);font-weight:600;margin-bottom:6px;">Отзывов</div>
+              <div style="font-size:24px;font-weight:800;color:var(--txt);">${stats.reviewsCount}</div>
             </div>
-            <div class="glass-card" style="padding:16px;text-align:center;">
-              <div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Рейтинг</div>
-              <div style="font-size:20px;font-weight:800;color:var(--txt);">${ratingAvgStr}</div>
+            <div class="glass-panel" style="padding:20px;text-align:center;">
+              <div style="font-size:13px;color:var(--dim);font-weight:600;margin-bottom:6px;">Рейтинг</div>
+              <div style="font-size:24px;font-weight:800;color:var(--txt);">${ratingAvgStr}</div>
             </div>
           </div>
           
@@ -952,7 +956,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="profile-tab ${profileTab === 'reviews' ? 'active' : ''}" onclick="switchProfileTab('reviews')">Отзывы</button>
           </div>
           <div id="profileTabContent">${contentHtml}</div>
-          <div style="margin-top:24px"><button class="btn btn-ghost btn-block" onclick="logoutAction()" style="color:var(--red);border:1px solid rgba(239,68,68,.3);">Выйти из аккаунта</button></div>`;
+          <div style="margin-top:32px"><button class="btn btn-ghost btn-block" onclick="logoutAction()" style="color:var(--red);border:1px solid rgba(239,68,68,.4); padding:16px; border-radius:16px; font-size:15px;">Выйти из аккаунта</button></div>`;
 
         if (profileTab === 'ads') loadMyAds();
         else if (profileTab === 'history') loadMyHistory();
@@ -966,17 +970,17 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const { items } = await API.req('GET', '/ads/my');
         list.innerHTML = items.length ? items.map(ad => `
-          <div class="glass-card" style="margin-bottom:12px; padding:16px;">
-            <div style="display:flex;justify-content:space-between;margin-bottom:16px">
-              <strong style="font-size:16px;color:var(--txt);">${ad.side === 'sell' ? 'Продажа' : 'Покупка'} ${ad.asset}</strong>
-              <span style="color:${ad.active ? 'var(--grn)' : 'var(--red)'};font-size:12px;font-weight:700;background:rgba(255,255,255,0.05);padding:4px 8px;border-radius:6px;">${ad.active ? 'Активно' : 'Неактивно'}</span>
+          <div class="glass-panel" style="margin-bottom:16px; padding:20px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:20px">
+              <strong style="font-size:18px;color:var(--txt);">${ad.side === 'sell' ? 'Продажа' : 'Покупка'} ${ad.asset}</strong>
+              <span style="color:${ad.active ? 'var(--grn)' : 'var(--red)'};font-size:13px;font-weight:700;background:rgba(0,0,0,0.2);padding:6px 12px;border-radius:8px;">${ad.active ? 'Активно' : 'Неактивно'}</span>
             </div>
-            <div class="grid-2-col" style="margin-bottom:16px;">
-              <div><div style="font-size:11px;color:var(--dim);font-weight:600;">Курс</div><div style="font-size:16px;font-weight:800;color:var(--txt);">${fmt(ad.price)} ₽</div></div>
-              <div><div style="font-size:11px;color:var(--dim);font-weight:600;">Остаток</div><div style="font-size:16px;font-weight:800;color:var(--txt);">${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div></div>
+            <div class="grid-2-col" style="margin-bottom:20px;">
+              <div><div style="font-size:12px;color:var(--dim);font-weight:600;">Курс</div><div style="font-size:18px;font-weight:800;color:var(--txt);">${fmt(ad.price)} ₽</div></div>
+              <div><div style="font-size:12px;color:var(--dim);font-weight:600;">Остаток</div><div style="font-size:18px;font-weight:800;color:var(--txt);">${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div></div>
             </div>
-            <div style="display:flex;gap:8px;">
-              <button class="btn btn-ghost btn-sm" style="flex:1; border:1px solid var(--glass-border); color:var(--txt);" onclick="toggleAdStatus(${ad.id}, ${ad.active})">${ad.active ? 'Снять' : 'Активировать'}</button>
+            <div style="display:flex;gap:12px;">
+              <button class="btn btn-ghost btn-sm" style="flex:1; border:1px solid var(--glass-border); color:var(--txt); border-radius:12px; padding:12px;" onclick="toggleAdStatus(${ad.id}, ${ad.active})">${ad.active ? 'Снять' : 'Активировать'}</button>
             </div>
           </div>
         `).join('') : '<div class="empty-state">У вас нет объявлений</div>';
@@ -995,7 +999,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const list = document.getElementById('myHistoryList'); if (!list) return;
       try {
         const { items } = await API.req('GET', '/orders/my?status=completed');
-        list.innerHTML = items.length ? items.map(o => `<div class="glass-card" style="margin-bottom:12px; border-left:4px solid var(--grn); padding:16px;"><div style="display:flex;justify-content:space-between;margin-bottom:12px"><strong style="font-size:15px;color:var(--txt);">#${o.publicId}</strong><span style="color:var(--grn);font-size:12px;font-weight:700;">Завершен</span></div><div class="grid-2-col"><div><div style="font-size:11px;color:var(--dim);font-weight:600;">Сумма</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmt(o.amountRub)} ₽</div></div><div><div style="font-size:11px;color:var(--dim);font-weight:600;">Актив</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div></div></div>`).join('') : '<div class="empty-state">История пуста</div>';
+        list.innerHTML = items.length ? items.map(o => `<div class="glass-panel" style="margin-bottom:16px; border-left:4px solid var(--grn); padding:20px;"><div style="display:flex;justify-content:space-between;margin-bottom:16px"><strong style="font-size:16px;color:var(--txt);">#${o.publicId}</strong><span style="color:var(--grn);font-size:13px;font-weight:700;">Завершен</span></div><div class="grid-2-col"><div><div style="font-size:12px;color:var(--dim);font-weight:600;">Сумма</div><div style="font-size:18px;font-weight:800;color:var(--txt);">${fmt(o.amountRub)} ₽</div></div><div><div style="font-size:12px;color:var(--dim);font-weight:600;">Актив</div><div style="font-size:18px;font-weight:800;color:var(--txt);">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div></div></div>`).join('') : '<div class="empty-state">История пуста</div>';
       } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     }
 
@@ -1005,7 +1009,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const u = API.user();
         const data = await API.req('GET', '/reviews/user/' + u.id);
         const items = data.items || [];
-        list.innerHTML = items.length ? items.map(r => `<div class="glass-card" style="margin-bottom:12px; padding:16px;"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><strong style="font-size:14px;color:var(--txt);">${r.author}</strong><span style="color:var(--yellow);font-size:16px;">${'★'.repeat(r.rating)}</span></div><p style="font-size:13px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p></div>`).join('') : '<div class="empty-state">Отзывов нет</div>';
+        list.innerHTML = items.length ? items.map(r => `<div class="glass-panel" style="margin-bottom:16px; padding:20px;"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><strong style="font-size:15px;color:var(--txt);">${r.author}</strong><span style="color:var(--yellow);font-size:16px;">${'★'.repeat(r.rating)}</span></div><p style="font-size:14px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p></div>`).join('') : '<div class="empty-state">Отзывов нет</div>';
       } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     }
 
@@ -1023,18 +1027,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('statusProgressContainer');
         let progressHtml = '';
         if (user.isMaker) {
-          progressHtml += `<div style="font-size:14px; color:var(--gold); font-weight:800;">✓ Статус Мейкера активен</div>`;
+          progressHtml += `<div style="font-size:15px; color:var(--gold); font-weight:800;">✓ Статус Мейкера активен</div>`;
         } else {
           const vol = stats.volumeUsd, sr = stats.successRate || 0;
           const volPercent = Math.min(100, Math.round((vol / 3000) * 100));
           const srPercent = Math.min(100, Math.round((sr / 80) * 100));
           progressHtml += `
-            <div style="background:rgba(0,0,0,0.1); padding:16px; border-radius:12px; border:1px solid var(--glass-border);">
-              <div style="font-size:14px; font-weight:800; margin-bottom:12px; color:var(--gold);">Статус Мейкера</div>
-              <div style="font-size:12px; color:var(--dim); margin-bottom:6px;">Оборот: $${fmt(vol)} / $3,000</div>
-              <div style="width:100%; height:6px; background:rgba(0,0,0,0.3); border-radius:3px; margin-bottom:12px;"><div style="width:${volPercent}%; height:100%; background:var(--gold); border-radius:3px;"></div></div>
-              <div style="font-size:12px; color:var(--dim); margin-bottom:6px;">Успешных: ${sr}% / 80%</div>
-              <div style="width:100%; height:6px; background:rgba(0,0,0,0.3); border-radius:3px; margin-bottom:16px;"><div style="width:${srPercent}%; height:100%; background:var(--gold); border-radius:3px;"></div></div>
+            <div style="background:rgba(0,0,0,0.2); padding:20px; border-radius:16px; border:1px solid var(--glass-border);">
+              <div style="font-size:15px; font-weight:800; margin-bottom:16px; color:var(--gold);">Статус Мейкера</div>
+              <div style="font-size:13px; color:var(--dim); margin-bottom:8px;">Оборот: $${fmt(vol)} / $3,000</div>
+              <div style="width:100%; height:8px; background:rgba(0,0,0,0.3); border-radius:4px; margin-bottom:16px;"><div style="width:${volPercent}%; height:100%; background:var(--gold); border-radius:4px; box-shadow:0 0 10px var(--gold);"></div></div>
+              <div style="font-size:13px; color:var(--dim); margin-bottom:8px;">Успешных: ${sr}% / 80%</div>
+              <div style="width:100%; height:8px; background:rgba(0,0,0,0.3); border-radius:4px; margin-bottom:20px;"><div style="width:${srPercent}%; height:100%; background:var(--gold); border-radius:4px; box-shadow:0 0 10px var(--gold);"></div></div>
             </div>`;
         }
         container.innerHTML = progressHtml;
@@ -1205,14 +1209,14 @@ document.addEventListener('DOMContentLoaded', () => {
           content.innerHTML = 'Загрузка...';
           const { items } = await API.req('GET', '/admin/users');
           content.innerHTML = items.map(user => `
-            <div class="glass-card" style="padding:16px; border-radius:12px; margin-bottom:12px;">
-              <div style="font-weight:800; color:var(--txt); font-size:15px;">${user.displayName} (@${user.username})</div>
-              <div style="font-size:12px; color:var(--dim); margin-top:2px;">Email: ${user.email} | Роль: ${user.role}</div>
-              <div style="margin-top:12px; display:flex; gap:6px; flex-wrap: wrap;">
+            <div class="glass-panel" style="padding:16px; border-radius:16px; margin-bottom:12px;">
+              <div style="font-weight:800; color:var(--txt); font-size:16px;">${user.displayName} (@${user.username})</div>
+              <div style="font-size:13px; color:var(--dim); margin-top:4px;">Email: ${user.email} | Роль: ${user.role}</div>
+              <div style="margin-top:16px; display:flex; gap:8px; flex-wrap: wrap;">
                 <button class="admin-badge-btn ${user.isPro ? 'active-pro' : ''}" onclick="toggleUserStatus(${user.id}, 'is_pro', ${user.isPro})">PRO</button>
                 <button class="admin-badge-btn ${user.isMerchant ? 'active-merchant' : ''}" onclick="toggleUserStatus(${user.id}, 'is_merchant', ${user.isMerchant})">MERCHANT</button>
                 <button class="admin-badge-btn ${user.isMaker ? 'active-maker' : ''}" onclick="toggleUserStatus(${user.id}, 'is_maker', ${user.isMaker})">MAKER</button>
-                ${canManageBalance ? `<button class="btn btn-primary btn-sm" style="margin-left:auto; padding:4px 8px; font-size:12px;" onclick="openBalanceModal(${user.id}, '${user.username}')">💰 Баланс</button>` : ''}
+                ${canManageBalance ? `<button class="btn btn-primary btn-sm" style="margin-left:auto; padding:6px 12px; font-size:12px; border-radius:8px;" onclick="openBalanceModal(${user.id}, '${user.username}')">💰 Баланс</button>` : ''}
               </div>
             </div>
           `).join('');
@@ -1222,14 +1226,14 @@ document.addEventListener('DOMContentLoaded', () => {
           const { items } = await API.req('GET', '/admin/orders');
           if (!items.length) { content.innerHTML = '<div class="empty-state">Нет споров</div>'; return; }
           content.innerHTML = items.map(o => `
-            <div class="ad-card glass-card" style="cursor:pointer; border-left:4px solid ${o.status === 'dispute' ? 'var(--gold)' : 'var(--blue)'}; margin-bottom:12px;" onclick="openAdminOrder(${o.id})">
-              <div style="display:flex;justify-content:space-between;margin-bottom:12px">
-                <strong style="font-family:monospace;font-size:15px; color:var(--txt);">#${o.publicId}</strong>
-                <span style="color:var(--txt);font-size:12px;font-weight:800">${o.statusLabel}</span>
+            <div class="ad-card glass-panel" style="cursor:pointer; border-left:4px solid ${o.status === 'dispute' ? 'var(--gold)' : 'var(--blue)'}; margin-bottom:12px;" onclick="openAdminOrder(${o.id})">
+              <div style="display:flex;justify-content:space-between;margin-bottom:16px">
+                <strong style="font-family:monospace;font-size:16px; color:var(--txt);">#${o.publicId}</strong>
+                <span style="color:var(--txt);font-size:13px;font-weight:800">${o.statusLabel}</span>
               </div>
               <div class="ad-body">
-                <div><div style="font-size:11px; color:var(--dim);">Сумма</div><div style="font-size:15px; font-weight:800; color:var(--txt);">${fmt(o.amountRub)} ₽</div></div>
-                <div><div style="font-size:11px; color:var(--dim);">Актив</div><div style="font-size:15px; font-weight:800; color:var(--txt);">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div>
+                <div><div style="font-size:12px; color:var(--dim);">Сумма</div><div style="font-size:16px; font-weight:800; color:var(--txt);">${fmt(o.amountRub)} ₽</div></div>
+                <div><div style="font-size:12px; color:var(--dim);">Актив</div><div style="font-size:16px; font-weight:800; color:var(--txt);">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div>
               </div>
             </div>
           `).join('');
@@ -1246,20 +1250,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const amountStr = `${fmt(req.amount)} ${req.type.includes('rub') || req.type === 'exchange_buy' ? 'RUB' : 'USDT'}`;
             
             return `
-            <div class="glass-card" style="padding:16px; margin-bottom:12px; border-left:4px solid ${statusColor};">
+            <div class="glass-panel" style="padding:16px; margin-bottom:12px; border-left:4px solid ${statusColor};">
               <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                <strong style="font-size:14px; color:var(--txt);">${typeLabel}</strong>
-                <span style="font-size:11px; font-weight:800; color:${statusColor}; text-transform:uppercase;">${req.status}</span>
+                <strong style="font-size:15px; color:var(--txt);">${typeLabel}</strong>
+                <span style="font-size:12px; font-weight:800; color:${statusColor}; text-transform:uppercase;">${req.status}</span>
               </div>
-              <div style="font-size:12px; color:var(--dim); margin-bottom:12px;">Юзер: <span style="color:var(--txt); font-weight:700;">@${req.username}</span></div>
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
-                 <div style="font-size:12px; color:var(--dim);">Сумма:</div>
-                 <div style="font-size:15px; font-weight:800; color:var(--txt);">${amountStr}</div>
+              <div style="font-size:13px; color:var(--dim); margin-bottom:12px;">Юзер: <span style="color:var(--txt); font-weight:700;">@${req.username}</span></div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+                 <div style="font-size:13px; color:var(--dim);">Сумма:</div>
+                 <div style="font-size:16px; font-weight:800; color:var(--txt);">${amountStr}</div>
               </div>
               ${isPending && canManageBalance ? `
                 <div class="grid-2-col" style="gap: 8px;">
-                  <button class="btn btn-primary btn-sm" style="background:var(--grn);" onclick="updateRequestStatus(${req.id}, 'approved')">Одобрить</button>
-                  <button class="btn btn-ghost btn-sm" style="color:var(--red); border:1px solid var(--red);" onclick="updateRequestStatus(${req.id}, 'rejected')">Отклонить</button>
+                  <button class="btn btn-primary btn-sm" style="background:var(--grn); border-radius:10px; padding:10px;" onclick="updateRequestStatus(${req.id}, 'approved')">Одобрить</button>
+                  <button class="btn btn-ghost btn-sm" style="color:var(--red); border:1px solid rgba(239,68,68,0.5); border-radius:10px; padding:10px;" onclick="updateRequestStatus(${req.id}, 'rejected')">Отклонить</button>
                 </div>
               ` : ''}
             </div>`;
@@ -1291,8 +1295,8 @@ document.addEventListener('DOMContentLoaded', () => {
         m = document.createElement('div');
         m.id = 'balanceModal'; m.className = 'modal';
         m.innerHTML = `
-          <div class="modal-content glass-card" style="padding: 24px;">
-            <div class="modal-header" style="padding:0; margin-bottom:16px;">
+          <div class="modal-content glass-panel" style="padding: 24px;">
+            <div class="modal-header" style="padding:0; margin-bottom:20px;">
                 <h3 style="font-size: 18px; font-weight: 800; color: var(--txt);">Баланс: @${username}</h3>
                 <button class="icon-btn" onclick="document.getElementById('balanceModal').classList.remove('active')">✕</button>
             </div>
@@ -1308,8 +1312,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <input type="number" id="balAmount" class="input" style="margin-top: 4px;" placeholder="1000">
             </div>
             <div style="display: flex; gap: 8px; margin-bottom: 20px;">
-              <button class="btn btn-primary" style="flex:1; background: var(--grn);" onclick="changeBalance(${userId}, 'add')">Начислить (+)</button>
-              <button class="btn btn-primary" style="flex:1; background: var(--red);" onclick="changeBalance(${userId}, 'sub')">Списать (-)</button>
+              <button class="btn btn-primary" style="flex:1; background: var(--grn); border-radius:12px;" onclick="changeBalance(${userId}, 'add')">Начислить (+)</button>
+              <button class="btn btn-primary" style="flex:1; background: var(--red); border-radius:12px;" onclick="changeBalance(${userId}, 'sub')">Списать (-)</button>
             </div>
           </div>
         `;
@@ -1322,32 +1326,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const currency = document.getElementById('balCurrency').value;
       const amount = parseFloat(document.getElementById('balAmount').value);
       if (!amount || amount <= 0) return toast('Введите сумму', 'error');
-      try {
-        await API.req('POST', '/admin/users/' + userId + '/balance', { currency, amount, action });
-        toast('Баланс изменен', 'success');
-        document.getElementById('balanceModal').classList.remove('active');
-        loadAdmin();
-      } catch(e) { toast(e.message || 'Ошибка', 'error'); }
-    };
-
-    window.updateRequestStatus = async function(reqId, status) {
-      if (!await confirmAsync('Изменение', `Отметить как "${status}"?`, 'Да')) return;
-      try {
-        await API.req('PATCH', '/admin/requests/' + reqId, { status });
-        toast('Статус обновлен', 'success'); loadAdmin();
-      } catch(e) { toast(e.message || 'Ошибка', 'error'); }
-    };
-
-    // СТАРТ
-    initExchange();
-    updateAuthUI();
-    updateNotifUI();
-    try { loadHome(); } catch(e) { console.error('Initial loadHome:', e); }
-
-  } catch (err) {
-    console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
-  }
-});t <= 0) return toast('Введите сумму', 'error');
       try {
         await API.req('POST', '/admin/users/' + userId + '/balance', { currency, amount, action });
         toast('Баланс изменен', 'success');
