@@ -217,3 +217,311 @@ body[data-theme="light"] .bottom-nav { background: rgba(255, 255, 255, 0.95); }
 .profile-tab.active { color: var(--txt); border-bottom-color: var(--txt); }
 
 .badge-pro { background: var(--txt); color: var(--bg); font-size: 9px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; margin-left: 6px; }
+
+/* =========================================
+   LIQUID GLASS MODAL STYLES
+   ========================================= */
+
+/* Задний фон с градиентом (чтобы стекло было видно) */
+.glass-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: radial-gradient(circle at top left, #1a1a2e, #16213e, #0f3460);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.glass-modal-overlay.active {
+  display: flex;
+}
+
+/* Само окно (Стекло) */
+.glass-modal {
+  width: 100%;
+  max-width: 420px;
+  max-height: 95vh;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.05); /* Прозрачный белый */
+  backdrop-filter: blur(24px) saturate(150%); /* Эффект размытия */
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.15); /* Тонкая светлая рамка */
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  scrollbar-width: none;
+}
+.glass-modal::-webkit-scrollbar { display: none; }
+
+/* Шапка */
+.glass-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.glass-title {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.glass-icon-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.glass-icon-btn:hover { background: rgba(255, 255, 255, 0.2); }
+
+/* Цена */
+.glass-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.glass-price {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+}
+.glass-price span {
+  font-size: 18px;
+  font-weight: 800;
+  color: #22c55e;
+  margin-left: 4px;
+}
+.glass-badges { display: flex; gap: 8px; }
+.glass-badge-time {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+}
+.glass-badge-secure {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px 8px;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Карточка ввода */
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.glass-tabs {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
+}
+.glass-tab {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 0 0 8px 0;
+  cursor: pointer;
+  position: relative;
+}
+.glass-tab.active { color: #fff; }
+.glass-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #fff;
+  border-radius: 2px;
+}
+.glass-timer {
+  margin-left: auto;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  background: rgba(0, 0, 0, 0.2);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.glass-input-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 8px;
+}
+.glass-input {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 32px;
+  font-weight: 800;
+  width: 100%;
+  outline: none;
+  padding: 0;
+}
+.glass-currency {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+}
+.glass-max-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #f59e0b;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.glass-max-btn:hover { background: rgba(255, 255, 255, 0.2); }
+
+.glass-limits {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 16px;
+}
+
+.glass-receive {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 12px;
+}
+.glass-receive strong { color: #fff; font-size: 16px; }
+
+/* Кнопка выбора оплаты (компактная, скругленная) */
+.glass-payment-btn {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.glass-payment-btn:hover { background: rgba(239, 68, 68, 0.2); }
+
+/* Инфо мерчанта */
+.glass-maker-info { display: flex; flex-direction: column; gap: 4px; }
+.glass-maker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.glass-maker-name {
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.glass-maker-name span { color: rgba(255, 255, 255, 0.4); font-size: 12px; }
+.glass-maker-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+}
+.glass-maker-rating svg { color: rgba(255, 255, 255, 0.6); }
+.glass-maker-stats { font-size: 12px; color: rgba(255, 255, 255, 0.4); }
+
+/* Условия */
+.glass-terms {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.glass-terms-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.glass-terms p {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+.glass-terms-text {
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-style: italic;
+}
+
+/* Футер */
+.glass-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+.glass-total-amount { font-size: 20px; font-weight: 800; }
+.glass-total-label { font-size: 12px; color: rgba(255, 255, 255, 0.5); }
+
+/* Главная кнопка (скругленная, компактная) */
+.glass-submit-btn {
+  background: #fff;
+  color: #000;
+  border: none;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 14px 32px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: 0.2s;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+}
+.glass-submit-btn:hover { background: #f0f0f0; transform: translateY(-2px); }
+.glass-submit-btn.disabled {
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.5);
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Логотип в стиле VEXO (для шапки или баннера) */
+.vexo-logo-text {
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  font-size: 24px;
+  background: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-transform: lowercase; /* как на баннере vexo-p2p */
+}
