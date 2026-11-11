@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (titleEl) titleEl.textContent = titles[name] || '';
       
       const backBtn = document.getElementById('backBtn');
-      if (backBtn) backBtn.classList.toggle('hidden', !['order'].includes(name));
+      if (backBtn) backBtn.classList.toggle('hidden', !['order', 'admin'].includes(name));
       
       try {
         if (name === 'market') loadMarket();
@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
       b.onclick = e => {
         e.preventDefault();
         const s = b.dataset.screen;
-        if (!['order'].includes(s)) previousScreen = s;
+        if (!['order', 'admin'].includes(s)) previousScreen = s;
         show(s);
       };
     });
@@ -233,6 +233,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const u = API.user();
       const lb = document.getElementById('loginBtn');
       const ab = document.getElementById('avatarBtn');
+      
+      // Включаем/выключаем режим админа (влияет на CSS)
+      if (u && u.role === 'admin') {
+        document.body.classList.add('admin-mode');
+      } else {
+        document.body.classList.remove('admin-mode');
+      }
+
       if (u) {
         if (lb) lb.classList.add('hidden');
         if (ab) {
@@ -586,6 +594,21 @@ document.addEventListener('DOMContentLoaded', () => {
         else actionsHtml = `<div style="background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:14px;text-align:center;color:var(--gold);font-size:14px;margin-bottom:16px;font-weight:800;">Спор рассматривается администратором</div>`;
       }
 
+      // БЛОК ЧЕКА ДЛЯ АДМИНА
+      let adminReceiptHtml = '';
+      if (isAdmin && ['paid', 'dispute'].includes(order.status)) {
+        adminReceiptHtml = `
+        <div class="glass-card" style="padding:16px;margin-bottom:16px;border:1px dashed var(--primary);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:12px;color:var(--dim);font-weight:700;margin-bottom:4px;">Чек об оплате (от покупателя)</div>
+              <div style="font-size:14px;font-weight:800;color:var(--txt);">Прикреплен</div>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="alert('Тут будет открываться картинка чека, когда мы прикрутим загрузку файлов на сервер.')">Посмотреть</button>
+          </div>
+        </div>`;
+      }
+
       const timelineHtml = (history || []).map(h => `<div style="display:flex;gap:12px;padding:8px 0"><div style="width:13px;height:13px;border-radius:50%;background:var(--txt);flex-shrink:0;margin-top:3px"></div><div style="flex:1"><div style="font-size:13px;font-weight:700">${h.note || h.status}</div><div style="font-size:11px;color:var(--dim);font-weight:600;">${new Date(h.at).toLocaleString('ru-RU')}</div></div></div>`).join('');
       
       const container = document.getElementById('orderDetailContent');
@@ -625,6 +648,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="font-size: 13px; color: var(--txt); line-height: 1.5; font-weight: 500;">${terms || 'Стандартные условия сделки.'}</div>
         </div>
         
+        ${adminReceiptHtml}
         ${actionsHtml}
         
         <button style="width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;padding:16px;margin-bottom:16px;color:var(--txt);font-size:14px" onclick="openChatModal(${order.id})">

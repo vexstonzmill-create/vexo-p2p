@@ -1,443 +1,479 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>VEXO P2P</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
+require('dotenv').config();
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const path = require('path');
+const crypto = require('crypto');
+const { Pool } = require('pg');
 
-<div class="bg-blobs">
-  <div class="blob blob-1"></div>
-  <div class="blob blob-2"></div>
-  <div class="blob blob-3"></div>
-</div>
+const PORT = Number(process.env.PORT) || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_vexo_key_that_is_long_enough_12345';
 
-<div class="app">
-  <aside class="sidebar glass-panel">
-    <div class="logo"><div class="logo-mark">V</div><span class="logo-text">vexo p2p</span></div>
-    <button class="nav-btn active" data-screen="home">Главная</button>
-    <button class="nav-btn" data-screen="market">Маркет</button>
-    <button class="nav-btn" data-screen="create">Создать объявление</button>
-    <button class="nav-btn" data-screen="orders">Мои ордера</button>
-    <button class="nav-btn" data-screen="wallet">Кошелёк</button>
-    <button class="nav-btn" data-screen="profile">Профиль</button>
-    <button class="nav-btn" data-screen="admin" id="adminNavBtn" style="display:none; color:var(--red); font-weight:900;">🛡 Админка</button>
-  </aside>
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_UDtaHhd5Zr6s@ep-divine-sun-bawvlsl5-pooler.c-8.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
+  ssl: { rejectUnauthorized: false }
+});
 
-  <div class="main">
-    <header class="topbar glass-panel">
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <button class="btn btn-sm btn-ghost hidden" id="backBtn" style="padding: 6px; border-radius: 50%; width: 32px; height: 32px;">←</button>
-        <div class="logo"><div class="logo-mark" style="width: 24px; height: 24px; font-size: 12px;">V</div><span class="logo-text" style="font-size: 18px;">vexo p2p</span></div>
-      </div>
-      <div class="topbar-title" id="topbarTitle" style="display: none;">Главная</div>
-      
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <button class="btn btn-sm btn-ghost notification-btn" id="notifBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-          <span class="notif-dot hidden" id="notifDot"></span>
-        </button>
-        <button class="btn btn-sm btn-ghost" id="themeBtn" style="padding: 6px; border-radius: 50%; width: 32px; height: 32px;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-        </button>
-        <button class="btn btn-sm btn-primary" id="loginBtn" style="padding: 8px 16px;">Войти</button>
-        <button class="avatar-btn hidden" id="avatarBtn"></button>
-      </div>
-    </header>
-
-    <main class="content">
-      <!-- ГЛАВНАЯ -->
-      <section class="screen active" id="screen-home">
-        <div class="banner-carousel">
-          <div class="banner-viewport" id="bannerViewport">
-            <div class="banner-track" id="bannerTrack">
-              <div class="banner banner-platform">
-                <h2>Добро пожаловать в <br><span>vexo p2p</span></h2>
-                <p>Самый быстрый и безопасный обмен криптовалюты на рубли.</p>
-                <button class="btn btn-primary" data-screen="market" style="width: fit-content;">Перейти в Маркет</button>
-              </div>
-              <div class="banner banner-tg">
-                <h2>Акции и розыгрыши</h2>
-                <p>Подписывайтесь на наш Telegram-канал, чтобы первыми узнавать о бонусах и 0% комиссии!</p>
-                <a href="https://t.me/vexoio_bot" target="_blank" class="btn btn-primary" style="width: fit-content; text-decoration: none;">В Telegram</a>
-              </div>
-            </div>
-          </div>
-          <div class="banner-dots">
-            <button class="banner-dot active" data-slide="0"></button>
-            <button class="banner-dot" data-slide="1"></button>
-          </div>
-        </div>
-
-        <div class="glass-card" style="margin-bottom: 20px;">
-          <h2 style="font-size: 16px; margin-bottom: 12px; font-weight: 800;">📰 Новости</h2>
-          <div class="news-list">
-            <div class="news-item">
-              <div class="news-date">Сегодня</div>
-              <div class="news-title">Запуск платформы VEXO P2P!</div>
-              <div class="news-desc">Мы рады приветствовать вас на нашей новой площадке.</div>
-            </div>
-            <div class="news-item">
-              <div class="news-date">Вчера</div>
-              <div class="news-title">Обновление интерфейса</div>
-              <div class="news-desc">Теперь сайт поддерживает светлую и темную темы.</div>
-            </div>
-          </div>
-        </div>
-
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <h2 style="font-size: 16px; font-weight: 800;">🔥 Лучшие предложения</h2>
-          <button class="btn btn-ghost btn-sm" data-screen="market" style="font-size: 12px;">Все →</button>
-        </div>
-        <div id="homeTopAds">Загрузка...</div>
-      </section>
-
-      <!-- МАРКЕТ -->
-      <section class="screen" id="screen-market">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <h2 style="font-size: 18px; font-weight: 800;">P2P Маркет</h2>
-          <button class="btn btn-ghost btn-sm" id="openFilterBtn" style="border: 1px solid var(--glass-border); padding: 6px 12px; border-radius: 10px; display: flex; gap: 6px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-            Фильтры
-          </button>
-        </div>
-
-        <div class="trade-tabs glass-panel" id="marketSideTabs">
-          <button class="trade-tab active" data-side="buy">Купить</button>
-          <button class="trade-tab" data-side="sell">Продать</button>
-        </div>
-
-        <div class="icon-scroll" id="filterAsset" style="margin-bottom: 8px;">
-          <div class="icon-chip active" data-val="">Все активы</div>
-          <div class="icon-chip" data-val="USDT"><div class="coin-icon usdt">₮</div> USDT</div>
-          <div class="icon-chip" data-val="BTC"><div class="coin-icon btc">₿</div> BTC</div>
-          <div class="icon-chip" data-val="TON"><div class="coin-icon ton">T</div> TON</div>
-        </div>
-        
-        <div class="chips" id="filterFace" style="margin-bottom: 12px;">
-          <button class="chip active" data-val="">Все лица</button>
-          <button class="chip" data-val="first">1-е лицо</button>
-          <button class="chip" data-val="third">3-е лицо</button>
-        </div>
-
-        <div id="adsList">Загрузка...</div>
-      </section>
-
-      <!-- СОЗДАНИЕ -->
-      <section class="screen" id="screen-create">
-        <h2 style="margin-bottom: 16px; font-size: 18px; font-weight: 800;">Создать объявление</h2>
-        
-        <div class="glass-card">
-          <div class="field">
-            <label>Тип сделки</label>
-            <div class="segmented glass-panel" id="f-side">
-              <button type="button" class="seg-btn buy active" data-val="sell">Я продаю</button>
-              <button type="button" class="seg-btn sell" data-val="buy">Я покупаю</button>
-            </div>
-          </div>
-
-          <div class="field">
-            <label>Тип лица</label>
-            <div class="segmented glass-panel" id="f-face">
-              <button type="button" class="seg-btn active" data-val="first">1-е лицо</button>
-              <button type="button" class="seg-btn" data-val="third">3-е лицо</button>
-            </div>
-          </div>
-
-          <div class="field">
-            <label>Актив</label>
-            <div class="icon-scroll" id="f-asset-select">
-              <div class="icon-chip active" data-val="USDT"><div class="coin-icon usdt">₮</div> USDT</div>
-              <div class="icon-chip" data-val="BTC"><div class="coin-icon btc">₿</div> BTC</div>
-              <div class="icon-chip" data-val="TON"><div class="coin-icon ton">T</div> TON</div>
-            </div>
-          </div>
-
-          <div class="field">
-            <label>Способы оплаты</label>
-            <div class="icon-scroll" id="f-payments">
-              <div class="pay-chip" data-val="СБП">🏦 СБП</div>
-              <div class="pay-chip" data-val="Тинькофф">🟡 Тинькофф</div>
-              <div class="pay-chip" data-val="Сбербанк">🟢 Сбер</div>
-              <div class="pay-chip" data-val="Альфа-Банк">🔴 Альфа</div>
-            </div>
-          </div>
-
-          <div class="field">
-            <label>Время на оплату</label>
-            <div class="icon-scroll" id="f-time">
-              <div class="pay-chip active" data-val="15">15 минут</div>
-              <div class="pay-chip" data-val="30">30 минут</div>
-              <div class="pay-chip" data-val="45">45 минут</div>
-              <div class="pay-chip" data-val="60">1 час</div>
-            </div>
-          </div>
-
-          <div class="field"><label>Цена за 1 <span id="f-asset-label">USDT</span> (₽)</label><input class="input" type="number" id="f-price" placeholder="Пример: 90"></div>
-          <div class="field"><label>Общий объем</label><input class="input" type="number" id="f-amount" placeholder="Пример: 500"></div>
-          <div class="field"><label>Мин. лимит (₽)</label><input class="input" type="number" id="f-min" placeholder="Пример: 3000"></div>
-          <div class="field"><label>Макс. лимит (₽)</label><input class="input" type="number" id="f-max" placeholder="Пример: 45000"></div>
-          <div class="field"><label>Условия</label><textarea class="input" id="f-terms" placeholder="ПРИНИМАЮ ТОЛЬКО СБП..." style="min-height: 60px;"></textarea></div>
-
-          <div class="error-msg" id="createError"></div>
-          <button class="btn btn-primary btn-block" id="createBtn" style="margin-top: 10px;">Опубликовать</button>
-        </div>
-      </section>
-
-      <!-- ОРДЕРА -->
-      <section class="screen" id="screen-orders">
-        <h2 style="margin-bottom: 16px; font-size: 18px; font-weight: 800;">Мои ордера</h2>
-        <div class="tabs glass-panel" id="ordersFilter">
-          <button class="tab active" data-val="active">Активные</button>
-          <button class="tab" data-val="completed">Завершённые</button>
-          <button class="tab" data-val="cancelled">Отменённые</button>
-        </div>
-        <div id="ordersList">Загрузка...</div>
-      </section>
-
-      <section class="screen" id="screen-order"><div id="orderDetailContent"></div></section>
-      <section class="screen" id="screen-wallet"></section>
-
-      <!-- ПРОФИЛЬ -->
-      <section class="screen" id="screen-profile">
-        <h2 style="margin-bottom: 16px; font-size: 18px; font-weight: 800;">Профиль</h2>
-        <div id="profileContent">Загрузка...</div>
-      </section>
-
-      <!-- АДМИНКА -->
-      <section class="screen" id="screen-admin">
-        <h2 style="margin-bottom: 16px; font-size: 18px; font-weight: 800; color:var(--red);">🛡 Панель Администратора</h2>
-        
-        <div class="tabs glass-panel" id="adminTabs" style="margin-bottom:20px;">
-          <button class="tab active" data-val="users">Пользователи</button>
-          <button class="tab" data-val="disputes">Споры и Ордера</button>
-        </div>
-
-        <div id="adminContent">Загрузка...</div>
-      </section>
-    </main>
-
-    <nav class="bottom-nav glass-panel">
-      <button class="bn-btn active" data-screen="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Главная</button>
-      <button class="bn-btn" data-screen="market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Маркет</button>
-      <button class="bn-btn" data-screen="create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Создать</button>
-      <button class="bn-btn" data-screen="orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>Ордера</button>
-      <button class="bn-btn" data-screen="wallet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M16 12h4"/></svg>Кошелёк</button>
-      <button class="bn-btn" data-screen="profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Профиль</button>
-      <button class="bn-btn" data-screen="admin" id="adminBnBtn" style="display:none; color:var(--red);">🛡 Админ</button>
-    </nav>
-  </div>
-</div>
-
-<div class="toast-container" id="toastContainer"></div>
-<div class="modal-overlay" id="dialogOverlay"><div class="modal glass-modal" id="dialogContent"></div></div>
-
-<!-- МОДАЛКА РЕДАКТИРОВАНИЯ ОБЪЯВЛЕНИЯ -->
-<div class="modal-overlay" id="editAdModal">
-  <div class="modal glass-modal">
-    <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Редактировать</h3>
-    <div class="field"><label>Цена за 1 ед. (₽)</label><input class="input" type="number" id="edit-price"></div>
-    <div class="field"><label>Мин. лимит (₽)</label><input class="input" type="number" id="edit-min"></div>
-    <div class="field"><label>Макс. лимит (₽)</label><input class="input" type="number" id="edit-max"></div>
-    <div class="field"><label>Условия</label><textarea class="input" id="edit-terms" style="min-height: 60px;"></textarea></div>
-    <div class="error-msg" id="editError"></div>
-    <button class="btn btn-primary btn-block" id="editSaveBtn">Сохранить</button>
-    <button class="btn btn-ghost btn-block" onclick="closeModal('editAdModal')" style="margin-top: 8px;">Отмена</button>
-  </div>
-</div>
-
-<!-- ОСТАЛЬНЫЕ МОДАЛКИ -->
-<div class="modal-overlay" id="filterModal">
-  <div class="modal glass-modal">
-    <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Фильтры</h3>
-    <div class="field">
-      <label>Сумма (₽)</label>
-      <div class="filter-inputs">
-        <input type="number" class="input" id="filterMinAmount" placeholder="От">
-        <input type="number" class="input" id="filterMaxAmount" placeholder="До">
-      </div>
-    </div>
-    <div class="field">
-      <label>Способ оплаты</label>
-      <div class="icon-scroll" id="filterPayment" style="margin-bottom:0;">
-        <div class="icon-chip active" data-val="">Все</div>
-        <div class="icon-chip" data-val="СБП">🏦 СБП</div>
-        <div class="icon-chip" data-val="Тинькофф">🟡 Тинькофф</div>
-        <div class="icon-chip" data-val="Сбербанк">🟢 Сбер</div>
-      </div>
-    </div>
-    <button class="btn btn-primary btn-block" id="applyFiltersBtn" style="margin-top: 10px;">Применить</button>
-    <button class="btn btn-ghost btn-block" onclick="closeModal('filterModal')" style="margin-top: 8px;">Сбросить</button>
-  </div>
-</div>
-
-<div class="modal-overlay" id="notificationsModal">
-  <div class="modal glass-modal" style="max-width: 350px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-      <h3 style="font-size: 16px; font-weight: 800;">Уведомления</h3>
-      <button class="btn btn-ghost btn-sm" onclick="clearNotifications()" style="font-size: 12px; color: var(--dim);">Очистить</button>
-    </div>
-    <div id="notificationsList" style="display: flex; flex-direction: column; gap: 10px;">
-      <div class="empty-state">Нет новых уведомлений</div>
-    </div>
-    <button class="btn btn-ghost btn-block" style="margin-top: 16px;" onclick="closeModal('notificationsModal')">Закрыть</button>
-  </div>
-</div>
-
-<div class="modal-overlay" id="authModal">
-  <div class="modal glass-modal">
-    <div style="display: flex; border-bottom: 1px solid var(--glass-border); margin-bottom: 16px;">
-      <button class="tab active" id="tabLogin" style="flex: 1; padding: 10px; font-weight: 700;">Вход</button>
-      <button class="tab" id="tabRegister" style="flex: 1; padding: 10px; font-weight: 700;">Регистрация</button>
-    </div>
-    <form id="authForm">
-      <div class="field">
-        <label id="loginLabel">Логин или Email</label>
-        <input class="input" type="text" id="authLogin" required>
-      </div>
-      <div class="field hidden" id="emailField">
-        <label>Email</label>
-        <input class="input" type="email" id="authEmail">
-      </div>
-      <div class="field">
-        <label>Пароль</label>
-        <input class="input" type="password" id="authPass" required>
-      </div>
-      <div class="error-msg" id="authError"></div>
-      <button type="submit" class="btn btn-primary btn-block" id="authSubmit">Войти</button>
-      <button type="button" class="btn btn-ghost btn-block" onclick="closeModal('authModal')" style="margin-top: 8px;">Отмена</button>
-    </form>
-  </div>
-</div>
-
-<div class="modal-overlay" id="settingsModal">
-  <div class="modal glass-modal">
-    <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Настройки</h3>
-    <div class="field"><label>Ссылка на аватар (URL)</label><input class="input" type="url" id="settingsAvatarUrl" placeholder="https://..."></div>
-    <div class="field"><label>Имя</label><input class="input" type="text" id="settingsName" maxlength="50"></div>
-    <div class="field"><label>Email</label><input class="input" type="email" id="settingsEmail"></div>
-    <div style="border-top: 1px solid var(--glass-border); margin: 20px 0; padding-top: 20px;">
-      <h4 style="font-size: 14px; font-weight: 800; margin-bottom: 12px; color: var(--dim);">Смена пароля</h4>
-      <div class="field"><label>Текущий пароль</label><input class="input" type="password" id="settingsCurrentPass" placeholder="Обязательно для смены"></div>
-      <div class="field"><label>Новый пароль</label><input class="input" type="password" id="settingsNewPass" placeholder="Мин. 8 символов"></div>
-    </div>
-    <div class="error-msg" id="settingsError"></div>
-    <button class="btn btn-primary btn-block" id="settingsSaveBtn">Сохранить</button>
-    <button class="btn btn-ghost btn-block" onclick="closeModal('settingsModal')" style="margin-top: 8px;">Отмена</button>
-  </div>
-</div>
-
-<div class="modal-overlay" id="publicProfileModal">
-  <div class="modal glass-modal">
-    <button style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: var(--dim); font-size: 24px; cursor: pointer;" onclick="closeModal('publicProfileModal')">×</button>
-    <div id="publicProfileContent">Загрузка...</div>
-  </div>
-</div>
-
-<!-- МОДАЛКА ПОПОЛНЕНИЯ/ВЫВОДА -->
-<div class="modal-overlay" id="walletActionModal">
-  <div class="modal glass-modal">
-    <h3 id="walletActionTitle" style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Пополнение</h3>
+async function initDB() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username VARCHAR(50) UNIQUE NOT NULL, display_name VARCHAR(50), email VARCHAR(100) UNIQUE NOT NULL, password_hash VARCHAR(255) NOT NULL, role VARCHAR(20) DEFAULT 'user', kyc_status VARCHAR(20) DEFAULT 'none', avatar_url TEXT, favorites INT[] DEFAULT '{}', volume_usd NUMERIC DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS ads (id SERIAL PRIMARY KEY, user_id INT REFERENCES users(id), side VARCHAR(10), face_type VARCHAR(20), asset VARCHAR(20), price NUMERIC, amount_total NUMERIC, amount_left NUMERIC, min_rub NUMERIC, max_rub NUMERIC, payment_methods TEXT[], terms TEXT, active BOOLEAN DEFAULT true, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS orders (id SERIAL PRIMARY KEY, public_id VARCHAR(20) UNIQUE, ad_id INT REFERENCES ads(id), buyer_id INT REFERENCES users(id), seller_id INT REFERENCES users(id), asset VARCHAR(20), price NUMERIC, amount_rub NUMERIC, amount_asset NUMERIC, face_type VARCHAR(20), payment_method VARCHAR(50), status VARCHAR(20) DEFAULT 'pending', history JSONB DEFAULT '[]', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, expires_at TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, order_id INT REFERENCES orders(id), sender_id INT REFERENCES users(id), text TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS reviews (id SERIAL PRIMARY KEY, order_id INT REFERENCES orders(id), author_id INT REFERENCES users(id), target_id INT REFERENCES users(id), rating INT, comment TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+    `);
     
-    <div class="field">
-      <label>Выберите валюту</label>
-      <div class="segmented glass-panel" id="walletAssetSelect">
-        <button type="button" class="seg-btn active" data-val="RUB">RUB (₽)</button>
-        <button type="button" class="seg-btn" data-val="USDT">USDT (₮)</button>
-      </div>
-    </div>
-
-    <div class="field"><label>Сумма</label><input type="number" class="input" id="walletActionAmount" placeholder="Введите сумму"></div>
-    <div class="field" id="walletRequisitesField" style="display:none;"><label>Реквизиты для вывода</label><input type="text" class="input" id="walletActionRequisites" placeholder="Номер карты или адрес кошелька"></div>
+    await pool.query(`ALTER TABLE ads ADD COLUMN IF NOT EXISTS payment_time INT DEFAULT 30;`);
+    await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_time INT DEFAULT 30;`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS balance_rub NUMERIC DEFAULT 0;`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS balance_usdt NUMERIC DEFAULT 0;`);
     
-    <button class="btn btn-primary btn-block" id="walletActionSubmit">Перейти в Telegram</button>
-    <button class="btn btn-ghost btn-block" onclick="closeModal('walletActionModal')" style="margin-top: 8px;">Отмена</button>
-  </div>
-</div>
+    console.log('✓ Database tables initialized');
+  } catch (err) {
+    console.error('❌ DB Init Error:', err);
+  }
+}
+initDB();
 
-<!-- ОКНО ПОКУПКИ -->
-<div class="modal-overlay" id="orderModal">
-  <div class="modal glass-modal" style="padding: 20px; gap: 16px;">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <button class="btn btn-ghost" style="padding: 0; width: 32px; height: 32px; border-radius: 50%;" onclick="closeModal('orderModal')">←</button>
-      <h3 id="orderTitle" style="font-size: 16px; font-weight: 800; text-align: center; flex: 1;">Покупка USDT</h3>
-      <div style="width: 32px;"></div>
-    </div>
+const app = express();
+app.use(express.json());
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+});
+
+async function auth(req, res, next) {
+  const h = req.headers.authorization || '';
+  const token = h.startsWith('Bearer ') ? h.slice(7) : null;
+  if (!token) return res.status(401).json({ error: 'unauthorized' });
+  try {
+    const p = jwt.verify(token, JWT_SECRET);
+    const result = await pool.query('SELECT * FROM users WHERE id = $1', [p.sub]);
+    const user = result.rows[0];
+    if (!user || user.blocked) return res.status(401).json({ error: 'unauthorized' });
+    req.user = user;
+    next();
+  } catch { res.status(401).json({ error: 'unauthorized' }); }
+}
+
+function publicUser(u) {
+  return { 
+    id: u.id, username: u.username, displayName: u.display_name || u.username, 
+    email: u.email, role: u.role, kycStatus: u.kyc_status, avatarUrl: u.avatar_url || '', 
+    volumeUsd: Number(u.volume_usd), createdAt: u.created_at,
+    balanceRub: Number(u.balance_rub || 0), balanceUsdt: Number(u.balance_usdt || 0)
+  };
+}
+
+async function getUserStats(userId) {
+  const completedRes = await pool.query("SELECT COUNT(*) FROM orders WHERE status = 'completed' AND (buyer_id = $1 OR seller_id = $1)", [userId]);
+  const cancelledRes = await pool.query("SELECT COUNT(*) FROM orders WHERE status = 'cancelled' AND (buyer_id = $1 OR seller_id = $1)", [userId]);
+  const reviewsRes = await pool.query("SELECT rating FROM reviews WHERE target_id = $1", [userId]);
+  const volumeRes = await pool.query("SELECT volume_usd FROM users WHERE id = $1", [userId]);
+  const completed = parseInt(completedRes.rows[0].count);
+  const cancelled = parseInt(cancelledRes.rows[0].count);
+  const total = completed + cancelled;
+  const successRate = total > 0 ? Math.round((completed / total) * 100) : null;
+  const ratings = reviewsRes.rows.map(r => r.rating);
+  const avg = ratings.length ? Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)) : null;
+  const volumeUsd = Number(volumeRes.rows[0]?.volume_usd || 0);
+  
+  const isPro = volumeUsd >= 100000 && successRate >= 80 && completed >= 10;
+  const isMerchant = completed >= 5 || volumeUsd >= 10000;
+  
+  return { dealsTotal: total, dealsCompleted: completed, successRate, reviewsCount: ratings.length, ratingAvg: avg, volumeUsd, isPro, isMerchant };
+}
+
+// АУТЕНТИФИКАЦИЯ
+app.post('/api/auth/register', async (req, res) => {
+  const { username, email, password } = req.body || {};
+  if (!username || username.length < 3) return res.status(400).json({ error: 'short_username' });
+  if (!email || !email.includes('@')) return res.status(400).json({ error: 'bad_email' });
+  if (!password || password.length < 8) return res.status(400).json({ error: 'short_password' });
+  try {
+    const exists = await pool.query('SELECT id FROM users WHERE username = $1 OR email = $2', [username, email.toLowerCase()]);
+    if (exists.rows.length > 0) return res.status(409).json({ error: 'user_exists' });
+    const hash = await bcrypt.hash(password, 10);
+    const result = await pool.query('INSERT INTO users (username, display_name, email, password_hash) VALUES ($1, $2, $3, $4) RETURNING *', [username, username, email.toLowerCase(), hash]);
+    const user = result.rows[0];
+    const token = jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: '7d' });
+    res.status(201).json({ token, user: publicUser(user) });
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  const { login, password } = req.body || {};
+  try {
+    const result = await pool.query('SELECT * FROM users WHERE email = $1 OR username = $1', [String(login).toLowerCase()]);
+    const user = result.rows[0];
+    if (!user || !(await bcrypt.compare(password, user.password_hash))) return res.status(401).json({ error: 'invalid_credentials' });
+    const token = jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: publicUser(user) });
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
+});
+
+app.get('/api/users/me', auth, async (req, res) => {
+  const stats = await getUserStats(req.user.id);
+  res.json({ user: publicUser(req.user), stats });
+});
+
+app.get('/api/users/:id', auth, async (req, res) => {
+  const result = await pool.query('SELECT * FROM users WHERE id = $1', [req.params.id]);
+  const u = result.rows[0];
+  if (!u) return res.status(404).json({ error: 'not_found' });
+  const stats = await getUserStats(u.id);
+  const isFavorite = req.user.favorites?.includes(u.id) || false;
+  res.json({ user: publicUser(u), stats, isFavorite });
+});
+
+app.patch('/api/users/me', auth, async (req, res) => {
+  const { email, displayName, avatarUrl, password, currentPassword } = req.body || {};
+  try {
+    if (email && email !== req.user.email) {
+      const check = await pool.query('SELECT id FROM users WHERE email = $1 AND id != $2', [email.toLowerCase(), req.user.id]);
+      if (check.rows.length > 0) return res.status(409).json({ error: 'email_taken' });
+    }
+    let newHash = req.user.password_hash;
+    if (password) {
+      if (!currentPassword || !(await bcrypt.compare(currentPassword, req.user.password_hash))) return res.status(400).json({ error: 'wrong_password' });
+      newHash = await bcrypt.hash(password, 10);
+    }
+    const result = await pool.query('UPDATE users SET email = COALESCE($1, email), display_name = COALESCE($2, display_name), avatar_url = COALESCE($3, avatar_url), password_hash = $4 WHERE id = $5 RETURNING *', [email ? email.toLowerCase() : null, displayName, avatarUrl, newHash, req.user.id]);
+    res.json({ user: publicUser(result.rows[0]) });
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
+});
+
+app.post('/api/users/:id/favorite', auth, async (req, res) => {
+  const targetId = Number(req.params.id);
+  if (targetId === req.user.id) return res.status(400).json({ error: 'self_fav' });
+  let favs = req.user.favorites || [];
+  const idx = favs.indexOf(targetId);
+  if (idx > -1) favs.splice(idx, 1); else favs.push(targetId);
+  await pool.query('UPDATE users SET favorites = $1 WHERE id = $2', [favs, req.user.id]);
+  res.json({ isFavorite: idx === -1 });
+});
+
+// ОБЪЯВЛЕНИЯ
+async function shapeAd(a) {
+  const uRes = await pool.query('SELECT * FROM users WHERE id = $1', [a.user_id]);
+  const u = uRes.rows[0];
+  const stats = await getUserStats(a.user_id);
+  const realMaxRub = Math.min(Number(a.max_rub), Number(a.amount_left) * Number(a.price));
+  return { id: a.id, userId: a.user_id, username: u?.username || '?', displayName: u?.display_name || u?.username || '?', avatarUrl: u?.avatar_url || '', side: a.side, faceType: a.face_type, asset: a.asset, price: Number(a.price), amountTotal: Number(a.amount_total), amountLeft: Number(a.amount_left), totalRub: (Number(a.amount_left) * Number(a.price)).toFixed(2), minRub: Number(a.min_rub), maxRub: realMaxRub.toFixed(2), paymentMethods: a.payment_methods, terms: a.terms, active: a.active, paymentTime: Number(a.payment_time) || 30, createdAt: a.created_at, ...stats };
+}
+
+app.get('/api/ads', async (req, res) => {
+  let query = "SELECT * FROM ads WHERE active = true AND amount_left > 0";
+  const params = [];
+  if (req.query.side) { params.push(req.query.side); query += ` AND side = $${params.length}`; }
+  if (req.query.asset) { params.push(req.query.asset); query += ` AND asset = $${params.length}`; }
+  if (req.query.face_type) { params.push(req.query.face_type); query += ` AND face_type = $${params.length}`; }
+  if (req.query.payment) { params.push(req.query.payment); query += ` AND $${params.length} = ANY(payment_methods)`; }
+  query += " ORDER BY created_at DESC LIMIT 50";
+  try {
+    const result = await pool.query(query, params);
+    const items = await Promise.all(result.rows.map(shapeAd));
+    res.json({ items });
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
+});
+
+app.get('/api/ads/my', auth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM ads WHERE user_id = $1 ORDER BY created_at DESC', [req.user.id]);
+    const items = await Promise.all(result.rows.map(shapeAd));
+    res.json({ items });
+  } catch(e) { res.json({ items: [] }); }
+});
+
+app.get('/api/ads/:id', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM ads WHERE id = $1', [req.params.id]);
+    if (!result.rows[0]) return res.status(404).json({ error: 'not_found' });
+    res.json(await shapeAd(result.rows[0]));
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
+});
+
+app.post('/api/ads', auth, async (req, res) => {
+  const { side, face_type, asset, price, amount_total, min_rub, max_rub, payment_methods, terms, payment_time } = req.body;
+  const p = Number(price), at = Number(amount_total), mn = Number(min_rub), mx = Number(max_rub);
+  if (!(p > 0) || !(at > 0) || !(mn > 0) || !(mx > 0) || mn > mx || mx > at * p) return res.status(400).json({ error: 'bad_amounts' });
+  try {
+    const result = await pool.query(
+      'INSERT INTO ads (user_id, side, face_type, asset, price, amount_total, amount_left, min_rub, max_rub, payment_methods, terms, payment_time) VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $8, $9, $10, $11) RETURNING *', 
+      [req.user.id, side, face_type, asset, p, at, mn, mx, payment_methods, terms, payment_time || 30]
+    );
+    res.status(201).json(await shapeAd(result.rows[0]));
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
+});
+
+app.patch('/api/ads/:id', auth, async (req, res) => {
+  const { price, min_rub, max_rub, payment_methods, terms, active } = req.body;
+  try {
+    const adRes = await pool.query('SELECT * FROM ads WHERE id = $1', [req.params.id]);
+    const ad = adRes.rows[0];
+    if (!ad || ad.user_id !== req.user.id) return res.status(403).json({ error: 'forbidden' });
     
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <div style="font-size: 12px; color: var(--dim);">Цена <span id="orderRate" style="color: var(--grn); font-size: 16px; font-weight: 800; margin-left: 4px;">0 ₽</span></div>
-      <div style="display: flex; gap: 6px;">
-         <span id="priceTimer" style="font-size: 11px; background: var(--glass-bg); padding: 4px 8px; border-radius: 6px; color: var(--txt); font-weight: 700;">60s</span>
-         <span style="font-size: 10px; background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3); padding: 4px 8px; border-radius: 6px; color: var(--grn);">🛡 Защита</span>
-      </div>
-    </div>
+    if (active !== undefined && !price) {
+       const result = await pool.query('UPDATE ads SET active = $1 WHERE id = $2 RETURNING *', [active, req.params.id]);
+       return res.json(await shapeAd(result.rows[0]));
+    }
 
-    <div class="glass-card" style="padding: 16px;">
-      <div style="display: flex; align-items: center; margin-bottom: 8px;">
-        <input class="input" type="number" id="orderAmount" value="" style="font-size: 24px; font-weight: 800; width: 100%; color: var(--txt); background: transparent; border: none; outline: none;" placeholder="0">
-        <span style="font-size: 14px; font-weight: 700; color: var(--dim); margin-left: 8px;">RUB</span>
-        <button id="btnOrderMax" style="background: var(--glass-border); border: none; color: var(--yellow); font-weight: 700; font-size: 12px; padding: 6px 10px; border-radius: 8px; margin-left: 8px;">Макс.</button>
-      </div>
-      <div class="hint" id="orderLimit" style="font-size: 12px; color: var(--dim); margin-bottom: 12px;">Лимит: 0 - 0 ₽</div>
-      
-      <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--glass-border); padding-top: 12px;">
-        <span style="font-size: 13px; color: var(--dim);" id="orderResultLabel">Вы получите</span>
-        <strong id="orderResult" style="font-size: 15px;">0 USDT</strong>
-      </div>
-    </div>
+    const p = Number(price), mn = Number(min_rub), mx = Number(max_rub);
+    if (!(p > 0) || !(mn > 0) || !(mx > 0) || mn > mx) return res.status(400).json({ error: 'bad_amounts' });
 
-    <div class="field" style="margin-bottom: 0;">
-      <div class="icon-scroll" id="orderPayments"></div>
-    </div>
-    <div id="orderAdOwnerProfile" class="inner-card" style="display: flex; align-items: center; gap: 10px; cursor: pointer;" onclick="openPublicProfile(window._ads[currentAd.id].userId)">
-      <div class="avatar" id="orderAvatar" style="width: 36px; height: 36px; font-size: 14px;">?</div>
-      <div>
-        <div style="font-weight: 800; font-size: 14px;" id="orderUsername">-</div>
-        <div style="font-size: 11px; color: var(--dim);" id="orderUserMeta">-</div>
-      </div>
-    </div>
-    <div id="orderAvailable" style="display:none;"></div>
-    <div class="inner-card" style="border: 1px dashed var(--glass-border); max-height: 80px; overflow-y: auto;">
-      <div style="font-size: 11px; font-weight: 800; color: var(--dim); text-transform: uppercase; margin-bottom: 4px;">Условия</div>
-      <div id="orderTerms" style="font-size: 12px; color: var(--txt); line-height: 1.4;"></div>
-    </div>
-    <div class="error-msg" id="orderError"></div>
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-      <div>
-        <div style="font-size: 16px; font-weight: 800;" id="orderTotalBottom">0 RUB</div>
-        <div style="font-size: 11px; color: var(--dim);">Итого</div>
-      </div>
-      <button class="btn btn-primary" id="orderSubmit" style="padding: 14px 32px;">Купить</button>
-    </div>
-  </div>
-</div>
+    const result = await pool.query(
+      'UPDATE ads SET price = $1, min_rub = $2, max_rub = $3, payment_methods = $4, terms = $5 WHERE id = $6 RETURNING *',
+      [p, mn, mx, payment_methods, terms, req.params.id]
+    );
+    res.json(await shapeAd(result.rows[0]));
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
+});
 
-<div class="modal-overlay" id="chatModal">
-  <div class="modal glass-modal" style="padding: 0; gap: 0; height: 80vh; max-width: 400px;">
-    <div style="padding: 16px; border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; gap: 10px;">
-      <div class="avatar" id="chatAvatar">?</div>
-      <div style="flex: 1;">
-        <div style="font-size: 14px; font-weight: 800;" id="chatTitle">Чат</div>
-        <div style="font-size: 11px; color: var(--dim);" id="chatSub">Собеседник</div>
-      </div>
-      <button style="background: none; border: none; color: var(--dim); font-size: 24px; cursor: pointer;" onclick="closeChatModal()">×</button>
-    </div>
-    <div class="chat-body" id="chatBody"></div>
-    <div class="chat-input-row">
-      <input type="text" id="chatInput" placeholder="Сообщение..." maxlength="500">
-      <button id="chatSend">➤</button>
-    </div>
-  </div>
-</div>
+// ОРДЕРА
+const STATUS_LABEL = { pending: 'Ожидает', accepted: 'К оплате', paid: 'Оплачено', completed: 'Завершён', cancelled: 'Отменён', declined: 'Отклонён', dispute: 'Спор' };
 
-<div class="modal-overlay" id="reviewModal">
-  <div class="modal glass-modal">
-    <h3 style="font-size: 18px; font-weight: 800;">Оставить отзыв</h3>
-    <div class="rating-stars" id="ratingStars" style="display: flex; gap: 8px; font-size: 28px; cursor: pointer; justify-content: center; margin: 16px 0;">
-      <span class="rating-star" data-r="1">★</span><span class="rating-star" data-r="2">★</span><span class="rating-star" data-r="3">★</span><span class="rating-star" data-r="4">★</span><span class="rating-star" data-r="5">★</span>
+async function shapeOrder(o) {
+  const bRes = await pool.query('SELECT * FROM users WHERE id = $1', [o.buyer_id]);
+  const sRes = await pool.query('SELECT * FROM users WHERE id = $1', [o.seller_id]);
+  const buyer = bRes.rows[0]; const seller = sRes.rows[0];
+  return { id: o.id, publicId: o.public_id, adId: o.ad_id, asset: o.asset, price: Number(o.price), amountRub: Number(o.amount_rub), amountAsset: Number(o.amount_asset), faceType: o.face_type, paymentMethod: o.payment_method, paymentTime: Number(o.payment_time) || 30, status: o.status, statusLabel: STATUS_LABEL[o.status] || o.status, buyer: { id: o.buyer_id, username: buyer?.username, displayName: buyer?.display_name || buyer?.username, avatarUrl: buyer?.avatar_url }, seller: { id: o.seller_id, username: seller?.username, displayName: seller?.display_name || seller?.username, avatarUrl: seller?.avatar_url }, createdAt: o.created_at, expiresAt: o.expires_at, buyer_id: o.buyer_id, seller_id: o.seller_id, amount_rub: o.amount_rub, amount_asset: o.amount_asset, public_id: o.public_id, payment_method: o.payment_method, face_type: o.face_type };
+}
+
+app.post('/api/orders', auth, async (req, res) => {
+  const { ad_id, amount_rub, payment_method } = req.body;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const adRes = await client.query('SELECT * FROM ads WHERE id = $1 FOR UPDATE', [ad_id]);
+    const ad = adRes.rows[0];
+    if (!ad || !ad.active) throw new Error('Объявление неактивно');
+    if (ad.user_id === req.user.id) throw new Error('Нельзя торговать с собой');
+    if (!ad.payment_methods.includes(payment_method)) throw new Error('Способ оплаты недоступен');
+    
+    const rub = Number(amount_rub);
+    const realMaxRub = Math.min(Number(ad.max_rub), Number(ad.amount_left) * Number(ad.price));
+    
+    if (rub < ad.min_rub) throw new Error('Сумма ниже минимума');
+    if (rub > realMaxRub) throw new Error('Сумма выше доступного лимита');
+    
+    const assetQty = rub / ad.price;
+    if (assetQty > ad.amount_left) throw new Error('Недостаточно актива');
+    
+    const buyerId = ad.side === 'sell' ? req.user.id : ad.user_id;
+    const sellerId = ad.side === 'sell' ? ad.user_id : req.user.id;
+    
+    await client.query('UPDATE ads SET amount_left = amount_left - $1 WHERE id = $2', [assetQty, ad.id]);
+    
+    const publicId = 'VX-' + crypto.randomBytes(3).toString('hex').toUpperCase();
+    const history = JSON.stringify([{ status: 'pending', at: new Date().toISOString(), note: 'Заявка создана' }]);
+    
+    const orderRes = await client.query(
+      'INSERT INTO orders (public_id, ad_id, buyer_id, seller_id, asset, price, amount_rub, amount_asset, face_type, payment_method, history, payment_time, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *', 
+      [publicId, ad.id, buyerId, sellerId, ad.asset, ad.price, rub, assetQty, ad.face_type, payment_method, history, ad.payment_time || 30, 'pending']
+    );
+    
+    await client.query('COMMIT');
+    res.status(201).json(await shapeOrder(orderRes.rows[0]));
+  } catch (err) {
+    await client.query('ROLLBACK');
+    res.status(400).json({ error: err.message || 'order_error' });
+  } finally { client.release(); }
+});
+
+app.get('/api/orders/my', auth, async (req, res) => {
+  let query = "SELECT * FROM orders"; let params = [];
+  if (req.user.role !== 'admin') { query += " WHERE buyer_id = $1 OR seller_id = $1"; params.push(req.user.id); }
+  else { query += " WHERE 1=1"; }
+  const f = req.query.status;
+  if (f === 'active') query += " AND status IN ('pending', 'accepted', 'paid', 'dispute')";
+  else if (f === 'completed') query += " AND status = 'completed'";
+  else if (f === 'cancelled') query += " AND status IN ('cancelled', 'declined')";
+  query += " ORDER BY created_at DESC";
+  const result = await pool.query(query, params);
+  const items = await Promise.all(result.rows.map(shapeOrder));
+  res.json({ items });
+});
+
+app.get('/api/orders/:id', auth, async (req, res) => {
+  const result = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
+  const o = result.rows[0];
+  if (!o) return res.status(404).json({ error: 'not_found' });
+  if (o.buyer_id !== req.user.id && o.seller_id !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
+  const adRes = await pool.query('SELECT terms FROM ads WHERE id = $1', [o.ad_id]);
+  res.json({ order: await shapeOrder(o), history: o.history, terms: adRes.rows[0]?.terms });
+});
+
+async function transition(orderId, to, note, client = pool) {
+  const oRes = await client.query('SELECT * FROM orders WHERE id = $1', [orderId]);
+  const o = oRes.rows[0];
+  const newHistory = [...(o.history || []), { status: to, at: new Date().toISOString(), note }];
+  await client.query('UPDATE orders SET status = $1, history = $2 WHERE id = $3', [to, JSON.stringify(newHistory), orderId]);
+  if (to === 'cancelled' || to === 'declined') await client.query('UPDATE ads SET amount_left = amount_left + $1 WHERE id = $2', [o.amount_asset, o.ad_id]);
+  return o;
+}
+
+app.post('/api/orders/:id/accept', auth, async (req, res) => {
+  const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
+  const o = oRes.rows[0];
+  if (o.seller_id !== req.user.id || o.status !== 'pending') return res.status(403).json({ error: 'Доступ запрещен' });
+  await transition(o.id, 'accepted', 'Заявка принята продавцом');
+  res.json({ ok: true });
+});
+
+app.post('/api/orders/:id/decline', auth, async (req, res) => {
+  const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
+  const o = oRes.rows[0];
+  if (o.seller_id !== req.user.id || o.status !== 'pending') return res.status(403).json({ error: 'Доступ запрещен' });
+  await transition(o.id, 'declined', 'Заявка отклонена продавцом');
+  res.json({ ok: true });
+});
+
+app.post('/api/orders/:id/paid', auth, async (req, res) => {
+  const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
+  const o = oRes.rows[0];
+  if (o.buyer_id !== req.user.id || o.status !== 'accepted') return res.status(409).json({ error: 'Неверный статус' });
+  await transition(o.id, 'paid', 'Оплата отправлена'); res.json({ ok: true });
+});
+
+app.post('/api/orders/:id/confirm', auth, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const oRes = await client.query('SELECT * FROM orders WHERE id = $1 FOR UPDATE', [req.params.id]);
+    const o = oRes.rows[0];
+    if (o.seller_id !== req.user.id || o.status !== 'paid') throw new Error('bad');
+    await transition(o.id, 'completed', 'Завершён', client);
+    const volumeToAdd = Number(o.amount_rub) / 90;
+    await client.query('UPDATE users SET volume_usd = volume_usd + $1 WHERE id = $2', [volumeToAdd, o.buyer_id]);
+    await client.query('UPDATE users SET volume_usd = volume_usd + $1 WHERE id = $2', [volumeToAdd, o.seller_id]);
+    await client.query('COMMIT');
+    res.json({ ok: true });
+  } catch (e) { await client.query('ROLLBACK'); res.status(409).json({ error: 'Ошибка' }); }
+  finally { client.release(); }
+});
+
+app.post('/api/orders/:id/cancel', auth, async (req, res) => {
+  const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
+  const o = oRes.rows[0];
+  if (!['pending', 'accepted', 'paid'].includes(o.status)) return res.status(409).json({ error: 'bad' });
+  if (o.buyer_id !== req.user.id && o.seller_id !== req.user.id) return res.status(403).json({ error: 'forbidden' });
+  await transition(o.id, 'cancelled', 'Отменён пользователем'); res.json({ ok: true });
+});
+
+app.post('/api/orders/:id/dispute', auth, async (req, res) => {
+  const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
+  const o = oRes.rows[0];
+  if (!o || !['pending', 'accepted', 'paid'].includes(o.status)) return res.status(409).json({ error: 'bad' });
+  if (o.buyer_id !== req.user.id && o.seller_id !== req.user.id) return res.status(403).json({ error: 'forbidden' });
+  await transition(o.id, 'dispute', 'Открыт спор: ' + (req.body?.reason || '')); res.json({ ok: true });
+});
+
+app.post('/api/orders/:id/resolve', auth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
+  const { resolution } = req.body;
+  if (!['completed', 'cancelled'].includes(resolution)) return res.status(400).json({ error: 'bad' });
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const oRes = await client.query('SELECT * FROM orders WHERE id = $1 FOR UPDATE', [req.params.id]);
+    const o = oRes.rows[0];
+    if (o.status !== 'dispute') throw new Error('bad');
+    const note = resolution === 'completed' ? 'Спор решен: в пользу продавца' : 'Спор решен: в пользу покупателя';
+    await transition(o.id, resolution, note, client);
+    if (resolution === 'completed') {
+      const volumeToAdd = Number(o.amount_rub) / 90;
+      await client.query('UPDATE users SET volume_usd = volume_usd + $1 WHERE id = $2', [volumeToAdd, o.buyer_id]);
+      await client.query('UPDATE users SET volume_usd = volume_usd + $1 WHERE id = $2', [volumeToAdd, o.seller_id]);
+    }
+    await client.query('COMMIT');
+    res.json({ ok: true });
+  } catch (e) { await client.query('ROLLBACK'); res.status(409).json({ error: 'bad' }); }
+  finally { client.release(); }
+});
+
+// ЧАТ, ОТЗЫВЫ, СТАТИСТИКА
+app.get('/api/chat/:orderId', auth, async (req, res) => {
+  const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.orderId]);
+  const o = oRes.rows[0];
+  if (!o || (o.buyer_id !== req.user.id && o.seller_id !== req.user.id)) return res.status(403).json({ error: 'forbidden' });
+  const result = await pool.query(`SELECT m.*, u.username FROM messages m JOIN users u ON m.sender_id = u.id WHERE m.order_id = $1 ORDER BY m.created_at ASC`, [o.id]);
+  res.json({ items: result.rows.map(m => ({ id: m.id, senderId: m.sender_id, senderUsername: m.username, text: m.text, createdAt: m.created_at, isMine: m.sender_id === req.user.id })) });
+});
+
+app.post('/api/chat/:orderId', auth, async (req, res) => {
+  const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.orderId]);
+  const o = oRes.rows[0];
+  if (!o || ['completed', 'cancelled', 'declined'].includes(o.status)) return res.status(409).json({ error: 'closed' });
+  const result = await pool.query('INSERT INTO messages (order_id, sender_id, text) VALUES ($1, $2, $3) RETURNING *', [o.id, req.user.id, req.body.text]);
+  res.status(201).json({ ...result.rows[0], isMine: true });
+});
+
+app.post('/api/reviews', auth, async (req, res) => {
+  const { order_id, rating, comment } = req.body;
+  const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [order_id]);
+  const o = oRes.rows[0];
+  if (!o || o.status !== 'completed') return res.status(409).json({ error: 'not_completed' });
+  const targetId = o.buyer_id === req.user.id ? o.seller_id : o.buyer_id;
+  await pool.query('INSERT INTO reviews (order_id, author_id, target_id, rating, comment) VALUES ($1, $2, $3, $4, $5)', [o.id, req.user.id, targetId, rating, comment]);
+  res.status(201).json({ ok: true });
+});
+
+app.get('/api/reviews/user/:userId', async (req, res) => {
+  const result = await pool.query(`SELECT r.*, u.display_name FROM reviews r JOIN users u ON r.author_id = u.id WHERE r.target_id = $1 ORDER BY r.created_at DESC`, [req.params.userId]);
+  res.json({ items: result.rows.map(r => ({ id: r.id, rating: r.rating, comment: r.comment, author: r.display_name, createdAt: r.created_at })) });
+});
+
+app.get('/api/stats', async (req, res) => {
+  try {
+    const uCount = await pool.query('SELECT COUNT(*) FROM users');
+    const oCount = await pool.query("SELECT COUNT(*) FROM orders WHERE status = 'completed'");
+    const turnover = await pool.query("SELECT SUM(amount_rub) FROM orders WHERE status = 'completed'");
+    res.json({ users: parseInt(uCount.rows[0].count), deals: parseInt(oCount.rows[0].count), turnover: Number(turnover.rows[0].sum || 0), avgRating: '5.0' });
+  } catch (e) { res.status(500).json({ error: 'db_error' }); }
+});
+
+// ==========================================
+// АДМИНКА
+// ==========================================
+app.get('/api/admin/users', auth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
+  try {
+    const result = await pool.query('SELECT * FROM users ORDER BY created_at DESC');
+    res.json({ items: result.rows.map(publicUser) });
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
+});
+
+app.patch('/api/admin/users/:id/role', auth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
+  const { role } = req.body;
+  if (!['user', 'admin', 'merchant'].includes(role)) return res.status(400).json({ error: 'bad_role' });
+  try {
+    await pool.query('UPDATE users SET role = $1 WHERE id = $2', [role, req.params.id]);
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
+});
+
+app.get('/api/admin/orders', auth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
+  try {
+    const result = await pool.query("SELECT * FROM orders WHERE status = 'dispute' OR status = 'pending' OR status = 'paid' ORDER BY created_at DESC");
+    const items = await Promise.all(result.rows.map(shapeOrder));
+    res.json({ items });
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
+});
+
+// СТАТИКА
+app.use(express.static(path.join(__dirname)));
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) return next();
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.listen(PORT, () => console.log('VEXO P2P running on port ' + PORT));" data-r="4">★</span><span class="rating-star" data-r="5">★</span>
     </div>
     <textarea class="input" id="reviewComment" placeholder="Комментарий (необязательно)" style="min-height: 80px;"></textarea>
     <div class="error-msg" id="reviewError"></div>
