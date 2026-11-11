@@ -5,8 +5,9 @@
   --txt: #ffffff; 
   --dim: #888888;
   
-  --glass-bg: rgba(20, 20, 20, 0.6); /* Сделал чуть темнее, чтобы стекло выделялось на фоне */
-  --glass-border: rgba(255, 255, 255, 0.12);
+  /* Усиленное жидкое стекло */
+  --glass-bg: rgba(20, 20, 20, 0.45); 
+  --glass-border: rgba(255, 255, 255, 0.15);
   --glass-hover: rgba(255, 255, 255, 0.1);
   
   --btn-bg: #ffffff; 
@@ -19,7 +20,6 @@
   --blue: #3b82f6;
 }
 
-/* Светлая тема */
 body[data-theme="light"] {
   --bg: #f3f4f6; 
   --surf: #ffffff; 
@@ -27,9 +27,9 @@ body[data-theme="light"] {
   --txt: #111827; 
   --dim: #6b7280; 
   
-  --glass-bg: rgba(255, 255, 255, 0.75); /* Плотнее для светлой темы */
-  --glass-border: rgba(0, 0, 0, 0.15);
-  --glass-hover: rgba(0, 0, 0, 0.05);
+  --glass-bg: rgba(255, 255, 255, 0.55); 
+  --glass-border: rgba(255, 255, 255, 0.8);
+  --glass-hover: rgba(255, 255, 255, 0.8);
   
   --btn-bg: #111827; 
   --btn-txt: #ffffff;
@@ -52,43 +52,60 @@ body {
   position: relative;
   min-height: 100vh;
   transition: background-color 0.3s, color 0.3s;
-  
-  /* ДОБАВЛЕН ФОН */
+}
+
+/* РАЗМЫТЫЙ ФОН */
+body::before {
+  content: '';
+  position: fixed;
+  inset: -20px; /* Чуть больше экрана, чтобы не было видно краев при размытии */
   background-image: url('bg.jpg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
   background-repeat: no-repeat;
+  filter: blur(15px); /* Вот тут задается размытие */
+  z-index: -2; 
 }
 
-/* Оверлей для затемнения/осветления фона, чтобы текст читался */
-body::before {
+/* Оверлей для затемнения/осветления */
+body::after {
   content: '';
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6); /* Затемнение для темной темы */
+  background: rgba(0, 0, 0, 0.5); /* Темная тема */
   z-index: -1;
   pointer-events: none;
 }
 
-body[data-theme="light"]::before {
-  background: rgba(255, 255, 255, 0.85); /* Осветление для светлой темы */
+body[data-theme="light"]::after {
+  background: rgba(255, 255, 255, 0.4); /* Светлая тема */
 }
 
-input, textarea { 
-  user-select: text; 
-  font-family: inherit; 
-  font-size: 16px !important; 
-  color: var(--txt); 
-}
+input, textarea { user-select: text; font-family: inherit; font-size: 16px !important; color: var(--txt); }
 input::placeholder, textarea::placeholder { color: var(--dim); font-size: 14px; }
 button { font-family: inherit; cursor: pointer; }
 .app { display: flex; min-height: 100vh; position: relative; z-index: 10; }
 
-.glass-panel { background: var(--glass-bg); backdrop-filter: blur(20px) saturate(150%); -webkit-backdrop-filter: blur(20px) saturate(150%); border: 1px solid var(--glass-border); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-.glass-card { background: var(--glass-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+/* ЭФФЕКТ ЖИДКОГО СТЕКЛА */
+.glass-panel { 
+  background: var(--glass-bg); 
+  backdrop-filter: blur(30px) saturate(200%); 
+  -webkit-backdrop-filter: blur(30px) saturate(200%); 
+  border: 1px solid var(--glass-border); 
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); 
+}
+.glass-card { 
+  background: var(--glass-bg); 
+  backdrop-filter: blur(25px) saturate(200%); 
+  -webkit-backdrop-filter: blur(25px) saturate(200%); 
+  border: 1px solid var(--glass-border); 
+  border-radius: 20px; 
+  padding: 16px; 
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2); 
+}
 
-.inner-card { background: var(--surf2); border-radius: 12px; padding: 12px; border: 1px solid transparent; }
+.inner-card { background: var(--glass-bg); border-radius: 12px; padding: 12px; border: 1px solid var(--glass-border); }
 
 /* ЛОГОТИП */
 .logo { display: flex; align-items: center; gap: 8px; padding-bottom: 20px; }
@@ -105,7 +122,7 @@ button { font-family: inherit; cursor: pointer; }
 .topbar .logo { padding-bottom: 0; }
 .topbar-title { font-size: 16px; font-weight: 800; }
 
-/* Уведомления (точка на колокольчике) */
+/* Уведомления */
 .notification-btn { position: relative; }
 .notif-dot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background: var(--red); border-radius: 50%; border: 2px solid var(--surf); }
 
@@ -130,10 +147,10 @@ button { font-family: inherit; cursor: pointer; }
 .banner h2 { font-size: 20px; margin-bottom: 8px; font-weight: 900; line-height: 1.2; color: var(--txt); }
 .banner p { color: var(--dim); font-size: 13px; margin-bottom: 16px; font-weight: 500; }
 
-.banner-platform { background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%); backdrop-filter: blur(10px); }
+.banner-platform { background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%); backdrop-filter: blur(15px); }
 body[data-theme="light"] .banner-platform { background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); }
 
-.banner-tg { background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(16, 185, 129, 0.2) 100%); backdrop-filter: blur(10px); }
+.banner-tg { background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(16, 185, 129, 0.2) 100%); backdrop-filter: blur(15px); }
 body[data-theme="light"] .banner-tg { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%); }
 
 .banner-dots { display: flex; justify-content: center; gap: 6px; padding-top: 10px; }
@@ -177,10 +194,10 @@ textarea.input { height: auto; padding: 12px 16px; resize: vertical; }
 .filter-inputs { display: flex; gap: 8px; margin-bottom: 0; }
 
 /* Карточка объявления */
-.ad-card { background: var(--glass-bg); backdrop-filter: blur(16px); border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px; margin-bottom: 12px; position: relative; transition: 0.2s; }
+.ad-card { background: var(--glass-bg); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 16px; margin-bottom: 12px; position: relative; transition: 0.2s; }
 .ad-card:hover { border-color: var(--dim); }
 .ad-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; cursor: pointer; }
-.avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--surf2); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: var(--txt); font-weight: 800; font-size: 14px; flex-shrink: 0; overflow: hidden; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--glass-hover); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: var(--txt); font-weight: 800; font-size: 14px; flex-shrink: 0; overflow: hidden; }
 .avatar img { width: 100%; height: 100%; object-fit: cover; }
 .avatar.lg { width: 72px; height: 72px; font-size: 28px; }
 .ad-user { flex: 1; min-width: 0; }
@@ -216,10 +233,10 @@ textarea.input { height: auto; padding: 12px 16px; resize: vertical; }
 .seg-btn.active { background: var(--btn-bg); color: var(--btn-txt); }
 
 /* Модалки */
-.modal-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,.6); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; padding: 16px; }
-body[data-theme="light"] .modal-overlay { background: rgba(0,0,0,.3); }
+.modal-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,.5); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; padding: 16px; }
+body[data-theme="light"] .modal-overlay { background: rgba(0,0,0,.2); }
 .modal-overlay.active { display: flex; }
-.modal { background: var(--surf); border: 1px solid var(--glass-border); border-radius: 20px; width: 100%; max-width: 400px; padding: 20px; display: flex; flex-direction: column; gap: 16px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.4); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); }
+.modal { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 24px; width: 100%; max-width: 400px; padding: 20px; display: flex; flex-direction: column; gap: 16px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.3); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); }
 .hidden { display: none !important; }
 .error-msg { color: var(--red); font-size: 12px; min-height: 16px; font-weight: 600; }
 
@@ -238,7 +255,7 @@ body[data-theme="light"] .modal-overlay { background: rgba(0,0,0,.3); }
 
 /* ТОСТЫ */
 .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 400px; padding: 0 16px; pointer-events: none; }
-.toast { position: relative; background: var(--surf); border: 1px solid var(--glass-border); border-radius: 12px; padding: 12px 16px 12px 24px; color: var(--txt); font-size: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-weight: 600; text-align: left; animation: slideDown 0.3s ease; overflow: hidden; backdrop-filter: blur(20px); }
+.toast { position: relative; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 12px 16px 12px 24px; color: var(--txt); font-size: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); font-weight: 600; text-align: left; animation: slideDown 0.3s ease; overflow: hidden; backdrop-filter: blur(30px); }
 .toast::before { content: ''; position: absolute; left: 8px; top: 50%; transform: translateY(-50%); width: 4px; height: 60%; border-radius: 2px; background: var(--dim); }
 .toast.success::before { background: var(--grn); }
 .toast.error::before { background: var(--red); }
@@ -251,21 +268,13 @@ body[data-theme="light"] .modal-overlay { background: rgba(0,0,0,.3); }
 .profile-tab.active { background: var(--btn-bg); border-color: var(--btn-bg); color: var(--btn-txt); }
 
 /* Кошелек */
-.wallet-hero { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 20px; padding: 24px; margin-bottom: 16px; backdrop-filter: blur(16px); }
+.wallet-hero { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 20px; padding: 24px; margin-bottom: 16px; backdrop-filter: blur(25px); }
 .wallet-hero .lbl { font-size: 13px; color: var(--dim); margin-bottom: 8px; font-weight: 600; }
 .wallet-hero .amount { font-size: 32px; font-weight: 900; color: var(--txt); margin-bottom: 24px; }
 .wallet-hero .amount span { font-size: 18px; color: var(--dim); }
 .wallet-actions { display: flex; gap: 12px; }
-.wallet-item { display: flex; align-items: center; gap: 16px; background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 16px; border-radius: 16px; margin-bottom: 8px; backdrop-filter: blur(16px); }
-.wallet-item .coin-icon { width: 36px; height: 36px; font-size: 16px; }ze: 16px; }.2); }
-
-/* Цена */
-.glass-price-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.glass-price {
+.wallet-item { display: flex; align-items: center; gap: 16px; background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 16px; border-radius: 16px; margin-bottom: 8px; backdrop-filter: blur(25px); }
+.wallet-item .coin-icon { width: 36px; height: 36px; font-size: 16px; }e {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.7);
 }
