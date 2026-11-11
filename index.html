@@ -46,12 +46,13 @@
         <div class="banner-carousel">
           <div class="banner-viewport" id="bannerViewport">
             <div class="banner-track" id="bannerTrack">
-              <div class="banner glass-panel">
+              <!-- ОБНОВЛЕННЫЕ БАННЕРЫ -->
+              <div class="banner banner-platform">
                 <h2>Добро пожаловать в <br><span>vexo p2p</span></h2>
                 <p>Самый быстрый и безопасный обмен криптовалюты на рубли.</p>
                 <button class="btn btn-primary" data-screen="market" style="width: fit-content;">Перейти в Маркет</button>
               </div>
-              <div class="banner glass-panel" style="background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(0,0,0,0.5));">
+              <div class="banner banner-tg">
                 <h2>Акции и розыгрыши</h2>
                 <p>Подписывайтесь на наш Telegram-канал, чтобы первыми узнавать о бонусах и 0% комиссии!</p>
                 <a href="https://t.me/vexoio_bot" target="_blank" class="btn btn-primary" style="width: fit-content; text-decoration: none;">В Telegram</a>
@@ -207,7 +208,6 @@
   </div>
 </div>
 
-<!-- Модалки (без изменений в структуре, только стили) -->
 <div class="toast-container" id="toastContainer"></div>
 <div class="modal-overlay" id="dialogOverlay"><div class="modal glass-modal" id="dialogContent"></div></div>
 
@@ -322,7 +322,7 @@
          <span style="font-size: 10px; background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3); padding: 4px 8px; border-radius: 6px; color: var(--grn);">🛡 Защита</span>
       </div>
     </div>
-    <div class="glass-card" style="padding: 16px;">
+    <div class="glass-card" style="padding: 16px; background: var(--surf2);">
       <div style="display: flex; gap: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;">
         <button style="background: none; border: none; color: var(--txt); font-weight: 700; font-size: 14px; border-bottom: 2px solid var(--txt); padding-bottom: 8px;">За фиат</button>
         <button style="background: none; border: none; color: var(--dim); font-weight: 600; font-size: 14px;">За криптовалюту</button>
@@ -331,7 +331,7 @@
       <div style="display: flex; align-items: center; margin-bottom: 8px;">
         <input class="glass-input" type="number" id="orderAmount" value="" style="font-size: 24px; font-weight: 800; width: 100%; color: var(--txt); background: transparent; border: none; outline: none;" placeholder="0">
         <span style="font-size: 14px; font-weight: 700; color: var(--dim);">RUB</span>
-        <button style="background: rgba(255,255,255,0.1); border: none; color: #f59e0b; font-weight: 700; font-size: 12px; padding: 6px 10px; border-radius: 8px; margin-left: 8px;">Макс.</button>
+        <button style="background: var(--glass-border); border: none; color: var(--yellow); font-weight: 700; font-size: 12px; padding: 6px 10px; border-radius: 8px; margin-left: 8px;">Макс.</button>
       </div>
       <div class="hint" id="orderLimit" style="font-size: 12px; color: var(--dim); margin-bottom: 12px;">Лимит: 0 - 0 ₽</div>
       <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--glass-border); padding-top: 12px;">
@@ -342,7 +342,7 @@
     <div class="field" style="margin-bottom: 0;">
       <div class="icon-scroll" id="orderPayments"></div>
     </div>
-    <div id="orderAdOwnerProfile" style="display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.1); padding: 12px; border-radius: 12px; cursor: pointer;" onclick="openPublicProfile(window._ads[currentAd.id].userId)">
+    <div id="orderAdOwnerProfile" class="inner-card" style="display: flex; align-items: center; gap: 10px; cursor: pointer;" onclick="openPublicProfile(window._ads[currentAd.id].userId)">
       <div class="avatar" id="orderAvatar" style="width: 36px; height: 36px; font-size: 14px;">?</div>
       <div>
         <div style="font-weight: 800; font-size: 14px;" id="orderUsername">-</div>
@@ -350,7 +350,7 @@
       </div>
     </div>
     <div id="orderAvailable" style="display:none;"></div>
-    <div style="background: rgba(0,0,0,0.1); border: 1px dashed var(--glass-border); border-radius: 12px; padding: 12px; max-height: 80px; overflow-y: auto;">
+    <div class="inner-card" style="border: 1px dashed var(--glass-border); max-height: 80px; overflow-y: auto;">
       <div style="font-size: 11px; font-weight: 800; color: var(--dim); text-transform: uppercase; margin-bottom: 4px;">Условия</div>
       <div id="orderTerms" style="font-size: 12px; color: var(--txt); line-height: 1.4;"></div>
     </div>
@@ -393,6 +393,12 @@
     <div class="error-msg" id="reviewError"></div>
     <button class="btn btn-primary btn-block" id="reviewSubmitBtn">Отправить</button>
     <button class="btn btn-ghost btn-block" onclick="closeModal('reviewModal')" style="margin-top: 8px;">Отмена</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>on class="btn btn-ghost btn-block" onclick="closeModal('reviewModal')" style="margin-top: 8px;">Отмена</button>
   </div>
 </div>
 

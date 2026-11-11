@@ -1,5 +1,7 @@
 :root {
   --bg: #000000;
+  --surf: #0a0a0a;
+  --surf2: #141414;
   --txt: #ffffff; 
   --dim: #888888;
   
@@ -17,17 +19,24 @@
   --blue: #3b82f6;
 }
 
+/* ИСПРАВЛЕНО: Полноценная светлая тема */
 body[data-theme="light"] {
-  --bg: #f0f2f5; 
-  --txt: #000000; 
-  --dim: #666666;
+  --bg: #f3f4f6; /* Светло-серый фон страницы */
+  --surf: #ffffff; /* Белые карточки и модалки */
+  --surf2: #e5e7eb; /* Серый фон для инпутов и внутренних блоков */
+  --txt: #111827; /* Почти черный текст */
+  --dim: #6b7280; /* Серый текст */
   
-  --glass-bg: rgba(255, 255, 255, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.9);
-  --glass-hover: rgba(255, 255, 255, 0.9);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.08); /* Темная обводка для контраста */
+  --glass-hover: rgba(0, 0, 0, 0.05);
   
-  --btn-bg: #000000; 
+  --btn-bg: #111827; /* Темные кнопки в светлой теме */
   --btn-txt: #ffffff;
+  
+  --grn: #16a34a;
+  --red: #dc2626;
+  --yellow: #ca8a04;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent !important; }
@@ -55,8 +64,10 @@ input::placeholder, textarea::placeholder { color: var(--dim); font-size: 14px; 
 button { font-family: inherit; cursor: pointer; }
 .app { display: flex; min-height: 100vh; position: relative; z-index: 10; }
 
-.glass-panel { background: var(--glass-bg); backdrop-filter: blur(20px) saturate(150%); -webkit-backdrop-filter: blur(20px) saturate(150%); border: 1px solid var(--glass-border); box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-.glass-card { background: var(--glass-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+.glass-panel { background: var(--glass-bg); backdrop-filter: blur(20px) saturate(150%); -webkit-backdrop-filter: blur(20px) saturate(150%); border: 1px solid var(--glass-border); box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+.glass-card { background: var(--glass-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+
+.inner-card { background: var(--surf2); border-radius: 12px; padding: 12px; border: 1px solid transparent; }
 
 /* ЛОГОТИП */
 .logo { display: flex; align-items: center; gap: 8px; padding-bottom: 20px; }
@@ -75,7 +86,7 @@ button { font-family: inherit; cursor: pointer; }
 
 /* Уведомления (точка на колокольчике) */
 .notification-btn { position: relative; }
-.notif-dot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background: var(--red); border-radius: 50%; border: 2px solid var(--bg); }
+.notif-dot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background: var(--red); border-radius: 50%; border: 2px solid var(--surf); }
 
 /* Content */
 .content { flex: 1; padding: 16px; padding-bottom: 120px; max-width: 1000px; margin: 0 auto; width: 100%; position: relative; z-index: 10;}
@@ -90,28 +101,36 @@ button { font-family: inherit; cursor: pointer; }
 .bn-btn svg { width: 20px; height: 20px; }
 .bn-btn.active { color: var(--txt); background: var(--glass-hover); }
 
-/* Баннеры */
+/* =========================================
+   ИСПРАВЛЕННЫЕ БАННЕРЫ
+   ========================================= */
 .banner-carousel { position: relative; margin-bottom: 20px; width: 100%; }
 .banner-viewport { overflow: hidden; border-radius: 16px; width: 100%; }
 .banner-track { display: flex; width: 100%; transition: transform 0.4s ease-in-out; }
-.banner { min-width: 100%; flex-shrink: 0; padding: 24px; display: flex; flex-direction: column; justify-content: center; min-height: 160px; }
-.banner h2 { font-size: 20px; margin-bottom: 8px; font-weight: 900; line-height: 1.2; }
+.banner { min-width: 100%; flex-shrink: 0; padding: 24px; display: flex; flex-direction: column; justify-content: center; min-height: 160px; border-radius: 16px; border: 1px solid var(--glass-border); }
+.banner h2 { font-size: 20px; margin-bottom: 8px; font-weight: 900; line-height: 1.2; color: var(--txt); }
 .banner p { color: var(--dim); font-size: 13px; margin-bottom: 16px; font-weight: 500; }
+
+/* Красивые градиенты для баннеров, которые работают в обеих темах */
+.banner-platform { background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%); }
+body[data-theme="light"] .banner-platform { background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); }
+
+.banner-tg { background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(16, 185, 129, 0.15) 100%); }
+body[data-theme="light"] .banner-tg { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%); }
+
 .banner-dots { display: flex; justify-content: center; gap: 6px; padding-top: 10px; }
 .banner-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dim); border: none; transition: 0.2s; }
 .banner-dot.active { width: 16px; border-radius: 3px; background: var(--txt); }
 
 /* =========================================
-   ВЫРАВНИВАНИЕ КНОПОК И ИНПУТОВ
+   КНОПКИ И ИНПУТЫ
    ========================================= */
-
-/* Общий стиль кнопок */
 .btn { 
   display: inline-flex; 
   align-items: center; 
   justify-content: center; 
   gap: 6px; 
-  height: 44px; /* Фиксированная высота */
+  height: 44px; 
   padding: 0 16px; 
   border-radius: 12px; 
   font-size: 14px; 
@@ -132,19 +151,18 @@ button { font-family: inherit; cursor: pointer; }
 .btn-block { width: 100%; }
 .btn-sm { height: 32px; padding: 0 12px; font-size: 12px; border-radius: 8px; }
 
-/* Общий стиль инпутов */
 .input, .glass-input { 
   width: 100%; 
   height: 48px;
   padding: 0 16px; 
-  background: var(--glass-bg); 
-  border: 1px solid var(--glass-border); /* Кант */
-  border-radius: 14px; /* Закругление */
+  background: var(--surf2); /* Фон инпута теперь зависит от темы */
+  border: 1px solid var(--glass-border); 
+  border-radius: 14px; 
   color: var(--txt); 
   font-weight: 600; 
   transition: 0.2s;
 }
-.input:focus, .glass-input:focus { border-color: var(--txt); background: var(--glass-hover); }
+.input:focus, .glass-input:focus { border-color: var(--txt); }
 textarea.input { height: auto; padding: 12px 16px; resize: vertical; }
 
 /* Вкладки */
@@ -180,14 +198,14 @@ textarea.input { height: auto; padding: 12px 16px; resize: vertical; }
 .coin-icon.usdt { background: #26a17b; }
 .coin-icon.btc { background: #f7931a; }
 .coin-icon.ton { background: #0098ea; }
-.coin-icon.rub { background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--txt); }
+.coin-icon.rub { background: var(--surf2); border: 1px solid var(--glass-border); color: var(--txt); }
 .filter-inputs { display: flex; gap: 8px; margin-bottom: 0; }
 
 /* Карточка объявления */
 .ad-card { background: var(--glass-bg); backdrop-filter: blur(16px); border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px; margin-bottom: 12px; position: relative; transition: 0.2s; }
 .ad-card:hover { border-color: var(--dim); }
 .ad-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; cursor: pointer; }
-.avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--glass-hover); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: var(--txt); font-weight: 800; font-size: 14px; flex-shrink: 0; overflow: hidden; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--surf2); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: var(--txt); font-weight: 800; font-size: 14px; flex-shrink: 0; overflow: hidden; }
 .avatar img { width: 100%; height: 100%; object-fit: cover; }
 .avatar.lg { width: 72px; height: 72px; font-size: 28px; }
 .ad-user { flex: 1; min-width: 0; }
@@ -200,13 +218,13 @@ textarea.input { height: auto; padding: 12px 16px; resize: vertical; }
 .ad-amount { font-size: 12px; color: var(--dim); }
 .ad-action { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
 .ad-pay-methods { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
-.pay-tag { font-size: 10px; padding: 4px 8px; border-radius: 6px; background: var(--glass-hover); color: var(--dim); font-weight: 600; }
+.pay-tag { font-size: 10px; padding: 4px 8px; border-radius: 6px; background: var(--surf2); color: var(--dim); font-weight: 600; }
 
 /* БЕЙДЖИ */
 .badge-face { display: inline-flex; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; border: 1px solid var(--glass-border); color: var(--dim); }
 .badge-pro { 
   background: transparent; 
-  border: 1px solid var(--grn); /* Зеленая обводка */
+  border: 1px solid var(--grn);
   color: var(--grn); 
   font-size: 10px; 
   font-weight: 900; 
@@ -245,19 +263,36 @@ textarea.input { height: auto; padding: 12px 16px; resize: vertical; }
 
 /* Модалки */
 .modal-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,.6); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; padding: 16px; }
+body[data-theme="light"] .modal-overlay { background: rgba(0,0,0,.3); }
 .modal-overlay.active { display: flex; }
-.modal { background: var(--bg); border: 1px solid var(--glass-border); border-radius: 20px; width: 100%; max-width: 400px; padding: 20px; display: flex; flex-direction: column; gap: 16px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.4); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); }
+.modal { 
+  background: var(--surf); /* Фон модалки теперь зависит от темы */
+  border: 1px solid var(--glass-border); 
+  border-radius: 20px; 
+  width: 100%; 
+  max-width: 400px; 
+  padding: 20px; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 16px; 
+  max-height: 90vh; 
+  overflow-y: auto; 
+  position: relative; 
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4); 
+  backdrop-filter: blur(30px); 
+  -webkit-backdrop-filter: blur(30px); 
+}
 .hidden { display: none !important; }
 .error-msg { color: var(--red); font-size: 12px; min-height: 16px; font-weight: 600; }
 
-/* ЧАТ */
-.chat-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; overflow-y: auto; }
+/* ЧАТ (АДАПТИРОВАН ПОД ТЕМУ) */
+.chat-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; overflow-y: auto; background: var(--surf); }
 .msg { display: flex; gap: 8px; max-width: 85%; }
 .msg.me { margin-left: auto; flex-direction: row-reverse; }
-.msg-bubble { padding: 10px 14px; border-radius: 16px; background: var(--glass-hover); border: 1px solid var(--glass-border); font-size: 14px; font-weight: 500; }
+.msg-bubble { padding: 10px 14px; border-radius: 16px; background: var(--surf2); border: 1px solid var(--glass-border); font-size: 14px; font-weight: 500; color: var(--txt); }
 .msg.me .msg-bubble { background: var(--btn-bg); color: var(--btn-txt); border-color: var(--btn-bg); }
-.chat-input-row { display: flex; align-items: center; gap: 8px; padding: 12px; border-top: 1px solid var(--glass-border); }
-.chat-input-row input { flex: 1; height: 44px; padding: 0 16px; border: 1px solid var(--glass-border); border-radius: 22px; font-weight: 600; font-size: 14px; outline: none; background: var(--glass-bg); color: var(--txt); }
+.chat-input-row { display: flex; align-items: center; gap: 8px; padding: 12px; border-top: 1px solid var(--glass-border); background: var(--surf); }
+.chat-input-row input { flex: 1; height: 44px; padding: 0 16px; border: 1px solid var(--glass-border); border-radius: 22px; font-weight: 600; font-size: 14px; outline: none; background: var(--surf2); color: var(--txt); }
 .chat-input-row button { width: 44px; height: 44px; flex-shrink: 0; border: none; display: flex; align-items: center; justify-content: center; font-size: 18px; background: var(--btn-bg); color: var(--btn-txt); border-radius: 50%; }
 
 /* Пустые состояния */
@@ -265,7 +300,7 @@ textarea.input { height: auto; padding: 12px 16px; resize: vertical; }
 
 /* ТОСТЫ */
 .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 400px; padding: 0 16px; pointer-events: none; }
-.toast { position: relative; background: var(--bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 12px 16px 12px 24px; color: var(--txt); font-size: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-weight: 600; text-align: left; animation: slideDown 0.3s ease; overflow: hidden; }
+.toast { position: relative; background: var(--surf); border: 1px solid var(--glass-border); border-radius: 12px; padding: 12px 16px 12px 24px; color: var(--txt); font-size: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); font-weight: 600; text-align: left; animation: slideDown 0.3s ease; overflow: hidden; }
 .toast::before { content: ''; position: absolute; left: 8px; top: 50%; transform: translateY(-50%); width: 4px; height: 60%; border-radius: 2px; background: var(--dim); }
 .toast.success::before { background: var(--grn); }
 .toast.error::before { background: var(--red); }
@@ -284,69 +319,7 @@ textarea.input { height: auto; padding: 12px 16px; resize: vertical; }
 .wallet-hero .amount span { font-size: 18px; color: var(--dim); }
 .wallet-actions { display: flex; gap: 12px; }
 .wallet-item { display: flex; align-items: center; gap: 16px; background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 16px; border-radius: 16px; margin-bottom: 8px; }
-.wallet-item .coin-icon { width: 36px; height: 36px; font-size: 16px; }�о) */
-.glass-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  background: radial-gradient(circle at top left, #1a1a2e, #16213e, #0f3460);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  font-family: 'Inter', -apple-system, sans-serif;
-}
-
-.glass-modal-overlay.active {
-  display: flex;
-}
-
-/* Само окно (Стекло) */
-.glass-modal {
-  width: 100%;
-  max-width: 420px;
-  max-height: 95vh;
-  overflow-y: auto;
-  background: rgba(255, 255, 255, 0.05); /* Прозрачный белый */
-  backdrop-filter: blur(24px) saturate(150%); /* Эффект размытия */
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.15); /* Тонкая светлая рамка */
-  border-radius: 24px;
-  padding: 20px;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
-  color: #fff;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  scrollbar-width: none;
-}
-.glass-modal::-webkit-scrollbar { display: none; }
-
-/* Шапка */
-.glass-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.glass-title {
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-}
-.glass-icon-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #fff;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: 0.2s;
-}
-.glass-icon-btn:hover { background: rgba(255, 255, 255, 0.2); }
+.wallet-item .coin-icon { width: 36px; height: 36px; font-size: 16px; }.2); }
 
 /* Цена */
 .glass-price-row {
