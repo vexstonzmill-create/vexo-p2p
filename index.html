@@ -9,6 +9,13 @@
 </head>
 <body>
 
+<!-- Анимированный фон (жидкие сферы) -->
+<div class="bg-blobs">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+</div>
+
 <div class="app">
   <aside class="sidebar glass-panel">
     <div class="logo"><div class="logo-mark">V</div><span class="logo-text">vexo p2p</span></div>
@@ -317,11 +324,11 @@
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <div style="font-size: 12px; color: var(--dim);">Цена <span id="orderRate" style="color: var(--grn); font-size: 16px; font-weight: 800; margin-left: 4px;">0 ₽</span></div>
       <div style="display: flex; gap: 6px;">
-         <span id="priceTimer" style="font-size: 11px; background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 6px; color: var(--txt); font-weight: 700;">60s</span>
+         <span id="priceTimer" style="font-size: 11px; background: var(--glass-bg); padding: 4px 8px; border-radius: 6px; color: var(--txt); font-weight: 700;">60s</span>
          <span style="font-size: 10px; background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3); padding: 4px 8px; border-radius: 6px; color: var(--grn);">🛡 Защита</span>
       </div>
     </div>
-    <div class="glass-card" style="padding: 16px; background: var(--surf2);">
+    <div class="glass-card" style="padding: 16px;">
       <div style="display: flex; gap: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;">
         <button style="background: none; border: none; color: var(--txt); font-weight: 700; font-size: 14px; border-bottom: 2px solid var(--txt); padding-bottom: 8px;">За фиат</button>
         <button style="background: none; border: none; color: var(--dim); font-weight: 600; font-size: 14px;">За криптовалюту</button>
