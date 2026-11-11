@@ -4,14 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>VEXO P2P</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+<!-- Фоновые пятна для эффекта стекла -->
+<div class="bg-orb orb-1"></div>
+<div class="bg-orb orb-2"></div>
+<div class="bg-orb orb-3"></div>
+
 <div class="app">
-  <aside class="sidebar">
-    <div class="logo"><div class="logo-mark">V</div><span>VEXO</span></div>
+  <aside class="sidebar glass-panel">
+    <div class="logo">
+      <div class="logo-mark">V</div>
+      <span class="logo-text">vexo p2p</span>
+    </div>
     <button class="nav-btn active" data-screen="home">Главная</button>
     <button class="nav-btn" data-screen="market">Маркет</button>
     <button class="nav-btn" data-screen="create">Создать объявление</button>
@@ -21,67 +29,66 @@
   </aside>
 
   <div class="main">
-    <header class="topbar">
+    <header class="topbar glass-panel">
       <div style="display: flex; align-items: center; gap: 8px;">
         <button class="btn btn-sm btn-ghost hidden" id="backBtn" style="padding: 6px; border-radius: 50%; width: 32px; height: 32px;">←</button>
-        <div style="display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 18px;">
+        <div class="logo">
           <div class="logo-mark" style="width: 24px; height: 24px; font-size: 12px;">V</div>
-          <span>VEXO</span>
+          <span class="logo-text" style="font-size: 18px;">vexo p2p</span>
         </div>
       </div>
       <div class="topbar-title" id="topbarTitle" style="display: none;">Главная</div>
+      
       <div style="display: flex; align-items: center; gap: 8px;">
+        <!-- Уведомления -->
+        <button class="btn btn-sm btn-ghost notification-btn" id="notifBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          <span class="notif-dot hidden" id="notifDot"></span>
+        </button>
         <button class="btn btn-sm btn-ghost" id="themeBtn" style="padding: 6px; border-radius: 50%; width: 32px; height: 32px;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
         </button>
-        <button class="btn btn-sm btn-primary" id="loginBtn">Войти</button>
+        <button class="btn btn-sm btn-primary" id="loginBtn" style="border-radius: 12px; padding: 8px 16px;">Войти</button>
         <button class="avatar-btn hidden" id="avatarBtn"></button>
       </div>
     </header>
 
     <main class="content">
+      <!-- ГЛАВНАЯ -->
       <section class="screen active" id="screen-home">
-        <div class="banner-carousel">
-          <div class="banner-viewport" id="bannerViewport">
-            <div class="banner-track" id="bannerTrack">
-              <div class="banner">
-                <div class="banner-text-content">
-                  <h2>Покупайте и продавайте <span>цифровые активы</span> безопасно</h2>
-                  <p>USDT · BTC · TON за рубли. Проверенные продавцы, эскроу-сделки.</p>
-                  <button class="btn btn-primary" data-screen="market">Перейти в Маркет</button>
-                </div>
-                <div class="coin-decoration">
-                  <div class="coin-icon float-1">₮</div>
-                  <div class="coin-icon float-2">₿</div>
-                  <div class="coin-icon float-3">T</div>
-                </div>
-              </div>
-              <div class="banner" style="justify-content: flex-start;">
-                <div class="banner-text-content">
-                  <h2>Официальный канал</h2>
-                  <p>Новости, курсы и розыгрыши. Подпишитесь на наш Telegram.</p>
-                  <a href="https://t.me/vexoio_bot" target="_blank" class="btn btn-primary">Подписаться</a>
-                </div>
-              </div>
+        
+        <div class="home-header">
+          <h1 class="home-title">Добро пожаловать в <br><span class="gradient-text">vexo p2p</span></h1>
+          <p class="home-subtitle">Самый быстрый и безопасный обмен криптовалюты.</p>
+        </div>
+
+        <div class="glass-card" style="margin-bottom: 20px;">
+          <h2 style="font-size: 16px; margin-bottom: 12px; font-weight: 800;">📰 Новости</h2>
+          <div class="news-list">
+            <div class="news-item">
+              <div class="news-date">Сегодня</div>
+              <div class="news-title">Запуск платформы VEXO P2P!</div>
+              <div class="news-desc">Первые 100 пользователей получат 0% комиссии на первые 5 сделок.</div>
+            </div>
+            <div class="news-item">
+              <div class="news-date">Вчера</div>
+              <div class="news-title">Курс USDT обновился</div>
+              <div class="news-desc">Следите за лучшими предложениями в разделе Маркет.</div>
             </div>
           </div>
-          <div class="banner-dots">
-            <button class="banner-dot active" data-slide="0"></button>
-            <button class="banner-dot" data-slide="1"></button>
-          </div>
         </div>
 
-        <div class="stats">
-          <div class="stat"><div class="stat-lbl">Пользователи</div><div class="stat-val" id="statUsers">0</div></div>
-          <div class="stat"><div class="stat-lbl">Сделки</div><div class="stat-val" id="statDeals">0</div></div>
-          <div class="stat"><div class="stat-lbl">Оборот</div><div class="stat-val" id="statTurnover">0 ₽</div></div>
-          <div class="stat"><div class="stat-lbl">Рейтинг</div><div class="stat-val" id="statRating">—</div></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h2 style="font-size: 16px; font-weight: 800;">🔥 Лучшие предложения</h2>
+          <button class="btn btn-ghost btn-sm" data-screen="market" style="font-size: 12px;">Все →</button>
         </div>
+        <div id="homeTopAds">Загрузка...</div>
       </section>
 
+      <!-- МАРКЕТ -->
       <section class="screen" id="screen-market">
-        <h2 style="margin-bottom: 12px; font-size: 18px;">P2P Маркет</h2>
-        <div class="trade-tabs" id="marketSideTabs">
+        <h2 style="margin-bottom: 12px; font-size: 18px; font-weight: 800;">P2P Маркет</h2>
+        <div class="trade-tabs glass-panel">
           <button class="trade-tab active" data-side="buy">Купить</button>
           <button class="trade-tab" data-side="sell">Продать</button>
         </div>
@@ -95,8 +102,8 @@
 
         <div class="filter-label">Сумма (₽)</div>
         <div class="filter-inputs">
-          <input type="number" class="input" id="filterMinAmount" placeholder="От">
-          <input type="number" class="input" id="filterMaxAmount" placeholder="До">
+          <input type="number" class="input glass-input" id="filterMinAmount" placeholder="От">
+          <input type="number" class="input glass-input" id="filterMaxAmount" placeholder="До">
         </div>
 
         <div class="filter-label">Актив</div>
@@ -118,57 +125,61 @@
         <div id="adsList" style="margin-top: 12px;">Загрузка...</div>
       </section>
 
+      <!-- СОЗДАНИЕ -->
       <section class="screen" id="screen-create">
-        <h2 style="margin-bottom: 16px; font-size: 18px;">Создать объявление</h2>
+        <h2 style="margin-bottom: 16px; font-size: 18px; font-weight: 800;">Создать объявление</h2>
         
-        <div class="field">
-          <label>Тип сделки</label>
-          <div class="segmented" id="f-side">
-            <button type="button" class="seg-btn buy active" data-val="sell">Я продаю</button>
-            <button type="button" class="seg-btn sell" data-val="buy">Я покупаю</button>
+        <div class="glass-card">
+          <div class="field">
+            <label>Тип сделки</label>
+            <div class="segmented glass-panel" id="f-side">
+              <button type="button" class="seg-btn buy active" data-val="sell">Я продаю</button>
+              <button type="button" class="seg-btn sell" data-val="buy">Я покупаю</button>
+            </div>
           </div>
-        </div>
 
-        <div class="field">
-          <label>Тип лица</label>
-          <div class="segmented" id="f-face">
-            <button type="button" class="seg-btn active" data-val="first">1-е лицо</button>
-            <button type="button" class="seg-btn" data-val="third">3-е лицо</button>
+          <div class="field">
+            <label>Тип лица</label>
+            <div class="segmented glass-panel" id="f-face">
+              <button type="button" class="seg-btn active" data-val="first">1-е лицо</button>
+              <button type="button" class="seg-btn" data-val="third">3-е лицо</button>
+            </div>
           </div>
-        </div>
 
-        <div class="field">
-          <label>Актив</label>
-          <div class="icon-scroll" id="f-asset-select">
-            <div class="icon-chip active" data-val="USDT"><div class="coin-icon usdt">₮</div> USDT</div>
-            <div class="icon-chip" data-val="BTC"><div class="coin-icon btc">₿</div> BTC</div>
-            <div class="icon-chip" data-val="TON"><div class="coin-icon ton">T</div> TON</div>
+          <div class="field">
+            <label>Актив</label>
+            <div class="icon-scroll" id="f-asset-select">
+              <div class="icon-chip active" data-val="USDT"><div class="coin-icon usdt">₮</div> USDT</div>
+              <div class="icon-chip" data-val="BTC"><div class="coin-icon btc">₿</div> BTC</div>
+              <div class="icon-chip" data-val="TON"><div class="coin-icon ton">T</div> TON</div>
+            </div>
           </div>
-        </div>
 
-        <div class="field">
-          <label>Способы оплаты</label>
-          <div class="icon-scroll" id="f-payments">
-            <div class="pay-chip" data-val="СБП">🏦 СБП</div>
-            <div class="pay-chip" data-val="Тинькофф">🟡 Тинькофф</div>
-            <div class="pay-chip" data-val="Сбербанк">🟢 Сбер</div>
-            <div class="pay-chip" data-val="Альфа-Банк">🔴 Альфа</div>
+          <div class="field">
+            <label>Способы оплаты</label>
+            <div class="icon-scroll" id="f-payments">
+              <div class="pay-chip" data-val="СБП">🏦 СБП</div>
+              <div class="pay-chip" data-val="Тинькофф">🟡 Тинькофф</div>
+              <div class="pay-chip" data-val="Сбербанк">🟢 Сбер</div>
+              <div class="pay-chip" data-val="Альфа-Банк">🔴 Альфа</div>
+            </div>
           </div>
+
+          <div class="field"><label>Цена за 1 <span id="f-asset-label">USDT</span> (₽)</label><input class="input glass-input" type="number" id="f-price" placeholder="Пример: 90"></div>
+          <div class="field"><label>Общий объем</label><input class="input glass-input" type="number" id="f-amount" placeholder="Пример: 500"></div>
+          <div class="field"><label>Мин. лимит (₽)</label><input class="input glass-input" type="number" id="f-min" placeholder="Пример: 3000"></div>
+          <div class="field"><label>Макс. лимит (₽)</label><input class="input glass-input" type="number" id="f-max" placeholder="Пример: 45000"></div>
+          <div class="field"><label>Условия</label><textarea class="input glass-input" id="f-terms" placeholder="ПРИНИМАЮ ТОЛЬКО СБП..." style="min-height: 60px;"></textarea></div>
+
+          <div class="error-msg" id="createError"></div>
+          <button class="btn btn-primary btn-block" id="createBtn" style="border-radius: 16px; margin-top: 10px;">Опубликовать</button>
         </div>
-
-        <div class="field"><label>Цена за 1 <span id="f-asset-label">USDT</span> (₽)</label><input class="input" type="number" id="f-price" placeholder="Пример: 90"></div>
-        <div class="field"><label>Общий объем</label><input class="input" type="number" id="f-amount" placeholder="Пример: 500"></div>
-        <div class="field"><label>Мин. лимит (₽)</label><input class="input" type="number" id="f-min" placeholder="Пример: 3000"></div>
-        <div class="field"><label>Макс. лимит (₽)</label><input class="input" type="number" id="f-max" placeholder="Пример: 45000"></div>
-        <div class="field"><label>Условия</label><textarea class="input" id="f-terms" placeholder="ПРИНИМАЮ ТОЛЬКО СБП..." style="min-height: 60px;"></textarea></div>
-
-        <div class="error-msg" id="createError"></div>
-        <button class="btn btn-primary btn-block" id="createBtn">Опубликовать</button>
       </section>
 
+      <!-- ОРДЕРА -->
       <section class="screen" id="screen-orders">
-        <h2 style="margin-bottom: 16px; font-size: 18px;">Мои ордера</h2>
-        <div class="tabs" id="ordersFilter">
+        <h2 style="margin-bottom: 16px; font-size: 18px; font-weight: 800;">Мои ордера</h2>
+        <div class="tabs glass-panel" id="ordersFilter">
           <button class="tab active" data-val="active">Активные</button>
           <button class="tab" data-val="completed">Завершённые</button>
           <button class="tab" data-val="cancelled">Отменённые</button>
@@ -177,15 +188,18 @@
       </section>
 
       <section class="screen" id="screen-order"><div id="orderDetailContent"></div></section>
+
+      <!-- КОШЕЛЕК -->
       <section class="screen" id="screen-wallet"></section>
 
+      <!-- ПРОФИЛЬ -->
       <section class="screen" id="screen-profile">
-        <h2 style="margin-bottom: 16px; font-size: 18px;">Профиль</h2>
+        <h2 style="margin-bottom: 16px; font-size: 18px; font-weight: 800;">Профиль</h2>
         <div id="profileContent">Загрузка...</div>
       </section>
     </main>
 
-    <nav class="bottom-nav">
+    <nav class="bottom-nav glass-panel">
       <button class="bn-btn active" data-screen="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Главная</button>
       <button class="bn-btn" data-screen="market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Маркет</button>
       <button class="bn-btn" data-screen="create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Создать</button>
@@ -197,182 +211,185 @@
 </div>
 
 <div class="toast-container" id="toastContainer"></div>
-<div class="modal-overlay" id="dialogOverlay"><div class="modal" id="dialogContent"></div></div>
+<div class="modal-overlay" id="dialogOverlay"><div class="modal glass-modal" id="dialogContent"></div></div>
 
-<!-- МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ -->
+<!-- УВЕДОМЛЕНИЯ -->
+<div class="modal-overlay" id="notificationsModal">
+  <div class="modal glass-modal" style="max-width: 350px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h3 style="font-size: 16px; font-weight: 800;">Уведомления</h3>
+      <button class="btn btn-ghost btn-sm" onclick="clearNotifications()" style="font-size: 12px; color: var(--dim);">Очистить</button>
+    </div>
+    <div id="notificationsList" style="display: flex; flex-direction: column; gap: 10px;">
+      <div class="empty-state">Нет новых уведомлений</div>
+    </div>
+    <button class="btn btn-ghost btn-block" style="margin-top: 16px; border-radius: 12px;" onclick="closeModal('notificationsModal')">Закрыть</button>
+  </div>
+</div>
+
+<!-- АВТОРИЗАЦИЯ -->
 <div class="modal-overlay" id="authModal">
-  <div class="modal">
-    <div style="display: flex; border-bottom: 1px solid var(--brd); margin-bottom: 16px;">
-      <button class="tab active" id="tabLogin" style="flex: 1; padding: 10px;">Вход</button>
-      <button class="tab" id="tabRegister" style="flex: 1; padding: 10px;">Регистрация</button>
+  <div class="modal glass-modal">
+    <div style="display: flex; border-bottom: 1px solid var(--glass-border); margin-bottom: 16px;">
+      <button class="tab active" id="tabLogin" style="flex: 1; padding: 10px; font-weight: 700;">Вход</button>
+      <button class="tab" id="tabRegister" style="flex: 1; padding: 10px; font-weight: 700;">Регистрация</button>
     </div>
     <form id="authForm">
       <div class="field">
         <label id="loginLabel">Логин или Email</label>
-        <input class="input" type="text" id="authLogin" required>
+        <input class="input glass-input" type="text" id="authLogin" required>
       </div>
       <div class="field hidden" id="emailField">
         <label>Email</label>
-        <input class="input" type="email" id="authEmail">
+        <input class="input glass-input" type="email" id="authEmail">
       </div>
       <div class="field">
         <label>Пароль</label>
-        <input class="input" type="password" id="authPass" required>
+        <input class="input glass-input" type="password" id="authPass" required>
       </div>
       <div class="error-msg" id="authError"></div>
-      <button type="submit" class="btn btn-primary btn-block" id="authSubmit">Войти</button>
-      <button type="button" class="btn btn-ghost btn-block btn-sm" onclick="closeModal('authModal')" style="margin-top: 8px;">Отмена</button>
+      <button type="submit" class="btn btn-primary btn-block" id="authSubmit" style="border-radius: 16px;">Войти</button>
+      <button type="button" class="btn btn-ghost btn-block btn-sm" onclick="closeModal('authModal')" style="margin-top: 8px; border-radius: 12px;">Отмена</button>
     </form>
   </div>
 </div>
 
-<!-- НАСТРОЙКИ ПРОФИЛЯ -->
+<!-- НАСТРОЙКИ -->
 <div class="modal-overlay" id="settingsModal">
-  <div class="modal">
-    <h3 style="font-size: 16px;">Настройки профиля</h3>
-    <div class="field"><label>Ссылка на аватар (URL)</label><input class="input" type="url" id="settingsAvatarUrl" placeholder="https://..."></div>
-    <div class="field"><label>Имя</label><input class="input" type="text" id="settingsName" maxlength="50"></div>
-    <div class="field"><label>Email</label><input class="input" type="email" id="settingsEmail"></div>
+  <div class="modal glass-modal">
+    <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Настройки профиля</h3>
+    
+    <div class="field"><label>Ссылка на аватар (URL)</label><input class="input glass-input" type="url" id="settingsAvatarUrl" placeholder="https://..."></div>
+    <div class="field"><label>Имя</label><input class="input glass-input" type="text" id="settingsName" maxlength="50"></div>
+    <div class="field"><label>Email</label><input class="input glass-input" type="email" id="settingsEmail"></div>
+    
+    <div style="border-top: 1px solid var(--glass-border); margin: 20px 0; padding-top: 20px;">
+      <h4 style="font-size: 14px; font-weight: 800; margin-bottom: 12px; color: var(--dim);">Смена пароля</h4>
+      <div class="field"><label>Текущий пароль</label><input class="input glass-input" type="password" id="settingsCurrentPass" placeholder="Обязательно для смены"></div>
+      <div class="field"><label>Новый пароль</label><input class="input glass-input" type="password" id="settingsNewPass" placeholder="Мин. 8 символов"></div>
+    </div>
+
     <div class="error-msg" id="settingsError"></div>
-    <button class="btn btn-primary btn-block" id="settingsSaveBtn">Сохранить</button>
-    <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('settingsModal')">Отмена</button>
+    <button class="btn btn-primary btn-block" id="settingsSaveBtn" style="border-radius: 16px;">Сохранить</button>
+    <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('settingsModal')" style="margin-top: 8px; border-radius: 12px;">Отмена</button>
   </div>
 </div>
 
 <!-- ПУБЛИЧНЫЙ ПРОФИЛЬ -->
 <div class="modal-overlay" id="publicProfileModal">
-  <div class="modal" style="padding: 20px;">
-    <button style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: var(--dim); font-size: 20px;" onclick="closeModal('publicProfileModal')">×</button>
+  <div class="modal glass-modal">
+    <button style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: var(--dim); font-size: 24px; cursor: pointer;" onclick="closeModal('publicProfileModal')">×</button>
     <div id="publicProfileContent">Загрузка...</div>
   </div>
 </div>
 
-<!-- МОДАЛКА КОШЕЛЬКА -->
+<!-- КОШЕЛЕК -->
 <div class="modal-overlay" id="walletActionModal">
-  <div class="modal">
-    <h3 id="walletActionTitle" style="font-size: 16px;">Пополнение</h3>
-    <div class="field"><label>Сумма</label><input type="number" class="input" id="walletActionAmount" placeholder="Введите сумму"></div>
-    <div class="field" id="walletRequisitesField" style="display:none;"><label>Реквизиты</label><input type="text" class="input" id="walletActionRequisites" placeholder="Номер карты или адрес"></div>
-    <button class="btn btn-primary btn-block" id="walletActionSubmit">Перейти в Telegram</button>
-    <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('walletActionModal')">Отмена</button>
+  <div class="modal glass-modal">
+    <h3 id="walletActionTitle" style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Пополнение</h3>
+    <div class="field"><label>Сумма</label><input type="number" class="input glass-input" id="walletActionAmount" placeholder="Введите сумму"></div>
+    <div class="field" id="walletRequisitesField" style="display:none;"><label>Реквизиты</label><input type="text" class="input glass-input" id="walletActionRequisites" placeholder="Номер карты или адрес"></div>
+    <button class="btn btn-primary btn-block" id="walletActionSubmit" style="border-radius: 16px;">Перейти в Telegram</button>
+    <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('walletActionModal')" style="margin-top: 8px; border-radius: 12px;">Отмена</button>
   </div>
 </div>
 
-<!-- МОДАЛКА СОЗДАНИЯ ОРДЕРА -->
-<!-- МОДАЛЬНОЕ ОКНО ПОКУПКИ (LIQUID GLASS) -->
-<div class="glass-modal-overlay" id="orderModal">
-  <div class="glass-modal">
+<!-- ОКНО ПОКУПКИ (LIQUID GLASS) -->
+<div class="modal-overlay" id="orderModal">
+  <div class="modal glass-modal" style="padding: 20px; gap: 16px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <button class="btn btn-ghost" style="padding: 0; width: 32px; height: 32px; border-radius: 50%;" onclick="closeModal('orderModal')">←</button>
+      <h3 id="orderTitle" style="font-size: 16px; font-weight: 800; text-align: center; flex: 1;">Покупка USDT</h3>
+      <div style="width: 32px;"></div>
+    </div>
     
-    <!-- Шапка -->
-    <div class="glass-header">
-      <button class="glass-icon-btn" onclick="closeModal('orderModal')">
-        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      </button>
-      <h2 class="glass-title">Покупка USDT</h2>
-      <div style="width: 32px;"></div> <!-- Пустой блок для центрирования -->
-    </div>
-
-    <!-- Цена и таймер -->
-    <div class="glass-price-row">
-      <div class="glass-price">Цена <span>86,90 RUB</span></div>
-      <div class="glass-badges">
-        <span class="glass-badge-time">6s</span>
-        <span class="glass-badge-secure">
-          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Защита
-        </span>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div style="font-size: 12px; color: var(--dim);">Цена <span id="orderRate" style="color: var(--grn); font-size: 16px; font-weight: 800; margin-left: 4px;">0 ₽</span></div>
+      <div style="display: flex; gap: 6px;">
+         <span style="font-size: 10px; background: var(--glass-bg); padding: 4px 8px; border-radius: 6px; color: var(--dim);">6s</span>
+         <span style="font-size: 10px; background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3); padding: 4px 8px; border-radius: 6px; color: var(--grn);">🛡 Защита</span>
       </div>
     </div>
 
-    <!-- Карточка ввода -->
-    <div class="glass-card">
-      <div class="glass-tabs">
-        <button class="glass-tab active">За фиат</button>
-        <button class="glass-tab">За криптовалюту</button>
-        <span class="glass-timer">⏱ 45мин.</span>
+    <div class="glass-card" style="padding: 16px;">
+      <div style="display: flex; gap: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;">
+        <button style="background: none; border: none; color: var(--txt); font-weight: 700; font-size: 14px; border-bottom: 2px solid var(--txt); padding-bottom: 8px;">За фиат</button>
+        <button style="background: none; border: none; color: var(--dim); font-weight: 600; font-size: 14px;">За криптовалюту</button>
+        <span style="margin-left: auto; font-size: 11px; color: var(--dim);">⏱ 45мин.</span>
       </div>
       
-      <div class="glass-input-group">
-        <input type="number" class="glass-input" value="9250" id="orderAmount">
-        <span class="glass-currency">RUB</span>
-        <button class="glass-max-btn">Макс.</button>
+      <div style="display: flex; align-items: center; margin-bottom: 8px;">
+        <input class="glass-input" type="number" id="orderAmount" value="" style="font-size: 32px; font-weight: 800; width: 100%;" placeholder="0">
+        <span style="font-size: 14px; font-weight: 700; color: var(--dim);">RUB</span>
+        <button style="background: rgba(255,255,255,0.1); border: none; color: #f59e0b; font-weight: 700; font-size: 12px; padding: 6px 10px; border-radius: 8px; margin-left: 8px;">Макс.</button>
       </div>
-
-      <div class="glass-limits">Лимиты: 5000 - 23 476,33 RUB</div>
+      <div class="hint" id="orderLimit" style="font-size: 12px; color: var(--dim); margin-bottom: 12px;">Лимит: 0 - 0 ₽</div>
       
-      <div class="glass-receive">
-        Я получу <strong>106,4441 USDT</strong>
+      <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--glass-border); padding-top: 12px;">
+        <span style="font-size: 13px; color: var(--dim);" id="orderResultLabel">Вы получите</span>
+        <strong id="orderResult" style="font-size: 15px;">0 USDT</strong>
       </div>
     </div>
 
-    <!-- Выбор оплаты -->
-    <button class="glass-payment-btn">
-      <span>+</span> Select payment method
-    </button>
+    <div class="field" style="margin-bottom: 0;">
+      <div class="icon-scroll" id="orderPayments"></div>
+    </div>
 
-    <!-- Информация о мерчанте -->
-    <div class="glass-maker-info">
-      <div class="glass-maker-header">
-        <div class="glass-maker-name">Onlytarget <span>></span></div>
-        <div class="glass-maker-rating">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
-          100%
-        </div>
-      </div>
-      <div class="glass-maker-stats">
-        Ордера 443 | Процент выполнения 93%
+    <div style="display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px;">
+      <div class="avatar" id="orderAvatar" style="width: 36px; height: 36px; font-size: 14px;">?</div>
+      <div>
+        <div style="font-weight: 800; font-size: 14px;" id="orderUsername">-</div>
+        <div style="font-size: 11px; color: var(--dim);" id="orderUserMeta">-</div>
       </div>
     </div>
 
-    <!-- Условия -->
-    <div class="glass-terms">
-      <div class="glass-terms-title">Условия мейкера ⓘ</div>
-      <p>Мерчанты могут указывать дополнительные условия. Внимательно изучите их перед размещением ордера.</p>
-      <p class="glass-terms-text">ЛЮБЫЕ ЛИЦА Т.-Б.АНК 🟡 С ВЕБ ПРИЛОЖЕНИЯМИ НЕ РАБОТАЮ ЗАХОДИТЕ НА КРАТНЫЕ 5000/6000/... (номер карты) (СПБ) Принимаю с т банка. (после оплаты чек на почту от имени )</p>
+    <div style="background: rgba(0,0,0,0.2); border: 1px dashed var(--glass-border); border-radius: 12px; padding: 12px; max-height: 80px; overflow-y: auto;">
+      <div style="font-size: 11px; font-weight: 800; color: var(--dim); text-transform: uppercase; margin-bottom: 4px;">Условия</div>
+      <div id="orderTerms" style="font-size: 12px; color: var(--txt); line-height: 1.4;"></div>
     </div>
 
-    <!-- Футер (Итог и кнопка) -->
-    <div class="glass-footer">
-      <div class="glass-total">
-        <div class="glass-total-amount">9250 RUB</div>
-        <div class="glass-total-label">Итого к выплате</div>
+    <div class="error-msg" id="orderError"></div>
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+      <div>
+        <div style="font-size: 16px; font-weight: 800;" id="orderTotalBottom">0 RUB</div>
+        <div style="font-size: 11px; color: var(--dim);">Итого</div>
       </div>
-      <button class="glass-submit-btn disabled">Покупка</button>
+      <button class="btn btn-primary" id="orderSubmit" style="border-radius: 16px; padding: 14px 32px;">Купить</button>
     </div>
-
   </div>
 </div>
 
-<!-- МОДАЛКА ЧАТА -->
+<!-- ЧАТ -->
 <div class="modal-overlay" id="chatModal">
-  <div class="modal" style="padding: 0; gap: 0;">
-    <div style="padding: 12px 16px; border-bottom: 1px solid var(--brd); display: flex; align-items: center; gap: 10px;">
+  <div class="modal glass-modal" style="padding: 0; gap: 0; height: 80vh; max-width: 400px;">
+    <div style="padding: 16px; border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; gap: 10px;">
       <div class="avatar" id="chatAvatar">?</div>
       <div style="flex: 1;">
-        <div style="font-size: 14px; font-weight: 700;" id="chatTitle">Чат</div>
-        <div style="font-size: 10px; color: var(--dim);" id="chatSub">Собеседник</div>
+        <div style="font-size: 14px; font-weight: 800;" id="chatTitle">Чат</div>
+        <div style="font-size: 11px; color: var(--dim);" id="chatSub">Собеседник</div>
       </div>
-      <button style="background: none; border: none; color: var(--dim); font-size: 20px;" onclick="closeChatModal()">×</button>
+      <button style="background: none; border: none; color: var(--dim); font-size: 24px; cursor: pointer;" onclick="closeChatModal()">×</button>
     </div>
     <div class="chat-body" id="chatBody"></div>
-    <div class="chat-input-row">
-      <input type="text" id="chatInput" placeholder="Сообщение..." maxlength="500">
-      <button style="width: 32px; height: 32px; border-radius: 50%; background: var(--btn-bg); color: var(--btn-txt); border: none; display: flex; align-items: center; justify-content: center;" id="chatSend">➤</button>
+    <div class="chat-input-row" style="background: rgba(0,0,0,0.2);">
+      <input type="text" id="chatInput" placeholder="Сообщение..." maxlength="500" style="background: var(--glass-bg);">
+      <button id="chatSend" style="background: var(--btn-bg); color: var(--btn-txt); border-radius: 50%;">➤</button>
     </div>
   </div>
 </div>
 
-<!-- МОДАЛКА ОТЗЫВА -->
+<!-- ОТЗЫВ -->
 <div class="modal-overlay" id="reviewModal">
-  <div class="modal">
-    <h3 style="font-size: 16px;">Оставить отзыв</h3>
-    <div class="rating-stars" id="ratingStars" style="display: flex; gap: 8px; font-size: 24px; cursor: pointer; justify-content: center; margin-bottom: 10px;">
+  <div class="modal glass-modal">
+    <h3 style="font-size: 18px; font-weight: 800;">Оставить отзыв</h3>
+    <div class="rating-stars" id="ratingStars" style="display: flex; gap: 8px; font-size: 28px; cursor: pointer; justify-content: center; margin: 16px 0;">
       <span class="rating-star" data-r="1">★</span><span class="rating-star" data-r="2">★</span><span class="rating-star" data-r="3">★</span><span class="rating-star" data-r="4">★</span><span class="rating-star" data-r="5">★</span>
     </div>
-    <textarea class="input" id="reviewComment" placeholder="Комментарий (необязательно)" style="min-height: 60px;"></textarea>
+    <textarea class="input glass-input" id="reviewComment" placeholder="Комментарий (необязательно)" style="min-height: 80px;"></textarea>
     <div class="error-msg" id="reviewError"></div>
-    <button class="btn btn-primary btn-block" id="reviewSubmitBtn">Отправить</button>
-    <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('reviewModal')">Отмена</button>
+    <button class="btn btn-primary btn-block" id="reviewSubmitBtn" style="border-radius: 16px;">Отправить</button>
+    <button class="btn btn-ghost btn-block btn-sm" onclick="closeModal('reviewModal')" style="border-radius: 12px;">Отмена</button>
   </div>
 </div>
 
