@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     function renderNotifications() {
-       updateNotifUI(); // просто перерисовываем список
+       updateNotifUI();
     }
 
     // --- НАВИГАЦИЯ ---
@@ -247,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const list = document.getElementById('homeTopAds');
       if (!list) return;
       try {
-        const { items } = await API.req('GET', '/ads?side=sell'); // Берем лучшие на продажу
+        const { items } = await API.req('GET', '/ads?side=sell');
         const top3 = items.slice(0, 3);
         list.innerHTML = top3.length ? top3.map(renderAd).join('') : '<div class="empty-state">Нет предложений</div>';
         bindAdButtons();
@@ -313,7 +313,6 @@ document.addEventListener('DOMContentLoaded', () => {
         avatarHtml = `<div class="avatar"><img src="${ad.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${ad.displayName[0].toUpperCase()}'"></div>`;
       }
 
-      // Bybit Style Layout
       return `<div class="ad-card">
         <div class="ad-head" onclick="openPublicProfile(${ad.userId})">
           ${avatarHtml}
@@ -650,8 +649,6 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const { user, stats } = await API.req('GET', '/users/me');
         const proBadge = stats.isPro ? `<span class="badge-pro">PRO</span>` : '';
-        
-        // Убираем null
         const successRateStr = stats.successRate !== null ? `${stats.successRate}%` : '—';
         const ratingAvgStr = stats.ratingAvg !== null ? stats.ratingAvg : '—';
         const proConditions = stats.isPro ? `<div style="font-size:11px; color:var(--grn); margin-top:8px; font-weight:600;">✓ Условия PRO выполнены</div>` : `<div style="font-size:11px; color:var(--dim); margin-top:8px;">До PRO: Оборот $${fmt(stats.volumeUsd)} / $100,000<br>Успешных: ${successRateStr} / 80%</div>`;
@@ -775,24 +772,44 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!ad) return;
       currentAd = ad; selectedPay = ad.paymentMethods?.[0] || null;
       const isBuy = ad.side === 'sell';
-      document.getElementById('orderTitle').textContent = (isBuy ? 'Покупка ' : 'Продажа ') + ad.asset;
-      document.getElementById('orderUsername').textContent = ad.displayName;
-      document.getElementById('orderUserMeta').textContent = (ad.faceType === 'first' ? '1-е лицо' : '3-е лицо') + ' · ★ ' + (ad.ratingAvg || '—');
-      document.getElementById('orderRate').textContent = fmt(ad.price) + ' ₽';
-      document.getElementById('orderAvailable').textContent = fmtDec(ad.amountLeft, 2) + ' ' + ad.asset;
-      document.getElementById('orderLimit').textContent = `Лимит: ${fmt(ad.minRub)} - ${fmt(ad.maxRub)} ₽`;
-      document.getElementById('orderAmount').value = '';
-      document.getElementById('orderResultLabel').textContent = isBuy ? 'Вы получите' : 'Вы отдадите';
-      document.getElementById('orderResult').textContent = '0 ' + ad.asset;
-      document.getElementById('orderTotalBottom').textContent = '0 RUB';
-      document.getElementById('orderError').textContent = '';
-      document.getElementById('orderTerms').textContent = ad.terms || 'Стандартные условия сделки.';
       
-      document.getElementById('orderAmount').oninput = e => {
-        const rub = parseFloat(e.target.value) || 0;
-        document.getElementById('orderResult').textContent = fmtDec(rub / ad.price, 4) + ' ' + ad.asset;
-        document.getElementById('orderTotalBottom').textContent = fmt(rub) + ' RUB';
-      };
+      // Безопасное присвоение, чтобы не было ошибок, если элемента нет
+      const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+      
+      setText('orderTitle', (isBuy ? 'Покупка ' : 'Продажа ') + ad.asset);
+      setText('orderUsername', ad.displayName);
+      setText('orderUserMeta', (ad.faceType === 'first' ? '1-е лицо' : '3-е лицо') + ' · ★ ' + (ad.ratingAvg || '—'));
+      setText('orderRate', fmt(ad.price) + ' ₽');
+      setText('orderAvailable', fmtDec(ad.amountLeft, 2) + ' ' + ad.asset);
+      setText('orderLimit', `Лимит: ${fmt(ad.minRub)} - ${fmt(ad.maxRub)} ₽`);
+      setText('orderResultLabel', isBuy ? 'Вы получите' : 'Вы отдадите');
+      setText('orderResult', '0 ' + ad.asset);
+      setText('orderTotalBottom', '0 RUB');
+      setText('orderTerms', ad.terms || 'Стандартные условия сделки.');
+      setText('orderError', '');
+
+      const amountInput = document.getElementById('orderAmount');
+      if (amountInput) {
+        amountInput.value = '';
+        
+        amountInput.oninput = e => {
+          const rub = parseFloat(e.target.value) || 0;
+          setText('orderResult', fmtDec(rub / ad.price, 4) + ' ' + ad.asset);
+          setText('orderTotalBottom', fmt(rub) + ' RUB');
+          
+          const errEl = document.getElementById('orderError');
+          const btn = document.getElementById('orderSubmit');
+          
+          // Валидация лимитов на лету
+          if (rub > 0 && (rub < ad.minRub || rub > ad.maxRub)) {
+             if (errEl) errEl.textContent = `Сумма должна быть от ${fmt(ad.minRub)} до ${fmt(ad.maxRub)} ₽`;
+             if (btn) { btn.style.opacity = '0.5'; btn.disabled = true; }
+          } else {
+             if (errEl) errEl.textContent = '';
+             if (btn) { btn.style.opacity = '1'; btn.disabled = false; }
+          }
+        };
+      }
       
       const payBox = document.getElementById('orderPayments');
       if (!payBox) return;
@@ -807,7 +824,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const btn = document.getElementById('orderSubmit');
       btn.className = 'btn ' + (isBuy ? 'btn-buy' : 'btn-sell');
       btn.textContent = isBuy ? 'Купить' : 'Продать';
+      btn.disabled = false;
+      btn.style.opacity = '1';
       btn.onclick = submitOrder;
+      
       document.getElementById('orderModal').classList.add('active');
     };
 
@@ -817,6 +837,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!selectedPay) { if (errEl) errEl.textContent = 'Выберите способ оплаты'; return; }
       if (rub < currentAd.minRub) { if (errEl) errEl.textContent = 'Минимум ' + fmt(currentAd.minRub) + ' ₽'; return; }
       if (rub > currentAd.maxRub) { if (errEl) errEl.textContent = 'Максимум ' + fmt(currentAd.maxRub) + ' ₽'; return; }
+      
       const btn = document.getElementById('orderSubmit'); btn.disabled = true; btn.textContent = '...';
       try {
         const order = await API.req('POST', '/orders', { ad_id: currentAd.id, amount_rub: rub, payment_method: selectedPay });

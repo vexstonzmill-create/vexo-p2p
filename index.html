@@ -9,11 +9,6 @@
 </head>
 <body>
 
-<!-- Фоновые пятна для эффекта стекла -->
-<div class="bg-orb orb-1"></div>
-<div class="bg-orb orb-2"></div>
-<div class="bg-orb orb-3"></div>
-
 <div class="app">
   <aside class="sidebar glass-panel">
     <div class="logo">
@@ -40,7 +35,6 @@
       <div class="topbar-title" id="topbarTitle" style="display: none;">Главная</div>
       
       <div style="display: flex; align-items: center; gap: 8px;">
-        <!-- Уведомления -->
         <button class="btn btn-sm btn-ghost notification-btn" id="notifBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
           <span class="notif-dot hidden" id="notifDot"></span>
@@ -54,9 +48,7 @@
     </header>
 
     <main class="content">
-      <!-- ГЛАВНАЯ -->
       <section class="screen active" id="screen-home">
-        
         <div class="home-header">
           <h1 class="home-title">Добро пожаловать в <br><span class="gradient-text">vexo p2p</span></h1>
           <p class="home-subtitle">Самый быстрый и безопасный обмен криптовалюты.</p>
@@ -85,14 +77,12 @@
         <div id="homeTopAds">Загрузка...</div>
       </section>
 
-      <!-- МАРКЕТ -->
       <section class="screen" id="screen-market">
         <h2 style="margin-bottom: 12px; font-size: 18px; font-weight: 800;">P2P Маркет</h2>
-        <div class="trade-tabs glass-panel">
-          <button class="trade-tab active" data-side="buy">Купить</button>
-          <button class="trade-tab" data-side="sell">Продать</button>
-        </div>
-
+       <div class="trade-tabs glass-panel" id="marketSideTabs">
+  <button class="trade-tab active" data-side="buy">Купить</button>
+  <button class="trade-tab" data-side="sell">Продать</button>
+</div>
         <div class="filter-label">Тип лица</div>
         <div class="chips" id="filterFace">
           <button class="chip active" data-val="">Все</button>
@@ -125,7 +115,6 @@
         <div id="adsList" style="margin-top: 12px;">Загрузка...</div>
       </section>
 
-      <!-- СОЗДАНИЕ -->
       <section class="screen" id="screen-create">
         <h2 style="margin-bottom: 16px; font-size: 18px; font-weight: 800;">Создать объявление</h2>
         
@@ -176,7 +165,6 @@
         </div>
       </section>
 
-      <!-- ОРДЕРА -->
       <section class="screen" id="screen-orders">
         <h2 style="margin-bottom: 16px; font-size: 18px; font-weight: 800;">Мои ордера</h2>
         <div class="tabs glass-panel" id="ordersFilter">
@@ -188,11 +176,8 @@
       </section>
 
       <section class="screen" id="screen-order"><div id="orderDetailContent"></div></section>
-
-      <!-- КОШЕЛЕК -->
       <section class="screen" id="screen-wallet"></section>
 
-      <!-- ПРОФИЛЬ -->
       <section class="screen" id="screen-profile">
         <h2 style="margin-bottom: 16px; font-size: 18px; font-weight: 800;">Профиль</h2>
         <div id="profileContent">Загрузка...</div>
@@ -257,7 +242,7 @@
 <!-- НАСТРОЙКИ -->
 <div class="modal-overlay" id="settingsModal">
   <div class="modal glass-modal">
-    <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Настройки профиля</h3>
+    <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Настройки</h3>
     
     <div class="field"><label>Ссылка на аватар (URL)</label><input class="input glass-input" type="url" id="settingsAvatarUrl" placeholder="https://..."></div>
     <div class="field"><label>Имя</label><input class="input glass-input" type="text" id="settingsName" maxlength="50"></div>
@@ -319,7 +304,7 @@
       </div>
       
       <div style="display: flex; align-items: center; margin-bottom: 8px;">
-        <input class="glass-input" type="number" id="orderAmount" value="" style="font-size: 32px; font-weight: 800; width: 100%;" placeholder="0">
+        <input class="glass-input" type="number" id="orderAmount" value="" style="font-size: 24px; font-weight: 800; width: 100%; color: var(--txt); background: transparent; border: none; outline: none;" placeholder="0">
         <span style="font-size: 14px; font-weight: 700; color: var(--dim);">RUB</span>
         <button style="background: rgba(255,255,255,0.1); border: none; color: #f59e0b; font-weight: 700; font-size: 12px; padding: 6px 10px; border-radius: 8px; margin-left: 8px;">Макс.</button>
       </div>
@@ -335,15 +320,18 @@
       <div class="icon-scroll" id="orderPayments"></div>
     </div>
 
-    <div style="display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px;">
+    <div style="display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.1); padding: 12px; border-radius: 12px;">
       <div class="avatar" id="orderAvatar" style="width: 36px; height: 36px; font-size: 14px;">?</div>
       <div>
         <div style="font-weight: 800; font-size: 14px;" id="orderUsername">-</div>
         <div style="font-size: 11px; color: var(--dim);" id="orderUserMeta">-</div>
       </div>
     </div>
+    
+    <!-- Скрытый элемент, который ожидает JS -->
+    <div id="orderAvailable" style="display:none;"></div>
 
-    <div style="background: rgba(0,0,0,0.2); border: 1px dashed var(--glass-border); border-radius: 12px; padding: 12px; max-height: 80px; overflow-y: auto;">
+    <div style="background: rgba(0,0,0,0.1); border: 1px dashed var(--glass-border); border-radius: 12px; padding: 12px; max-height: 80px; overflow-y: auto;">
       <div style="font-size: 11px; font-weight: 800; color: var(--dim); text-transform: uppercase; margin-bottom: 4px;">Условия</div>
       <div id="orderTerms" style="font-size: 12px; color: var(--txt); line-height: 1.4;"></div>
     </div>
@@ -372,8 +360,8 @@
       <button style="background: none; border: none; color: var(--dim); font-size: 24px; cursor: pointer;" onclick="closeChatModal()">×</button>
     </div>
     <div class="chat-body" id="chatBody"></div>
-    <div class="chat-input-row" style="background: rgba(0,0,0,0.2);">
-      <input type="text" id="chatInput" placeholder="Сообщение..." maxlength="500" style="background: var(--glass-bg);">
+    <div class="chat-input-row" style="background: rgba(0,0,0,0.1);">
+      <input type="text" id="chatInput" placeholder="Сообщение..." maxlength="500" style="background: var(--glass-bg); color: var(--txt);">
       <button id="chatSend" style="background: var(--btn-bg); color: var(--btn-txt); border-radius: 50%;">➤</button>
     </div>
   </div>
@@ -395,4 +383,10 @@
 
 <script src="app.js"></script>
 </body>
-</html>
+</html>tn btn-ghost btn-block btn-sm" onclick="closeModal('reviewModal')" style="border-radius: 12px;">Отмена</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>/html>
