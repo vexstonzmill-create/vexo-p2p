@@ -33,6 +33,11 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const c = document.getElementById('toastContainer');
         if (!c) return;
+        
+        // Защита от дублей тостов
+        const existing = Array.from(c.children).find(el => el.textContent === msg);
+        if (existing) return;
+
         if (c.children.length >= 2) c.removeChild(c.firstElementChild);
 
         const el = document.createElement('div');
@@ -84,12 +89,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- УВЕДОМЛЕНИЯ ---
     let notifications = JSON.parse(localStorage.getItem('vexo_notifs')) || [];
+    
+    // Очистка старых дублей при загрузке
+    notifications = notifications.filter((v,i,a)=>a.findIndex(t=>(t.id === v.id))===i);
+
     function addNotification(text) {
-      notifications.unshift({ id: Date.now(), text, date: new Date().toISOString() });
+      // Защита от спама одинаковыми уведомлениями
+      const now = Date.now();
+      const isDuplicate = notifications.some(n => n.text === text && (now - new Date(n.date).getTime() < 3000));
+      if (isDuplicate) return;
+
+      notifications.unshift({ id: now, text, date: new Date().toISOString() });
       if (notifications.length > 20) notifications.pop();
       localStorage.setItem('vexo_notifs', JSON.stringify(notifications));
       updateNotifUI();
     }
+    
     window.clearNotifications = () => {
       notifications = [];
       localStorage.setItem('vexo_notifs', JSON.stringify([]));
@@ -327,7 +342,6 @@ document.addEventListener('DOMContentLoaded', () => {
       let avatarHtml = `<div class="avatar">${ad.displayName[0].toUpperCase()}</div>`;
       if (ad.avatarUrl) avatarHtml = `<div class="avatar"><img src="${ad.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${ad.displayName[0].toUpperCase()}'"></div>`;
       
-      // Иконка мерчанта/мейкера
       const merchantBadge = ad.isMerchant ? `<span class="badge-merchant" title="Проверенный мерчант">✓</span>` : '';
 
       return `<div class="ad-card">
@@ -520,13 +534,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (order.status === 'completed') progress = 100;
       if (order.status === 'cancelled' || order.status === 'dispute' || order.status === 'declined') progress = 0;
 
-      // ОПРЕДЕЛЕНИЕ КОНТРАГЕНТА
       const counterparty = isBuyer ? order.seller : order.buyer;
       const counterpartyRole = isBuyer ? 'Продавец' : 'Покупатель';
 
       let actionsHtml = '';
       
-      // ЛОГИКА КНОПОК В ЗАВИСИМОСТИ ОТ СТАТУСА
       if (order.status === 'pending') {
         if (isSeller) {
           actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><button class="btn btn-primary" onclick="doAction(${order.id},'accept')" style="background:var(--grn);color:#fff;border:none;">Принять заявку</button><button class="btn btn-ghost" style="color:var(--red);border-color:var(--red);" onclick="doAction(${order.id},'decline')">Отклонить</button></div>`;
@@ -585,7 +597,6 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="width:100%;height:6px;background:var(--glass-border);border-radius:3px;margin-top:20px;overflow:hidden"><div style="height:100%;width:${progress}%;background:${sc[order.status]};transition:0.3s"></div></div>
         </div>
         
-        <!-- ПРОФИЛЬ КОНТРАГЕНТА -->
         <div class="glass-card" style="padding:16px;margin-bottom:16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;" onclick="openPublicProfile(${counterparty.id})">
           <div style="display:flex;align-items:center;gap:12px;">
              <div class="avatar" style="width:44px;height:44px;font-size:16px;">${counterparty.avatarUrl ? `<img src="${counterparty.avatarUrl}">` : counterparty.displayName[0].toUpperCase()}</div>
@@ -618,7 +629,6 @@ document.addEventListener('DOMContentLoaded', () => {
         </button>
         <div class="glass-card" style="padding:16px"><div style="font-size:12px;font-weight:800;margin-bottom:14px;color:var(--dim);text-transform:uppercase">История</div>${timelineHtml}</div>`;
 
-      // ЛОГИКА ТАЙМЕРА НА ОПЛАТУ
       if (order.status === 'accepted') {
         const timerEl = document.getElementById('paymentTimerDisplay');
         if (timerEl) {
@@ -636,7 +646,6 @@ document.addEventListener('DOMContentLoaded', () => {
                clearInterval(window.orderTimerInterval);
                timerEl.textContent = '00:00';
                timerEl.style.color = 'var(--red)';
-               // Тут можно автоматически отменять или открывать спор
              } else {
                const m = Math.floor(diff / 60000).toString().padStart(2, '0');
                const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
@@ -648,7 +657,6 @@ document.addEventListener('DOMContentLoaded', () => {
          if (window.orderTimerInterval) clearInterval(window.orderTimerInterval);
       }
 
-      // ФАЙЛ ЧЕКА
       const fileInput = document.getElementById('receiptFile');
       if (fileInput) {
         fileInput.onchange = (e) => {
@@ -947,7 +955,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.style.opacity = '1';
       btn.onclick = submitOrder;
       
-      // ТАЙМЕР НА ЦЕНУ (60 СЕКУНД С МОМЕНТА СОЗДАНИЯ ОБЪЯВЛЕНИЯ)
+      // ТАЙМЕР НА ЦЕНУ (60 СЕКУНД)
       let timeLeft = 60;
       const timerEl = document.getElementById('priceTimer');
       if (timerEl) timerEl.textContent = timeLeft + 's';
