@@ -109,10 +109,13 @@
       <section class="screen" id="screen-market">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <h2 style="font-size: 18px; font-weight: 800;">P2P Маркет</h2>
-          <button class="btn btn-ghost btn-sm" id="openFilterBtn" style="border: 1px solid var(--glass-border); padding: 6px 12px; border-radius: 10px; display: flex; gap: 6px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-            Фильтры
-          </button>
+          <div style="display: flex; gap: 6px;">
+            <button class="btn btn-ghost btn-sm" id="openFastBuyBtn" style="border: 1px solid var(--primary); color: var(--primary); padding: 6px 12px; border-radius: 10px; font-weight: 800;">⚡ Быстро</button>
+            <button class="btn btn-ghost btn-sm" id="openFilterBtn" style="border: 1px solid var(--glass-border); padding: 6px 12px; border-radius: 10px; display: flex; gap: 6px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+              Фильтры
+            </button>
+          </div>
         </div>
 
         <div class="trade-tabs glass-panel" id="marketSideTabs">
@@ -144,7 +147,7 @@
             <label>Тип сделки</label>
             <div class="segmented glass-panel" id="f-side">
               <button type="button" class="seg-btn buy active" data-val="sell">Я продаю</button>
-              <button type="button" class="seg-btn sell" data-val="buy">Я покупаю (Мейкер)</button>
+              <button type="button" class="seg-btn sell" data-val="buy">Я покупаю</button>
             </div>
           </div>
 
@@ -239,6 +242,41 @@
 <div class="toast-container" id="toastContainer"></div>
 <div class="modal-overlay" id="dialogOverlay"><div class="modal glass-modal" id="dialogContent"></div></div>
 
+<!-- МОДАЛКА БЫСТРОЙ ПОКУПКИ -->
+<div class="modal-overlay" id="fastBuyModal">
+  <div class="modal glass-modal">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h3 style="font-size: 18px; font-weight: 800;">⚡ Быстрая покупка USDT</h3>
+      <button style="background:none;border:none;color:var(--dim);font-size:24px;" onclick="closeModal('fastBuyModal')">×</button>
+    </div>
+    <p style="font-size: 13px; color: var(--dim); margin-bottom: 16px;">Курс фиксируется с наценкой 4.5% от рынка для мгновенной обработки заявки.</p>
+    
+    <div class="field">
+      <label>Сеть для получения</label>
+      <div class="icon-scroll" id="fb-network">
+        <div class="icon-chip active" data-val="TRC20">TRC-20</div>
+        <div class="icon-chip" data-val="ERC20">ERC-20</div>
+        <div class="icon-chip" data-val="BEP20">BEP-20</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Сумма в USDT</label>
+      <input type="number" class="input" id="fb-amount" placeholder="Пример: 100">
+    </div>
+    <div class="field">
+      <label>Адрес кошелька</label>
+      <input type="text" class="input" id="fb-address" placeholder="Вставьте ваш адрес">
+    </div>
+    
+    <div class="inner-card" style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+      <span style="color: var(--dim); font-size: 13px;">К оплате:</span>
+      <strong id="fb-total" style="color: var(--grn);">0 RUB</strong>
+    </div>
+
+    <button class="btn btn-primary btn-block" id="fb-submit" style="border-radius: 12px;">Перейти к оплате</button>
+  </div>
+</div>
+
 <!-- МОДАЛКА РЕДАКТИРОВАНИЯ ОБЪЯВЛЕНИЯ -->
 <div class="modal-overlay" id="editAdModal">
   <div class="modal glass-modal">
@@ -317,7 +355,6 @@
   </div>
 </div>
 
-<!-- НАСТРОЙКИ (С БЛОКОМ СТАТУСОВ) -->
 <div class="modal-overlay" id="settingsModal">
   <div class="modal glass-modal">
     <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Настройки</h3>

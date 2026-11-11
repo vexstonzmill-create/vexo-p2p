@@ -9,7 +9,7 @@ const { Pool } = require('pg');
 const PORT = Number(process.env.PORT) || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_vexo_key_that_is_long_enough_12345';
 
-// --- ПОДКЛЮЧЕНИЕ К БАЗЕ ДАННЫХ NEON (СТРОКА КАК ТЫ ДАЛ) ---
+// Строка, которую ты дал
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_UDtaHhd5Zr6s@ep-divine-sun-bawvlsl5-pooler.c-8.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
   ssl: { rejectUnauthorized: false }
@@ -215,7 +215,7 @@ app.get('/api/ads/:id', async (req, res) => {
 app.post('/api/ads', auth, async (req, res) => {
   const { side, face_type, asset, price, amount_total, min_rub, max_rub, payment_methods, terms, payment_time } = req.body;
   
-  // Проверка на Мейкера для покупки
+  // Проверка на Мейкера ТОЛЬКО для покупки
   if (side === 'buy' && !req.user.is_maker && req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Для создания объявлений на покупку нужен статус Мейкера' });
   }
@@ -420,7 +420,8 @@ app.post('/api/orders/:id/resolve', auth, async (req, res) => {
 app.get('/api/chat/:orderId', auth, async (req, res) => {
   const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.orderId]);
   const o = oRes.rows[0];
-  if (!o || (o.buyer_id !== req.user.id && o.seller_id !== req.user.id)) return res.status(403).json({ error: 'forbidden' });
+  // Админ тоже может читать
+  if (!o || (o.buyer_id !== req.user.id && o.seller_id !== req.user.id && req.user.role !== 'admin')) return res.status(403).json({ error: 'forbidden' });
   const result = await pool.query(`SELECT m.*, u.username FROM messages m JOIN users u ON m.sender_id = u.id WHERE m.order_id = $1 ORDER BY m.created_at ASC`, [o.id]);
   res.json({ items: result.rows.map(m => ({ id: m.id, senderId: m.sender_id, senderUsername: m.username, text: m.text, createdAt: m.created_at, isMine: m.sender_id === req.user.id })) });
 });
@@ -429,6 +430,7 @@ app.post('/api/chat/:orderId', auth, async (req, res) => {
   const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.orderId]);
   const o = oRes.rows[0];
   if (!o || ['completed', 'cancelled', 'declined'].includes(o.status)) return res.status(409).json({ error: 'closed' });
+  if (o.buyer_id !== req.user.id && o.seller_id !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
   const result = await pool.query('INSERT INTO messages (order_id, sender_id, text) VALUES ($1, $2, $3) RETURNING *', [o.id, req.user.id, req.body.text]);
   res.status(201).json({ ...result.rows[0], isMine: true });
 });

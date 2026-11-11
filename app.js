@@ -53,7 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const overlay = document.getElementById('dialogOverlay');
         const content = document.getElementById('dialogContent');
         if (!overlay || !content) return resolve(false);
-        content.innerHTML = `<h3 style="font-size:18px;font-weight:800">${title}</h3><p style="font-size:14px;color:var(--dim);margin:10px 0;font-weight:500;">${message}</p><div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-ghost" style="flex:1;" id="dlgCancel">Отмена</button><button class="btn btn-primary" style="flex:1;" id="dlgOk">${okText}</button></div>`;
+        // Улучшенный контраст для диалогов (жидкое стекло)
+        content.innerHTML = `<h3 style="font-size:18px;font-weight:800;color:var(--txt)">${title}</h3><p style="font-size:14px;color:var(--dim);margin:10px 0;font-weight:500;">${message}</p><div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-ghost" style="flex:1;" id="dlgCancel">Отмена</button><button class="btn btn-primary" style="flex:1;" id="dlgOk">${okText}</button></div>`;
         overlay.classList.add('active');
         document.getElementById('dlgCancel').onclick = () => { overlay.classList.remove('active'); resolve(false); };
         document.getElementById('dlgOk').onclick = () => { overlay.classList.remove('active'); resolve(true); };
@@ -108,9 +109,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (dot) dot.classList.toggle('hidden', notifications.length === 0);
       if (list) {
         list.innerHTML = notifications.length ? notifications.map(n => `
-          <div class="glass-card" style="padding:12px;">
+          <div class="glass-card" style="padding:12px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);">
             <div style="font-size:10px;color:var(--dim);margin-bottom:4px;">${new Date(n.date).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'})}</div>
-            <div style="font-size:13px;font-weight:600;">${n.text}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--txt);">${n.text}</div>
           </div>
         `).join('') : '<div class="empty-state">Нет новых уведомлений</div>';
       }
@@ -292,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
         screen.innerHTML = `
           <h2 style="margin-bottom: 4px; font-size: 18px;">Кошелёк</h2>
           <p style="color: var(--dim); font-size: 12px; margin-bottom: 16px;">Балансы и история операций</p>
-          <div class="wallet-hero">
+          <div class="wallet-hero glass-card" style="padding: 20px;">
             <div class="lbl">Общий баланс в рублях</div>
             <div class="amount">${fmt(u.balanceRub)} <span>₽</span></div>
             <div class="wallet-actions">
@@ -302,45 +303,96 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <h3 style="margin-top: 20px; font-size: 14px; margin-bottom: 12px;">Активы</h3>
           <div class="wallet-list">
-            <div class="wallet-item"><div class="coin-icon rub">₽</div><div class="w-info"><div class="w-name">Российский рубль</div><div class="w-sub">RUB · фиат</div></div><div class="w-bal">${fmt(u.balanceRub)} ₽</div></div>
-            <div class="wallet-item"><div class="coin-icon usdt">₮</div><div class="w-info"><div class="w-name">Tether</div><div class="w-sub">USDT · TRC-20</div></div><div class="w-bal">${fmtDec(u.balanceUsdt, 2)} <span>≈ 0 ₽</span></div></div>
+            <div class="wallet-item glass-card" style="padding: 12px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;"><div class="coin-icon rub">₽</div><div class="w-info"><div class="w-name">Российский рубль</div><div class="w-sub">RUB · фиат</div></div><div class="w-bal">${fmt(u.balanceRub)} ₽</div></div>
+            <div class="wallet-item glass-card" style="padding: 12px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;"><div class="coin-icon usdt">₮</div><div class="w-info"><div class="w-name">Tether</div><div class="w-sub">USDT · TRC-20</div></div><div class="w-bal">${fmtDec(u.balanceUsdt, 2)} <span>≈ 0 ₽</span></div></div>
           </div>`;
         document.getElementById('btnDeposit').onclick = () => { walletActionType = 'deposit'; document.getElementById('walletActionTitle').textContent = 'Пополнение'; document.getElementById('walletRequisitesField').style.display = 'none'; document.getElementById('walletActionModal').classList.add('active'); };
         document.getElementById('btnWithdraw').onclick = () => { walletActionType = 'withdraw'; document.getElementById('walletActionTitle').textContent = 'Вывод'; document.getElementById('walletRequisitesField').style.display = 'block'; document.getElementById('walletActionModal').classList.add('active'); };
       }
     }
 
-    // МАРКЕТ
-    async function loadMarket() {
+    // --- МАРКЕТ И ФИЛЬТРЫ ---
+    
+    // 1. Функция для сбора всех фильтров из модального окна
+    function getActiveFilters() {
       const filters = {};
       const activeTab = document.querySelector('#marketSideTabs .trade-tab.active');
       if (activeTab && activeTab.dataset.side) filters.side = activeTab.dataset.side === 'buy' ? 'sell' : 'buy';
-      const faceChip = document.querySelector('#filterFace .chip.active'); if (faceChip && faceChip.dataset.val) filters.face_type = faceChip.dataset.val;
-      const assetChip = document.querySelector('#filterAsset .icon-chip.active'); if (assetChip && assetChip.dataset.val) filters.asset = assetChip.dataset.val;
-      const payChip = document.querySelector('#filterPayment .icon-chip.active'); if (payChip && payChip.dataset.val) filters.payment = payChip.dataset.val;
+      
+      // Читаем именно из модалки фильтров
+      const faceChip = document.querySelector('#filterModal #filterFace .chip.active'); 
+      if (faceChip && faceChip.dataset.val) filters.face_type = faceChip.dataset.val;
+      
+      const assetChip = document.querySelector('#filterModal #filterAsset .icon-chip.active'); 
+      if (assetChip && assetChip.dataset.val) filters.asset = assetChip.dataset.val;
+      
+      const payChip = document.querySelector('#filterModal #filterPayment .icon-chip.active'); 
+      if (payChip && payChip.dataset.val) filters.payment = payChip.dataset.val;
+      
       const fMin = document.getElementById('filterMinAmount')?.value;
       const fMax = document.getElementById('filterMaxAmount')?.value;
       if (fMin) filters.min_amount = fMin;
       if (fMax) filters.max_amount = fMax;
 
+      return filters;
+    }
+
+    // 2. Загрузка маркета с применением фильтров
+    async function loadMarket() {
       const list = document.getElementById('adsList');
       if (!list) return;
+      
+      const filters = getActiveFilters();
       list.innerHTML = '<div class="empty-state">Загрузка...</div>';
 
       try {
         const { items } = await API.req('GET', '/ads?' + new URLSearchParams(filters));
-        list.innerHTML = items.length ? items.map(renderAd).join('') : '<div class="empty-state">Объявлений не найдено</div>';
+        list.innerHTML = items.length ? items.map(renderAd).join('') : '<div class="empty-state">Объявлений не найдено по вашим фильтрам</div>';
         bindAdButtons();
-      } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+      } catch (e) { 
+        list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; 
+      }
     }
 
+    // 3. Логика модального окна фильтров
     document.getElementById('openFilterBtn')?.addEventListener('click', () => {
       document.getElementById('filterModal').classList.add('active');
     });
+
     document.getElementById('applyFiltersBtn')?.addEventListener('click', () => {
       closeModal('filterModal');
-      loadMarket();
+      loadMarket(); // Применяем фильтры только при нажатии "Применить"
     });
+
+    document.getElementById('resetFiltersBtn')?.addEventListener('click', () => {
+        // Сброс полей в модалке
+        document.getElementById('filterMinAmount').value = '';
+        document.getElementById('filterMaxAmount').value = '';
+        document.querySelectorAll('#filterModal .chip, #filterModal .icon-chip').forEach(c => c.classList.remove('active'));
+        // Устанавливаем "Все" по умолчанию
+        document.querySelector('#filterModal #filterFace .chip[data-val=""]')?.classList.add('active');
+        document.querySelector('#filterModal #filterAsset .icon-chip[data-val="all"]')?.classList.add('active');
+        document.querySelector('#filterModal #filterPayment .icon-chip[data-val="all"]')?.classList.add('active');
+    });
+
+
+    // Переключение вкладок Купить/Продать на главной
+    document.querySelectorAll('#marketSideTabs .trade-tab').forEach(c => c.onclick = () => { 
+        document.querySelectorAll('#marketSideTabs .trade-tab').forEach(x => x.classList.remove('active')); 
+        c.classList.add('active'); 
+        loadMarket(); 
+    });
+
+    // Просто переключаем состояние чипсов внутри модалки (БЕЗ загрузки)
+    document.querySelectorAll('#filterModal .chip').forEach(c => c.onclick = () => { 
+        document.querySelectorAll('#filterModal .chip').forEach(x => x.classList.remove('active')); 
+        c.classList.add('active'); 
+    });
+    document.querySelectorAll('#filterModal .icon-chip').forEach(c => c.onclick = () => { 
+        document.querySelectorAll('#filterModal .icon-chip').forEach(x => x.classList.remove('active')); 
+        c.classList.add('active'); 
+    });
+
 
     function renderAd(ad) {
       const isSell = ad.side === 'sell';
@@ -351,27 +403,32 @@ document.addEventListener('DOMContentLoaded', () => {
       let avatarHtml = `<div class="avatar">${ad.displayName[0].toUpperCase()}</div>`;
       if (ad.avatarUrl) avatarHtml = `<div class="avatar"><img src="${ad.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${ad.displayName[0].toUpperCase()}'"></div>`;
       
-      // БЕЙДЖИ С ОБВОДКОЙ
       const merchantBadge = ad.isMerchant ? `<span class="badge-merchant" title="Мерчант">MERCHANT</span>` : '';
       const makerBadge = ad.isMaker ? `<span class="badge-maker" title="Мейкер">MAKER</span>` : '';
 
-      return `<div class="ad-card">
-        <div class="ad-head" onclick="openPublicProfile(${ad.userId})">
+      // ИСПРАВЛЕНИЕ: Лимиты сделаны мелким, но контрастным шрифтом. Добавлен inline-style для надежности.
+      return `<div class="ad-card glass-card" style="padding:16px; margin-bottom:12px; border-radius:16px;">
+        <div class="ad-head" onclick="openPublicProfile(${ad.userId})" style="display:flex; align-items:center; gap:12px; margin-bottom:12px; cursor:pointer;">
           ${avatarHtml}
           <div class="ad-user">
-            <div class="ad-name">${ad.displayName} ${merchantBadge} ${makerBadge} <span class="badge-face">${faceLabel}</span> ${ad.isPro ? '<span class="badge-pro">PRO</span>' : ''}</div>
-            <div class="ad-meta"><span>★ ${ad.ratingAvg || '—'}</span> <span>${ad.dealsCompleted || 0} сделок</span></div>
+            <div class="ad-name" style="font-size:15px; font-weight:700; color:var(--txt); display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                ${ad.displayName} ${merchantBadge} ${makerBadge} 
+                <span class="badge-face" style="font-size:10px; color:var(--dim); border:1px solid var(--glass-border); padding:2px 6px; border-radius:4px;">${faceLabel}</span> 
+                ${ad.isPro ? '<span class="badge-pro">PRO</span>' : ''}
+            </div>
+            <div class="ad-meta" style="font-size:12px; color:var(--dim); font-weight:500; margin-top:2px;"><span>★ ${ad.ratingAvg || '—'}</span> <span>${ad.dealsCompleted || 0} сделок</span></div>
           </div>
         </div>
-        <div class="ad-body">
+        <div class="ad-body" style="display:flex; justify-content:space-between; align-items:flex-end;">
           <div class="ad-price-block">
-             <div class="ad-price">${fmt(ad.price)} ₽</div>
-             <div class="ad-limits">Лимиты: ${fmt(ad.minRub)} - ${fmt(ad.maxRub)} RUB</div>
-             <div class="ad-amount">Доступно: ${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div>
-             ${pays ? `<div class="ad-pay-methods" style="justify-content:flex-start;margin-top:4px;">${pays}</div>` : ''}
+             <div class="ad-price" style="font-size:20px; font-weight:800; color:var(--txt);">${fmt(ad.price)} ₽</div>
+             <!-- ИСПРАВЛЕНИЕ ЛИМИТОВ: Мелкий, темный, жирный текст -->
+             <div class="ad-limits" style="font-size: 12px; font-weight: 600; color: var(--txt); opacity: 0.85; margin-top: 4px;">Лимит: ${fmt(ad.minRub)} - ${fmt(ad.maxRub)} RUB</div>
+             <div class="ad-amount" style="font-size: 12px; color: var(--dim); margin-top: 2px;">Доступно: ${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div>
+             ${pays ? `<div class="ad-pay-methods" style="justify-content:flex-start; margin-top:8px; display:flex; gap:4px; flex-wrap:wrap;">${pays}</div>` : ''}
           </div>
           <div class="ad-action">
-             <button class="btn ${isSell ? 'btn-buy' : 'btn-sell'} btn-sm" data-ad-id="${ad.id}" style="min-width:100px;">${isSell ? 'Купить' : 'Продать'}</button>
+             <button class="btn ${isSell ? 'btn-buy' : 'btn-sell'} btn-sm" data-ad-id="${ad.id}" style="min-width:100px; font-weight:700;">${isSell ? 'Купить' : 'Продать'}</button>
           </div>
         </div>
       </div>`;
@@ -386,11 +443,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
       });
     }
-
-    document.querySelectorAll('#marketSideTabs .trade-tab').forEach(c => c.onclick = () => { document.querySelectorAll('#marketSideTabs .trade-tab').forEach(x => x.classList.remove('active')); c.classList.add('active'); loadMarket(); });
-    document.querySelectorAll('#filterFace .chip').forEach(c => c.onclick = () => { document.querySelectorAll('#filterFace .chip').forEach(x => x.classList.remove('active')); c.classList.add('active'); loadMarket(); });
-    document.querySelectorAll('#filterAsset .icon-chip').forEach(c => c.onclick = () => { document.querySelectorAll('#filterAsset .icon-chip').forEach(x => x.classList.remove('active')); c.classList.add('active'); loadMarket(); });
-    document.querySelectorAll('#filterPayment .icon-chip').forEach(c => c.onclick = () => { document.querySelectorAll('#filterPayment .icon-chip').forEach(x => x.classList.remove('active')); c.classList.add('active'); });
 
     window.openPublicProfile = async function(userId) {
       const m = document.getElementById('publicProfileModal'); const c = document.getElementById('publicProfileContent');
@@ -410,14 +462,14 @@ document.addEventListener('DOMContentLoaded', () => {
           ${favBtn}
           <div style="text-align:center; margin-bottom: 20px; margin-top:10px;">
             ${avatarHtml}
-            <h2 style="font-size:20px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;justify-content:center;">${user.displayName} ${merchantBadge} ${makerBadge} ${proBadge}</h2>
+            <h2 style="font-size:20px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;justify-content:center;color:var(--txt);">${user.displayName} ${merchantBadge} ${makerBadge} ${proBadge}</h2>
             <div style="font-size:12px;color:var(--dim);font-weight:600;">@${user.username}</div>
           </div>
           <div class="stats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-            <div class="glass-card" style="padding:12px;text-align:center;"><div style="font-size:11px;color:var(--dim);">Сделок</div><div style="font-size:18px;font-weight:800;">${stats.dealsTotal}</div></div>
-            <div class="glass-card" style="padding:12px;text-align:center;"><div style="font-size:11px;color:var(--dim);">Успешных</div><div style="font-size:18px;font-weight:800;">${stats.successRate !== null ? stats.successRate + '%' : '—'}</div></div>
-            <div class="glass-card" style="padding:12px;text-align:center;"><div style="font-size:11px;color:var(--dim);">Отзывов</div><div style="font-size:18px;font-weight:800;">${stats.reviewsCount}</div></div>
-            <div class="glass-card" style="padding:12px;text-align:center;"><div style="font-size:11px;color:var(--dim);">Рейтинг</div><div style="font-size:18px;font-weight:800;">${stats.ratingAvg || '—'}</div></div>
+            <div class="glass-card" style="padding:12px;text-align:center; background:rgba(255,255,255,0.05);"><div style="font-size:11px;color:var(--dim);font-weight:600;">Сделок</div><div style="font-size:18px;font-weight:800;color:var(--txt);">${stats.dealsTotal}</div></div>
+            <div class="glass-card" style="padding:12px;text-align:center; background:rgba(255,255,255,0.05);"><div style="font-size:11px;color:var(--dim);font-weight:600;">Успешных</div><div style="font-size:18px;font-weight:800;color:var(--txt);">${stats.successRate !== null ? stats.successRate + '%' : '—'}</div></div>
+            <div class="glass-card" style="padding:12px;text-align:center; background:rgba(255,255,255,0.05);"><div style="font-size:11px;color:var(--dim);font-weight:600;">Отзывов</div><div style="font-size:18px;font-weight:800;color:var(--txt);">${stats.reviewsCount}</div></div>
+            <div class="glass-card" style="padding:12px;text-align:center; background:rgba(255,255,255,0.05);"><div style="font-size:11px;color:var(--dim);font-weight:600;">Рейтинг</div><div style="font-size:18px;font-weight:800;color:var(--txt);">${stats.ratingAvg || '—'}</div></div>
           </div>
           <div id="publicReviewsList" style="margin-top:16px;">Загрузка отзывов...</div>`;
         loadPublicReviews(user.id);
@@ -439,7 +491,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await API.req('GET', '/reviews/user/' + userId);
         const items = data.items || [];
         list.innerHTML = `<div style="font-size:13px;font-weight:800;margin-bottom:12px;color:var(--txt);text-transform:uppercase;">Отзывы</div>` + 
-          (items.length ? items.map(r => `<div class="glass-card" style="padding:12px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong style="font-size:13px;">${r.author}</strong><span style="color:var(--txt);font-size:14px;">${'★'.repeat(r.rating)}</span></div><p style="font-size:13px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p></div>`).join('') : '<div class="empty-state">Отзывов пока нет</div>');
+          (items.length ? items.map(r => `<div class="glass-card" style="padding:12px;margin-bottom:8px; background:rgba(255,255,255,0.05);"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong style="font-size:13px;color:var(--txt);">${r.author}</strong><span style="color:var(--yellow);font-size:14px;">${'★'.repeat(r.rating)}</span></div><p style="font-size:13px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p></div>`).join('') : '<div class="empty-state">Отзывов пока нет</div>');
       } catch(e) { list.innerHTML = ''; }
     }
 
@@ -501,14 +553,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const { items } = await API.req('GET', '/orders/my?status=' + filter);
         const sc = { pending: 'var(--yellow)', accepted: 'var(--blue)', paid: 'var(--grn)', completed: 'var(--grn)', cancelled: 'var(--red)', declined: 'var(--red)', dispute: 'var(--gold)' };
         list.innerHTML = items.length ? items.map(o => `
-          <div class="ad-card" style="cursor:pointer;border-left:4px solid ${sc[o.status] || 'var(--dim)'}" data-order-id="${o.id}">
+          <div class="ad-card glass-card" style="cursor:pointer;border-left:4px solid ${sc[o.status] || 'var(--dim)'}; padding:16px; margin-bottom:12px;" data-order-id="${o.id}">
             <div style="display:flex;justify-content:space-between;margin-bottom:10px">
-              <strong style="font-family:Inter,monospace;font-size:15px;">#${o.publicId}</strong>
+              <strong style="font-family:Inter,monospace;font-size:15px;color:var(--txt);">#${o.publicId}</strong>
               <span style="color:${sc[o.status] || 'var(--txt)'};font-size:12px;font-weight:800">${o.statusLabel}</span>
             </div>
-            <div class="ad-body">
-              <div><div class="ad-lbl">Сумма</div><div class="ad-val">${fmt(o.amountRub)} ₽</div></div>
-              <div><div class="ad-lbl">Актив</div><div class="ad-val">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div>
+            <div class="ad-body" style="display:flex; justify-content:space-between;">
+              <div><div class="ad-lbl" style="font-size:11px; color:var(--dim);">Сумма</div><div class="ad-val" style="font-size:15px; font-weight:800; color:var(--txt);">${fmt(o.amountRub)} ₽</div></div>
+              <div><div class="ad-lbl" style="font-size:11px; color:var(--dim);">Актив</div><div class="ad-val" style="font-size:15px; font-weight:800; color:var(--txt);">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div>
             </div>
             <div style="font-size:12px;color:var(--dim);display:flex;justify-content:space-between;font-weight:600;margin-top:12px;">
               <span>${new Date(o.createdAt).toLocaleString('ru-RU')}</span>
@@ -599,7 +651,7 @@ document.addEventListener('DOMContentLoaded', () => {
       let adminReceiptHtml = '';
       if (isAdmin && ['paid', 'dispute'].includes(order.status)) {
         adminReceiptHtml = `
-        <div class="glass-card" style="padding:16px;margin-bottom:16px;border:1px dashed var(--primary);">
+        <div class="glass-card" style="padding:16px;margin-bottom:16px;border:1px dashed var(--primary); background:rgba(255,255,255,0.05);">
           <div style="display:flex;justify-content:space-between;align-items:center;">
             <div>
               <div style="font-size:12px;color:var(--dim);font-weight:700;margin-bottom:4px;">Чек об оплате (от покупателя)</div>
@@ -610,11 +662,11 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>`;
       }
 
-      const timelineHtml = (history || []).map(h => `<div style="display:flex;gap:12px;padding:8px 0"><div style="width:13px;height:13px;border-radius:50%;background:var(--txt);flex-shrink:0;margin-top:3px"></div><div style="flex:1"><div style="font-size:13px;font-weight:700">${h.note || h.status}</div><div style="font-size:11px;color:var(--dim);font-weight:600;">${new Date(h.at).toLocaleString('ru-RU')}</div></div></div>`).join('');
+      const timelineHtml = (history || []).map(h => `<div style="display:flex;gap:12px;padding:8px 0"><div style="width:13px;height:13px;border-radius:50%;background:var(--txt);flex-shrink:0;margin-top:3px"></div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--txt);">${h.note || h.status}</div><div style="font-size:11px;color:var(--dim);font-weight:600;">${new Date(h.at).toLocaleString('ru-RU')}</div></div></div>`).join('');
       
       const container = document.getElementById('orderDetailContent');
       container.innerHTML = `
-        <div class="glass-card" style="padding: 24px; margin-bottom: 16px;">
+        <div class="glass-card" style="padding: 24px; margin-bottom: 16px; background: rgba(255,255,255,0.05);">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
              <div style="font-size:12px;color:var(--dim);font-family:monospace;font-weight:700;">#${order.public_id}</div>
              <div style="background:var(--glass-bg);color:${sc[order.status]};font-size:12px;font-weight:800;padding:4px 10px;border-radius:6px">${order.statusLabel}</div>
@@ -624,23 +676,23 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="width:100%;height:6px;background:var(--glass-border);border-radius:3px;margin-top:20px;overflow:hidden"><div style="height:100%;width:${progress}%;background:${sc[order.status]};transition:0.3s"></div></div>
         </div>
         
-        <div class="glass-card" style="padding:16px;margin-bottom:16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;" onclick="openPublicProfile(${counterparty.id})">
+        <div class="glass-card" style="padding:16px;margin-bottom:16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between; background: rgba(255,255,255,0.05);" onclick="openPublicProfile(${counterparty.id})">
           <div style="display:flex;align-items:center;gap:12px;">
              <div class="avatar" style="width:44px;height:44px;font-size:16px;">${counterparty.avatarUrl ? `<img src="${counterparty.avatarUrl}">` : counterparty.displayName[0].toUpperCase()}</div>
              <div>
                <div style="font-size:12px;color:var(--dim);font-weight:600;">${counterpartyRole}</div>
-               <div style="font-size:15px;font-weight:800;">${counterparty.displayName}</div>
+               <div style="font-size:15px;font-weight:800;color:var(--txt);">${counterparty.displayName}</div>
              </div>
           </div>
           <button class="btn btn-ghost btn-sm" style="border:1px solid var(--glass-border);">Профиль</button>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-          <div class="glass-card" style="padding:16px;"><div style="font-size:11px;color:var(--dim);font-weight:700;margin-bottom:4px;">Количество</div><div style="font-size:15px;font-weight:800;">${fmtDec(order.amount_asset, 4)} ${order.asset}</div></div>
-          <div class="glass-card" style="padding:16px;"><div style="font-size:11px;color:var(--dim);font-weight:700;margin-bottom:4px;">Курс</div><div style="font-size:15px;font-weight:800;">${fmt(order.price)} ₽</div></div>
+          <div class="glass-card" style="padding:16px; background: rgba(255,255,255,0.05);"><div style="font-size:11px;color:var(--dim);font-weight:700;margin-bottom:4px;">Количество</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmtDec(order.amount_asset, 4)} ${order.asset}</div></div>
+          <div class="glass-card" style="padding:16px; background: rgba(255,255,255,0.05);"><div style="font-size:11px;color:var(--dim);font-weight:700;margin-bottom:4px;">Курс</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmt(order.price)} ₽</div></div>
         </div>
         
-        <div class="glass-card" style="padding:16px;margin-bottom:16px;">
+        <div class="glass-card" style="padding:16px;margin-bottom:16px; background: rgba(255,255,255,0.05);">
           <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
              <div style="font-size: 11px; font-weight: 800; color: var(--dim); text-transform: uppercase;">Время на оплату</div>
              <div style="font-size: 12px; font-weight: 800; color: var(--yellow);">${order.paymentTime} минут</div>
@@ -653,9 +705,9 @@ document.addEventListener('DOMContentLoaded', () => {
         ${actionsHtml}
         
         <button style="width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;padding:16px;margin-bottom:16px;color:var(--txt);font-size:14px" onclick="openChatModal(${order.id})">
-          <div style="display:flex;align-items:center;gap:12px"><div class="avatar" style="width:40px;height:40px;font-size:18px">💬</div><div style="text-align:left;"><div style="font-weight:800">Чат по сделке</div><div style="font-size:11px;color:var(--dim);font-weight:600;">Обсудить детали</div></div></div>
+          <div style="display:flex;align-items:center;gap:12px"><div class="avatar" style="width:40px;height:40px;font-size:18px">💬</div><div style="text-align:left;"><div style="font-weight:800; color:var(--txt);">Чат по сделке</div><div style="font-size:11px;color:var(--dim);font-weight:600;">Обсудить детали</div></div></div>
         </button>
-        <div class="glass-card" style="padding:16px"><div style="font-size:12px;font-weight:800;margin-bottom:14px;color:var(--dim);text-transform:uppercase">История</div>${timelineHtml}</div>`;
+        <div class="glass-card" style="padding:16px; background: rgba(255,255,255,0.05);"><div style="font-size:12px;font-weight:800;margin-bottom:14px;color:var(--dim);text-transform:uppercase">История</div>${timelineHtml}</div>`;
 
       if (order.status === 'accepted') {
         const timerEl = document.getElementById('paymentTimerDisplay');
@@ -752,7 +804,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const div = document.createElement('div');
           div.className = 'msg' + (m.isMine ? ' me' : '');
           div.dataset.msgId = m.id;
-          div.innerHTML = `<div class="avatar" style="width:28px;height:28px;font-size:11px">${m.senderUsername[0].toUpperCase()}</div><div><div class="msg-bubble">${m.text.replace(/</g, '&lt;')}</div><div style="font-size:10px;color:var(--dim);margin-top:4px;font-weight:600; text-align: ${m.isMine ? 'right' : 'left'}">${new Date(m.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div></div>`;
+          div.innerHTML = `<div class="avatar" style="width:28px;height:28px;font-size:11px">${m.senderUsername[0].toUpperCase()}</div><div><div class="msg-bubble" style="color:var(--txt);">${m.text.replace(/</g, '&lt;')}</div><div style="font-size:10px;color:var(--dim);margin-top:4px;font-weight:600; text-align: ${m.isMine ? 'right' : 'left'}">${new Date(m.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div></div>`;
           body.appendChild(div);
         });
         body.scrollTop = body.scrollHeight;
@@ -800,7 +852,6 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const { user, stats } = await API.req('GET', '/users/me');
         
-        // БЕЙДЖИ С ОБВОДКОЙ
         const proBadge = user.isPro ? `<span class="badge-pro" style="margin-left:6px;">PRO</span>` : '';
         const merchantBadge = user.isMerchant ? `<span class="badge-merchant" style="margin-left:6px;">MERCHANT</span>` : '';
         const makerBadge = user.isMaker ? `<span class="badge-maker" style="margin-left:6px;">MAKER</span>` : '';
@@ -816,12 +867,11 @@ document.addEventListener('DOMContentLoaded', () => {
         let avatarHtml = `<div class="avatar lg">${user.displayName[0].toUpperCase()}</div>`;
         if (user.avatarUrl) avatarHtml = `<div class="avatar lg"><img src="${user.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${user.displayName[0].toUpperCase()}'"></div>`;
 
-        // Убрали прогресс из главного экрана профиля
         content.innerHTML = `
-          <div class="glass-card" style="display:flex;align-items:center;gap:16px;padding:20px;margin-bottom:20px;position:relative;">
+          <div class="glass-card" style="display:flex;align-items:center;gap:16px;padding:20px;margin-bottom:20px;position:relative; background: rgba(255,255,255,0.05);">
             ${avatarHtml}
             <div style="flex:1;min-width:0">
-              <h2 style="font-size:20px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;flex-wrap:wrap;">${user.displayName} ${merchantBadge} ${makerBadge} ${proBadge}</h2>
+              <h2 style="font-size:20px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;flex-wrap:wrap;color:var(--txt);">${user.displayName} ${merchantBadge} ${makerBadge} ${proBadge}</h2>
               <div style="font-size:12px;color:var(--dim);font-weight:600;">@${user.username}</div>
             </div>
             <button class="btn btn-ghost btn-sm" style="position:absolute;top:16px;right:16px;font-size:18px;" onclick="openSettings()">⚙️</button>
@@ -830,19 +880,19 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
             <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;padding:16px;text-align:center;">
               <div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Сделок</div>
-              <div style="font-size:18px;font-weight:800;">${stats.dealsTotal}</div>
+              <div style="font-size:18px;font-weight:800;color:var(--txt);">${stats.dealsTotal}</div>
             </div>
             <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;padding:16px;text-align:center;">
               <div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Успешных</div>
-              <div style="font-size:18px;font-weight:800;">${successRateStr}</div>
+              <div style="font-size:18px;font-weight:800;color:var(--txt);">${successRateStr}</div>
             </div>
             <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;padding:16px;text-align:center;">
               <div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Отзывов</div>
-              <div style="font-size:18px;font-weight:800;">${stats.reviewsCount}</div>
+              <div style="font-size:18px;font-weight:800;color:var(--txt);">${stats.reviewsCount}</div>
             </div>
             <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;padding:16px;text-align:center;">
               <div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Рейтинг</div>
-              <div style="font-size:18px;font-weight:800;">${ratingAvgStr}</div>
+              <div style="font-size:18px;font-weight:800;color:var(--txt);">${ratingAvgStr}</div>
             </div>
           </div>
           
@@ -866,17 +916,17 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const { items } = await API.req('GET', '/ads/my');
         list.innerHTML = items.length ? items.map(ad => `
-          <div class="glass-card" style="margin-bottom:12px;">
+          <div class="glass-card" style="margin-bottom:12px; background: rgba(255,255,255,0.05); padding:16px;">
             <div style="display:flex;justify-content:space-between;margin-bottom:12px">
-              <strong style="font-size:16px;">${ad.side === 'sell' ? 'Продажа' : 'Покупка'} ${ad.asset}</strong>
+              <strong style="font-size:16px;color:var(--txt);">${ad.side === 'sell' ? 'Продажа' : 'Покупка'} ${ad.asset}</strong>
               <span style="color:${ad.active ? 'var(--grn)' : 'var(--red)'};font-size:12px;font-weight:700;background:rgba(255,255,255,0.05);padding:4px 8px;border-radius:6px;">${ad.active ? 'Активно' : 'Неактивно'}</span>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
-              <div><div style="font-size:11px;color:var(--dim);font-weight:600;">Курс</div><div style="font-size:15px;font-weight:800;">${fmt(ad.price)} ₽</div></div>
-              <div><div style="font-size:11px;color:var(--dim);font-weight:600;">Остаток</div><div style="font-size:15px;font-weight:800;">${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div></div>
+              <div><div style="font-size:11px;color:var(--dim);font-weight:600;">Курс</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmt(ad.price)} ₽</div></div>
+              <div><div style="font-size:11px;color:var(--dim);font-weight:600;">Остаток</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div></div>
             </div>
             <div style="display:flex;gap:8px;">
-              <button class="btn btn-ghost btn-sm" style="flex:1; border:1px solid var(--glass-border);" onclick="toggleAdStatus(${ad.id}, ${ad.active})">${ad.active ? 'Снять' : 'Активировать'}</button>
+              <button class="btn btn-ghost btn-sm" style="flex:1; border:1px solid var(--glass-border); color:var(--txt);" onclick="toggleAdStatus(${ad.id}, ${ad.active})">${ad.active ? 'Снять' : 'Активировать'}</button>
               <button class="btn btn-primary btn-sm" style="flex:1;" onclick="openEditAdModal(${ad.id})">Редактировать</button>
             </div>
           </div>
@@ -926,7 +976,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const list = document.getElementById('myHistoryList'); if (!list) return;
       try {
         const { items } = await API.req('GET', '/orders/my?status=completed');
-        list.innerHTML = items.length ? items.map(o => `<div class="glass-card" style="margin-bottom:12px; border-left:4px solid var(--grn);"><div style="display:flex;justify-content:space-between;margin-bottom:12px"><strong style="font-size:15px;">#${o.publicId}</strong><span style="color:var(--grn);font-size:12px;font-weight:700;">Завершен</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div style="font-size:11px;color:var(--dim);font-weight:600;">Сумма</div><div style="font-size:15px;font-weight:800;">${fmt(o.amountRub)} ₽</div></div><div><div style="font-size:11px;color:var(--dim);font-weight:600;">Актив</div><div style="font-size:15px;font-weight:800;">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div></div></div>`).join('') : '<div class="empty-state">История пуста</div>';
+        list.innerHTML = items.length ? items.map(o => `<div class="glass-card" style="margin-bottom:12px; border-left:4px solid var(--grn); background: rgba(255,255,255,0.05); padding:16px;"><div style="display:flex;justify-content:space-between;margin-bottom:12px"><strong style="font-size:15px;color:var(--txt);">#${o.publicId}</strong><span style="color:var(--grn);font-size:12px;font-weight:700;">Завершен</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div style="font-size:11px;color:var(--dim);font-weight:600;">Сумма</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmt(o.amountRub)} ₽</div></div><div><div style="font-size:11px;color:var(--dim);font-weight:600;">Актив</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div></div></div>`).join('') : '<div class="empty-state">История пуста</div>';
       } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
     }
 
@@ -936,7 +986,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const u = API.user();
         const data = await API.req('GET', '/reviews/user/' + u.id);
         const items = data.items || [];
-        list.innerHTML = items.length ? items.map(r => `<div class="glass-card" style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><strong style="font-size:14px;">${r.author}</strong><span style="color:var(--yellow);font-size:16px;">${'★'.repeat(r.rating)}</span></div><p style="font-size:13px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p></div>`).join('') : '<div class="empty-state">Отзывов нет</div>';
+        list.innerHTML = items.length ? items.map(r => `<div class="glass-card" style="margin-bottom:12px; background: rgba(255,255,255,0.05); padding:16px;"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><strong style="font-size:14px;color:var(--txt);">${r.author}</strong><span style="color:var(--yellow);font-size:16px;">${'★'.repeat(r.rating)}</span></div><p style="font-size:13px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p></div>`).join('') : '<div class="empty-state">Отзывов нет</div>';
       } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
     }
 
@@ -951,14 +1001,12 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('settingsNewPass').value = '';
       document.getElementById('settingsError').textContent = '';
       
-      // Загружаем актуальный прогресс
       try {
         const { user, stats } = await API.req('GET', '/users/me');
         const container = document.getElementById('statusProgressContainer');
         
         let progressHtml = '';
         
-        // Прогресс до Мейкера
         if (user.isMaker) {
           progressHtml += `<div style="font-size:13px; color:var(--gold); font-weight:700;">✓ Статус Мейкера активен</div>`;
         } else {
@@ -1044,7 +1092,6 @@ document.addEventListener('DOMContentLoaded', () => {
       setText('orderUserMeta', (ad.faceType === 'first' ? '1-е лицо' : '3-е лицо') + ' · ★ ' + (ad.ratingAvg || '—'));
       setText('orderRate', fmt(ad.price) + ' ₽');
       setText('orderAvailable', fmtDec(ad.amountLeft, 2) + ' ' + ad.asset);
-      setText('orderLimit', `Лимит: ${fmt(ad.minRub)} - ${fmt(ad.maxRub)} ₽`);
       setText('orderResultLabel', isBuy ? 'Вы получите' : 'Вы отдадите');
       setText('orderResult', '0 ' + ad.asset);
       setText('orderTotalBottom', '0 RUB');
@@ -1057,7 +1104,14 @@ document.addEventListener('DOMContentLoaded', () => {
         amountInput.value = '';
         
         const realMaxRub = Math.min(ad.maxRub, ad.amountLeft * ad.price);
-        setText('orderLimit', `Лимит: ${fmt(ad.minRub)} - ${fmt(realMaxRub)} ₽`);
+        // В модалке ордера тоже делаем лимиты читаемыми
+        const limitEl = document.getElementById('orderLimit');
+        if(limitEl) {
+            limitEl.textContent = `Лимит: ${fmt(ad.minRub)} - ${fmt(realMaxRub)} ₽`;
+            limitEl.style.color = 'var(--txt)';
+            limitEl.style.fontWeight = '600';
+            limitEl.style.fontSize = '12px';
+        }
 
         amountInput.oninput = e => {
           const rub = parseFloat(e.target.value) || 0;
@@ -1183,11 +1237,11 @@ document.addEventListener('DOMContentLoaded', () => {
           const { items } = await API.req('GET', '/admin/users');
           
           content.innerHTML = items.map(user => `
-            <div class="admin-user-card">
+            <div class="admin-user-card" style="background:var(--glass-bg); padding:12px; border-radius:12px; margin-bottom:8px; border:1px solid var(--glass-border);">
               <div class="admin-user-info">
-                <div class="admin-user-name">${user.displayName} (@${user.username})</div>
-                <div class="admin-user-meta">Email: ${user.email} | Роль: ${user.role}</div>
-                <div class="admin-status-btns">
+                <div class="admin-user-name" style="font-weight:800; color:var(--txt);">${user.displayName} (@${user.username})</div>
+                <div class="admin-user-meta" style="font-size:12px; color:var(--dim);">Email: ${user.email} | Роль: ${user.role}</div>
+                <div class="admin-status-btns" style="margin-top:8px; display:flex; gap:6px;">
                   <button class="admin-badge-btn ${user.isPro ? 'active-pro' : ''}" onclick="toggleUserStatus(${user.id}, 'is_pro', ${user.isPro})">PRO</button>
                   <button class="admin-badge-btn ${user.isMerchant ? 'active-merchant' : ''}" onclick="toggleUserStatus(${user.id}, 'is_merchant', ${user.isMerchant})">MERCHANT</button>
                   <button class="admin-badge-btn ${user.isMaker ? 'active-maker' : ''}" onclick="toggleUserStatus(${user.id}, 'is_maker', ${user.isMaker})">MAKER</button>
@@ -1206,14 +1260,14 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           
           content.innerHTML = items.map(o => `
-            <div class="ad-card" style="cursor:pointer; border-left:4px solid ${o.status === 'dispute' ? 'var(--gold)' : 'var(--blue)'}" onclick="openOrderPage(${o.id})">
+            <div class="ad-card glass-card" style="cursor:pointer; border-left:4px solid ${o.status === 'dispute' ? 'var(--gold)' : 'var(--blue)'}; background: rgba(255,255,255,0.05); padding:16px; margin-bottom:12px;" onclick="openOrderPage(${o.id})">
               <div style="display:flex;justify-content:space-between;margin-bottom:10px">
-                <strong style="font-family:Inter,monospace;font-size:15px;">#${o.publicId}</strong>
+                <strong style="font-family:Inter,monospace;font-size:15px; color:var(--txt);">#${o.publicId}</strong>
                 <span style="color:var(--txt);font-size:12px;font-weight:800">${o.statusLabel}</span>
               </div>
-              <div class="ad-body">
-                <div><div class="ad-lbl">Сумма</div><div class="ad-val">${fmt(o.amountRub)} ₽</div></div>
-                <div><div class="ad-lbl">Актив</div><div class="ad-val">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div>
+              <div class="ad-body" style="display:flex; justify-content:space-between;">
+                <div><div class="ad-lbl" style="font-size:11px; color:var(--dim);">Сумма</div><div class="ad-val" style="font-size:15px; font-weight:800; color:var(--txt);">${fmt(o.amountRub)} ₽</div></div>
+                <div><div class="ad-lbl" style="font-size:11px; color:var(--dim);">Актив</div><div class="ad-val" style="font-size:15px; font-weight:800; color:var(--txt);">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div>
               </div>
               <div style="font-size:12px;color:var(--dim);display:flex;justify-content:space-between;font-weight:600;margin-top:12px;">
                 <span>${o.buyer.displayName} ↔ ${o.seller.displayName}</span>
@@ -1239,7 +1293,7 @@ document.addEventListener('DOMContentLoaded', () => {
         payload[field] = !currentVal;
         await API.req('PATCH', '/admin/users/' + userId + '/status', payload);
         toast('Статус обновлен', 'success');
-        loadAdmin(); // Перерисовываем админку
+        loadAdmin();
       } catch(e) { toast('Ошибка', 'error'); }
     };
 
