@@ -14,6 +14,7 @@
   --red: #ef4444;
   --yellow: #eab308;
   --gold: #D4AF37;
+  --blue: #3b82f6;
 }
 
 body[data-theme="light"] {
@@ -44,7 +45,12 @@ body {
   transition: background-color 0.3s, color 0.3s;
 }
 
-input, textarea { user-select: text; font-family: inherit; font-size: 16px !important; color: var(--txt); }
+input, textarea { 
+  user-select: text; 
+  font-family: inherit; 
+  font-size: 16px !important; 
+  color: var(--txt); 
+}
 input::placeholder, textarea::placeholder { color: var(--dim); font-size: 14px; }
 button { font-family: inherit; cursor: pointer; }
 .app { display: flex; min-height: 100vh; position: relative; z-index: 10; }
@@ -95,29 +101,80 @@ button { font-family: inherit; cursor: pointer; }
 .banner-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dim); border: none; transition: 0.2s; }
 .banner-dot.active { width: 16px; border-radius: 3px; background: var(--txt); }
 
-/* Кнопки */
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; border-radius: 12px; font-size: 14px; font-weight: 700; border: 1px solid var(--glass-border); transition: 0.2s; text-decoration: none; background: var(--glass-bg); color: var(--txt); }
+/* =========================================
+   ВЫРАВНИВАНИЕ КНОПОК И ИНПУТОВ
+   ========================================= */
+
+/* Общий стиль кнопок */
+.btn { 
+  display: inline-flex; 
+  align-items: center; 
+  justify-content: center; 
+  gap: 6px; 
+  height: 44px; /* Фиксированная высота */
+  padding: 0 16px; 
+  border-radius: 12px; 
+  font-size: 14px; 
+  font-weight: 700; 
+  border: 1px solid var(--glass-border); 
+  transition: 0.2s; 
+  text-decoration: none; 
+  background: var(--glass-bg); 
+  color: var(--txt); 
+  white-space: nowrap;
+}
 .btn:hover { background: var(--glass-hover); }
 .btn-primary { background: var(--btn-bg); color: var(--btn-txt); border: none; }
-.btn-ghost { background: transparent; border: none; }
-.btn-buy { background: var(--grn); color: #fff; border: none; border-radius: 12px; padding: 10px 24px; }
-.btn-sell { background: var(--red); color: #fff; border: none; border-radius: 12px; padding: 10px 24px; }
+.btn-ghost { background: transparent; border: 1px solid var(--glass-border); }
+.btn-ghost:hover { background: var(--glass-hover); }
+.btn-buy { background: var(--grn); color: #fff; border: none; }
+.btn-sell { background: var(--red); color: #fff; border: none; }
 .btn-block { width: 100%; }
-.btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
+.btn-sm { height: 32px; padding: 0 12px; font-size: 12px; border-radius: 8px; }
+
+/* Общий стиль инпутов */
+.input, .glass-input { 
+  width: 100%; 
+  height: 48px;
+  padding: 0 16px; 
+  background: var(--glass-bg); 
+  border: 1px solid var(--glass-border); /* Кант */
+  border-radius: 14px; /* Закругление */
+  color: var(--txt); 
+  font-weight: 600; 
+  transition: 0.2s;
+}
+.input:focus, .glass-input:focus { border-color: var(--txt); background: var(--glass-hover); }
+textarea.input { height: auto; padding: 12px 16px; resize: vertical; }
 
 /* Вкладки */
 .trade-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 16px; margin-bottom: 12px; }
-.trade-tab { background: transparent; border: none; padding: 10px; border-radius: 12px; font-size: 14px; font-weight: 800; color: var(--dim); transition: 0.2s; }
+.trade-tab { background: transparent; border: none; height: 44px; border-radius: 12px; font-size: 14px; font-weight: 800; color: var(--dim); transition: 0.2s; }
 .trade-tab.active { background: var(--btn-bg); color: var(--btn-txt); }
 .tabs { display: flex; padding: 4px; border-radius: 16px; margin-bottom: 16px; }
-.tab { flex: 1; padding: 10px; text-align: center; background: none; border: none; color: var(--dim); font-weight: 800; font-size: 13px; border-radius: 12px; transition: 0.2s; }
+.tab { flex: 1; height: 40px; text-align: center; background: none; border: none; color: var(--dim); font-weight: 800; font-size: 13px; border-radius: 12px; transition: 0.2s; }
 .tab.active { background: var(--glass-hover); color: var(--txt); }
 
-/* Фильтры */
+/* Фильтры-пилюли */
 .filter-label { font-size: 12px; color: var(--dim); font-weight: 700; margin-bottom: 8px; margin-top: 16px; }
 .chips, .icon-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; margin-bottom: 8px; }
 .chips::-webkit-scrollbar, .icon-scroll::-webkit-scrollbar { display: none; }
-.chip, .icon-chip, .pay-chip { padding: 8px 14px; border-radius: 20px; background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--dim); font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
+.chip, .icon-chip, .pay-chip { 
+  height: 36px;
+  padding: 0 14px; 
+  border-radius: 18px; 
+  background: var(--glass-bg); 
+  border: 1px solid var(--glass-border); 
+  color: var(--dim); 
+  font-size: 13px; 
+  font-weight: 600; 
+  white-space: nowrap; 
+  cursor: pointer; 
+  transition: 0.2s; 
+  display: inline-flex; 
+  align-items: center; 
+  gap: 6px; 
+}
 .chip.active, .icon-chip.active, .pay-chip.active { background: var(--btn-bg); border-color: var(--btn-bg); color: var(--btn-txt); }
 .coin-icon { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #fff; }
 .coin-icon.usdt { background: #26a17b; }
@@ -125,9 +182,6 @@ button { font-family: inherit; cursor: pointer; }
 .coin-icon.ton { background: #0098ea; }
 .coin-icon.rub { background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--txt); }
 .filter-inputs { display: flex; gap: 8px; margin-bottom: 0; }
-.input { width: 100%; padding: 12px 16px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--txt); font-weight: 600; outline: none; transition: 0.2s; }
-.input:focus { border-color: var(--dim); background: var(--glass-hover); }
-.glass-input { background: transparent; border: none; }
 
 /* Карточка объявления */
 .ad-card { background: var(--glass-bg); backdrop-filter: blur(16px); border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px; margin-bottom: 12px; position: relative; transition: 0.2s; }
@@ -137,7 +191,7 @@ button { font-family: inherit; cursor: pointer; }
 .avatar img { width: 100%; height: 100%; object-fit: cover; }
 .avatar.lg { width: 72px; height: 72px; font-size: 28px; }
 .ad-user { flex: 1; min-width: 0; }
-.ad-name { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 15px; margin-bottom: 4px; }
+.ad-name { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 15px; margin-bottom: 4px; flex-wrap: wrap; }
 .ad-meta { display: flex; gap: 8px; font-size: 12px; color: var(--dim); font-weight: 500; }
 .ad-body { display: flex; justify-content: space-between; align-items: flex-end; }
 .ad-price-block { display: flex; flex-direction: column; gap: 4px; }
@@ -147,13 +201,34 @@ button { font-family: inherit; cursor: pointer; }
 .ad-action { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
 .ad-pay-methods { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
 .pay-tag { font-size: 10px; padding: 4px 8px; border-radius: 6px; background: var(--glass-hover); color: var(--dim); font-weight: 600; }
+
+/* БЕЙДЖИ */
 .badge-face { display: inline-flex; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; border: 1px solid var(--glass-border); color: var(--dim); }
-.badge-pro { background: var(--gold); color: #000; font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; margin-left: 6px; }
+.badge-pro { 
+  background: transparent; 
+  border: 1px solid var(--grn); /* Зеленая обводка */
+  color: var(--grn); 
+  font-size: 10px; 
+  font-weight: 900; 
+  padding: 2px 6px; 
+  border-radius: 4px; 
+  text-transform: uppercase; 
+  margin-left: 6px; 
+}
+.badge-merchant {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+}
 
 /* Главная */
-.home-header { margin-bottom: 24px; }
-.home-title { font-size: 26px; font-weight: 900; line-height: 1.2; margin-bottom: 8px; }
-.gradient-text { background: linear-gradient(135deg, var(--txt), var(--dim)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 .news-list { display: flex; flex-direction: column; gap: 12px; }
 .news-item { border-bottom: 1px solid var(--glass-border); padding-bottom: 12px; }
 .news-item:last-child { border-bottom: none; padding-bottom: 0; }
@@ -165,7 +240,7 @@ button { font-family: inherit; cursor: pointer; }
 .field { margin-bottom: 16px; }
 .field label { display: block; font-size: 12px; color: var(--dim); margin-bottom: 8px; font-weight: 600; }
 .segmented { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 14px; }
-.seg-btn { padding: 10px; border-radius: 10px; background: transparent; border: none; color: var(--dim); font-weight: 700; font-size: 13px; transition: 0.2s; }
+.seg-btn { height: 40px; border-radius: 10px; background: transparent; border: none; color: var(--dim); font-weight: 700; font-size: 13px; transition: 0.2s; }
 .seg-btn.active { background: var(--btn-bg); color: var(--btn-txt); }
 
 /* Модалки */
@@ -175,56 +250,31 @@ button { font-family: inherit; cursor: pointer; }
 .hidden { display: none !important; }
 .error-msg { color: var(--red); font-size: 12px; min-height: 16px; font-weight: 600; }
 
-/* ЧАТ (Возвращен в нормальную тему) */
+/* ЧАТ */
 .chat-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; overflow-y: auto; }
 .msg { display: flex; gap: 8px; max-width: 85%; }
 .msg.me { margin-left: auto; flex-direction: row-reverse; }
 .msg-bubble { padding: 10px 14px; border-radius: 16px; background: var(--glass-hover); border: 1px solid var(--glass-border); font-size: 14px; font-weight: 500; }
 .msg.me .msg-bubble { background: var(--btn-bg); color: var(--btn-txt); border-color: var(--btn-bg); }
-.chat-input-row { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--glass-border); }
-.chat-input-row input { flex: 1; padding: 12px 16px; border: 1px solid var(--glass-border); border-radius: 20px; font-weight: 600; font-size: 14px; outline: none; background: var(--glass-bg); color: var(--txt); }
-.chat-input-row button { width: 44px; height: 44px; border: none; display: flex; align-items: center; justify-content: center; font-size: 18px; background: var(--btn-bg); color: var(--btn-txt); border-radius: 50%; }
+.chat-input-row { display: flex; align-items: center; gap: 8px; padding: 12px; border-top: 1px solid var(--glass-border); }
+.chat-input-row input { flex: 1; height: 44px; padding: 0 16px; border: 1px solid var(--glass-border); border-radius: 22px; font-weight: 600; font-size: 14px; outline: none; background: var(--glass-bg); color: var(--txt); }
+.chat-input-row button { width: 44px; height: 44px; flex-shrink: 0; border: none; display: flex; align-items: center; justify-content: center; font-size: 18px; background: var(--btn-bg); color: var(--btn-txt); border-radius: 50%; }
 
 /* Пустые состояния */
 .empty-state { text-align: center; padding: 30px 16px; font-size: 14px; color: var(--dim); font-weight: 500; }
 
-/* ТОСТЫ (УВЕДОМЛЕНИЯ) */
+/* ТОСТЫ */
 .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 400px; padding: 0 16px; pointer-events: none; }
-.toast { 
-  position: relative;
-  background: var(--bg); 
-  border: 1px solid var(--glass-border); 
-  border-radius: 12px; 
-  padding: 12px 16px 12px 24px; /* Отступ слева для полоски */
-  color: var(--txt); 
-  font-size: 14px; 
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
-  font-weight: 600; 
-  text-align: left;
-  animation: slideDown 0.3s ease;
-  overflow: hidden;
-}
-/* Маленькая цветная плашка */
-.toast::before {
-  content: '';
-  position: absolute;
-  left: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 4px;
-  height: 60%;
-  border-radius: 2px;
-  background: var(--dim);
-}
+.toast { position: relative; background: var(--bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 12px 16px 12px 24px; color: var(--txt); font-size: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-weight: 600; text-align: left; animation: slideDown 0.3s ease; overflow: hidden; }
+.toast::before { content: ''; position: absolute; left: 8px; top: 50%; transform: translateY(-50%); width: 4px; height: 60%; border-radius: 2px; background: var(--dim); }
 .toast.success::before { background: var(--grn); }
 .toast.error::before { background: var(--red); }
 .toast.info::before { background: var(--yellow); }
-
 @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
 
 /* Профиль */
 .profile-tabs { display: flex; padding: 4px; gap: 8px; margin-bottom: 16px; overflow-x: auto; scrollbar-width: none; }
-.profile-tab { padding: 8px 16px; background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--dim); font-weight: 700; font-size: 13px; border-radius: 12px; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+.profile-tab { height: 36px; padding: 0 16px; background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--dim); font-weight: 700; font-size: 13px; border-radius: 12px; cursor: pointer; white-space: nowrap; transition: 0.2s; display: inline-flex; align-items: center; }
 .profile-tab.active { background: var(--btn-bg); border-color: var(--btn-bg); color: var(--btn-txt); }
 
 /* Кошелек */
@@ -234,16 +284,7 @@ button { font-family: inherit; cursor: pointer; }
 .wallet-hero .amount span { font-size: 18px; color: var(--dim); }
 .wallet-actions { display: flex; gap: 12px; }
 .wallet-item { display: flex; align-items: center; gap: 16px; background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 16px; border-radius: 16px; margin-bottom: 8px; }
-.wallet-item .coin-icon { width: 36px; height: 36px; font-size: 16px; }olid transparent; cursor: pointer; white-space: nowrap; }
-.profile-tab.active { color: var(--txt); border-bottom-color: var(--txt); }
-
-.badge-pro { background: var(--txt); color: var(--bg); font-size: 9px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; margin-left: 6px; }
-
-/* =========================================
-   LIQUID GLASS MODAL STYLES
-   ========================================= */
-
-/* Задний фон с градиентом (чтобы стекло было видно) */
+.wallet-item .coin-icon { width: 36px; height: 36px; font-size: 16px; }�о) */
 .glass-modal-overlay {
   position: fixed;
   inset: 0;

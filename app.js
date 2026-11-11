@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const overlay = document.getElementById('dialogOverlay');
         const content = document.getElementById('dialogContent');
         if (!overlay || !content) return resolve(false);
-        content.innerHTML = `<h3 style="font-size:18px;font-weight:800">${title}</h3><p style="font-size:14px;color:var(--dim);margin:10px 0;font-weight:500;">${message}</p><div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-ghost" style="flex:1;border-radius:12px;" id="dlgCancel">Отмена</button><button class="btn btn-primary" style="flex:1;border-radius:12px;" id="dlgOk">${okText}</button></div>`;
+        content.innerHTML = `<h3 style="font-size:18px;font-weight:800">${title}</h3><p style="font-size:14px;color:var(--dim);margin:10px 0;font-weight:500;">${message}</p><div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-ghost" style="flex:1;" id="dlgCancel">Отмена</button><button class="btn btn-primary" style="flex:1;" id="dlgOk">${okText}</button></div>`;
         overlay.classList.add('active');
         document.getElementById('dlgCancel').onclick = () => { overlay.classList.remove('active'); resolve(false); };
         document.getElementById('dlgOk').onclick = () => { overlay.classList.remove('active'); resolve(true); };
@@ -73,22 +73,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const viewport = document.getElementById('bannerViewport');
       if (!track || !dots.length) return;
       let idx = 0, timer;
-      
-      function go(i) { 
-        idx = (i + dots.length) % dots.length; 
-        track.style.transform = `translateX(-${idx * 100}%)`; 
-        dots.forEach((d, k) => d.classList.toggle('active', k === idx)); 
-      }
+      function go(i) { idx = (i + dots.length) % dots.length; track.style.transform = `translateX(-${idx * 100}%)`; dots.forEach((d, k) => d.classList.toggle('active', k === idx)); }
       function auto() { clearInterval(timer); timer = setInterval(() => go(idx + 1), 4500); }
-      
       dots.forEach((d, i) => d.onclick = () => { go(i); auto(); });
-
       let startX = 0;
       viewport.addEventListener('touchstart', e => { startX = e.touches[0].clientX; clearInterval(timer); }, { passive: true });
-      viewport.addEventListener('touchend', e => { 
-        const endX = e.changedTouches[0].clientX; const diff = startX - endX; 
-        if (diff > 50) go(idx + 1); if (diff < -50) go(idx - 1); auto(); 
-      });
+      viewport.addEventListener('touchend', e => { const endX = e.changedTouches[0].clientX; const diff = startX - endX; if (diff > 50) go(idx + 1); if (diff < -50) go(idx - 1); auto(); });
       auto();
     })();
 
@@ -282,8 +272,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="lbl">Общий баланс в рублях</div>
             <div class="amount">0,00 <span>₽</span></div>
             <div class="wallet-actions">
-              <button class="btn btn-primary" id="btnDeposit" style="flex:1;border-radius:14px;">Пополнить</button>
-              <button class="btn btn-ghost" id="btnWithdraw" style="flex:1;border-radius:14px;border:1px solid var(--glass-border)">Вывести</button>
+              <button class="btn btn-primary" id="btnDeposit" style="flex:1;">Пополнить</button>
+              <button class="btn btn-ghost" id="btnWithdraw" style="flex:1;">Вывести</button>
             </div>
           </div>
           <h3 style="margin-top: 20px; font-size: 14px; margin-bottom: 12px;">Активы</h3>
@@ -333,14 +323,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const faceLabel = ad.faceType === 'first' ? '1-е лицо' : '3-е лицо';
       window._ads = window._ads || {}; window._ads[ad.id] = ad;
       const pays = (ad.paymentMethods || []).map(p => `<span class="pay-tag">${p}</span>`).join('');
+      
       let avatarHtml = `<div class="avatar">${ad.displayName[0].toUpperCase()}</div>`;
       if (ad.avatarUrl) avatarHtml = `<div class="avatar"><img src="${ad.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${ad.displayName[0].toUpperCase()}'"></div>`;
+      
+      // Иконка мерчанта/мейкера
+      const merchantBadge = ad.isMerchant ? `<span class="badge-merchant" title="Проверенный мерчант">✓</span>` : '';
 
       return `<div class="ad-card">
         <div class="ad-head" onclick="openPublicProfile(${ad.userId})">
           ${avatarHtml}
           <div class="ad-user">
-            <div class="ad-name">${ad.displayName} <span class="badge-face">${faceLabel}</span> ${ad.isPro ? '<span class="badge-pro">PRO</span>' : ''}</div>
+            <div class="ad-name">${ad.displayName} ${merchantBadge} <span class="badge-face">${faceLabel}</span> ${ad.isPro ? '<span class="badge-pro">PRO</span>' : ''}</div>
             <div class="ad-meta"><span>★ ${ad.ratingAvg || '—'}</span> <span>${ad.dealsCompleted || 0} сделок</span></div>
           </div>
         </div>
@@ -382,11 +376,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (user.avatarUrl) avatarHtml = `<div class="avatar lg" style="margin:0 auto 10px;"><img src="${user.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${user.displayName[0].toUpperCase()}'"></div>`;
         let favBtn = '';
         if (API.user() && API.user().id !== user.id) favBtn = `<button class="btn-fav ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(${user.id}, this)" style="position:absolute;top:20px;right:20px;font-size:24px;background:none;border:none;">${isFavorite ? '❤️' : '🤍'}</button>`;
+        
+        const merchantBadge = stats.isMerchant ? `<span class="badge-merchant" style="width:20px;height:20px;font-size:12px;margin-left:6px;" title="Проверенный мерчант">✓</span>` : '';
+
         c.innerHTML = `
           ${favBtn}
           <div style="text-align:center; margin-bottom: 20px; margin-top:10px;">
             ${avatarHtml}
-            <h2 style="font-size:20px;font-weight:800;margin-bottom:4px">${user.displayName} ${stats.isPro ? '<span class="badge-pro">PRO</span>' : ''}</h2>
+            <h2 style="font-size:20px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;justify-content:center;">${user.displayName} ${merchantBadge} ${stats.isPro ? '<span class="badge-pro">PRO</span>' : ''}</h2>
             <div style="font-size:12px;color:var(--dim);font-weight:600;">@${user.username}</div>
           </div>
           <div class="stats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
@@ -423,15 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('#f-side .seg-btn').forEach(b => { b.onclick = () => { document.querySelectorAll('#f-side .seg-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); }; });
     document.querySelectorAll('#f-face .seg-btn').forEach(b => { b.onclick = () => { document.querySelectorAll('#f-face .seg-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); }; });
     document.querySelectorAll('#f-payments .pay-chip').forEach(c => { c.onclick = () => c.classList.toggle('active'); });
-    
-    // НОВОЕ: обработка выбора времени
-    document.querySelectorAll('#f-time .pay-chip').forEach(c => { 
-      c.onclick = () => { 
-        document.querySelectorAll('#f-time .pay-chip').forEach(x => x.classList.remove('active')); 
-        c.classList.add('active'); 
-      }; 
-    });
-
+    document.querySelectorAll('#f-time .pay-chip').forEach(c => { c.onclick = () => { document.querySelectorAll('#f-time .pay-chip').forEach(x => x.classList.remove('active')); c.classList.add('active'); }; });
     document.querySelectorAll('#f-asset-select .icon-chip').forEach(c => {
       c.onclick = () => {
         document.querySelectorAll('#f-asset-select .icon-chip').forEach(x => x.classList.remove('active'));
@@ -477,18 +466,18 @@ document.addEventListener('DOMContentLoaded', () => {
       } finally { btn.disabled = false; btn.textContent = 'Опубликовать'; }
     });
 
-    // ОРДЕРА
+    // ОРДЕРА (ЗАЯВКИ)
     async function loadOrders(filter) {
       const list = document.getElementById('ordersList'); if (!list) return;
       if (!API.user()) { list.innerHTML = '<div class="empty-state">Войдите, чтобы увидеть ордера</div>'; return; }
       try {
         const { items } = await API.req('GET', '/orders/my?status=' + filter);
-        const sc = { waiting: 'var(--yellow)', paid: 'var(--grn)', completed: 'var(--grn)', cancelled: 'var(--red)', dispute: 'var(--gold)' };
+        const sc = { pending: 'var(--yellow)', accepted: 'var(--blue)', paid: 'var(--grn)', completed: 'var(--grn)', cancelled: 'var(--red)', declined: 'var(--red)', dispute: 'var(--gold)' };
         list.innerHTML = items.length ? items.map(o => `
-          <div class="ad-card" style="cursor:pointer;border-left:4px solid ${sc[o.status]}" data-order-id="${o.id}">
+          <div class="ad-card" style="cursor:pointer;border-left:4px solid ${sc[o.status] || 'var(--dim)'}" data-order-id="${o.id}">
             <div style="display:flex;justify-content:space-between;margin-bottom:10px">
               <strong style="font-family:Inter,monospace;font-size:15px;">#${o.publicId}</strong>
-              <span style="color:${sc[o.status]};font-size:12px;font-weight:800">${o.statusLabel}</span>
+              <span style="color:${sc[o.status] || 'var(--txt)'};font-size:12px;font-weight:800">${o.statusLabel}</span>
             </div>
             <div class="ad-body">
               <div><div class="ad-lbl">Сумма</div><div class="ad-val">${fmt(o.amountRub)} ₽</div></div>
@@ -524,32 +513,60 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderOrderPage(order, history, terms) {
       const u = API.user(), isBuyer = order.buyer_id === u.id, isSeller = order.seller_id === u.id, isAdmin = u.role === 'admin';
-      const sc = { waiting: '#FFD60A', paid: '#22c55e', completed: '#22c55e', cancelled: '#ef4444', dispute: '#D4AF37' };
+      const sc = { pending: '#FFD60A', accepted: '#3b82f6', paid: '#22c55e', completed: '#22c55e', cancelled: '#ef4444', declined: '#ef4444', dispute: '#D4AF37' };
       let progress = 20;
-      if (order.status === 'paid') progress = 60;
+      if (order.status === 'accepted') progress = 40;
+      if (order.status === 'paid') progress = 70;
       if (order.status === 'completed') progress = 100;
-      if (order.status === 'cancelled' || order.status === 'dispute') progress = 0;
+      if (order.status === 'cancelled' || order.status === 'dispute' || order.status === 'declined') progress = 0;
+
+      // ОПРЕДЕЛЕНИЕ КОНТРАГЕНТА
+      const counterparty = isBuyer ? order.seller : order.buyer;
+      const counterpartyRole = isBuyer ? 'Продавец' : 'Покупатель';
 
       let actionsHtml = '';
-      if (order.status === 'waiting' && isBuyer) {
-        actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><button class="btn btn-primary" onclick="doAction(${order.id},'paid')">Я оплатил</button><button class="btn btn-ghost" style="color:var(--red)" onclick="doAction(${order.id},'cancel')">Отменить</button></div>
-        <div style="background:rgba(34,197,94,.1);border:1px dashed rgba(34,197,94,.4);border-radius:12px;padding:16px;text-align:center;margin-bottom:16px;">
-          <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--grn);">Прикрепить чек об оплате</div>
-          <input type="file" id="receiptFile" style="display:none;" accept="image/*">
-          <button class="btn btn-primary btn-sm" onclick="document.getElementById('receiptFile').click()" style="border-radius:10px;">Выбрать файл</button>
-          <div id="fileName" style="font-size:11px;color:var(--dim);margin-top:8px;"></div>
-        </div>
-        <button class="btn btn-ghost btn-block btn-sm" style="color:var(--gold);" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
-      } else if (order.status === 'waiting' && isSeller) {
-        actionsHtml = `<div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:13px;margin-bottom:8px;font-weight:600;">Ожидайте оплаты от покупателя</div><button class="btn btn-ghost btn-block btn-sm" style="color:var(--gold);" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
-      } else if (order.status === 'paid') {
-        if (isSeller) actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><button class="btn btn-primary" onclick="doAction(${order.id},'confirm')">Оплата получена</button><button class="btn btn-ghost" style="color:var(--red)" onclick="doAction(${order.id},'dispute')">Спор</button></div>`;
-        else actionsHtml = `<div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:13px;margin-bottom:8px;font-weight:600;">Ожидайте подтверждения от продавца</div><button class="btn btn-ghost btn-block btn-sm" style="color:var(--red);" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
-      } else if (order.status === 'completed') {
-        actionsHtml = `<div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:14px;text-align:center;color:var(--grn);font-size:14px;font-weight:800;margin-bottom:10px">✓ Сделка завершена</div><button class="btn btn-primary btn-block" onclick="openReview(${order.id})" style="margin-bottom:16px;border-radius:12px;">Оставить отзыв</button>`;
-      } else if (order.status === 'cancelled') {
-        actionsHtml = `<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:14px;text-align:center;color:var(--red);font-size:14px;margin-bottom:16px;font-weight:800;">Ордер отменён</div>`;
-      } else if (order.status === 'dispute') {
+      
+      // ЛОГИКА КНОПОК В ЗАВИСИМОСТИ ОТ СТАТУСА
+      if (order.status === 'pending') {
+        if (isSeller) {
+          actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><button class="btn btn-primary" onclick="doAction(${order.id},'accept')" style="background:var(--grn);color:#fff;border:none;">Принять заявку</button><button class="btn btn-ghost" style="color:var(--red);border-color:var(--red);" onclick="doAction(${order.id},'decline')">Отклонить</button></div>`;
+        } else {
+          actionsHtml = `<div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:13px;margin-bottom:8px;font-weight:600;">Ожидайте подтверждения заявки продавцом</div>
+          <button class="btn btn-ghost btn-block" style="color:var(--red);" onclick="doAction(${order.id},'cancel')">Отменить заявку</button>`;
+        }
+      } 
+      else if (order.status === 'accepted') {
+        if (isBuyer) {
+          actionsHtml = `
+          <div style="background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:12px;padding:16px;text-align:center;margin-bottom:16px;">
+            <div style="font-size:12px;color:var(--dim);margin-bottom:8px;">Время на оплату:</div>
+            <div id="paymentTimerDisplay" style="font-size:24px;font-weight:900;color:var(--yellow);margin-bottom:12px;">--:--</div>
+            <input type="file" id="receiptFile" style="display:none;" accept="image/*">
+            <button class="btn btn-primary btn-block" onclick="document.getElementById('receiptFile').click()" style="margin-bottom:8px;">Прикрепить чек</button>
+            <div id="fileName" style="font-size:11px;color:var(--grn);margin-bottom:12px;font-weight:600;"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+               <button class="btn btn-primary" onclick="doAction(${order.id},'paid')">Я оплатил</button>
+               <button class="btn btn-ghost" style="color:var(--red);" onclick="doAction(${order.id},'cancel')">Отменить</button>
+            </div>
+          </div>`;
+        } else {
+          actionsHtml = `<div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:13px;margin-bottom:8px;font-weight:600;">Ожидайте оплаты от покупателя</div><button class="btn btn-ghost btn-block" style="color:var(--gold);" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
+        }
+      } 
+      else if (order.status === 'paid') {
+        if (isSeller) {
+          actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><button class="btn btn-primary" onclick="doAction(${order.id},'confirm')">Оплата получена</button><button class="btn btn-ghost" style="color:var(--red);" onclick="doAction(${order.id},'dispute')">Спор</button></div>`;
+        } else {
+          actionsHtml = `<div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:13px;margin-bottom:8px;font-weight:600;">Ожидайте подтверждения от продавца</div><button class="btn btn-ghost btn-block" style="color:var(--red);" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
+        }
+      } 
+      else if (order.status === 'completed') {
+        actionsHtml = `<div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:14px;text-align:center;color:var(--grn);font-size:14px;font-weight:800;margin-bottom:10px">✓ Сделка завершена</div><button class="btn btn-primary btn-block" onclick="openReview(${order.id})" style="margin-bottom:16px;">Оставить отзыв</button>`;
+      } 
+      else if (order.status === 'cancelled' || order.status === 'declined') {
+        actionsHtml = `<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:14px;text-align:center;color:var(--red);font-size:14px;margin-bottom:16px;font-weight:800;">Заявка ${order.status === 'declined' ? 'отклонена' : 'отменена'}</div>`;
+      } 
+      else if (order.status === 'dispute') {
         if (isAdmin) actionsHtml = `<div style="background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:14px;text-align:center;color:var(--gold);font-size:14px;margin-bottom:12px;font-weight:800;">Вы админ. Решите спор:</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px"><button class="btn btn-primary" onclick="resolveDispute(${order.id}, 'completed')">Завершить</button><button class="btn btn-ghost" style="color:var(--red)" onclick="resolveDispute(${order.id}, 'cancelled')">Отменить</button></div>`;
         else actionsHtml = `<div style="background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:14px;text-align:center;color:var(--gold);font-size:14px;margin-bottom:16px;font-weight:800;">Спор рассматривается администратором</div>`;
       }
@@ -559,15 +576,32 @@ document.addEventListener('DOMContentLoaded', () => {
       const container = document.getElementById('orderDetailContent');
       container.innerHTML = `
         <div class="glass-card" style="padding: 24px; margin-bottom: 16px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:12px;color:var(--dim);font-family:monospace;font-weight:700;">#${order.public_id}</div><div style="background:var(--glass-bg);color:${sc[order.status]};font-size:12px;font-weight:800;padding:4px 10px;border-radius:6px">${order.status}</div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+             <div style="font-size:12px;color:var(--dim);font-family:monospace;font-weight:700;">#${order.public_id}</div>
+             <div style="background:var(--glass-bg);color:${sc[order.status]};font-size:12px;font-weight:800;padding:4px 10px;border-radius:6px">${order.statusLabel}</div>
+          </div>
           <h2 style="font-size:22px;font-weight:900;margin-bottom:8px;color:var(--txt)">${isBuyer ? 'Покупка ' : 'Продажа '}${order.asset}</h2>
           <div style="font-size:36px;font-weight:900;color:var(--txt);font-variant-numeric:tabular-nums;">${fmt(order.amount_rub)}<span style="font-size:16px;color:var(--dim);font-weight:600;margin-left:4px">₽</span></div>
           <div style="width:100%;height:6px;background:var(--glass-border);border-radius:3px;margin-top:20px;overflow:hidden"><div style="height:100%;width:${progress}%;background:${sc[order.status]};transition:0.3s"></div></div>
         </div>
+        
+        <!-- ПРОФИЛЬ КОНТРАГЕНТА -->
+        <div class="glass-card" style="padding:16px;margin-bottom:16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;" onclick="openPublicProfile(${counterparty.id})">
+          <div style="display:flex;align-items:center;gap:12px;">
+             <div class="avatar" style="width:44px;height:44px;font-size:16px;">${counterparty.avatarUrl ? `<img src="${counterparty.avatarUrl}">` : counterparty.displayName[0].toUpperCase()}</div>
+             <div>
+               <div style="font-size:12px;color:var(--dim);font-weight:600;">${counterpartyRole}</div>
+               <div style="font-size:15px;font-weight:800;">${counterparty.displayName}</div>
+             </div>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="border:1px solid var(--glass-border);">Профиль</button>
+        </div>
+
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
           <div class="glass-card" style="padding:16px;"><div style="font-size:11px;color:var(--dim);font-weight:700;margin-bottom:4px;">Количество</div><div style="font-size:15px;font-weight:800;">${fmtDec(order.amount_asset, 4)} ${order.asset}</div></div>
           <div class="glass-card" style="padding:16px;"><div style="font-size:11px;color:var(--dim);font-weight:700;margin-bottom:4px;">Курс</div><div style="font-size:15px;font-weight:800;">${fmt(order.price)} ₽</div></div>
         </div>
+        
         <div class="glass-card" style="padding:16px;margin-bottom:16px;">
           <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
              <div style="font-size: 11px; font-weight: 800; color: var(--dim); text-transform: uppercase;">Время на оплату</div>
@@ -576,18 +610,51 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="font-size: 11px; font-weight: 800; color: var(--dim); text-transform: uppercase; margin-bottom: 8px;">Условия сделки</div>
           <div style="font-size: 13px; color: var(--txt); line-height: 1.5; font-weight: 500;">${terms || 'Стандартные условия сделки.'}</div>
         </div>
+        
         ${actionsHtml}
+        
         <button style="width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;padding:16px;margin-bottom:16px;color:var(--txt);font-size:14px" onclick="openChatModal(${order.id})">
           <div style="display:flex;align-items:center;gap:12px"><div class="avatar" style="width:40px;height:40px;font-size:18px">💬</div><div style="text-align:left;"><div style="font-weight:800">Чат по сделке</div><div style="font-size:11px;color:var(--dim);font-weight:600;">Обсудить детали</div></div></div>
         </button>
         <div class="glass-card" style="padding:16px"><div style="font-size:12px;font-weight:800;margin-bottom:14px;color:var(--dim);text-transform:uppercase">История</div>${timelineHtml}</div>`;
 
+      // ЛОГИКА ТАЙМЕРА НА ОПЛАТУ
+      if (order.status === 'accepted') {
+        const timerEl = document.getElementById('paymentTimerDisplay');
+        if (timerEl) {
+           const createdAt = new Date(order.createdAt).getTime();
+           const limitMs = order.paymentTime * 60000;
+           const expiresAt = createdAt + limitMs;
+           
+           if (window.orderTimerInterval) clearInterval(window.orderTimerInterval);
+           
+           window.orderTimerInterval = setInterval(() => {
+             const now = Date.now();
+             const diff = expiresAt - now;
+             
+             if (diff <= 0) {
+               clearInterval(window.orderTimerInterval);
+               timerEl.textContent = '00:00';
+               timerEl.style.color = 'var(--red)';
+               // Тут можно автоматически отменять или открывать спор
+             } else {
+               const m = Math.floor(diff / 60000).toString().padStart(2, '0');
+               const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+               timerEl.textContent = `${m}:${s}`;
+             }
+           }, 1000);
+        }
+      } else {
+         if (window.orderTimerInterval) clearInterval(window.orderTimerInterval);
+      }
+
+      // ФАЙЛ ЧЕКА
       const fileInput = document.getElementById('receiptFile');
       if (fileInput) {
         fileInput.onchange = (e) => {
           const file = e.target.files[0];
           if (file) {
-            document.getElementById('fileName').textContent = `Прикреплено: ${file.name}`;
+            document.getElementById('fileName').textContent = `✓ Файл прикреплен`;
             toast('Чек успешно прикреплен!', 'success');
           }
         };
@@ -595,13 +662,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.doAction = async function(orderId, action) {
-      if (action === 'cancel' && !await confirmAsync('Отмена', 'Отменить ордер?', 'Да')) return;
+      if (action === 'cancel' && !await confirmAsync('Отмена', 'Отменить заявку?', 'Да')) return;
       if (action === 'confirm' && !await confirmAsync('Подтверждение', 'Подтвердить оплату?', 'Да')) return;
       if (action === 'dispute' && !await confirmAsync('Спор', 'Вы уверены, что хотите открыть спор?', 'Да')) return;
+      if (action === 'decline' && !await confirmAsync('Отклонение', 'Отклонить заявку?', 'Да')) return;
+      
       try { 
         await API.req('POST', `/orders/${orderId}/${action}`); 
         toast('Статус обновлён', 'success'); 
-        addNotification(`Статус ордера #${orderId} обновлен: ${action}`);
+        addNotification(`Статус ордера #${orderId} обновлен`);
         openOrderPage(orderId); 
       }
       catch (e) { toast(e.message, 'error'); }
@@ -695,14 +764,16 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const { user, stats } = await API.req('GET', '/users/me');
         const proBadge = stats.isPro ? `<span class="badge-pro">PRO</span>` : '';
+        const merchantBadge = stats.isMerchant ? `<span class="badge-merchant" style="width:20px;height:20px;font-size:12px;margin-left:6px;" title="Мерчант">✓</span>` : '';
+        
         const successRateStr = stats.successRate !== null ? `${stats.successRate}%` : '—';
         const ratingAvgStr = stats.ratingAvg !== null ? stats.ratingAvg : '—';
         const proConditions = stats.isPro ? `<div style="font-size:11px; color:var(--grn); margin-top:8px; font-weight:600;">✓ Условия PRO выполнены</div>` : `<div style="font-size:11px; color:var(--dim); margin-top:8px;">До PRO: Оборот $${fmt(stats.volumeUsd)} / $100,000<br>Успешных: ${successRateStr} / 80%</div>`;
 
         let contentHtml = '';
-        if (profileTab === 'ads') contentHtml = '<div id="myAdsList">Загрузка...</div>';
-        else if (profileTab === 'history') contentHtml = '<div id="myHistoryList">Загрузка...</div>';
-        else if (profileTab === 'reviews') contentHtml = '<div id="myReviewsList">Загрузка...</div>';
+        if (profileTab === 'ads') contentHtml = '<div id="myAdsList"><div class="empty-state">Загрузка...</div></div>';
+        else if (profileTab === 'history') contentHtml = '<div id="myHistoryList"><div class="empty-state">Загрузка...</div></div>';
+        else if (profileTab === 'reviews') contentHtml = '<div id="myReviewsList"><div class="empty-state">Загрузка...</div></div>';
         
         let avatarHtml = `<div class="avatar lg">${user.displayName[0].toUpperCase()}</div>`;
         if (user.avatarUrl) avatarHtml = `<div class="avatar lg"><img src="${user.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${user.displayName[0].toUpperCase()}'"></div>`;
@@ -711,7 +782,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="glass-card" style="display:flex;align-items:center;gap:16px;padding:20px;margin-bottom:20px;position:relative;">
             ${avatarHtml}
             <div style="flex:1;min-width:0">
-              <h2 style="font-size:20px;font-weight:800;margin-bottom:4px">${user.displayName} ${proBadge}</h2>
+              <h2 style="font-size:20px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;">${user.displayName} ${merchantBadge} ${proBadge}</h2>
               <div style="font-size:12px;color:var(--dim);font-weight:600;">@${user.username}</div>
               ${proConditions}
             </div>
@@ -743,7 +814,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="profile-tab ${profileTab === 'reviews' ? 'active' : ''}" onclick="switchProfileTab('reviews')">Отзывы</button>
           </div>
           <div id="profileTabContent">${contentHtml}</div>
-          <div style="margin-top:24px"><button class="btn btn-ghost btn-block" onclick="logoutAction()" style="color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:16px;">Выйти из аккаунта</button></div>`;
+          <div style="margin-top:24px"><button class="btn btn-ghost btn-block" onclick="logoutAction()" style="color:var(--red);border:1px solid rgba(239,68,68,.3);">Выйти из аккаунта</button></div>`;
 
         if (profileTab === 'ads') loadMyAds();
         else if (profileTab === 'history') loadMyHistory();
@@ -753,29 +824,29 @@ document.addEventListener('DOMContentLoaded', () => {
     window.switchProfileTab = function(tab) { profileTab = tab; loadProfile(); };
 
     async function loadMyAds() {
+      const list = document.getElementById('myAdsList'); if (!list) return;
       try {
         const { items } = await API.req('GET', '/ads/my');
-        const list = document.getElementById('myAdsList'); if (!list) return;
         list.innerHTML = items.length ? items.map(ad => `<div class="glass-card" style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;margin-bottom:12px"><strong style="font-size:16px;">${ad.side === 'sell' ? 'Продажа' : 'Покупка'} ${ad.asset}</strong><span style="color:${ad.active ? 'var(--grn)' : 'var(--red)'};font-size:12px;font-weight:700;background:rgba(255,255,255,0.05);padding:4px 8px;border-radius:6px;">${ad.active ? 'Активно' : 'Неактивно'}</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div style="font-size:11px;color:var(--dim);font-weight:600;">Курс</div><div style="font-size:15px;font-weight:800;">${fmt(ad.price)} ₽</div></div><div><div style="font-size:11px;color:var(--dim);font-weight:600;">Остаток</div><div style="font-size:15px;font-weight:800;">${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div></div></div></div>`).join('') : '<div class="empty-state">У вас нет объявлений</div>';
-      } catch (e) { const l = document.getElementById('myAdsList'); if (l) l.innerHTML = '<div class="empty-state">Ошибка</div>'; }
+      } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки объявлений</div>'; }
     }
 
     async function loadMyHistory() {
+      const list = document.getElementById('myHistoryList'); if (!list) return;
       try {
         const { items } = await API.req('GET', '/orders/my?status=completed');
-        const list = document.getElementById('myHistoryList'); if (!list) return;
         list.innerHTML = items.length ? items.map(o => `<div class="glass-card" style="margin-bottom:12px; border-left:4px solid var(--grn);"><div style="display:flex;justify-content:space-between;margin-bottom:12px"><strong style="font-size:15px;">#${o.publicId}</strong><span style="color:var(--grn);font-size:12px;font-weight:700;">Завершен</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div style="font-size:11px;color:var(--dim);font-weight:600;">Сумма</div><div style="font-size:15px;font-weight:800;">${fmt(o.amountRub)} ₽</div></div><div><div style="font-size:11px;color:var(--dim);font-weight:600;">Актив</div><div style="font-size:15px;font-weight:800;">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div></div></div>`).join('') : '<div class="empty-state">История пуста</div>';
-      } catch (e) { const l = document.getElementById('myHistoryList'); if (l) l.innerHTML = '<div class="empty-state">Ошибка</div>'; }
+      } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
     }
 
     async function loadMyReviews() {
+      const list = document.getElementById('myReviewsList'); if (!list) return;
       try {
         const u = API.user();
         const data = await API.req('GET', '/reviews/user/' + u.id);
         const items = data.items || [];
-        const list = document.getElementById('myReviewsList'); if (!list) return;
         list.innerHTML = items.length ? items.map(r => `<div class="glass-card" style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><strong style="font-size:14px;">${r.author}</strong><span style="color:var(--yellow);font-size:16px;">${'★'.repeat(r.rating)}</span></div><p style="font-size:13px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p></div>`).join('') : '<div class="empty-state">Отзывов нет</div>';
-      } catch (e) { const l = document.getElementById('myReviewsList'); if (l) l.innerHTML = '<div class="empty-state">Отзывов нет</div>'; }
+      } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
     }
 
     // НАСТРОЙКИ
@@ -798,7 +869,6 @@ document.addEventListener('DOMContentLoaded', () => {
           avatarUrl: document.getElementById('settingsAvatarUrl').value,
           email: document.getElementById('settingsEmail').value
         };
-        
         const curPass = document.getElementById('settingsCurrentPass').value;
         const newPass = document.getElementById('settingsNewPass').value;
         if (newPass) {
@@ -806,21 +876,19 @@ document.addEventListener('DOMContentLoaded', () => {
            payload.currentPassword = curPass;
            payload.password = newPass;
         }
-
         const { user } = await API.req('PATCH', '/users/me', payload);
         localStorage.setItem('vexo_user', JSON.stringify(user));
         closeModal('settingsModal'); 
         toast('Настройки сохранены', 'success'); 
         addNotification('Вы обновили настройки профиля.');
-        updateAuthUI();
-        loadProfile();
+        updateAuthUI(); loadProfile();
       } catch (e) {
         const er = document.getElementById('settingsError');
         if (er) er.textContent = e.message === 'wrong_password' ? 'Неверный текущий пароль' : e.message;
       } finally { btn.disabled = false; btn.textContent = 'Сохранить'; }
     });
 
-    // ОРДЕР МОДАЛКА (С ТАЙМЕРОМ)
+    // ОРДЕР МОДАЛКА (С ТАЙМЕРОМ НА ЦЕНУ)
     let currentAd = null, selectedPay = null, priceTimerInterval = null;
     window.openOrderModal = function(adId) {
       const ad = (window._ads || {})[adId];
@@ -879,7 +947,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.style.opacity = '1';
       btn.onclick = submitOrder;
       
-      // ЗАПУСК ТАЙМЕРА НА 60 СЕКУНД
+      // ТАЙМЕР НА ЦЕНУ (60 СЕКУНД С МОМЕНТА СОЗДАНИЯ ОБЪЯВЛЕНИЯ)
       let timeLeft = 60;
       const timerEl = document.getElementById('priceTimer');
       if (timerEl) timerEl.textContent = timeLeft + 's';
@@ -893,28 +961,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (timeLeft <= 0) {
           clearInterval(priceTimerInterval);
           if (timerEl) timerEl.textContent = 'Обновление...';
-          
-          // Запрашиваем актуальную цену
           try {
             const freshAd = await API.req('GET', '/ads/' + ad.id);
             if (freshAd.price !== ad.price) {
-              // Цена изменилась
-              currentAd = freshAd; // обновляем локальный объект
+              currentAd = freshAd; 
               window._ads[ad.id] = freshAd;
               ad.price = freshAd.price;
-              
               setText('orderRate', fmt(ad.price) + ' ₽');
-              toast('Внимание! Мейкер изменил курс. Ознакомьтесь с новой ценой.', 'error');
-              
-              // Пересчитываем сумму, если введена
+              toast('Внимание! Мейкер изменил курс. Цена обновлена.', 'error');
               if (amountInput.value) amountInput.dispatchEvent(new Event('input'));
             }
           } catch(e) { console.log('Ошибка обновления цены', e); }
-
-          // Перезапускаем таймер
           timeLeft = 60;
           if (timerEl) timerEl.textContent = timeLeft + 's';
-          priceTimerInterval = setInterval(() => { /* логика таймера */ }, 1000); // для простоты можно рекурсию, но мы просто перезапустим openOrderModal или вызовем функцию
         }
       }, 1000);
 
@@ -932,8 +991,8 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const order = await API.req('POST', '/orders', { ad_id: currentAd.id, amount_rub: rub, payment_method: selectedPay });
         closeModal('orderModal'); 
-        toast('Ордер создан!', 'success'); 
-        addNotification(`Создан новый ордер #${order.publicId}`);
+        toast('Заявка создана! Ожидайте подтверждения.', 'success'); 
+        addNotification(`Создана новая заявка #${order.publicId}`);
         openOrderPage(order.id);
       } catch (err) { if (errEl) errEl.textContent = err.message; }
       finally { btn.disabled = false; btn.textContent = currentAd ? (currentAd.side === 'sell' ? 'Купить' : 'Продать') : 'OK'; }

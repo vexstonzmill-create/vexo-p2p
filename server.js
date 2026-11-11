@@ -10,7 +10,7 @@ const PORT = Number(process.env.PORT) || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_vexo_key_that_is_long_enough_12345';
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_UDtaHhd5Zr6s@ep-divine-sun-bawvlsl5-pooler.c-8.eu-central-1.aws.neon.tech/neondb?sslmode=require",
+  connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_UDtaHhd5Zr6s@ep-divine-sun-bawv1sl5-pooler.c-8.eu-central-1.aws.neon.tech/neondb?sslmode=require",
   ssl: { rejectUnauthorized: false }
 });
 
@@ -19,12 +19,11 @@ async function initDB() {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username VARCHAR(50) UNIQUE NOT NULL, display_name VARCHAR(50), email VARCHAR(100) UNIQUE NOT NULL, password_hash VARCHAR(255) NOT NULL, role VARCHAR(20) DEFAULT 'user', kyc_status VARCHAR(20) DEFAULT 'none', avatar_url TEXT, favorites INT[] DEFAULT '{}', volume_usd NUMERIC DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS ads (id SERIAL PRIMARY KEY, user_id INT REFERENCES users(id), side VARCHAR(10), face_type VARCHAR(20), asset VARCHAR(20), price NUMERIC, amount_total NUMERIC, amount_left NUMERIC, min_rub NUMERIC, max_rub NUMERIC, payment_methods TEXT[], terms TEXT, active BOOLEAN DEFAULT true, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
-      CREATE TABLE IF NOT EXISTS orders (id SERIAL PRIMARY KEY, public_id VARCHAR(20) UNIQUE, ad_id INT REFERENCES ads(id), buyer_id INT REFERENCES users(id), seller_id INT REFERENCES users(id), asset VARCHAR(20), price NUMERIC, amount_rub NUMERIC, amount_asset NUMERIC, face_type VARCHAR(20), payment_method VARCHAR(50), status VARCHAR(20) DEFAULT 'waiting', history JSONB DEFAULT '[]', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, expires_at TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS orders (id SERIAL PRIMARY KEY, public_id VARCHAR(20) UNIQUE, ad_id INT REFERENCES ads(id), buyer_id INT REFERENCES users(id), seller_id INT REFERENCES users(id), asset VARCHAR(20), price NUMERIC, amount_rub NUMERIC, amount_asset NUMERIC, face_type VARCHAR(20), payment_method VARCHAR(50), status VARCHAR(20) DEFAULT 'pending', history JSONB DEFAULT '[]', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, expires_at TIMESTAMP);
       CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, order_id INT REFERENCES orders(id), sender_id INT REFERENCES users(id), text TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS reviews (id SERIAL PRIMARY KEY, order_id INT REFERENCES orders(id), author_id INT REFERENCES users(id), target_id INT REFERENCES users(id), rating INT, comment TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
     `);
     
-    // Безопасное добавление новых колонок, если их нет
     await pool.query(`ALTER TABLE ads ADD COLUMN IF NOT EXISTS payment_time INT DEFAULT 30;`);
     await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_time INT DEFAULT 30;`);
     
@@ -76,7 +75,11 @@ async function getUserStats(userId) {
   const avg = ratings.length ? Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)) : null;
   const volumeUsd = Number(volumeRes.rows[0]?.volume_usd || 0);
   const isPro = volumeUsd >= 100000 && successRate >= 80 && completed >= 10;
-  return { dealsTotal: total, dealsCompleted: completed, successRate, reviewsCount: ratings.length, ratingAvg: avg, volumeUsd, isPro };
+  
+  // Дополнительный статус для мерчантов
+  const isMerchant = completed >= 5 || volumeUsd >= 10000;
+
+  return { dealsTotal: total, dealsCompleted: completed, successRate, reviewsCount: ratings.length, ratingAvg: avg, volumeUsd, isPro, isMerchant };
 }
 
 app.post('/api/auth/register', async (req, res) => {
@@ -170,7 +173,16 @@ app.get('/api/ads', async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
-// НОВЫЙ ЭНДПОИНТ: Получить конкретное объявление (для проверки цены)
+app.get('/api/ads/my', auth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM ads WHERE user_id = $1 ORDER BY created_at DESC', [req.user.id]);
+    const items = await Promise.all(result.rows.map(shapeAd));
+    res.json({ items });
+  } catch(e) { 
+    res.json({ items: [] }); 
+  }
+});
+
 app.get('/api/ads/:id', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM ads WHERE id = $1', [req.params.id]);
@@ -192,13 +204,16 @@ app.post('/api/ads', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
-app.get('/api/ads/my', auth, async (req, res) => {
-  const result = await pool.query('SELECT * FROM ads WHERE user_id = $1 ORDER BY created_at DESC', [req.user.id]);
-  const items = await Promise.all(result.rows.map(shapeAd));
-  res.json({ items });
-});
-
-const STATUS_LABEL = { waiting: 'Ожидает оплаты', paid: 'Оплата отмечена', completed: 'Завершён', cancelled: 'Отменён', dispute: 'Спор' };
+// СТАТУСЫ НА РУССКОМ
+const STATUS_LABEL = { 
+  pending: 'Ожидает одобрения', 
+  accepted: 'Ожидает оплаты', 
+  paid: 'Оплата отправлена', 
+  completed: 'Завершён', 
+  cancelled: 'Отменён', 
+  declined: 'Отклонён',
+  dispute: 'Спор' 
+};
 
 async function shapeOrder(o) {
   const bRes = await pool.query('SELECT * FROM users WHERE id = $1', [o.buyer_id]);
@@ -214,14 +229,16 @@ app.post('/api/orders', auth, async (req, res) => {
     await client.query('BEGIN');
     const adRes = await client.query('SELECT * FROM ads WHERE id = $1 FOR UPDATE', [ad_id]);
     const ad = adRes.rows[0];
-    if (!ad || !ad.active) throw new Error('ad_inactive');
-    if (ad.user_id === req.user.id) throw new Error('self_trade');
-    if (!ad.payment_methods.includes(payment_method)) throw new Error('bad_payment');
+    if (!ad || !ad.active) throw new Error('Объявление неактивно');
+    if (ad.user_id === req.user.id) throw new Error('Нельзя торговать с собой');
+    if (!ad.payment_methods.includes(payment_method)) throw new Error('Способ оплаты недоступен');
+    
     const rub = Number(amount_rub);
-    if (rub < ad.min_rub) throw new Error('below_min');
-    if (rub > ad.max_rub) throw new Error('above_max');
+    if (rub < ad.min_rub) throw new Error('Сумма ниже минимума');
+    if (rub > ad.max_rub) throw new Error('Сумма выше максимума');
+    
     const assetQty = rub / ad.price;
-    if (assetQty > ad.amount_left) throw new Error('insufficient_asset');
+    if (assetQty > ad.amount_left) throw new Error('Недостаточно актива');
     
     const buyerId = ad.side === 'sell' ? req.user.id : ad.user_id;
     const sellerId = ad.side === 'sell' ? ad.user_id : req.user.id;
@@ -229,11 +246,11 @@ app.post('/api/orders', auth, async (req, res) => {
     await client.query('UPDATE ads SET amount_left = amount_left - $1 WHERE id = $2', [assetQty, ad.id]);
     
     const publicId = 'VX-' + crypto.randomBytes(3).toString('hex').toUpperCase();
-    const history = JSON.stringify([{ status: 'waiting', at: new Date().toISOString(), note: 'Ордер создан' }]);
+    const history = JSON.stringify([{ status: 'pending', at: new Date().toISOString(), note: 'Заявка создана' }]);
     
     const orderRes = await client.query(
-      'INSERT INTO orders (public_id, ad_id, buyer_id, seller_id, asset, price, amount_rub, amount_asset, face_type, payment_method, history, payment_time) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *', 
-      [publicId, ad.id, buyerId, sellerId, ad.asset, ad.price, rub, assetQty, ad.face_type, payment_method, history, ad.payment_time || 30]
+      'INSERT INTO orders (public_id, ad_id, buyer_id, seller_id, asset, price, amount_rub, amount_asset, face_type, payment_method, history, payment_time, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *', 
+      [publicId, ad.id, buyerId, sellerId, ad.asset, ad.price, rub, assetQty, ad.face_type, payment_method, history, ad.payment_time || 30, 'pending']
     );
     
     await client.query('COMMIT');
@@ -249,9 +266,9 @@ app.get('/api/orders/my', auth, async (req, res) => {
   if (req.user.role !== 'admin') { query += " WHERE buyer_id = $1 OR seller_id = $1"; params.push(req.user.id); }
   else { query += " WHERE 1=1"; }
   const f = req.query.status;
-  if (f === 'active') query += " AND status IN ('waiting', 'paid', 'dispute')";
+  if (f === 'active') query += " AND status IN ('pending', 'accepted', 'paid', 'dispute')";
   else if (f === 'completed') query += " AND status = 'completed'";
-  else if (f === 'cancelled') query += " AND status = 'cancelled'";
+  else if (f === 'cancelled') query += " AND status IN ('cancelled', 'declined')";
   query += " ORDER BY created_at DESC";
   const result = await pool.query(query, params);
   const items = await Promise.all(result.rows.map(shapeOrder));
@@ -272,15 +289,33 @@ async function transition(orderId, to, note, client = pool) {
   const o = oRes.rows[0];
   const newHistory = [...(o.history || []), { status: to, at: new Date().toISOString(), note }];
   await client.query('UPDATE orders SET status = $1, history = $2 WHERE id = $3', [to, JSON.stringify(newHistory), orderId]);
-  if (to === 'cancelled') await client.query('UPDATE ads SET amount_left = amount_left + $1 WHERE id = $2', [o.amount_asset, o.ad_id]);
+  if (to === 'cancelled' || to === 'declined') await client.query('UPDATE ads SET amount_left = amount_left + $1 WHERE id = $2', [o.amount_asset, o.ad_id]);
   return o;
 }
+
+// ПРИНЯТИЕ ЗАЯВКИ ПРОДАВЦОМ
+app.post('/api/orders/:id/accept', auth, async (req, res) => {
+  const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
+  const o = oRes.rows[0];
+  if (o.seller_id !== req.user.id || o.status !== 'pending') return res.status(403).json({ error: 'Доступ запрещен' });
+  await transition(o.id, 'accepted', 'Заявка принята продавцом');
+  res.json({ ok: true });
+});
+
+// ОТКЛОНЕНИЕ ЗАЯВКИ ПРОДАВЦОМ
+app.post('/api/orders/:id/decline', auth, async (req, res) => {
+  const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
+  const o = oRes.rows[0];
+  if (o.seller_id !== req.user.id || o.status !== 'pending') return res.status(403).json({ error: 'Доступ запрещен' });
+  await transition(o.id, 'declined', 'Заявка отклонена продавцом');
+  res.json({ ok: true });
+});
 
 app.post('/api/orders/:id/paid', auth, async (req, res) => {
   const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
   const o = oRes.rows[0];
-  if (o.buyer_id !== req.user.id || o.status !== 'waiting') return res.status(409).json({ error: 'bad' });
-  await transition(o.id, 'paid', 'Оплата отмечена'); res.json({ ok: true });
+  if (o.buyer_id !== req.user.id || o.status !== 'accepted') return res.status(409).json({ error: 'Неверный статус' });
+  await transition(o.id, 'paid', 'Оплата отправлена'); res.json({ ok: true });
 });
 
 app.post('/api/orders/:id/confirm', auth, async (req, res) => {
@@ -296,22 +331,22 @@ app.post('/api/orders/:id/confirm', auth, async (req, res) => {
     await client.query('UPDATE users SET volume_usd = volume_usd + $1 WHERE id = $2', [volumeToAdd, o.seller_id]);
     await client.query('COMMIT');
     res.json({ ok: true });
-  } catch (e) { await client.query('ROLLBACK'); res.status(409).json({ error: 'bad' }); }
+  } catch (e) { await client.query('ROLLBACK'); res.status(409).json({ error: 'Ошибка' }); }
   finally { client.release(); }
 });
 
 app.post('/api/orders/:id/cancel', auth, async (req, res) => {
   const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
   const o = oRes.rows[0];
-  if (!['waiting', 'paid'].includes(o.status)) return res.status(409).json({ error: 'bad' });
+  if (!['pending', 'accepted', 'paid'].includes(o.status)) return res.status(409).json({ error: 'bad' });
   if (o.buyer_id !== req.user.id && o.seller_id !== req.user.id) return res.status(403).json({ error: 'forbidden' });
-  await transition(o.id, 'cancelled', 'Отменён'); res.json({ ok: true });
+  await transition(o.id, 'cancelled', 'Отменён пользователем'); res.json({ ok: true });
 });
 
 app.post('/api/orders/:id/dispute', auth, async (req, res) => {
   const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
   const o = oRes.rows[0];
-  if (!o || !['waiting', 'paid'].includes(o.status)) return res.status(409).json({ error: 'bad' });
+  if (!o || !['pending', 'accepted', 'paid'].includes(o.status)) return res.status(409).json({ error: 'bad' });
   if (o.buyer_id !== req.user.id && o.seller_id !== req.user.id) return res.status(403).json({ error: 'forbidden' });
   await transition(o.id, 'dispute', 'Открыт спор: ' + (req.body?.reason || '')); res.json({ ok: true });
 });
@@ -350,7 +385,7 @@ app.get('/api/chat/:orderId', auth, async (req, res) => {
 app.post('/api/chat/:orderId', auth, async (req, res) => {
   const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.orderId]);
   const o = oRes.rows[0];
-  if (!o || ['completed', 'cancelled'].includes(o.status)) return res.status(409).json({ error: 'closed' });
+  if (!o || ['completed', 'cancelled', 'declined'].includes(o.status)) return res.status(409).json({ error: 'closed' });
   const result = await pool.query('INSERT INTO messages (order_id, sender_id, text) VALUES ($1, $2, $3) RETURNING *', [o.id, req.user.id, req.body.text]);
   res.status(201).json({ ...result.rows[0], isMine: true });
 });
