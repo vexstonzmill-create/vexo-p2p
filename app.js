@@ -41,6 +41,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const fmt = (n) => new Intl.NumberFormat('ru-RU').format(n || 0);
     const fmtDec = (n, d = 2) => new Intl.NumberFormat('ru-RU', { minimumFractionDigits: d, maximumFractionDigits: d }).format(n || 0);
 
+    // SVG Иконки для бейджей
+    const ICONS = {
+      pro: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
+      merchant: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>`, // Звезда для мерчанта (можно заменить на щит)
+      maker: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>` // Молния
+    };
+
     function toast(msg, type = 'info') {
       try {
         const c = document.getElementById('toastContainer');
@@ -87,6 +94,19 @@ document.addEventListener('DOMContentLoaded', () => {
       viewport.addEventListener('touchend', e => { const endX = e.changedTouches[0].clientX; const diff = startX - endX; if (diff > 50) go(idx + 1); if (diff < -50) go(idx - 1); auto(); });
       auto();
     })();
+
+    // Загрузка курса на главную
+    async function loadHomeRate() {
+      try {
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=rub');
+        const data = await res.json();
+        if (data && data.tether && data.tether.rub) {
+          document.getElementById('homeUsdtRate').textContent = fmt(data.tether.rub) + ' ₽';
+        }
+      } catch(e) {
+        document.getElementById('homeUsdtRate').textContent = '90 ₽'; // Фоллбэк
+      }
+    }
 
     let notifications = JSON.parse(localStorage.getItem('vexo_notifs')) || [];
     notifications = notifications.filter((v,i,a)=>a.findIndex(t=>(t.id === v.id))===i);
@@ -144,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (name === 'market' && !screenCache.market) { loadMarket(); screenCache.market = true; }
         if (name === 'orders' && !screenCache.orders) { loadOrders('active'); screenCache.orders = true; }
         if (name === 'profile' && !screenCache.profile) { loadProfile(); screenCache.profile = true; }
-        if (name === 'home' && !screenCache.home) { loadHome(); screenCache.home = true; }
+        if (name === 'home' && !screenCache.home) { loadHomeRate(); screenCache.home = true; }
         if (name === 'wallet') { loadWallet(); screenCache.wallet = true; }
         if (name === 'admin') { loadAdmin(); } 
       } catch(e) { console.error('show error:', e); }
@@ -179,14 +199,6 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.setItem('vexo_font', font);
     }
     applyFont(currentFont);
-
-    let currentZoom = localStorage.getItem('vexo_zoom') || 'medium';
-    function applyZoom(size) {
-      document.body.classList.remove('zoom-small', 'zoom-medium', 'zoom-large');
-      document.body.classList.add('zoom-' + size);
-      localStorage.setItem('vexo_zoom', size);
-    }
-    applyZoom(currentZoom);
 
     document.getElementById('themeBtn')?.addEventListener('click', () => {
       currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -281,40 +293,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // ОБНОВЛЕННЫЙ РЕНДЕР ДЛЯ ГЛАВНОЙ (Мини-карточки)
-    function renderMiniAd(ad) {
-      const coinClass = ad.asset.toLowerCase();
-      const coinSymbol = ad.asset === 'USDT' ? '₮' : ad.asset === 'BTC' ? '₿' : 'T';
-      const pays = (ad.paymentMethods || []).join(', ');
-      
-      return `<div class="ad-card" style="padding: 10px; cursor:pointer;" onclick="openPublicProfile(${ad.userId})">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div style="display:flex; align-items:center; gap:8px;">
-             <div class="coin-icon ${coinClass}" style="width:32px;height:32px;font-size:14px;">${coinSymbol}</div>
-             <div>
-               <div style="font-weight:800; font-size:14px; color:var(--txt);">${ad.asset}</div>
-               <div style="font-size:10px; color:var(--dim); max-width:100px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${pays}</div>
-             </div>
-          </div>
-          <div style="text-align:right;">
-             <div style="font-weight:900; font-size:15px; color:var(--txt);">${fmt(ad.price)} ₽</div>
-             <div style="font-size:10px; color:var(--dim);">${ad.displayName}</div>
-          </div>
-        </div>
-      </div>`;
-    }
-
-    async function loadHome() {
-      const list = document.getElementById('homeTopAds');
-      if (!list) return;
-      try {
-        const { items } = await API.req('GET', '/ads?side=sell');
-        const top3 = items.slice(0, 3);
-        list.innerHTML = top3.length ? top3.map(renderMiniAd).join('') : '<div class="empty-state">Нет предложений</div>';
-      } catch(e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
-    }
-
-    let walletActionType = 'deposit';
     async function loadWallet() {
       const u = API.user();
       const screen = document.getElementById('screen-wallet');
@@ -338,18 +316,18 @@ document.addEventListener('DOMContentLoaded', () => {
           screen.innerHTML = `
             <h2 style="margin-bottom: 4px; font-size: 16px;">Кошелёк</h2>
             <p style="color: var(--dim); font-size: 11px; margin-bottom: 12px;">Балансы и история</p>
-            <div class="wallet-hero" style="padding: 20px; margin-bottom: 16px;">
-              <div class="lbl" style="font-size:11px;">Общий баланс</div>
-              <div class="amount" style="font-size:32px; margin-bottom:16px;">${fmt(freshUser.balanceRub)} <span>₽</span></div>
-              <div class="wallet-actions" style="gap:8px;">
-                <button class="btn btn-primary btn-sm" id="btnDeposit" style="flex:1; height:36px; font-size:12px;">Пополнить</button>
-                <button class="btn btn-ghost btn-sm" id="btnWithdraw" style="flex:1; height:36px; font-size:12px;">Вывести</button>
+            <div class="wallet-hero">
+              <div class="lbl">Общий баланс</div>
+              <div class="amount">${fmt(freshUser.balanceRub)} <span>₽</span></div>
+              <div class="wallet-actions">
+                <button class="btn btn-primary btn-sm" id="btnDeposit" style="flex:1;">Пополнить</button>
+                <button class="btn btn-ghost btn-sm" id="btnWithdraw" style="flex:1;">Вывести</button>
               </div>
             </div>
             <h3 style="margin-top: 12px; font-size: 13px; margin-bottom: 8px;">Активы</h3>
             <div class="wallet-list">
-              <div class="wallet-item" style="padding: 12px;"><div class="coin-icon rub" style="width:32px;height:32px;font-size:14px;">₽</div><div class="w-info"><div class="w-name" style="font-weight:700; font-size:13px;">Российский рубль</div><div class="w-sub" style="font-size:10px;color:var(--dim);">RUB · фиат</div></div><div class="w-bal" style="margin-left:auto; font-weight:800; font-size:14px;">${fmt(freshUser.balanceRub)} ₽</div></div>
-              <div class="wallet-item" style="padding: 12px;"><div class="coin-icon usdt" style="width:32px;height:32px;font-size:14px;">₮</div><div class="w-info"><div class="w-name" style="font-weight:700; font-size:13px;">Tether</div><div class="w-sub" style="font-size:10px;color:var(--dim);">USDT · TRC-20</div></div><div class="w-bal" style="margin-left:auto; font-weight:800; font-size:14px;">${fmtDec(freshUser.balanceUsdt, 2)} <span style="font-size:10px;color:var(--dim);">≈ ${fmt(estimatedRub)} ₽</span></div></div>
+              <div class="wallet-item"><div class="coin-icon rub">₽</div><div class="w-info"><div class="w-name" style="font-weight:700; font-size:13px;">Российский рубль</div><div class="w-sub" style="font-size:10px;color:var(--dim);">RUB · фиат</div></div><div class="w-bal" style="margin-left:auto; font-weight:800; font-size:14px;">${fmt(freshUser.balanceRub)} ₽</div></div>
+              <div class="wallet-item"><div class="coin-icon usdt">₮</div><div class="w-info"><div class="w-name" style="font-weight:700; font-size:13px;">Tether</div><div class="w-sub" style="font-size:10px;color:var(--dim);">USDT · TRC-20</div></div><div class="w-bal" style="margin-left:auto; font-weight:800; font-size:14px;">${fmtDec(freshUser.balanceUsdt, 2)} <span style="font-size:10px;color:var(--dim);">≈ ${fmt(estimatedRub)} ₽</span></div></div>
             </div>`;
             
           document.getElementById('btnDeposit').onclick = () => { walletActionType = 'deposit'; document.getElementById('walletActionTitle').textContent = 'Пополнение'; document.getElementById('walletActionModal').classList.add('active'); };
@@ -358,6 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    let walletActionType = 'deposit';
     document.getElementById('walletActionSubmit')?.addEventListener('click', async () => {
       if (!API.user()) { closeModal('walletActionModal'); document.getElementById('authModal')?.classList.add('active'); return; }
       
@@ -385,7 +364,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // ИСПРАВЛЕННЫЙ ФИЛЬТР И ВКЛАДКИ КУПИТЬ/ПРОДАТЬ
     async function loadMarket() {
       const filters = {};
       const activeTab = document.querySelector('#marketSideTabs .trade-tab.active');
@@ -413,7 +391,6 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
     }
 
-    // Слушатели для вкладок Купить/Продать
     document.querySelectorAll('#marketSideTabs .trade-tab').forEach(tab => {
       tab.onclick = () => {
         document.querySelectorAll('#marketSideTabs .trade-tab').forEach(t => t.classList.remove('active'));
@@ -531,36 +508,37 @@ document.addEventListener('DOMContentLoaded', () => {
       updateExchangeUI();
     }
 
-    // СТАНДАРТНЫЙ РЕНДЕР (Для маркета)
     function renderAd(ad) {
       const isSell = ad.side === 'sell';
       const faceLabel = ad.faceType === 'first' ? '1-е лицо' : '3-е лицо';
       window._ads = window._ads || {}; window._ads[ad.id] = ad;
-      const pays = (ad.paymentMethods || []).map(p => `<span class="pay-tag" style="background:rgba(255,255,255,0.1); border:1px solid var(--glass-border); padding:2px 6px; border-radius:4px; font-size:10px; font-weight:600;">${p}</span>`).join('');
+      const pays = (ad.paymentMethods || []).map(p => `<span class="pay-tag" style="background:rgba(255,255,255,0.1); border:1px solid var(--glass-border); padding:2px 6px; border-radius:4px; font-size:10px; font-weight:600; color:var(--txt);">${p}</span>`).join('');
       
-      let avatarHtml = `<div class="avatar" style="width:36px; height:36px; font-size:14px;">${ad.displayName[0].toUpperCase()}</div>`;
-      if (ad.avatarUrl) avatarHtml = `<div class="avatar" style="width:36px; height:36px;"><img src="${ad.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${ad.displayName[0].toUpperCase()}'"></div>`;
+      let avatarHtml = `<div class="avatar">${ad.displayName[0].toUpperCase()}</div>`;
+      if (ad.avatarUrl) avatarHtml = `<div class="avatar"><img src="${ad.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${ad.displayName[0].toUpperCase()}'"></div>`;
       
-      const merchantBadge = ad.isMerchant ? `<span class="badge-merchant">M</span>` : '';
-      const makerBadge = ad.isMaker ? `<span class="badge-maker">MK</span>` : '';
+      // КРУГЛЫЕ БЕЙДЖИ
+      const merchantBadge = ad.isMerchant ? `<span class="badge-merchant" title="Merchant">${ICONS.merchant}</span>` : '';
+      const makerBadge = ad.isMaker ? `<span class="badge-maker" title="Maker">${ICONS.maker}</span>` : '';
+      const proBadge = ad.isPro ? `<span class="badge-pro" title="PRO">${ICONS.pro}</span>` : '';
 
-      return `<div class="ad-card" style="padding: 14px; margin-bottom: 10px;">
-        <div class="ad-head" style="margin-bottom: 10px;" onclick="openPublicProfile(${ad.userId})">
+      return `<div class="ad-card">
+        <div class="ad-head" onclick="openPublicProfile(${ad.userId})">
           ${avatarHtml}
           <div class="ad-user">
-            <div class="ad-name" style="font-size:13px; margin-bottom:2px;">${ad.displayName} ${merchantBadge} ${makerBadge} <span class="badge-face" style="font-size:9px;">${faceLabel}</span></div>
-            <div class="ad-meta" style="font-size:11px;"><span>★ ${ad.ratingAvg || '—'}</span> <span>${ad.dealsCompleted || 0} сделок</span></div>
+            <div class="ad-name">${ad.displayName} ${merchantBadge} ${makerBadge} ${proBadge} <span class="badge-face">${faceLabel}</span></div>
+            <div class="ad-meta"><span>★ ${ad.ratingAvg || '—'}</span> <span>${ad.dealsCompleted || 0} сделок</span></div>
           </div>
         </div>
         <div class="ad-body">
           <div class="ad-price-block">
-             <div class="ad-price" style="font-size:18px;">${fmt(ad.price)} ₽</div>
-             <div class="ad-limits" style="font-size:11px;">Лимит: ${fmt(ad.minRub)} - ${fmt(ad.maxRub)} ₽</div>
-             <div class="ad-amount" style="font-size:11px;">Доступно: ${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div>
+             <div class="ad-price">${fmt(ad.price)} ₽</div>
+             <div class="ad-limits">Лимиты: ${fmt(ad.minRub)} - ${fmt(ad.maxRub)} RUB</div>
+             <div class="ad-amount">Доступно: ${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div>
              ${pays ? `<div class="ad-pay-methods" style="justify-content:flex-start;margin-top:4px; display:flex; gap:4px; flex-wrap:wrap;">${pays}</div>` : ''}
           </div>
           <div class="ad-action">
-             <button class="btn ${isSell ? 'btn-buy' : 'btn-sell'} btn-sm" data-ad-id="${ad.id}" style="min-width:80px; height:32px; font-size:12px;">${isSell ? 'Купить' : 'Продать'}</button>
+             <button class="btn ${isSell ? 'btn-buy' : 'btn-sell'} btn-sm" data-ad-id="${ad.id}" style="min-width:80px;">${isSell ? 'Купить' : 'Продать'}</button>
           </div>
         </div>
       </div>`;
@@ -581,19 +559,20 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!m || !c) return; c.innerHTML = '<div class="empty-state">Загрузка...</div>'; m.classList.add('active');
       try {
         const { user, stats, isFavorite } = await API.req('GET', '/users/' + userId);
-        let avatarHtml = `<div class="avatar lg" style="margin:0 auto 8px; width:60px; height:60px; font-size:24px;">${user.displayName[0].toUpperCase()}</div>`;
-        if (user.avatarUrl) avatarHtml = `<div class="avatar lg" style="margin:0 auto 8px; width:60px; height:60px;"><img src="${user.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${user.displayName[0].toUpperCase()}'"></div>`;
+        let avatarHtml = `<div class="avatar lg" style="margin:0 auto 8px;">${user.displayName[0].toUpperCase()}</div>`;
+        if (user.avatarUrl) avatarHtml = `<div class="avatar lg" style="margin:0 auto 8px;"><img src="${user.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${user.displayName[0].toUpperCase()}'"></div>`;
         let favBtn = '';
         if (API.user() && API.user().id !== user.id) favBtn = `<button class="btn-fav ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(${user.id}, this)" style="position:absolute;top:15px;right:15px;font-size:20px;background:none;border:none;">${isFavorite ? '❤️' : '🤍'}</button>`;
         
-        const merchantBadge = user.isMerchant ? `<span class="badge-merchant" style="margin-left:4px;">M</span>` : '';
-        const makerBadge = user.isMaker ? `<span class="badge-maker" style="margin-left:4px;">MK</span>` : '';
+        const merchantBadge = user.isMerchant ? `<span class="badge-merchant" style="margin-left:4px; width:20px; height:20px;" title="Merchant">${ICONS.merchant}</span>` : '';
+        const makerBadge = user.isMaker ? `<span class="badge-maker" style="margin-left:4px; width:20px; height:20px;" title="Maker">${ICONS.maker}</span>` : '';
+        const proBadge = user.isPro ? `<span class="badge-pro" style="margin-left:4px; width:20px; height:20px;" title="PRO">${ICONS.pro}</span>` : '';
 
         c.innerHTML = `
           ${favBtn}
           <div style="text-align:center; margin-bottom: 16px; margin-top:8px;">
             ${avatarHtml}
-            <h2 style="font-size:16px;font-weight:800;margin-bottom:2px;display:flex;align-items:center;justify-content:center;color:var(--txt);">${user.displayName} ${merchantBadge} ${makerBadge}</h2>
+            <h2 style="font-size:16px;font-weight:800;margin-bottom:2px;display:flex;align-items:center;justify-content:center;color:var(--txt);">${user.displayName} ${merchantBadge} ${makerBadge} ${proBadge}</h2>
             <div style="font-size:11px;color:var(--dim);font-weight:600;">@${user.username}</div>
           </div>
           <div class="stats" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
@@ -993,9 +972,9 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const { user, stats } = await API.req('GET', '/users/me');
         
-        const proBadge = user.isPro ? `<span class="badge-pro">PRO</span>` : '';
-        const merchantBadge = user.isMerchant ? `<span class="badge-merchant">M</span>` : '';
-        const makerBadge = user.isMaker ? `<span class="badge-maker">MK</span>` : '';
+        const proBadge = user.isPro ? `<span class="badge-pro" title="PRO">${ICONS.pro}</span>` : '';
+        const merchantBadge = user.isMerchant ? `<span class="badge-merchant" title="Merchant">${ICONS.merchant}</span>` : '';
+        const makerBadge = user.isMaker ? `<span class="badge-maker" title="Maker">${ICONS.maker}</span>` : '';
 
         const successRateStr = stats.successRate !== null ? `${stats.successRate}%` : '0%';
         const ratingAvgStr = stats.ratingAvg !== null ? stats.ratingAvg : '—';
@@ -1006,19 +985,19 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (profileTab === 'reviews') contentHtml = '<div id="myReviewsList"><div class="empty-state">Загрузка...</div></div>';
         else if (profileTab === 'requests') contentHtml = '<div id="myRequestsList"><div class="empty-state">Загрузка...</div></div>';
         
-        let avatarHtml = `<div class="avatar lg" style="width:60px; height:60px; font-size:24px;">${user.displayName[0].toUpperCase()}</div>`;
-        if (user.avatarUrl) avatarHtml = `<div class="avatar lg" style="width:60px; height:60px;"><img src="${user.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${user.displayName[0].toUpperCase()}'"></div>`;
+        let avatarHtml = `<div class="avatar lg">${user.displayName[0].toUpperCase()}</div>`;
+        if (user.avatarUrl) avatarHtml = `<div class="avatar lg"><img src="${user.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${user.displayName[0].toUpperCase()}'"></div>`;
 
         content.innerHTML = `
-          <div class="glass-card profile-header-card" style="padding:16px; margin-bottom:16px;">
-            <div class="profile-info-left" style="gap:12px;">
+          <div class="glass-card profile-header-card">
+            <div class="profile-info-left">
               ${avatarHtml}
               <div style="flex:1;min-width:0">
-                <h2 class="profile-name-row" style="font-size:18px;">${user.displayName} ${merchantBadge} ${makerBadge} ${proBadge}</h2>
+                <h2 class="profile-name-row">${user.displayName} ${merchantBadge} ${makerBadge} ${proBadge}</h2>
                 <div style="font-size:11px;color:var(--dim);font-weight:600;">@${user.username}</div>
               </div>
             </div>
-            <button class="profile-settings-btn" style="width:36px;height:36px;font-size:16px;" onclick="openSettings()">⚙️</button>
+            <button class="profile-settings-btn" onclick="openSettings()">⚙️</button>
           </div>
           
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
@@ -1040,11 +1019,11 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </div>
           
-          <div class="profile-tabs" style="margin-bottom:12px; padding:4px;">
-            <button class="profile-tab ${profileTab === 'ads' ? 'active' : ''}" style="height:36px; font-size:12px; padding:0 12px;" onclick="switchProfileTab('ads')">Объявления</button>
-            <button class="profile-tab ${profileTab === 'history' ? 'active' : ''}" style="height:36px; font-size:12px; padding:0 12px;" onclick="switchProfileTab('history')">История</button>
-            <button class="profile-tab ${profileTab === 'reviews' ? 'active' : ''}" style="height:36px; font-size:12px; padding:0 12px;" onclick="switchProfileTab('reviews')">Отзывы</button>
-            <button class="profile-tab ${profileTab === 'requests' ? 'active' : ''}" style="height:36px; font-size:12px; padding:0 12px;" onclick="switchProfileTab('requests')">Заявки</button>
+          <div class="profile-tabs">
+            <button class="profile-tab ${profileTab === 'ads' ? 'active' : ''}" onclick="switchProfileTab('ads')">Объявления</button>
+            <button class="profile-tab ${profileTab === 'history' ? 'active' : ''}" onclick="switchProfileTab('history')">История</button>
+            <button class="profile-tab ${profileTab === 'reviews' ? 'active' : ''}" onclick="switchProfileTab('reviews')">Отзывы</button>
+            <button class="profile-tab ${profileTab === 'requests' ? 'active' : ''}" onclick="switchProfileTab('requests')">Заявки</button>
           </div>
           <div id="profileTabContent">${contentHtml}</div>
           <div style="margin-top:16px"><button class="btn btn-ghost btn-block btn-sm" onclick="logoutAction()" style="color:var(--red);border:1px solid rgba(239,68,68,.3); height:40px;">Выйти</button></div>`;
@@ -1238,7 +1217,6 @@ document.addEventListener('DOMContentLoaded', () => {
       b.onclick = () => {
         document.querySelectorAll('#sizeSelect .seg-btn').forEach(x => x.classList.remove('active'));
         b.classList.add('active');
-        applyZoom(b.dataset.val);
       };
     });
 
@@ -1425,10 +1403,10 @@ document.addEventListener('DOMContentLoaded', () => {
           const { items } = await API.req('GET', '/admin/users');
           
           content.innerHTML = items.map(user => `
-            <div class="admin-user-card" style="padding:10px;">
+            <div class="admin-user-card">
               <div class="admin-user-info">
-                <div class="admin-user-name" style="font-size:13px;">${user.displayName} (@${user.username})</div>
-                <div class="admin-user-meta" style="font-size:10px;">Роль: ${user.role}</div>
+                <div class="admin-user-name">${user.displayName} (@${user.username})</div>
+                <div class="admin-user-meta">Роль: ${user.role}</div>
               </div>
               <button class="btn btn-primary btn-sm" style="border-radius: 8px; padding: 4px 10px; height:28px; font-size:11px;" onclick="openAdminUserModal(${user.id})">⚙️</button>
             </div>
@@ -1590,6 +1568,46 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.adminChangeBalance = async function(action) {
+      if (!currentAdminUserId) return;
+      const currency = document.getElementById('admBalanceCurrency').value;
+      const amount = parseFloat(document.getElementById('admBalanceAmount').value);
+      if (!amount || amount <= 0) return toast('Введите сумму', 'error');
+      
+      try {
+        await API.req('POST', '/admin/users/' + currentAdminUserId + '/balance', { currency, amount, action });
+        toast('Баланс изменен', 'success');
+        document.getElementById('admBalanceAmount').value = '';
+        openAdminUserModal(currentAdminUserId); 
+      } catch(e) { toast(e.message || 'Ошибка', 'error'); }
+    };
+
+    document.querySelectorAll('#adminTabs .tab').forEach(c => {
+      c.onclick = () => {
+        document.querySelectorAll('#adminTabs .tab').forEach(x => x.classList.remove('active'));
+        c.classList.add('active');
+        adminTab = c.dataset.val;
+        loadAdmin();
+      };
+    });
+
+    window.updateRequestStatus = async function(reqId, status) {
+      if (!await confirmAsync('Изменение', `Отметить как "${status}"?`, 'Да')) return;
+      try {
+        await API.req('PATCH', '/admin/requests/' + reqId, { status });
+        toast('Обновлено', 'success'); 
+        loadAdmin(); screenCache.profile = false; screenCache.wallet = false;
+      } catch(e) { toast(e.message || 'Ошибка', 'error'); }
+    };
+
+    // СТАРТ
+    updateAuthUI();
+    updateNotifUI();
+    try { loadHomeRate(); } catch(e) { console.error('Initial loadHome:', e); }
+
+  } catch (err) {
+    console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
+  }
+});ChangeBalance = async function(action) {
       if (!currentAdminUserId) return;
       const currency = document.getElementById('admBalanceCurrency').value;
       const amount = parseFloat(document.getElementById('admBalanceAmount').value);
