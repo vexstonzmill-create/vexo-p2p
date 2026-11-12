@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeModal(id) { const el = document.getElementById(id); if (el) el.classList.remove('active'); }
     window.closeModal = closeModal;
 
-    // --- БАННЕРЫ (ИНИЦИАЛИЗАЦИЯ ОДИН РАЗ) ---
+    // --- БАННЕРЫ ---
     (function initCarousel() {
       if (window.bannerInited) return;
       window.bannerInited = true;
@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateNotifUI();
     });
 
-    // --- НАВИГАЦИЯ И КЭШИРОВАНИЕ ---
+    // --- НАВИГАЦИЯ ---
     let previousScreen = 'home';
     const screenCache = {};
 
@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (lb) lb.classList.add('hidden');
         if (ab) {
           ab.classList.remove('hidden');
-          ab.style.background = 'var(--btn-bg)'; ab.style.color = 'var(--btn-txt)'; ab.style.width = '32px'; ab.style.height = '32px';
+          ab.style.background = 'var(--btn-bg)'; ab.style.color = 'var(--btn-txt)'; ab.style.width = '36px'; ab.style.height = '36px';
           ab.style.borderRadius = '50%'; ab.style.display = 'flex'; ab.style.alignItems = 'center'; ab.style.justifyContent = 'center';
           ab.style.fontWeight = '800'; ab.style.fontSize = '14px';
           if (u.avatarUrl) {
@@ -286,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch(e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
     }
 
-    // КОШЕЛЕК (ИСПРАВЛЕН РАСЧЕТ USDT)
+    // КОШЕЛЕК
     let walletActionType = 'deposit';
     async function loadWallet() {
       const u = API.user();
@@ -391,7 +391,6 @@ document.addEventListener('DOMContentLoaded', () => {
       loadMarket();
     });
 
-    // ПЕРЕКЛЮЧАТЕЛЬ P2P / ОБМЕН
     document.querySelectorAll('#marketModeSwitch .mode-btn').forEach(btn => {
       btn.onclick = () => {
         document.querySelectorAll('#marketModeSwitch .mode-btn').forEach(b => b.classList.remove('active'));
@@ -407,7 +406,6 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     });
 
-    // БЫСТРЫЙ ОБМЕН ЛОГИКА
     let exMode = 'buy';
     let basePrice = 90;
     let isPriceLoaded = false;
@@ -480,6 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
               document.getElementById('exAmount').value = '';
               updateExchangeUI();
               screenCache.wallet = false;
+              screenCache.profile = false;
           } catch(e) {
               toast(e.message || 'Ошибка', 'error');
           } finally {
@@ -649,7 +648,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } finally { btn.disabled = false; btn.textContent = 'Опубликовать'; }
     });
 
-    // ОРДЕРА (ЗАЯВКИ)
+    // ОРДЕРА
     async function loadOrders(filter) {
       const list = document.getElementById('ordersList'); if (!list) return;
       if (!API.user()) { list.innerHTML = '<div class="empty-state">Войдите, чтобы увидеть ордера</div>'; return; }
@@ -967,6 +966,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (profileTab === 'ads') contentHtml = '<div id="myAdsList"><div class="empty-state">Загрузка...</div></div>';
         else if (profileTab === 'history') contentHtml = '<div id="myHistoryList"><div class="empty-state">Загрузка...</div></div>';
         else if (profileTab === 'reviews') contentHtml = '<div id="myReviewsList"><div class="empty-state">Загрузка...</div></div>';
+        else if (profileTab === 'requests') contentHtml = '<div id="myRequestsList"><div class="empty-state">Загрузка...</div></div>';
         
         let avatarHtml = `<div class="avatar lg">${user.displayName[0].toUpperCase()}</div>`;
         if (user.avatarUrl) avatarHtml = `<div class="avatar lg"><img src="${user.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${user.displayName[0].toUpperCase()}'"></div>`;
@@ -1006,6 +1006,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="profile-tab ${profileTab === 'ads' ? 'active' : ''}" onclick="switchProfileTab('ads')">Объявления</button>
             <button class="profile-tab ${profileTab === 'history' ? 'active' : ''}" onclick="switchProfileTab('history')">История</button>
             <button class="profile-tab ${profileTab === 'reviews' ? 'active' : ''}" onclick="switchProfileTab('reviews')">Отзывы</button>
+            <button class="profile-tab ${profileTab === 'requests' ? 'active' : ''}" onclick="switchProfileTab('requests')">Мои заявки</button>
           </div>
           <div id="profileTabContent">${contentHtml}</div>
           <div style="margin-top:24px"><button class="btn btn-ghost btn-block" onclick="logoutAction()" style="color:var(--red);border:1px solid rgba(239,68,68,.3);">Выйти из аккаунта</button></div>`;
@@ -1013,6 +1014,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (profileTab === 'ads') loadMyAds();
         else if (profileTab === 'history') loadMyHistory();
         else if (profileTab === 'reviews') loadMyReviews();
+        else if (profileTab === 'requests') loadMyRequests();
       } catch (e) { content.innerHTML = '<div class="empty-state">Ошибка загрузки профиля</div>'; }
     }
     window.switchProfileTab = function(tab) { profileTab = tab; loadProfile(); };
@@ -1092,6 +1094,42 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await API.req('GET', '/reviews/user/' + u.id);
         const items = data.items || [];
         list.innerHTML = items.length ? items.map(r => `<div class="glass-card" style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><strong style="font-size:14px;">${r.author}</strong><span style="color:var(--yellow);font-size:16px;">${'★'.repeat(r.rating)}</span></div><p style="font-size:13px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p></div>`).join('') : '<div class="empty-state">Отзывов нет</div>';
+      } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+    }
+
+    // МОИ ЗАЯВКИ
+    async function loadMyRequests() {
+      const list = document.getElementById('myRequestsList'); if (!list) return;
+      try {
+        const { items } = await API.req('GET', '/requests/my');
+        const statusMap = {
+          pending: { l: 'В обработке', c: 'var(--yellow)' },
+          approved: { l: 'Одобрено', c: 'var(--grn)' },
+          rejected: { l: 'Отклонено', c: 'var(--red)' },
+          cancelled: { l: 'Отменено', c: 'var(--dim)' },
+          completed: { l: 'Выполнено', c: 'var(--grn)' }
+        };
+
+        list.innerHTML = items.length ? items.map(r => {
+          const st = statusMap[r.status] || { l: r.status, c: 'var(--txt)' };
+          let typeLabel = r.type;
+          if (r.type === 'exchange') typeLabel = r.details?.exchange_type === 'buy' ? 'Покупка USDT' : 'Продажа USDT';
+          if (r.type === 'deposit_rub') typeLabel = 'Пополнение RUB';
+          if (r.type === 'withdraw_rub') typeLabel = 'Вывод RUB';
+          if (r.type === 'deposit_usdt') typeLabel = 'Пополнение USDT';
+          if (r.type === 'withdraw_usdt') typeLabel = 'Вывод USDT';
+          if (r.type === 'maker_req') typeLabel = 'Заявка на Мейкера';
+          if (r.type === 'merchant_req') typeLabel = 'Заявка на Мерчанта';
+
+          return `<div class="glass-card" style="margin-bottom:12px; border-left:4px solid ${st.c}; padding:16px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+              <strong style="font-size:15px; color:var(--txt);">${typeLabel}</strong>
+              <span style="color:${st.c}; font-size:12px; font-weight:800; text-transform:uppercase;">${st.l}</span>
+            </div>
+            ${r.amount ? `<div style="font-size:13px; color:var(--dim);">Сумма: <strong style="color:var(--txt);">${fmt(r.amount)} ${r.currency}</strong></div>` : ''}
+            <div style="font-size:11px; color:var(--dim); margin-top:8px;">${new Date(r.created_at).toLocaleString('ru-RU')}</div>
+          </div>`;
+        }).join('') : '<div class="empty-state">У вас нет активных заявок</div>';
       } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
     }
 
@@ -1324,7 +1362,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (await confirmAsync('Выход', 'Выйти из аккаунта?', 'Выйти')) { localStorage.removeItem('vexo_token'); localStorage.removeItem('vexo_user'); location.reload(); }
     };
 
-    // АДМИНКА
+    // ==========================================
+    // АДМИНКА (С КОМПАКТНЫМИ КАРТОЧКАМИ И СТАТИСТИКОЙ)
+    // ==========================================
     let adminTab = 'users';
 
     async function loadAdmin() {
@@ -1342,15 +1382,16 @@ document.addEventListener('DOMContentLoaded', () => {
           
           content.innerHTML = items.map(user => `
             <div class="admin-user-card">
-              <div class="admin-user-info">
+              <div class="admin-user-info" style="cursor:pointer;" onclick="openUserStats(${user.id})">
                 <div class="admin-user-name">${user.displayName} (@${user.username})</div>
-                <div class="admin-user-meta">Email: ${user.email} | Роль: ${user.role} | RUB: ${fmt(user.balanceRub)} | USDT: ${fmtDec(user.balanceUsdt, 2)}</div>
+                <div class="admin-user-meta">Email: ${user.email} | Роль: ${user.role}</div>
+                <div class="admin-user-meta">RUB: ${fmt(user.balanceRub)} | USDT: ${fmtDec(user.balanceUsdt, 2)}</div>
               </div>
               <div class="admin-status-btns">
                 <button class="admin-badge-btn ${user.isPro ? 'active-pro' : ''}" onclick="toggleUserStatus(${user.id}, 'is_pro', ${user.isPro})">PRO</button>
                 <button class="admin-badge-btn ${user.isMerchant ? 'active-merchant' : ''}" onclick="toggleUserStatus(${user.id}, 'is_merchant', ${user.isMerchant})">MERCHANT</button>
                 <button class="admin-badge-btn ${user.isMaker ? 'active-maker' : ''}" onclick="toggleUserStatus(${user.id}, 'is_maker', ${user.isMaker})">MAKER</button>
-                ${canManageBalance ? `<button class="btn btn-primary btn-sm" style="margin-left:10px; padding:4px 8px; font-size:10px;" onclick="openBalanceModal(${user.id}, '${user.username}')">💰 Баланс</button>` : ''}
+                ${canManageBalance ? `<button class="btn btn-primary btn-sm" style="margin-left:8px; padding:6px 10px; font-size:11px;" onclick="openBalanceModal(${user.id}, '${user.username}')">💰 Баланс</button>` : ''}
               </div>
             </div>
           `).join('');
@@ -1387,8 +1428,16 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
           content.innerHTML = items.map(req => {
-            const isPending = req.status === 'pending';
-            const statusColor = isPending ? 'var(--yellow)' : req.status === 'approved' ? 'var(--grn)' : 'var(--red)';
+            const statusMap = {
+              pending: { l: 'В обработке', c: 'var(--yellow)' },
+              approved: { l: 'Одобрено', c: 'var(--grn)' },
+              rejected: { l: 'Отклонено', c: 'var(--red)' },
+              cancelled: { l: 'Отменено', c: 'var(--dim)' },
+              completed: { l: 'Выполнено', c: 'var(--grn)' }
+            };
+            const st = statusMap[req.status] || { l: req.status, c: 'var(--txt)' };
+            const isFinal = ['rejected', 'cancelled', 'completed'].includes(req.status);
+
             let typeLabel = req.type;
             if (req.type === 'maker_req') typeLabel = 'Заявка на Мейкера';
             if (req.type === 'merchant_req') typeLabel = 'Заявка на Мерчанта';
@@ -1401,25 +1450,26 @@ document.addEventListener('DOMContentLoaded', () => {
             const details = req.details || {};
             
             return `
-            <div class="glass-card" style="padding:12px; margin-bottom:8px; border-left:4px solid ${statusColor};">
-              <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                <strong style="font-size:14px; color:var(--txt);">${typeLabel}</strong>
-                <span style="font-size:11px; font-weight:800; color:${statusColor}; text-transform:uppercase;">${req.status}</span>
+            <div class="glass-card" style="padding:16px; margin-bottom:12px; border-left:4px solid ${st.c};">
+              <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                <strong style="font-size:15px; color:var(--txt);">${typeLabel}</strong>
+                <span style="font-size:12px; font-weight:800; color:${st.c}; text-transform:uppercase;">${st.l}</span>
               </div>
-              <div style="font-size:12px; color:var(--dim); margin-bottom:8px;">
+              <div style="font-size:13px; color:var(--dim); margin-bottom:8px;">
                 Юзер: <span style="color:var(--txt); font-weight:700;">@${req.username}</span>
               </div>
               ${req.amount ? `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
-                 <div style="font-size:11px; color:var(--dim);">Сумма:</div>
-                 <div style="font-size:14px; font-weight:800; color:var(--txt);">${fmt(req.amount)} ${req.currency}</div>
+                 <div style="font-size:12px; color:var(--dim);">Сумма:</div>
+                 <div style="font-size:15px; font-weight:800; color:var(--txt);">${fmt(req.amount)} ${req.currency}</div>
               </div>` : ''}
-              ${details.requisites ? `<div style="font-size:11px; color:var(--dim); margin-bottom:4px;">Реквизиты: <span style="color:var(--txt);">${details.requisites}</span></div>` : ''}
-              ${details.tg_username ? `<div style="font-size:11px; color:var(--dim); margin-bottom:8px;">TG: <span style="color:var(--txt);">${details.tg_username}</span></div>` : ''}
+              ${details.requisites ? `<div style="font-size:12px; color:var(--dim); margin-bottom:4px;">Реквизиты: <span style="color:var(--txt); font-weight:600;">${details.requisites}</span></div>` : ''}
+              ${details.tg_username ? `<div style="font-size:12px; color:var(--dim); margin-bottom:12px;">TG: <span style="color:var(--txt); font-weight:600;">${details.tg_username}</span></div>` : ''}
               
-              ${isPending && canManageBalance ? `
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top:8px;">
-                  <button class="btn btn-primary btn-sm" style="background:var(--grn); padding:6px; font-size:12px;" onclick="updateRequestStatus(${req.id}, 'approved')">Одобрить</button>
-                  <button class="btn btn-ghost btn-sm" style="color:var(--red); border:1px solid var(--red); padding:6px; font-size:12px;" onclick="updateRequestStatus(${req.id}, 'rejected')">Отклонить</button>
+              ${!isFinal && canManageBalance ? `
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top:12px;">
+                  <button class="btn btn-primary btn-sm" style="background:var(--grn); padding:8px; font-size:12px; border-radius:8px;" onclick="updateRequestStatus(${req.id}, 'approved')">Одобрить</button>
+                  <button class="btn btn-ghost btn-sm" style="color:var(--red); border:1px solid var(--red); padding:8px; font-size:12px; border-radius:8px;" onclick="updateRequestStatus(${req.id}, 'rejected')">Отклонить</button>
+                  <button class="btn btn-ghost btn-sm" style="color:var(--dim); border:1px solid var(--glass-border); padding:8px; font-size:12px; border-radius:8px;" onclick="updateRequestStatus(${req.id}, 'cancelled')">Отменить</button>
                 </div>
               ` : ''}
             </div>
@@ -1427,6 +1477,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       } catch(e) { content.innerHTML = '<div class="empty-state">Ошибка загрузки данных</div>'; }
     }
+
+    // СТАТИСТИКА ЮЗЕРА В АДМИНКЕ
+    window.openUserStats = async function(userId) {
+      const m = document.getElementById('publicProfileModal'); 
+      const c = document.getElementById('publicProfileContent');
+      if (!m || !c) return; 
+      c.innerHTML = '<div class="empty-state">Загрузка...</div>'; 
+      m.classList.add('active');
+      
+      try {
+        const { user, stats } = await API.req('GET', '/users/' + userId);
+        let avatarHtml = `<div class="avatar lg" style="margin:0 auto 10px;">${user.displayName[0].toUpperCase()}</div>`;
+        if (user.avatarUrl) avatarHtml = `<div class="avatar lg" style="margin:0 auto 10px;"><img src="${user.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${user.displayName[0].toUpperCase()}'"></div>`;
+        
+        c.innerHTML = `
+          <div style="text-align:center; margin-bottom: 20px; margin-top:10px;">
+            ${avatarHtml}
+            <h2 style="font-size:20px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;justify-content:center;color:var(--txt);">${user.displayName}</h2>
+            <div style="font-size:13px;color:var(--dim);font-weight:600;">@${user.username}</div>
+            <div style="font-size:12px;color:var(--dim);margin-top:8px;">Email: ${user.email}</div>
+            <div style="font-size:12px;color:var(--dim);">Баланс: ${fmt(user.balanceRub)} RUB | ${fmtDec(user.balanceUsdt, 2)} USDT</div>
+          </div>
+          <div class="stats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div class="glass-card" style="padding:16px;text-align:center;"><div style="font-size:12px;color:var(--dim);">Сделок</div><div style="font-size:20px;font-weight:800;color:var(--txt);">${stats.dealsTotal}</div></div>
+            <div class="glass-card" style="padding:16px;text-align:center;"><div style="font-size:12px;color:var(--dim);">Успешных</div><div style="font-size:20px;font-weight:800;color:var(--txt);">${stats.successRate}%</div></div>
+            <div class="glass-card" style="padding:16px;text-align:center;"><div style="font-size:12px;color:var(--dim);">Отзывов</div><div style="font-size:20px;font-weight:800;color:var(--txt);">${stats.reviewsCount}</div></div>
+            <div class="glass-card" style="padding:16px;text-align:center;"><div style="font-size:12px;color:var(--dim);">Рейтинг</div><div style="font-size:20px;font-weight:800;color:var(--txt);">${stats.ratingAvg || '—'}</div></div>
+          </div>
+        `;
+      } catch(e) { c.innerHTML = '<div class="empty-state">Ошибка загрузки профиля</div>'; }
+    };
 
     document.querySelectorAll('#adminTabs .tab').forEach(c => {
       c.onclick = () => {
