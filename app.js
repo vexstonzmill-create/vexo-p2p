@@ -41,11 +41,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const fmt = (n) => new Intl.NumberFormat('ru-RU').format(n || 0);
     const fmtDec = (n, d = 2) => new Intl.NumberFormat('ru-RU', { minimumFractionDigits: d, maximumFractionDigits: d }).format(n || 0);
 
-    // SVG Иконки для бейджей
     const ICONS = {
       pro: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
-      merchant: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>`, // Звезда для мерчанта (можно заменить на щит)
-      maker: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>` // Молния
+      merchant: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>`,
+      maker: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`
     };
 
     function toast(msg, type = 'info') {
@@ -95,7 +94,6 @@ document.addEventListener('DOMContentLoaded', () => {
       auto();
     })();
 
-    // Загрузка курса на главную
     async function loadHomeRate() {
       try {
         const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=rub');
@@ -104,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
           document.getElementById('homeUsdtRate').textContent = fmt(data.tether.rub) + ' ₽';
         }
       } catch(e) {
-        document.getElementById('homeUsdtRate').textContent = '90 ₽'; // Фоллбэк
+        document.getElementById('homeUsdtRate').textContent = '90 ₽'; 
       }
     }
 
@@ -517,7 +515,6 @@ document.addEventListener('DOMContentLoaded', () => {
       let avatarHtml = `<div class="avatar">${ad.displayName[0].toUpperCase()}</div>`;
       if (ad.avatarUrl) avatarHtml = `<div class="avatar"><img src="${ad.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${ad.displayName[0].toUpperCase()}'"></div>`;
       
-      // КРУГЛЫЕ БЕЙДЖИ
       const merchantBadge = ad.isMerchant ? `<span class="badge-merchant" title="Merchant">${ICONS.merchant}</span>` : '';
       const makerBadge = ad.isMaker ? `<span class="badge-maker" title="Maker">${ICONS.maker}</span>` : '';
       const proBadge = ad.isPro ? `<span class="badge-pro" title="PRO">${ICONS.pro}</span>` : '';
@@ -603,7 +600,6 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch(e) { list.innerHTML = ''; }
     }
 
-    // СОЗДАНИЕ ОБЪЯВЛЕНИЯ
     document.querySelectorAll('#f-side .seg-btn').forEach(b => { 
       b.onclick = () => { 
         document.querySelectorAll('#f-side .seg-btn').forEach(x => x.classList.remove('active')); 
@@ -665,7 +661,6 @@ document.addEventListener('DOMContentLoaded', () => {
       } finally { btn.disabled = false; btn.textContent = 'Опубликовать'; }
     });
 
-    // ОРДЕРА
     async function loadOrders(filter) {
       const list = document.getElementById('ordersList'); if (!list) return;
       if (!API.user()) { list.innerHTML = '<div class="empty-state">Войдите</div>'; return; }
@@ -890,7 +885,6 @@ document.addEventListener('DOMContentLoaded', () => {
       catch (e) { toast(e.message, 'error'); }
     };
 
-    // ЧАТ
     let currentChatOrderId = null, chatPollTimer = null;
     window.openChatModal = async function(orderId) {
       currentChatOrderId = orderId;
@@ -931,7 +925,6 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (e) {}
     }
 
-    // ОТЗЫВЫ
     let currentReviewOrderId = null, currentRating = 5;
     window.openReview = function(orderId) {
       currentReviewOrderId = orderId; currentRating = 5;
@@ -961,7 +954,6 @@ document.addEventListener('DOMContentLoaded', () => {
       finally { btn.disabled = false; }
     });
 
-    // ПРОФИЛЬ
     let profileTab = 'ads';
     async function loadProfile() {
       const u = API.user();
@@ -1257,7 +1249,6 @@ document.addEventListener('DOMContentLoaded', () => {
       } finally { btn.disabled = false; btn.textContent = 'Сохранить'; }
     });
 
-    // ОРДЕР МОДАЛКА
     let currentAd = null, selectedPay = null, priceTimerInterval = null;
     window.openOrderModal = function(adId) {
       const ad = (window._ads || {})[adId];
@@ -1386,7 +1377,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (await confirmAsync('Выход', 'Выйти из аккаунта?', 'Выйти')) { localStorage.removeItem('vexo_token'); localStorage.removeItem('vexo_user'); location.reload(); }
     };
 
-    // АДМИНКА
     let adminTab = 'users';
     let currentAdminUserId = null;
 
@@ -1595,6 +1585,19 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         await API.req('PATCH', '/admin/requests/' + reqId, { status });
         toast('Обновлено', 'success'); 
+        loadAdmin(); screenCache.profile = false; screenCache.wallet = false;
+      } catch(e) { toast(e.message || 'Ошибка', 'error'); }
+    };
+
+    // СТАРТ
+    updateAuthUI();
+    updateNotifUI();
+    try { loadHomeRate(); } catch(e) { console.error('Initial loadHomeRate:', e); }
+
+  } catch (err) {
+    console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
+  }
+});ast('Обновлено', 'success'); 
         loadAdmin(); screenCache.profile = false; screenCache.wallet = false;
       } catch(e) { toast(e.message || 'Ошибка', 'error'); }
     };
