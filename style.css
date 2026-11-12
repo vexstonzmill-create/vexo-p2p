@@ -151,41 +151,23 @@ body[data-theme="light"] .bn-btn { color: #475569 !important; }
   color: var(--txt);
 }
 
-/* ========================================= */
-/* ЖЕСТКИЕ ПРАВИЛА ДЛЯ ЦВЕТОВ                */
-/* ========================================= */
-
-/* 1. Базовые кнопки (Ghost) в светлой теме */
+/* ЖЕСТКИЙ ФИКС СВЕТЛОЙ ТЕМЫ ДЛЯ НЕАКТИВНЫХ КНОПОК */
+body[data-theme="light"] .btn:not(.btn-primary):not(.btn-buy):not(.btn-sell):not(.btn-ghost) { 
+  color: #0f172a !important; 
+}
 body[data-theme="light"] .btn-ghost {
   color: #0f172a !important;
-  border-color: rgba(0,0,0,0.15) !important;
+  border-color: rgba(0,0,0,0.15);
 }
 
-/* 2. Основные кнопки (Синие) */
-.btn-primary {
-  background: var(--btn-bg) !important;
-  color: #ffffff !important;
-  border: none !important;
-  box-shadow: var(--btn-glow) !important;
-}
+.btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+.btn:active { transform: translateY(1px); box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); }
 
-/* 3. Кнопки Купить (Зеленые) */
-.btn-buy {
-  background: linear-gradient(135deg, #34d399, #059669) !important;
-  color: #ffffff !important;
-  border: none !important;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
-}
+.btn-primary { background: var(--btn-bg) !important; color: #ffffff !important; border: none !important; box-shadow: var(--btn-glow) !important; }
+.btn-buy { background: linear-gradient(135deg, #34d399, #059669) !important; color: #ffffff !important; border: none !important; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important; }
+.btn-sell { background: linear-gradient(135deg, #f87171, #dc2626) !important; color: #ffffff !important; border: none !important; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4) !important; }
 
-/* 4. Кнопки Продать (Красные) */
-.btn-sell {
-  background: linear-gradient(135deg, #f87171, #dc2626) !important;
-  color: #ffffff !important;
-  border: none !important;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4) !important;
-}
-
-/* 5. Кнопки в Баннерах (Всегда Белые) */
+/* Кнопки в баннерах (Всегда белые) */
 .banner .btn-primary, 
 .banner .btn {
   background: #ffffff !important;
@@ -193,40 +175,6 @@ body[data-theme="light"] .btn-ghost {
   box-shadow: 0 10px 25px rgba(0,0,0,0.2) !important;
   border: none !important;
 }
-
-/* 6. Активные вкладки/пилюли (Всегда Синие) */
-.mode-btn.active, 
-.trade-tab.active, 
-.tab.active, 
-.seg-btn.active, 
-.chip.active, 
-.icon-chip.active, 
-.pay-chip.active, 
-.profile-tab.active {
-  background: var(--btn-bg) !important;
-  color: #ffffff !important;
-  border-color: transparent !important;
-  box-shadow: var(--btn-glow) !important;
-}
-
-/* 7. Неактивные вкладки/пилюли в светлой теме (Темный текст) */
-body[data-theme="light"] .seg-btn:not(.active),
-body[data-theme="light"] .trade-tab:not(.active),
-body[data-theme="light"] .tab:not(.active),
-body[data-theme="light"] .mode-btn:not(.active),
-body[data-theme="light"] .chip:not(.active),
-body[data-theme="light"] .icon-chip:not(.active),
-body[data-theme="light"] .pay-chip:not(.active),
-body[data-theme="light"] .profile-tab:not(.active) {
-  color: #0f172a !important;
-  background: #ffffff !important;
-  border-color: rgba(0,0,0,0.15) !important;
-}
-
-/* ========================================= */
-
-.btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-.btn:active { transform: translateY(1px); box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); }
 
 .btn-block { width: 100%; }
 .btn-sm { height: 30px; padding: 0 12px; font-size: 11px; }
@@ -288,6 +236,34 @@ body[data-theme="light"] .badge-face { background: rgba(0,0,0,0.05); color: #475
 .segmented { display: flex; gap: 6px; width: 100%; }
 .seg-btn { flex: 1; height: 34px; padding: 0 8px; border-radius: 999px; background: var(--btn-glass-bg); border: 1px solid var(--btn-glass-border); color: var(--dim); font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.1); white-space: nowrap; }
 
+/* ЖЕСТКИЙ ФИКС АКТИВНЫХ ЭЛЕМЕНТОВ */
+.mode-btn.active, 
+.trade-tab.active, 
+.tab.active, 
+.seg-btn.active, 
+.chip.active, 
+.icon-chip.active, 
+.pay-chip.active, 
+.profile-tab.active {
+  background: var(--btn-bg) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  box-shadow: var(--btn-glow) !important;
+}
+
+body[data-theme="light"] .seg-btn:not(.active),
+body[data-theme="light"] .trade-tab:not(.active),
+body[data-theme="light"] .tab:not(.active),
+body[data-theme="light"] .mode-btn:not(.active),
+body[data-theme="light"] .chip:not(.active),
+body[data-theme="light"] .icon-chip:not(.active),
+body[data-theme="light"] .pay-chip:not(.active),
+body[data-theme="light"] .profile-tab:not(.active) {
+  color: #0f172a !important;
+  background: #ffffff !important;
+  border-color: rgba(0,0,0,0.15) !important;
+}
+
 .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .field { margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px; }
 .field label { font-size: 11px; color: var(--dim); font-weight: 600; padding-left: 2px; }
@@ -321,12 +297,9 @@ body[data-theme="light"] .avatar { background: #e2e8f0; }
   background: rgba(3, 7, 18, 0.8); backdrop-filter: blur(8px); 
   display: flex; align-items: center; justify-content: center; padding: 12px; 
 }
-.modal-overlay:not(.active) { 
-  display: none !important; 
-}
-.modal-overlay.active { 
-  display: flex !important; 
-}
+.modal-overlay:not(.active) { display: none !important; }
+.modal-overlay.active { display: flex !important; }
+
 .modal { background: var(--glass-bg); backdrop-filter: blur(30px); border: 1px solid var(--glass-border); border-radius: 24px; width: 100%; max-width: 400px; padding: 16px; display: flex; flex-direction: column; gap: 12px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
 body[data-theme="light"] .modal { background: #ffffff; border-color: rgba(0,0,0,0.1); }
 .hidden { display: none !important; }
@@ -415,19 +388,34 @@ body[data-theme="light"] .admin-user-card { background: #ffffff; border-color: r
 .chips, .icon-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; margin-bottom: 8px; }
 .chips::-webkit-scrollbar, .icon-scroll::-webkit-scrollbar { display: none; }
 
+/* ВОЗВРАЩЕННЫЕ КНОПКИ КОШЕЛЬКА */
 .wallet-hero { background: var(--btn-bg); border-radius: 20px; padding: 16px; margin-bottom: 16px; box-shadow: var(--btn-glow); position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); }
 .wallet-hero::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at top right, rgba(255,255,255,0.3), transparent 60%); pointer-events: none; }
 .wallet-hero .lbl { font-size: 11px; color: rgba(255,255,255,0.8); margin-bottom: 4px; font-weight: 600; text-transform: uppercase;}
 .wallet-hero .amount { font-size: 28px; font-weight: 900; color: #fff; margin-bottom: 16px; letter-spacing: -1px; position: relative; z-index: 2; }
 .wallet-hero .amount span { font-size: 16px; color: rgba(255,255,255,0.7); }
+
 .wallet-actions { display: flex; gap: 8px; position: relative; z-index: 2; }
-.wallet-actions .btn-primary { background: rgba(255, 255, 255, 0.2) !important; color: #fff !important; box-shadow: inset 0 1px 1px rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(10px); }
-.wallet-actions .btn-primary:hover { background: rgba(255, 255, 255, 0.3) !important; }
-.wallet-actions .btn-ghost { background: transparent; color: #fff !important; border: 1px solid rgba(255,255,255,0.3); }
+/* Обе кнопки теперь прозрачные с белым текстом */
+.wallet-actions .btn { 
+  background: rgba(255, 255, 255, 0.2) !important; 
+  color: #fff !important; 
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.3), 0 4px 15px rgba(0,0,0,0.1); 
+  border: 1px solid rgba(255,255,255,0.3) !important; 
+  backdrop-filter: blur(10px); 
+}
+.wallet-actions .btn:hover { background: rgba(255, 255, 255, 0.3) !important; }
+
 .wallet-item { display: flex; align-items: center; gap: 12px; background: var(--btn-glass-bg); border: 1px solid var(--btn-glass-border); padding: 12px; border-radius: 16px; margin-bottom: 8px; transition: 0.2s; box-shadow: var(--btn-glass-shadow); }
 body[data-theme="light"] .wallet-item { background: #ffffff; border-color: rgba(0,0,0,0.05); }
 .wallet-item:hover { transform: translateY(-1px); }
 .wallet-item .coin-icon { width: 32px; height: 32px; font-size: 14px; }
+
+/* КРАСНАЯ КНОПКА ВЫХОДА */
+button[onclick="logoutAction()"] {
+  color: #ef4444 !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
 
 .news-list { display: flex; flex-direction: column; gap: 8px; }
 .news-item { background: var(--btn-glass-bg); border: 1px solid var(--btn-glass-border); border-radius: 12px; padding: 10px; position: relative; overflow: hidden; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 3px solid var(--primary); }
@@ -436,7 +424,7 @@ body[data-theme="light"] .news-item { background: #ffffff; border-color: rgba(0,
 .news-content { display: flex; flex-direction: column; gap: 4px; }
 .news-title { font-size: 13px; font-weight: 800; color: var(--txt); line-height: 1.2; }
 .news-date { font-size: 10px; color: var(--primary); font-weight: 700; }
-.news-badge.new { position: absolute; top: 10px; right: 10px; background: var(--grn); color: #fff; font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4); }[data-theme="light"] .profile-tab.active {
+.news-badge.new { position: absolute; top: 10px; right: 10px; background: var(--grn); color: #fff; font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4); } color: #fff; font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4); }[data-theme="light"] .profile-tab.active {
   background: var(--btn-bg) !important;
   color: #ffffff !important;
   border-color: transparent !important;

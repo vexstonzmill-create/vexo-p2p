@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="amount">${fmt(totalBalanceRub)} <span>₽</span></div>
               <div class="wallet-actions">
                 <button class="btn btn-primary btn-sm" id="btnDeposit" style="flex:1;">Пополнить</button>
-                <button class="btn btn-ghost btn-sm" id="btnWithdraw" style="flex:1;">Вывести</button>
+                <button class="btn btn-primary btn-sm" id="btnWithdraw" style="flex:1;">Вывести</button>
               </div>
             </div>
             <h3 style="margin-top: 12px; font-size: 13px; margin-bottom: 8px;">Активы</h3>
@@ -659,7 +659,22 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     });
 
-    // СОЗДАНИЕ ОБЪЯВЛЕНИЯ (ТОЛЬКО SELL)
+    // Клики по кнопкам "Я продаю / Я покупаю"
+    document.querySelectorAll('#f-side .seg-btn').forEach(b => {
+      b.onclick = () => {
+        document.querySelectorAll('#f-side .seg-btn').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+      };
+    });
+
+    // Клики по кнопкам "1-е лицо / 3-е лицо"
+    document.querySelectorAll('#f-face .seg-btn').forEach(b => {
+      b.onclick = () => {
+        document.querySelectorAll('#f-face .seg-btn').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+      };
+    });
+
     document.getElementById('createBtn')?.addEventListener('click', async () => {
       const errEl = document.getElementById('createError'); if (errEl) errEl.textContent = '';
       const u = API.user();
@@ -675,19 +690,26 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!price || !amount || !min || !max) { if (errEl) errEl.textContent = 'Заполните поля'; return; }
       
       const payment_time = document.querySelector('#f-time .pay-chip.active')?.dataset.val || 30;
+      const side = document.querySelector('#f-side .seg-btn.active')?.dataset.val;
       const asset = document.querySelector('#f-asset-select .icon-chip.active')?.dataset.val;
 
-      // ПРОВЕРКА БАЛАНСА
-      if (u.balanceUsdt < Number(amount)) {
-          toast(`Недостаточно ${asset} на балансе (Нужно: ${fmtDec(amount, 2)})`, 'error');
-          return;
+      if (side === 'sell') {
+         if (u.balanceUsdt < Number(amount)) {
+             toast(`Недостаточно ${asset} на балансе (Нужно: ${fmtDec(amount, 2)})`, 'error');
+             return;
+         }
+      } else if (side === 'buy') {
+         if (u.balanceRub < Number(max)) {
+             toast(`Недостаточно RUB на балансе (Нужно: ${fmt(max)} ₽)`, 'error');
+             return;
+         }
       }
 
       const btn = document.getElementById('createBtn'); btn.disabled = true; btn.textContent = '...';
       
       try {
         await API.req('POST', '/ads', {
-          side: 'sell',
+          side: side,
           face_type: document.querySelector('#f-face .seg-btn.active')?.dataset.val,
           asset: asset, price: price, amount_total: amount,
           min_rub: min, max_rub: max,
@@ -1061,7 +1083,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="profile-tab ${profileTab === 'requests' ? 'active' : ''}" onclick="switchProfileTab('requests')">Заявки</button>
           </div>
           <div id="profileTabContent">${contentHtml}</div>
-          <div style="margin-top:16px"><button class="btn btn-ghost btn-block btn-sm" onclick="logoutAction()" style="color:var(--red);border:1px solid rgba(239,68,68,.3); height:40px;">Выйти</button></div>`;
+          <div style="margin-top:16px"><button class="btn btn-ghost btn-block btn-sm" onclick="logoutAction()" style="color:var(--red) !important;border:1px solid rgba(239,68,68,.3) !important; height:40px;">Выйти</button></div>`;
 
         if (profileTab === 'ads') loadMyAds();
         else if (profileTab === 'history') loadMyHistory();
@@ -1102,7 +1124,6 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch(e) { toast('Ошибка', 'error'); }
     };
 
-    // ОБНОВЛЕННОЕ РЕДАКТИРОВАНИЕ ОБЪЯВЛЕНИЯ
     window.openEditAdModal = function(adId) {
       API.req('GET', '/ads/' + adId).then(ad => {
         document.getElementById('edit-price').value = ad.price;
@@ -1111,7 +1132,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('edit-max').value = ad.maxRub;
         document.getElementById('edit-terms').value = ad.terms || '';
         
-        // Настройка чипсов оплаты
         const payBox = document.getElementById('edit-payments');
         payBox.innerHTML = '';
         const allPayments = ['СБП', 'Тинькофф', 'Сбербанк', 'Альфа-Банк'];
@@ -1423,7 +1443,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentAdminUserId = null;
     let allAdminUsers = []; 
 
-    // ЗАГРУЗКА АДМИНКИ С ПОИСКОМ
     async function loadAdmin() {
       const u = API.user();
       if (!['admin', 'owner', 'deputy'].includes(u.role)) return;

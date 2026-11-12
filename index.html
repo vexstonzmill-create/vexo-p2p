@@ -216,11 +216,10 @@
           <div class="field">
             <label>Тип сделки</label>
             <div class="segmented" id="f-side">
-              <!-- Кнопки восстановлены -->
               <button type="button" class="seg-btn buy active" data-val="sell">Я продаю</button>
-              <button type="button" class="seg-btn sell" data-val="buy">Я покупаю (Мейкер)</button>
+              <!-- Текст исправлен -->
+              <button type="button" class="seg-btn sell" data-val="buy">Я покупаю</button>
             </div>
-            <p id="makerWarning" style="display: none; color: var(--yellow); font-size: 10px; margin-top: 4px;">Для покупки нужен статус Мейкера</p>
           </div>
 
           <div class="field">
@@ -632,6 +631,14 @@
 <script>
   setTimeout(() => {
     const loader = document.getElementById('loader');
+    if (loader) {
+      loader.style.opacity = '0';
+      setTimeout(() => loader.style.display = 'none', 500);
+    }
+  }, 1500);
+</script>
+</body>
+</html>st loader = document.getElementById('loader');
     if (loader) {
       loader.style.opacity = '0';
       setTimeout(() => loader.style.display = 'none', 500);
