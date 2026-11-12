@@ -149,7 +149,7 @@ body[data-theme="light"] .bn-btn.active { background: rgba(0,0,0,0.05); color: v
   box-shadow: var(--btn-glass-shadow);
   color: var(--txt);
 }
-body[data-theme="light"] .btn { color: #0f172a; }
+body[data-theme="light"] .btn { color: #0f172a !important; } /* ИСПРАВЛЕНИЕ: Принудительно темный текст для светлой темы */
 
 .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 .btn:active { transform: translateY(1px); box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); }
@@ -220,7 +220,7 @@ body[data-theme="light"] .badge-face { background: rgba(0,0,0,0.05); color: #475
 
 .segmented { display: flex; gap: 6px; width: 100%; }
 .seg-btn { flex: 1; height: 34px; padding: 0 8px; border-radius: 999px; background: var(--btn-glass-bg); border: 1px solid var(--btn-glass-border); color: var(--dim); font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.1); white-space: nowrap; }
-body[data-theme="light"] .seg-btn { background: #ffffff; border-color: rgba(0,0,0,0.15); color: #475569; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+body[data-theme="light"] .seg-btn { background: #ffffff; border-color: rgba(0,0,0,0.15); color: #0f172a !important; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
 .seg-btn.active { background: var(--btn-bg); border-color: transparent; color: #fff !important; box-shadow: var(--btn-glow); }
 
 .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -300,7 +300,7 @@ body[data-theme="light"] .admin-user-card { background: #ffffff; border-color: r
 .admin-user-name { font-size: 12px; font-weight: 800; white-space: nowrap; color: var(--txt); }
 .admin-user-meta { font-size: 10px; color: var(--dim); white-space: nowrap; }
 
-/* === ВОЗВРАЩЕННЫЕ БОЛЬШИЕ БАННЕРЫ === */
+/* БАННЕРЫ */
 .banner-carousel { position: relative; margin-bottom: 24px; width: 100%; border-radius: 30px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.3); }
 .banner-viewport { width: 100%; overflow: hidden; }
 .banner-track { display: flex; width: 100%; transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); will-change: transform; }

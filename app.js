@@ -190,14 +190,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     applyTheme(currentTheme);
 
-    let currentFont = localStorage.getItem('vexo_font') || 'normal';
-    function applyFont(font) {
-      document.body.classList.remove('font-normal', 'font-bold');
-      document.body.classList.add('font-' + font);
-      localStorage.setItem('vexo_font', font);
-    }
-    applyFont(currentFont);
-
     document.getElementById('themeBtn')?.addEventListener('click', () => {
       currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
       applyTheme(currentTheme);
@@ -291,6 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // ИСПРАВЛЕННЫЙ БАЛАНС
     async function loadWallet() {
       const u = API.user();
       const screen = document.getElementById('screen-wallet');
@@ -310,13 +303,14 @@ document.addEventListener('DOMContentLoaded', () => {
           localStorage.setItem('vexo_user', JSON.stringify(data.user));
           const freshUser = data.user;
           const estimatedRub = freshUser.balanceUsdt * usdtRate;
+          const totalBalanceRub = freshUser.balanceRub + estimatedRub; // ИСПРАВЛЕНИЕ: Складываем RUB + (USDT * Курс)
 
           screen.innerHTML = `
             <h2 style="margin-bottom: 4px; font-size: 16px;">Кошелёк</h2>
             <p style="color: var(--dim); font-size: 11px; margin-bottom: 12px;">Балансы и история</p>
             <div class="wallet-hero">
               <div class="lbl">Общий баланс</div>
-              <div class="amount">${fmt(freshUser.balanceRub)} <span>₽</span></div>
+              <div class="amount">${fmt(totalBalanceRub)} <span>₽</span></div>
               <div class="wallet-actions">
                 <button class="btn btn-primary btn-sm" id="btnDeposit" style="flex:1;">Пополнить</button>
                 <button class="btn btn-ghost btn-sm" id="btnWithdraw" style="flex:1;">Вывести</button>
@@ -328,11 +322,32 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="wallet-item"><div class="coin-icon usdt">₮</div><div class="w-info"><div class="w-name" style="font-weight:700; font-size:13px;">Tether</div><div class="w-sub" style="font-size:10px;color:var(--dim);">USDT · TRC-20</div></div><div class="w-bal" style="margin-left:auto; font-weight:800; font-size:14px;">${fmtDec(freshUser.balanceUsdt, 2)} <span style="font-size:10px;color:var(--dim);">≈ ${fmt(estimatedRub)} ₽</span></div></div>
             </div>`;
             
-          document.getElementById('btnDeposit').onclick = () => { walletActionType = 'deposit'; document.getElementById('walletActionTitle').textContent = 'Пополнение'; document.getElementById('walletActionModal').classList.add('active'); };
-          document.getElementById('btnWithdraw').onclick = () => { walletActionType = 'withdraw'; document.getElementById('walletActionTitle').textContent = 'Вывод'; document.getElementById('walletActionModal').classList.add('active'); };
+          document.getElementById('btnDeposit').onclick = () => { 
+            walletActionType = 'deposit'; 
+            document.getElementById('walletActionTitle').textContent = 'Пополнение'; 
+            // Сброс на RUB при открытии
+            document.querySelectorAll('#walletAssetSelect .seg-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('#walletAssetSelect .seg-btn[data-val="RUB"]').classList.add('active');
+            document.getElementById('walletActionModal').classList.add('active'); 
+          };
+          document.getElementById('btnWithdraw').onclick = () => { 
+            walletActionType = 'withdraw'; 
+            document.getElementById('walletActionTitle').textContent = 'Вывод'; 
+            document.querySelectorAll('#walletAssetSelect .seg-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('#walletAssetSelect .seg-btn[data-val="RUB"]').classList.add('active');
+            document.getElementById('walletActionModal').classList.add('active'); 
+          };
         });
       }
     }
+
+    // ИСПРАВЛЕНИЕ: Клик по выбору валюты (RUB/USDT) в модалке
+    document.querySelectorAll('#walletAssetSelect .seg-btn').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('#walletAssetSelect .seg-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      };
+    });
 
     let walletActionType = 'deposit';
     document.getElementById('walletActionSubmit')?.addEventListener('click', async () => {
@@ -1151,20 +1166,15 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('settingsNewPass').value = '';
       document.getElementById('settingsError').textContent = '';
       
-      document.querySelectorAll('#fontWeightSelect .seg-btn').forEach(b => b.classList.remove('active'));
-      document.querySelector(`#fontWeightSelect .seg-btn[data-val="${localStorage.getItem('vexo_font') || 'normal'}"]`).classList.add('active');
-
-      document.querySelectorAll('#sizeSelect .seg-btn').forEach(b => b.classList.remove('active'));
-      document.querySelector(`#sizeSelect .seg-btn[data-val="${localStorage.getItem('vexo_zoom') || 'medium'}"]`).classList.add('active');
-      
       try {
         const { user, stats } = await API.req('GET', '/users/me');
         const container = document.getElementById('statusProgressContainer');
         
         let progressHtml = '';
         
+        // ОБНОВЛЕНИЕ СТАТУСОВ В НАСТРОЙКАХ
         if (user.isMaker) {
-          progressHtml += `<div style="font-size:12px; color:var(--dim); font-weight:700; display:flex; align-items:center; gap:4px;">☑ Мейкер активен</div>`;
+          progressHtml += `<div style="font-size:12px; color:var(--txt); font-weight:700; display:flex; align-items:center; gap:6px;"><span class="badge-maker" style="width:20px;height:20px;">${ICONS.maker}</span> Мейкер активен</div>`;
         } else {
           progressHtml += `
             <div style="background:var(--glass-bg); padding:8px; border-radius:10px; border:1px solid var(--glass-border);">
@@ -1179,7 +1189,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         if (user.isMerchant) {
-          progressHtml += `<div style="font-size:12px; color:var(--dim); font-weight:700; display:flex; align-items:center; gap:4px;">M Мерчант активен</div>`;
+          progressHtml += `<div style="font-size:12px; color:var(--txt); font-weight:700; display:flex; align-items:center; gap:6px;"><span class="badge-merchant" style="width:20px;height:20px;">${ICONS.merchant}</span> Мерчант активен</div>`;
         } else {
           progressHtml += `
             <div style="background:var(--glass-bg); padding:8px; border-radius:10px; border:1px solid var(--glass-border);">
@@ -1196,21 +1206,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       document.getElementById('settingsModal').classList.add('active');
     };
-
-    document.querySelectorAll('#fontWeightSelect .seg-btn').forEach(b => {
-      b.onclick = () => {
-        document.querySelectorAll('#fontWeightSelect .seg-btn').forEach(x => x.classList.remove('active'));
-        b.classList.add('active');
-        applyFont(b.dataset.val);
-      };
-    });
-
-    document.querySelectorAll('#sizeSelect .seg-btn').forEach(b => {
-      b.onclick = () => {
-        document.querySelectorAll('#sizeSelect .seg-btn').forEach(x => x.classList.remove('active'));
-        b.classList.add('active');
-      };
-    });
 
     window.applyStatus = async function(type) {
       try {

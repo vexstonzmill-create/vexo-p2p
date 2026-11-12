@@ -87,7 +87,6 @@
           </div>
         </div>
 
-        <!-- НОВЫЙ БЛОК: СТАТИСТИКА И БЫСТРЫЙ СТАРТ -->
         <div class="glass-card" style="margin-bottom: 16px;">
           <h2 style="font-size: 14px; margin-bottom: 12px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 18px;">📈</span> Рыночный курс
@@ -316,7 +315,6 @@
   </div>
 </div>
 
-<!-- Дальше идут все модалки, они не менялись. Оставляем их как было -->
 <div class="toast-container" id="toastContainer"></div>
 <div class="modal-overlay" id="dialogOverlay"><div class="modal glass-modal" id="dialogContent"></div></div>
 
@@ -432,34 +430,19 @@
   </div>
 </div>
 
+<!-- Настройки (убран блок Внешний вид) -->
 <div class="modal-overlay" id="settingsModal">
   <div class="modal glass-modal" style="padding: 18px;">
     <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 12px;">Настройки</h3>
     <div class="field" style="margin-bottom: 12px;"><label>Аватар (URL)</label><input class="input" type="url" id="settingsAvatarUrl" placeholder="https://..." style="height: 40px;"></div>
     <div class="field" style="margin-bottom: 12px;"><label>Имя</label><input class="input" type="text" id="settingsName" maxlength="50" style="height: 40px;"></div>
     <div class="field" style="margin-bottom: 12px;"><label>Email</label><input class="input" type="email" id="settingsEmail" style="height: 40px;"></div>
-    <div style="border-top: 1px solid var(--glass-border); margin: 12px 0; padding-top: 12px;">
-      <h4 style="font-size: 12px; font-weight: 800; margin-bottom: 8px; color: var(--dim);">Внешний вид</h4>
-      <div class="field" style="margin-bottom: 12px;">
-        <label>Шрифт</label>
-        <div class="segmented" id="fontWeightSelect">
-          <button type="button" class="seg-btn active" data-val="normal" style="height: 36px; font-size: 12px;">Обычный</button>
-          <button type="button" class="seg-btn" data-val="bold" style="height: 36px; font-size: 12px;">Жирный</button>
-        </div>
-      </div>
-      <div class="field" style="margin-bottom: 12px;">
-        <label>Размер</label>
-        <div class="segmented" id="sizeSelect">
-          <button type="button" class="seg-btn" data-val="small" style="height: 36px; font-size: 12px;">S</button>
-          <button type="button" class="seg-btn active" data-val="medium" style="height: 36px; font-size: 12px;">M</button>
-          <button type="button" class="seg-btn" data-val="large" style="height: 36px; font-size: 12px;">L</button>
-        </div>
-      </div>
-    </div>
+    
     <div style="border-top: 1px solid var(--glass-border); margin: 12px 0; padding-top: 12px;">
       <h4 style="font-size: 12px; font-weight: 800; margin-bottom: 8px; color: var(--dim);">Статусы</h4>
       <div id="statusProgressContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
     </div>
+
     <div style="border-top: 1px solid var(--glass-border); margin: 12px 0; padding-top: 12px;">
       <h4 style="font-size: 12px; font-weight: 800; margin-bottom: 8px; color: var(--dim);">Смена пароля</h4>
       <div class="field" style="margin-bottom: 8px;"><label>Текущий</label><input class="input" type="password" id="settingsCurrentPass" style="height: 40px;"></div>
@@ -584,6 +567,28 @@
 <div class="modal-overlay" id="editAdModal">
   <div class="modal glass-modal" style="padding: 18px;">
     <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 12px;">Редактировать</h3>
+    <div class="field" style="margin-bottom: 12px;"><label>Цена (₽)</label><input class="input" type="number" id="edit-price" style="height: 40px;"></div>
+    <div class="field" style="margin-bottom: 12px;"><label>Мин. лимит</label><input class="input" type="number" id="edit-min" style="height: 40px;"></div>
+    <div class="field" style="margin-bottom: 12px;"><label>Макс. лимит</label><input class="input" type="number" id="edit-max" style="height: 40px;"></div>
+    <div class="field" style="margin-bottom: 12px;"><label>Условия</label><textarea class="input" id="edit-terms" style="min-height: 50px; font-size: 12px !important;"></textarea></div>
+    <div class="error-msg" id="editError" style="font-size: 10px;"></div>
+    <button class="btn btn-primary btn-block" id="editSaveBtn" style="height: 40px;">Сохранить</button>
+    <button class="btn btn-ghost btn-block" onclick="closeModal('editAdModal')" style="margin-top: 6px; height: 40px;">Отмена</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+  setTimeout(() => {
+    const loader = document.getElementById('loader');
+    if (loader) {
+      loader.style.opacity = '0';
+      setTimeout(() => loader.style.display = 'none', 500);
+    }
+  }, 1500);
+</script>
+</body>
+</html>�вать</h3>
     <div class="field" style="margin-bottom: 12px;"><label>Цена (₽)</label><input class="input" type="number" id="edit-price" style="height: 40px;"></div>
     <div class="field" style="margin-bottom: 12px;"><label>Мин. лимит</label><input class="input" type="number" id="edit-min" style="height: 40px;"></div>
     <div class="field" style="margin-bottom: 12px;"><label>Макс. лимит</label><input class="input" type="number" id="edit-max" style="height: 40px;"></div>
