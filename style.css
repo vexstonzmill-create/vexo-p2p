@@ -240,6 +240,45 @@ body[data-theme="light"] .badge-face { background: rgba(0,0,0,0.05); }
   background: var(--btn-bg); color: #fff; box-shadow: var(--btn-glow); 
 }
 
+/* === ИСПРАВЛЕНИЕ ДЛЯ SEGMENTED BUTTONS (Вкладки) === */
+.segmented {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.seg-btn {
+  flex: 1;
+  height: 42px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--btn-glass-bg);
+  border: 1px solid var(--btn-glass-border);
+  color: var(--dim);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,0.1);
+  white-space: nowrap;
+}
+
+body[data-theme="light"] .seg-btn {
+  background: #ffffff;
+  border-color: rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+}
+
+.seg-btn.active {
+  background: var(--btn-bg);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: var(--btn-glow);
+}
+
 /* ВЫРАВНИВАНИЕ СЕТОК */
 .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .field { margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px; }
@@ -397,3 +436,84 @@ body[data-theme="light"] .chip, body[data-theme="light"] .icon-chip, body[data-t
 body[data-theme="light"] .wallet-item { background: #ffffff; border-color: rgba(0,0,0,0.05); }
 .wallet-item:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
 .wallet-item .coin-icon { width: 44px; height: 44px; font-size: 20px; }
+
+/* === СТИЛИ ДЛЯ НОВОСТЕЙ === */
+.news-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.news-item {
+  background: var(--btn-glass-bg);
+  border: 1px solid var(--btn-glass-border);
+  border-radius: 16px;
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  border-left: 3px solid var(--primary);
+}
+
+.news-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  border-color: rgba(59, 130, 246, 0.4);
+  border-left-color: var(--primary);
+}
+
+body[data-theme="light"] .news-item {
+  background: #ffffff;
+  border-color: rgba(0,0,0,0.05);
+  border-left-color: var(--primary);
+}
+
+.news-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.news-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--txt);
+  line-height: 1.3;
+}
+
+.news-desc {
+  font-size: 13px;
+  color: var(--dim);
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.news-date {
+  font-size: 11px;
+  color: var(--primary);
+  font-weight: 700;
+  margin-top: 4px;
+  opacity: 0.8;
+}
+
+.news-badge.new {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: var(--grn);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.4);
+  animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
