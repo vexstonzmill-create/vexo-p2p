@@ -180,6 +180,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     applyFont(currentFont);
 
+    // НОВОЕ: МАСШТАБ ИНТЕРФЕЙСА (ZOOM)
+    let currentZoom = localStorage.getItem('vexo_zoom') || 'medium';
+    function applyZoom(size) {
+      document.body.classList.remove('zoom-small', 'zoom-medium', 'zoom-large');
+      document.body.classList.add('zoom-' + size);
+      localStorage.setItem('vexo_zoom', size);
+    }
+    applyZoom(currentZoom);
+
     document.getElementById('themeBtn')?.addEventListener('click', () => {
       currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
       applyTheme(currentTheme);
@@ -249,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (lb) lb.classList.add('hidden');
         if (ab) {
           ab.classList.remove('hidden');
-          ab.style.background = 'var(--btn-bg)'; ab.style.color = 'var(--btn-txt)'; ab.style.width = '36px'; ab.style.height = '36px';
+          ab.style.background = 'var(--btn-bg)'; ab.style.color = 'var(--btn-txt)'; ab.style.width = '32px'; ab.style.height = '32px';
           ab.style.borderRadius = '50%'; ab.style.display = 'flex'; ab.style.alignItems = 'center'; ab.style.justifyContent = 'center';
           ab.style.fontWeight = '800'; ab.style.fontSize = '14px';
           if (u.avatarUrl) {
@@ -1146,6 +1155,9 @@ document.addEventListener('DOMContentLoaded', () => {
       
       document.querySelectorAll('#fontWeightSelect .seg-btn').forEach(b => b.classList.remove('active'));
       document.querySelector(`#fontWeightSelect .seg-btn[data-val="${localStorage.getItem('vexo_font') || 'normal'}"]`).classList.add('active');
+
+      document.querySelectorAll('#sizeSelect .seg-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector(`#sizeSelect .seg-btn[data-val="${localStorage.getItem('vexo_zoom') || 'medium'}"]`).classList.add('active');
       
       try {
         const { user, stats } = await API.req('GET', '/users/me');
@@ -1193,6 +1205,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('#fontWeightSelect .seg-btn').forEach(x => x.classList.remove('active'));
         b.classList.add('active');
         applyFont(b.dataset.val);
+      };
+    });
+
+    document.querySelectorAll('#sizeSelect .seg-btn').forEach(b => {
+      b.onclick = () => {
+        document.querySelectorAll('#sizeSelect .seg-btn').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        applyZoom(b.dataset.val);
       };
     });
 
@@ -1363,7 +1383,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // ==========================================
-    // АДМИНКА (С КОМПАКТНЫМИ КАРТОЧКАМИ И СТАТИСТИКОЙ)
+    // АДМИНКА
     // ==========================================
     let adminTab = 'users';
 

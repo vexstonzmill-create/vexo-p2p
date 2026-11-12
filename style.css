@@ -28,6 +28,7 @@
   --blue: #3b82f6;
 
   --font-weight-base: 500;
+  --ui-zoom: 1;
 }
 
 body[data-theme="light"] {
@@ -52,6 +53,12 @@ body[data-theme="light"] {
   --red: #dc2626;
   --yellow: #d97706;
 }
+
+/* МАСШТАБИРОВАНИЕ ИНТЕРФЕЙСА */
+body.zoom-small { --ui-zoom: 0.9; }
+body.zoom-medium { --ui-zoom: 1; }
+body.zoom-large { --ui-zoom: 1.1; }
+body { zoom: var(--ui-zoom); }
 
 /* СБРОС СТИЛЕЙ */
 button, input, select, textarea {
@@ -151,11 +158,7 @@ button { cursor: pointer; }
 .bn-btn svg { width: 22px; height: 22px; }
 .bn-btn.active { color: var(--txt); background: rgba(255,255,255,0.1); box-shadow: inset 0 1px 2px rgba(255,255,255,0.2); }
 
-/* 
-  =============================================
-  НОВЫЙ СТИЛЬ КНОПОК (КАК НА КАРТИНКЕ)
-  =============================================
-*/
+/* КНОПКИ В ЕДИНОМ СТИЛЕ (ПИЛЮЛИ) */
 .btn { 
   display: inline-flex; align-items: center; justify-content: center; gap: 8px; 
   height: 48px; padding: 0 24px; border-radius: 999px; /* Форма пилюли */
@@ -163,7 +166,6 @@ button { cursor: pointer; }
   transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); 
   text-decoration: none; white-space: nowrap; 
   
-  /* Эффект темного стекла по умолчанию */
   background: var(--btn-glass-bg);
   border: 1px solid var(--btn-glass-border);
   box-shadow: var(--btn-glass-shadow);
@@ -179,7 +181,7 @@ button { cursor: pointer; }
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
 }
 
-/* Главная синяя кнопка (Send) */
+/* Главная синяя кнопка */
 .btn-primary { 
   background: var(--btn-bg); 
   color: var(--btn-txt); 
@@ -190,7 +192,7 @@ button { cursor: pointer; }
   box-shadow: 0 12px 28px rgba(37, 99, 235, 0.6), inset 0 1px 2px rgba(255,255,255,0.6); 
 }
 
-/* Кнопки Покупки/Продажи (Зеленая/Красная) */
+/* Кнопки Покупки/Продажи */
 .btn-buy { 
   background: linear-gradient(135deg, #34d399, #059669); 
   color: #fff; 
@@ -219,23 +221,23 @@ button { cursor: pointer; }
 .btn-block { width: 100%; }
 .btn-sm { height: 38px; padding: 0 16px; font-size: 12px; }
 
-/* ИНПУТЫ (В стиле "Last transaction" с картинки) */
+/* ИНПУТЫ */
 .input { 
   width: 100%; height: 54px; padding: 0 20px; 
-  background: rgba(15, 23, 42, 0.5); 
-  border: 1px solid rgba(255, 255, 255, 0.05); 
+  background: rgba(15, 23, 42, 0.5) !important; 
+  border: 1px solid rgba(255, 255, 255, 0.05) !important; 
   border-radius: 20px; 
   color: var(--txt); font-weight: 600; 
   transition: 0.2s; 
   box-shadow: inset 0 2px 6px rgba(0,0,0,0.3), 0 1px 0 rgba(255,255,255,0.05); 
 }
 body[data-theme="light"] .input { 
-  background: #ffffff; 
-  border-color: rgba(0,0,0,0.05); 
+  background: #ffffff !important; 
+  border-color: rgba(0,0,0,0.05) !important; 
   box-shadow: inset 0 2px 6px rgba(0,0,0,0.02), 0 1px 0 rgba(255,255,255,1); 
 }
 .input:focus { 
-  border-color: var(--primary); 
+  border-color: var(--primary) !important; 
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.1), 0 0 0 3px rgba(59, 130, 246, 0.2); 
 }
 textarea.input { height: auto; padding: 16px 20px; resize: vertical; }
@@ -247,50 +249,51 @@ textarea.input { height: auto; padding: 16px 20px; resize: vertical; }
 .badge-maker { background: rgba(156, 163, 175, 0.15); color: #9ca3af; font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 8px; text-transform: uppercase; border: 1px solid rgba(156,163,175,0.3); display: inline-flex; align-items: center; gap: 4px; }
 .badge-maker::before { content: '☑'; font-size: 10px; }
 
-/* ПЕРЕКЛЮЧАТЕЛИ (ТАБЫ) */
-.market-mode-switch { 
-  display: flex; padding: 6px; border-radius: 999px; margin-bottom: 20px; gap: 6px; 
-  background: var(--btn-glass-bg); border: 1px solid var(--btn-glass-border); 
-  box-shadow: var(--btn-glass-shadow); 
-}
-.mode-btn { 
-  flex: 1; height: 44px; border-radius: 999px; color: var(--dim); font-weight: 800; font-size: 14px; 
-  transition: 0.3s; border: none; background: transparent; 
-}
-.mode-btn.active { 
-  background: var(--btn-bg); color: #fff; box-shadow: var(--btn-glow); 
-}
-
-.trade-tabs { 
-  display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 6px; 
-  border-radius: 999px; margin-bottom: 20px; 
-  background: var(--btn-glass-bg); border: 1px solid var(--btn-glass-border); 
-  box-shadow: var(--btn-glass-shadow); 
-}
-.trade-tab { 
-  height: 44px; border-radius: 999px; font-size: 14px; font-weight: 800; color: var(--dim); 
-  transition: 0.3s; background: transparent; border: none;
-}
-.trade-tab.active { 
-  background: var(--btn-bg); color: #fff; box-shadow: var(--btn-glow); 
+/* 
+  =============================================
+  ИСПРАВЛЕННЫЕ ПЕРЕКЛЮЧАТЕЛИ (УБРАНЫ БЕЛЫЕ ПОЛОСЫ)
+  =============================================
+*/
+.segmented, .trade-tabs, .tabs { 
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 6px !important; 
+  padding: 6px !important; 
+  border-radius: 999px !important; 
+  background: var(--btn-glass-bg) !important; 
+  border: 1px solid var(--btn-glass-border) !important; 
+  box-shadow: var(--btn-glass-shadow) !important; 
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin-bottom: 16px !important;
 }
 
-.tabs { 
-  display: flex; padding: 6px; border-radius: 999px; margin-bottom: 20px; 
-  background: var(--btn-glass-bg); border: 1px solid var(--btn-glass-border); 
-  box-shadow: var(--btn-glass-shadow); 
+.seg-btn, .trade-tab, .tab { 
+  flex: 1 !important;
+  height: 44px !important; 
+  border-radius: 999px !important; 
+  background: transparent !important;
+  border: none !important;
+  color: var(--dim) !important; 
+  font-weight: 800 !important; 
+  font-size: 13px !important; 
+  transition: 0.3s !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  white-space: nowrap !important;
+  padding: 0 12px !important;
 }
-.tab { 
-  flex: 1; height: 44px; text-align: center; background: transparent; border: none; 
-  color: var(--dim); font-weight: 800; font-size: 13px; border-radius: 999px; transition: 0.2s; 
-}
-.tab.active { 
-  background: var(--btn-bg); color: #fff; box-shadow: var(--btn-glow); 
+
+.seg-btn.active, .trade-tab.active, .tab.active { 
+  background: var(--btn-bg) !important; 
+  color: #fff !important; 
+  box-shadow: var(--btn-glow) !important; 
 }
 
 /* ВЫРАВНИВАНИЕ СЕТОК */
 .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.field { margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px; }
+.field { margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px; }
 .field label { font-size: 13px; color: var(--dim); font-weight: 600; padding-left: 4px; }
 
 /* КАРТОЧКИ И ПРОФИЛЬ */
@@ -330,7 +333,7 @@ body[data-theme="light"] .modal { background: rgba(255, 255, 255, 0.98); border-
 .hidden { display: none !important; }
 .error-msg { color: var(--red); font-size: 12px; min-height: 16px; font-weight: 600; }
 
-/* КНОПКИ В НАСТРОЙКАХ (НОРМАЛЬНЫЙ РАЗМЕР) */
+/* КНОПКИ В НАСТРОЙКАХ */
 .settings-actions { display: flex; gap: 12px; margin-top: 10px; }
 .settings-actions .btn { flex: 1; height: 52px; font-size: 15px; }
 
@@ -429,7 +432,7 @@ body[data-theme="light"] .chip, body[data-theme="light"] .icon-chip, body[data-t
 .chips, .icon-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; margin-bottom: 12px; }
 .chips::-webkit-scrollbar, .icon-scroll::-webkit-scrollbar { display: none; }
 
-/* КОШЕЛЕК (В СТИЛЕ КАРТИНКИ) */
+/* КОШЕЛЕК */
 .wallet-hero { 
   background: var(--btn-bg); 
   border-radius: 30px; padding: 30px; margin-bottom: 24px; 
@@ -458,6 +461,11 @@ body[data-theme="light"] .chip, body[data-theme="light"] .icon-chip, body[data-t
 .wallet-item { 
   display: flex; align-items: center; gap: 16px; 
   background: var(--btn-glass-bg); border: 1px solid var(--btn-glass-border); 
+  padding: 20px; border-radius: 24px; margin-bottom: 12px; 
+  transition: 0.2s; box-shadow: var(--btn-glass-shadow); 
+}
+.wallet-item:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+.wallet-item .coin-icon { width: 44px; height: 44px; font-size: 20px; }round: var(--btn-glass-bg); border: 1px solid var(--btn-glass-border); 
   padding: 20px; border-radius: 24px; margin-bottom: 12px; 
   transition: 0.2s; box-shadow: var(--btn-glass-shadow); 
 }
