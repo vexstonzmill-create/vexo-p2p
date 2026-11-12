@@ -137,6 +137,7 @@ button { cursor: pointer; }
 .bn-btn svg { width: 18px; height: 18px; }
 .bn-btn.active { color: var(--txt); background: rgba(255,255,255,0.1); }
 body[data-theme="light"] .bn-btn.active { background: rgba(0,0,0,0.05); color: var(--primary); }
+body[data-theme="light"] .bn-btn { color: #475569 !important; }
 
 .btn { 
   display: inline-flex; align-items: center; justify-content: center; gap: 6px; 
@@ -149,8 +150,14 @@ body[data-theme="light"] .bn-btn.active { background: rgba(0,0,0,0.05); color: v
   box-shadow: var(--btn-glass-shadow);
   color: var(--txt);
 }
-body[data-theme="light"] .btn:not(.btn-primary):not(.btn-buy):not(.btn-sell) { 
+
+/* Темный текст для неактивных кнопок в светлой теме */
+body[data-theme="light"] .btn:not(.btn-primary):not(.btn-buy):not(.btn-sell):not(.btn-ghost) { 
   color: #0f172a !important; 
+}
+body[data-theme="light"] .btn-ghost {
+  color: #0f172a !important;
+  border-color: rgba(0,0,0,0.15);
 }
 
 .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
@@ -159,9 +166,6 @@ body[data-theme="light"] .btn:not(.btn-primary):not(.btn-buy):not(.btn-sell) {
 .btn-primary { background: var(--btn-bg); color: var(--btn-txt) !important; border: none; box-shadow: var(--btn-glow); }
 .btn-buy { background: linear-gradient(135deg, #34d399, #059669); color: #fff !important; border: none; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); }
 .btn-sell { background: linear-gradient(135deg, #f87171, #dc2626); color: #fff !important; border: none; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); }
-.btn-ghost { background: transparent; border: 1px solid var(--btn-glass-border); color: var(--txt); box-shadow: none; }
-.btn-ghost:hover { background: rgba(255,255,255,0.05); transform: translateY(0); }
-body[data-theme="light"] .btn-ghost:hover { background: rgba(0,0,0,0.05); }
 
 .btn-block { width: 100%; }
 .btn-sm { height: 30px; padding: 0 12px; font-size: 11px; }
@@ -179,6 +183,7 @@ body[data-theme="light"] .input {
   background: #ffffff !important; 
   border-color: rgba(0,0,0,0.15) !important; 
   box-shadow: inset 0 1px 4px rgba(0,0,0,0.02); 
+  color: #0f172a !important;
 }
 .input:focus { border-color: var(--primary) !important; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
 textarea.input { height: auto; padding: 10px 14px; resize: vertical; }
@@ -215,18 +220,15 @@ body[data-theme="light"] .badge-face { background: rgba(0,0,0,0.05); color: #475
 /* ПЕРЕКЛЮЧАТЕЛИ */
 .market-mode-switch { display: flex; padding: 4px; border-radius: 999px; margin-bottom: 12px; gap: 4px; background: var(--btn-glass-bg); border: 1px solid var(--btn-glass-border); box-shadow: var(--btn-glass-shadow); width: 100%; box-sizing: border-box; }
 .mode-btn { flex: 1; height: 36px; border-radius: 999px; color: var(--dim); font-weight: 800; font-size: 12px; transition: 0.3s; border: none; background: transparent; }
-.mode-btn.active { background: var(--btn-bg); color: #fff; box-shadow: var(--btn-glow); }
 body[data-theme="light"] .mode-btn:not(.active) { color: #0f172a !important; }
 
 .trade-tabs, .tabs { display: flex; gap: 4px; padding: 4px; border-radius: 999px; margin-bottom: 12px; background: var(--btn-glass-bg); border: 1px solid var(--btn-glass-border); box-shadow: var(--btn-glass-shadow); width: 100%; box-sizing: border-box; }
 .trade-tab, .tab { flex: 1; height: 36px; border-radius: 999px; font-size: 12px; font-weight: 800; color: var(--dim); transition: 0.3s; background: transparent; border: none; display: flex; align-items: center; justify-content: center; }
-.trade-tab.active, .tab.active { background: var(--btn-bg); color: #fff; box-shadow: var(--btn-glow); }
 body[data-theme="light"] .trade-tab:not(.active), body[data-theme="light"] .tab:not(.active) { color: #0f172a !important; }
 
 .segmented { display: flex; gap: 6px; width: 100%; }
 .seg-btn { flex: 1; height: 34px; padding: 0 8px; border-radius: 999px; background: var(--btn-glass-bg); border: 1px solid var(--btn-glass-border); color: var(--dim); font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.1); white-space: nowrap; }
 body[data-theme="light"] .seg-btn:not(.active) { background: #ffffff; border-color: rgba(0,0,0,0.15); color: #0f172a !important; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
-.seg-btn.active { background: var(--btn-bg); border-color: transparent; color: #fff !important; box-shadow: var(--btn-glow); }
 
 .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .field { margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px; }
@@ -306,7 +308,7 @@ body[data-theme="light"] .notif-item { background: #f8fafc; }
 
 .profile-tabs { display: flex; padding: 4px; gap: 4px; margin-bottom: 12px; overflow-x: auto; scrollbar-width: none; background: var(--btn-glass-bg); border-radius: 999px; border: 1px solid var(--btn-glass-border); }
 .profile-tab { height: 32px; padding: 0 12px; background: transparent; border: none; color: var(--dim); font-weight: 800; font-size: 11px; border-radius: 999px; cursor: pointer; white-space: nowrap; transition: 0.2s; }
-.profile-tab.active { background: var(--btn-bg); border-color: transparent; color: #fff; box-shadow: var(--btn-glow); }
+body[data-theme="light"] .profile-tab:not(.active) { color: #0f172a !important; }
 
 .admin-user-card { background: var(--btn-glass-bg); border: 1px solid var(--btn-glass-border); border-radius: 12px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 body[data-theme="light"] .admin-user-card { background: #ffffff; border-color: rgba(0,0,0,0.05); }
@@ -338,7 +340,7 @@ body[data-theme="light"] .admin-user-card { background: #ffffff; border-color: r
 .banner-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.3); border: none; transition: 0.3s; }
 .banner-dot.active { width: 20px; border-radius: 4px; background: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.5); }
 
-/* СТИЛИ ДЛЯ ЦЕПОЧКИ ШАГОВ (Как это работает) */
+/* ЦЕПОЧКА ШАГОВ */
 .steps-wrapper { display: flex; flex-direction: column; align-items: flex-start; margin-top: 10px; }
 .step-item { display: flex; align-items: center; gap: 12px; width: 100%; }
 .step-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; flex-shrink: 0; }
@@ -353,8 +355,8 @@ body[data-theme="light"] .admin-user-card { background: #ffffff; border-color: r
 .coin-icon.rub { background: linear-gradient(135deg, #94a3b8, #64748b); color: #fff; }
 
 .chip, .icon-chip, .pay-chip { height: 32px; padding: 0 12px; border-radius: 999px; background: var(--btn-glass-bg); border: 1px solid var(--btn-glass-border); color: var(--dim); font-size: 11px; font-weight: 700; white-space: nowrap; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-body[data-theme="light"] .chip, body[data-theme="light"] .icon-chip, body[data-theme="light"] .pay-chip { background: #ffffff; border-color: rgba(0,0,0,0.15); color: #475569; }
-.chip.active, .icon-chip.active, .pay-chip.active { background: var(--btn-bg); border-color: transparent; color: #fff !important; box-shadow: var(--btn-glow); }
+body[data-theme="light"] .chip:not(.active), body[data-theme="light"] .icon-chip:not(.active), body[data-theme="light"] .pay-chip:not(.active) { background: #ffffff; border-color: rgba(0,0,0,0.15); color: #475569 !important; }
+
 .chips, .icon-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; margin-bottom: 8px; }
 .chips::-webkit-scrollbar, .icon-scroll::-webkit-scrollbar { display: none; }
 
@@ -380,3 +382,36 @@ body[data-theme="light"] .news-item { background: #ffffff; border-color: rgba(0,
 .news-title { font-size: 13px; font-weight: 800; color: var(--txt); line-height: 1.2; }
 .news-date { font-size: 10px; color: var(--primary); font-weight: 700; }
 .news-badge.new { position: absolute; top: 10px; right: 10px; background: var(--grn); color: #fff; font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4); }
+
+/* ========================================= */
+/* ЖЕСТКИЙ ФИКС АКТИВНЫХ КНОПОК (СИНИЙ ФОН)  */
+/* ========================================= */
+.btn-primary, 
+.mode-btn.active, 
+.trade-tab.active, 
+.tab.active, 
+.seg-btn.active, 
+.chip.active, 
+.icon-chip.active, 
+.pay-chip.active, 
+.profile-tab.active {
+  background: var(--btn-bg) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  box-shadow: var(--btn-glow) !important;
+}
+
+body[data-theme="light"] .btn-primary,
+body[data-theme="light"] .mode-btn.active,
+body[data-theme="light"] .trade-tab.active,
+body[data-theme="light"] .tab.active,
+body[data-theme="light"] .seg-btn.active,
+body[data-theme="light"] .chip.active,
+body[data-theme="light"] .icon-chip.active,
+body[data-theme="light"] .pay-chip.active,
+body[data-theme="light"] .profile-tab.active {
+  background: var(--btn-bg) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  box-shadow: var(--btn-glow) !important;
+}

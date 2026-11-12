@@ -327,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('#walletAssetSelect .seg-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('#walletAssetSelect .seg-btn[data-val="RUB"]').classList.add('active');
             document.getElementById('walletActionModal').classList.add('active'); 
-            toggleUsdtFields();
+            toggleWalletFields();
           };
           document.getElementById('btnWithdraw').onclick = () => { 
             walletActionType = 'withdraw'; 
@@ -335,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('#walletAssetSelect .seg-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('#walletAssetSelect .seg-btn[data-val="RUB"]').classList.add('active');
             document.getElementById('walletActionModal').classList.add('active'); 
-            toggleUsdtFields();
+            toggleWalletFields();
           };
         });
       }
@@ -345,43 +345,23 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.onclick = () => {
         document.querySelectorAll('#walletAssetSelect .seg-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        toggleUsdtFields();
+        toggleWalletFields();
       };
     });
 
-    // Функция для скрытия/показа полей USDT и пересчета комиссии
-    function toggleUsdtFields() {
+    function toggleWalletFields() {
       const currency = document.querySelector('#walletAssetSelect .seg-btn.active').dataset.val;
+      const bankGroup = document.getElementById('walletBankGroup');
       const usdtFields = document.getElementById('usdtWithdrawFields');
-      const reqsField = document.getElementById('walletRequisitesField');
       
-      if (currency === 'USDT' && walletActionType === 'withdraw') {
-        usdtFields.style.display = 'block';
-        reqsField.style.display = 'none'; // Скрываем поле для карты, т.к. есть адрес
-        calculateFee();
-      } else {
+      if (currency === 'RUB') {
+        bankGroup.style.display = 'block';
         usdtFields.style.display = 'none';
-        reqsField.style.display = 'block';
+      } else {
+        bankGroup.style.display = 'none';
+        usdtFields.style.display = 'block';
       }
     }
-
-    // Пересчет комиссии
-    function calculateFee() {
-      const amount = parseFloat(document.getElementById('walletActionAmount').value) || 0;
-      const network = document.getElementById('walletNetwork').value;
-      const baseFee = network === 'TRC20' ? 1.0 : 5.0; // Базовая комиссия сети
-      const totalFee = baseFee * 1.20; // +20% маржа платформы
-      
-      document.getElementById('withdrawFeeAmount').textContent = fmtDec(totalFee, 2) + ' USDT';
-      document.getElementById('withdrawTotalAmount').textContent = fmtDec(amount + totalFee, 2) + ' USDT';
-      return totalFee;
-    }
-
-    // Слушатели для пересчета при вводе суммы или смене сети
-    document.getElementById('walletActionAmount')?.addEventListener('input', () => {
-       if (document.querySelector('#walletAssetSelect .seg-btn.active').dataset.val === 'USDT') calculateFee();
-    });
-    document.getElementById('walletNetwork')?.addEventListener('change', calculateFee);
 
     let walletActionType = 'deposit';
     document.getElementById('walletActionSubmit')?.addEventListener('click', async () => {
@@ -395,26 +375,17 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!amount || Number(amount) <= 0) return toast('Введите сумму', 'error');
       if (!tg) return toast('Введите Telegram', 'error');
 
-      let payload = { type: walletActionType === 'deposit' ? `deposit_${currency.toLowerCase()}` : `withdraw_${currency.toLowerCase()}`, amount: Number(amount), currency, tg_username: tg };
+      let payload = { type: walletActionType === 'deposit' ? `deposit_${currency.toLowerCase()}` : `withdraw_${currency.toLowerCase()}`, amount: Number(amount), currency, tg_username: tg, user_id: u.id };
 
-      if (currency === 'USDT' && walletActionType === 'withdraw') {
+      if (currency === 'RUB') {
+        const bank = document.getElementById('walletBankSelect').value;
+        payload.requisites = bank; 
+      } else {
         const network = document.getElementById('walletNetwork').value;
         const address = document.getElementById('walletAddress').value.trim();
         if (!address) return toast('Введите адрес кошелька', 'error');
-        
-        const fee = calculateFee();
-        const totalNeeded = Number(amount) + fee;
-
-        // ПРОВЕРКА БАЛАНСА
-        if (u.balanceUsdt < totalNeeded) return toast(`Недостаточно средств. Нужно: ${fmtDec(totalNeeded, 2)} USDT`, 'error');
-
         payload.requisites = address;
         payload.network = network;
-        payload.fee = fee;
-      } else {
-        const reqs = document.getElementById('walletActionRequisites')?.value.trim();
-        if (!reqs) return toast('Введите реквизиты', 'error');
-        payload.requisites = reqs;
       }
       
       const btn = document.getElementById('walletActionSubmit'); btn.disabled = true; btn.textContent = '...';
@@ -677,19 +648,6 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch(e) { list.innerHTML = ''; }
     }
 
-    document.querySelectorAll('#f-side .seg-btn').forEach(b => { 
-      b.onclick = () => { 
-        document.querySelectorAll('#f-side .seg-btn').forEach(x => x.classList.remove('active')); 
-        b.classList.add('active'); 
-        const u = API.user();
-        if (b.dataset.val === 'buy' && u && !u.isMaker && u.role !== 'admin') {
-          document.getElementById('makerWarning').style.display = 'block';
-        } else {
-          document.getElementById('makerWarning').style.display = 'none';
-        }
-      }; 
-    });
-    document.querySelectorAll('#f-face .seg-btn').forEach(b => { b.onclick = () => { document.querySelectorAll('#f-face .seg-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); }; });
     document.querySelectorAll('#f-payments .pay-chip').forEach(c => { c.onclick = () => c.classList.toggle('active'); });
     document.querySelectorAll('#f-time .pay-chip').forEach(c => { c.onclick = () => { document.querySelectorAll('#f-time .pay-chip').forEach(x => x.classList.remove('active')); c.classList.add('active'); }; });
     document.querySelectorAll('#f-asset-select .icon-chip').forEach(c => {
@@ -701,7 +659,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     });
 
-    // ОБНОВЛЕННАЯ ЛОГИКА СОЗДАНИЯ ОБЪЯВЛЕНИЯ С ПРОВЕРКОЙ БАЛАНСА
+    // СОЗДАНИЕ ОБЪЯВЛЕНИЯ (ТОЛЬКО SELL)
     document.getElementById('createBtn')?.addEventListener('click', async () => {
       const errEl = document.getElementById('createError'); if (errEl) errEl.textContent = '';
       const u = API.user();
@@ -717,27 +675,19 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!price || !amount || !min || !max) { if (errEl) errEl.textContent = 'Заполните поля'; return; }
       
       const payment_time = document.querySelector('#f-time .pay-chip.active')?.dataset.val || 30;
-      const side = document.querySelector('#f-side .seg-btn.active')?.dataset.val;
       const asset = document.querySelector('#f-asset-select .icon-chip.active')?.dataset.val;
 
-      // ПРОВЕРКА БАЛАНСА ДЛЯ P2P
-      if (side === 'sell') {
-         if (u.balanceUsdt < Number(amount)) {
-             toast(`Недостаточно ${asset} на балансе (Нужно: ${fmtDec(amount, 2)})`, 'error');
-             return;
-         }
-      } else if (side === 'buy') {
-         if (u.balanceRub < Number(max)) {
-             toast(`Недостаточно RUB на балансе (Нужно: ${fmt(max)} ₽)`, 'error');
-             return;
-         }
+      // ПРОВЕРКА БАЛАНСА
+      if (u.balanceUsdt < Number(amount)) {
+          toast(`Недостаточно ${asset} на балансе (Нужно: ${fmtDec(amount, 2)})`, 'error');
+          return;
       }
 
       const btn = document.getElementById('createBtn'); btn.disabled = true; btn.textContent = '...';
       
       try {
         await API.req('POST', '/ads', {
-          side: side,
+          side: 'sell',
           face_type: document.querySelector('#f-face .seg-btn.active')?.dataset.val,
           asset: asset, price: price, amount_total: amount,
           min_rub: min, max_rub: max,
@@ -1079,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', () => {
               ${avatarHtml}
               <div style="flex:1;min-width:0">
                 <h2 class="profile-name-row">${user.displayName} ${merchantBadge} ${makerBadge} ${proBadge}</h2>
-                <div style="font-size:11px;color:var(--dim);font-weight:600;">@${user.username}</div>
+                <div style="font-size:11px;color:var(--dim);font-weight:600;">@${user.username} (ID: ${user.id})</div>
               </div>
             </div>
             <button class="profile-settings-btn" onclick="openSettings()">⚙️</button>
@@ -1152,21 +1102,41 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch(e) { toast('Ошибка', 'error'); }
     };
 
+    // ОБНОВЛЕННОЕ РЕДАКТИРОВАНИЕ ОБЪЯВЛЕНИЯ
     window.openEditAdModal = function(adId) {
       API.req('GET', '/ads/' + adId).then(ad => {
         document.getElementById('edit-price').value = ad.price;
+        document.getElementById('edit-amount').value = ad.amountTotal;
         document.getElementById('edit-min').value = ad.minRub;
         document.getElementById('edit-max').value = ad.maxRub;
         document.getElementById('edit-terms').value = ad.terms || '';
+        
+        // Настройка чипсов оплаты
+        const payBox = document.getElementById('edit-payments');
+        payBox.innerHTML = '';
+        const allPayments = ['СБП', 'Тинькофф', 'Сбербанк', 'Альфа-Банк'];
+        allPayments.forEach(p => {
+           const el = document.createElement('div');
+           el.className = 'pay-chip' + (ad.paymentMethods.includes(p) ? ' active' : '');
+           el.textContent = p;
+           el.onclick = () => el.classList.toggle('active');
+           payBox.appendChild(el);
+        });
+
         document.getElementById('editError').textContent = '';
+        
         document.getElementById('editSaveBtn').onclick = async () => {
           const btn = document.getElementById('editSaveBtn'); btn.disabled = true; btn.textContent = '...';
+          const selectedPayments = [...payBox.querySelectorAll('.pay-chip.active')].map(c => c.textContent);
+          if (!selectedPayments.length) { document.getElementById('editError').textContent = 'Выберите хотя бы один способ оплаты'; btn.disabled = false; btn.textContent = 'Сохранить'; return; }
+          
           try {
             await API.req('PATCH', '/ads/' + adId, {
               price: document.getElementById('edit-price').value,
+              amount_total: document.getElementById('edit-amount').value,
               min_rub: document.getElementById('edit-min').value,
               max_rub: document.getElementById('edit-max').value,
-              payment_methods: ad.paymentMethods, 
+              payment_methods: selectedPayments, 
               terms: document.getElementById('edit-terms').value
             });
             toast('Обновлено!', 'success');
@@ -1224,7 +1194,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           return `<div class="glass-card" style="margin-bottom:8px; border-left:3px solid ${st.c}; padding:12px;">
             <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-              <strong style="font-size:13px; color:var(--txt);">${typeLabel}</strong>
+              <strong style="font-size:13px; color:var(--txt);">${typeLabel} (ID: ${r.user_id})</strong>
               <span style="color:${st.c}; font-size:10px; font-weight:800; text-transform:uppercase;">${st.l}</span>
             </div>
             ${r.amount ? `<div style="font-size:11px; color:var(--dim);">Сумма: <strong style="color:var(--txt);">${fmt(r.amount)} ${r.currency}</strong></div>` : ''}
@@ -1451,30 +1421,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let adminTab = 'users';
     let currentAdminUserId = null;
+    let allAdminUsers = []; 
 
+    // ЗАГРУЗКА АДМИНКИ С ПОИСКОМ
     async function loadAdmin() {
       const u = API.user();
       if (!['admin', 'owner', 'deputy'].includes(u.role)) return;
       
       const content = document.getElementById('adminContent');
+      const searchInput = document.getElementById('adminUserSearch');
       if (!content) return;
 
       try {
         if (adminTab === 'users') {
           content.innerHTML = 'Загрузка...';
           const { items } = await API.req('GET', '/admin/users');
+          allAdminUsers = items;
           
-          content.innerHTML = items.map(user => `
-            <div class="admin-user-card">
-              <div class="admin-user-info">
-                <div class="admin-user-name">${user.displayName} (@${user.username})</div>
-                <div class="admin-user-meta">Роль: ${user.role}</div>
+          const renderUsers = (query = '') => {
+            let filtered = allAdminUsers;
+            if (query) {
+               const q = query.toLowerCase();
+               filtered = allAdminUsers.filter(user => 
+                  user.id.toString() === q || 
+                  user.username.toLowerCase().includes(q) || 
+                  (user.displayName || '').toLowerCase().includes(q)
+               );
+            }
+            
+            if (!filtered.length) { content.innerHTML = '<div class="empty-state">Не найдено</div>'; return; }
+
+            content.innerHTML = filtered.map(user => `
+              <div class="admin-user-card">
+                <div class="admin-user-info">
+                  <div class="admin-user-name">ID: ${user.id} | ${user.displayName} (@${user.username})</div>
+                  <div class="admin-user-meta">Роль: ${user.role} | Бал: ${fmt(user.balanceRub)} ₽</div>
+                </div>
+                <button class="btn btn-primary btn-sm" style="border-radius: 8px; padding: 4px 10px; height:28px; font-size:11px;" onclick="openAdminUserModal(${user.id})">⚙️</button>
               </div>
-              <button class="btn btn-primary btn-sm" style="border-radius: 8px; padding: 4px 10px; height:28px; font-size:11px;" onclick="openAdminUserModal(${user.id})">⚙️</button>
-            </div>
-          `).join('');
+            `).join('');
+          };
+
+          renderUsers(searchInput.value);
+          searchInput.oninput = () => renderUsers(searchInput.value);
+
         } 
         else if (adminTab === 'disputes') {
+          searchInput.style.display = 'none';
           content.innerHTML = 'Загрузка...';
           const { items } = await API.req('GET', '/admin/orders');
           
@@ -1497,6 +1490,7 @@ document.addEventListener('DOMContentLoaded', () => {
           `).join('');
         }
         else if (adminTab === 'requests') {
+          searchInput.style.display = 'none';
           content.innerHTML = 'Загрузка...';
           const { items } = await API.req('GET', '/admin/requests');
           
@@ -1530,7 +1524,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return `
             <div class="glass-card" style="padding:10px; margin-bottom:8px; border-left:3px solid ${st.c};">
               <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                <strong style="font-size:13px; color:var(--txt);">${typeLabel}</strong>
+                <strong style="font-size:13px; color:var(--txt);">${typeLabel} (ID: ${req.user_id})</strong>
                 <span style="font-size:10px; font-weight:800; color:${st.c}; text-transform:uppercase;">${st.l}</span>
               </div>
               <div style="font-size:11px; color:var(--dim); margin-bottom:4px;">
@@ -1542,7 +1536,6 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>` : ''}
               ${details.requisites ? `<div style="font-size:10px; color:var(--dim); margin-bottom:2px;">Рек: <span style="color:var(--txt); font-weight:600;">${details.requisites}</span></div>` : ''}
               ${details.network ? `<div style="font-size:10px; color:var(--dim); margin-bottom:2px;">Сеть: <span style="color:var(--txt); font-weight:600;">${details.network}</span></div>` : ''}
-              ${details.fee ? `<div style="font-size:10px; color:var(--dim); margin-bottom:2px;">Комиссия: <span style="color:var(--red); font-weight:600;">${fmtDec(details.fee, 2)} USDT</span></div>` : ''}
               ${details.tg_username ? `<div style="font-size:10px; color:var(--dim); margin-bottom:6px;">TG: <span style="color:var(--txt); font-weight:600;">${details.tg_username}</span></div>` : ''}
               
               ${!isFinal ? `
@@ -1577,7 +1570,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
             ${avatarHtml}
             <div>
-              <h3 style="font-size:14px; font-weight:800; margin:0;">${user.displayName}</h3>
+              <h3 style="font-size:14px; font-weight:800; margin:0;">${user.displayName} (ID: ${user.id})</h3>
               <div style="font-size:10px; color:var(--dim);">@${user.username}</div>
             </div>
           </div>

@@ -159,14 +159,12 @@ app.post('/api/users/apply', auth, async (req, res) => {
 });
 
 app.post('/api/requests/finance', auth, async (req, res) => {
-  const { type, amount, currency, requisites, tg_username, network, fee } = req.body;
+  const { type, amount, currency, requisites, tg_username, network, user_id } = req.body;
   if (!amount || amount <= 0) return res.status(400).json({ error: 'bad_amount' });
   if (!requisites || !tg_username) return res.status(400).json({ error: 'Заполните все поля' });
   
-  // Если это вывод USDT - проверяем баланс
   if (type === 'withdraw_usdt') {
-      const totalNeeded = Number(amount) + Number(fee || 0);
-      if (Number(req.user.balance_usdt) < totalNeeded) {
+      if (Number(req.user.balance_usdt) < Number(amount)) {
           return res.status(400).json({ error: 'Недостаточно средств' });
       }
   } else if (type === 'withdraw_rub') {
@@ -177,7 +175,7 @@ app.post('/api/requests/finance', auth, async (req, res) => {
 
   try {
     await pool.query("INSERT INTO requests (user_id, type, amount, currency, details, status) VALUES ($1, $2, $3, $4, $5, 'pending')", 
-      [req.user.id, type, amount, currency, JSON.stringify({ requisites, tg_username, network, fee })]);
+      [req.user.id, type, amount, currency, JSON.stringify({ requisites, tg_username, network, user_id: req.user.id })]);
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: 'db_error' }); }
 });
@@ -258,25 +256,15 @@ app.get('/api/ads/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
-// ПРОВЕРКА БАЛАНСА ПРИ СОЗДАНИИ ОБЪЯВЛЕНИЯ
 app.post('/api/ads', auth, async (req, res) => {
   const { side, face_type, asset, price, amount_total, min_rub, max_rub, payment_methods, terms, payment_time } = req.body;
-  if (side === 'buy' && !req.user.is_maker && req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Для создания объявлений на покупку нужен статус Мейкера.' });
-  }
   
   const p = Number(price), at = Number(amount_total), mn = Number(min_rub), mx = Number(max_rub);
   if (!(p > 0) || !(at > 0) || !(mn > 0) || !(mx > 0) || mn > mx || mx > at * p) return res.status(400).json({ error: 'bad_amounts' });
 
-  // Проверка баланса
   if (side === 'sell' && req.user.role !== 'admin') {
       if (Number(req.user.balance_usdt) < at) {
           return res.status(400).json({ error: 'Недостаточно USDT для создания объявления' });
-      }
-  }
-  if (side === 'buy' && req.user.role !== 'admin') {
-      if (Number(req.user.balance_rub) < mx) {
-          return res.status(400).json({ error: 'Недостаточно RUB для создания объявления' });
       }
   }
 
@@ -289,21 +277,30 @@ app.post('/api/ads', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
+// ОБНОВЛЕНИЕ С ПОДДЕРЖКОЙ ИЗМЕНЕНИЯ ОБЪЕМА И СПОСОБОВ ОПЛАТЫ
 app.patch('/api/ads/:id', auth, async (req, res) => {
-  const { price, min_rub, max_rub, payment_methods, terms, active } = req.body;
+  const { price, min_rub, max_rub, payment_methods, terms, amount_total, active } = req.body;
   try {
     const adRes = await pool.query('SELECT * FROM ads WHERE id = $1', [req.params.id]);
     const ad = adRes.rows[0];
     if (!ad || ad.user_id !== req.user.id) return res.status(403).json({ error: 'forbidden' });
+    
     if (active !== undefined && !price) {
        const result = await pool.query('UPDATE ads SET active = $1 WHERE id = $2 RETURNING *', [active, req.params.id]);
        return res.json(await shapeAd(result.rows[0]));
     }
-    const p = Number(price), mn = Number(min_rub), mx = Number(max_rub);
-    if (!(p > 0) || !(mn > 0) || !(mx > 0) || mn > mx) return res.status(400).json({ error: 'bad_amounts' });
+    
+    const p = Number(price), mn = Number(min_rub), mx = Number(max_rub), at = Number(amount_total);
+    if (!(p > 0) || !(mn > 0) || !(mx > 0) || mn > mx || !(at > 0)) return res.status(400).json({ error: 'bad_amounts' });
+
+    const diff = at - Number(ad.amount_total);
+    const newAmountLeft = Number(ad.amount_left) + diff;
+
+    if (newAmountLeft < 0) return res.status(400).json({ error: 'Недостаточно средств на балансе для увеличения объема' });
+
     const result = await pool.query(
-      'UPDATE ads SET price = $1, min_rub = $2, max_rub = $3, payment_methods = $4, terms = $5 WHERE id = $6 RETURNING *',
-      [p, mn, mx, payment_methods, terms, req.params.id]
+      'UPDATE ads SET price = $1, min_rub = $2, max_rub = $3, payment_methods = $4, terms = $5, amount_total = $6, amount_left = $7 WHERE id = $8 RETURNING *',
+      [p, mn, mx, payment_methods, terms, at, newAmountLeft, req.params.id]
     );
     res.json(await shapeAd(result.rows[0]));
   } catch (err) { res.status(500).json({ error: 'db_error' }); }
@@ -313,7 +310,6 @@ app.post('/api/exchange', auth, async (req, res) => {
   const { type, amount, rate } = req.body;
   if (!amount || amount <= 0) return res.status(400).json({ error: 'bad_amount' });
   
-  // Проверка баланса для быстрого обмена
   if (type === 'buy' && Number(req.user.balance_rub) < Number(amount)) {
       return res.status(400).json({ error: 'Недостаточно RUB' });
   }
@@ -600,10 +596,7 @@ app.patch('/api/admin/requests/:id', auth, async (req, res) => {
       } else if (request.type === 'deposit_usdt') {
         await client.query('UPDATE users SET balance_usdt = balance_usdt + $1 WHERE id = $2', [request.amount, request.user_id]);
       } else if (request.type === 'withdraw_usdt') {
-        const details = request.details || {};
-        const fee = Number(details.fee || 0);
-        const totalToDeduct = Number(request.amount) + fee;
-        await client.query('UPDATE users SET balance_usdt = balance_usdt - $1 WHERE id = $2', [totalToDeduct, request.user_id]);
+        await client.query('UPDATE users SET balance_usdt = balance_usdt - $1 WHERE id = $2', [request.amount, request.user_id]);
       } else if (request.type === 'exchange') {
         const details = request.details;
         if (details.exchange_type === 'buy') {

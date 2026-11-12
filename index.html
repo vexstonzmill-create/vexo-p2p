@@ -216,10 +216,9 @@
           <div class="field">
             <label>Тип сделки</label>
             <div class="segmented" id="f-side">
-              <button type="button" class="seg-btn buy active" data-val="sell">Я продаю</button>
-              <button type="button" class="seg-btn sell" data-val="buy">Я покупаю (Мейкер)</button>
+              <!-- Убрана покупка, оставлена только продажа -->
+              <button type="button" class="seg-btn buy active" data-val="sell" style="flex: 1;">Я продаю</button>
             </div>
-            <p id="makerWarning" style="display: none; color: var(--yellow); font-size: 10px; margin-top: 4px;">Для покупки нужен статус Мейкера</p>
           </div>
 
           <div class="field">
@@ -261,7 +260,7 @@
 
           <div class="grid-2-col">
             <div class="field" style="margin-bottom: 8px;"><label>Цена за 1 USDT (₽)</label><input class="input" type="number" id="f-price" placeholder="90" style="height: 44px;"></div>
-            <div class="field" style="margin-bottom: 8px;"><label>Общий объем</label><input class="input" type="number" id="f-amount" placeholder="500" style="height: 44px;"></div>
+            <div class="field" style="margin-bottom: 8px;"><label>Общий объем (USDT)</label><input class="input" type="number" id="f-amount" placeholder="500" style="height: 44px;"></div>
           </div>
           <div class="grid-2-col">
             <div class="field" style="margin-bottom: 8px;"><label>Мин. лимит (₽)</label><input class="input" type="number" id="f-min" placeholder="3000" style="height: 44px;"></div>
@@ -295,6 +294,12 @@
 
       <section class="screen" id="screen-admin">
         <h2 style="margin-bottom: 12px; font-size: 16px; font-weight: 800; color:var(--red);">🛡 Админка</h2>
+        
+        <!-- ПОИСК В АДМИНКЕ -->
+        <div class="field" id="adminSearchContainer" style="margin-bottom: 12px;">
+          <input type="text" class="input" id="adminUserSearch" placeholder="Поиск по ID или нику..." style="height: 40px; font-size: 12px !important;">
+        </div>
+
         <div class="tabs" id="adminTabs" style="margin-bottom:16px;">
           <button class="tab active" data-val="users">Люди</button>
           <button class="tab" data-val="disputes">Споры</button>
@@ -316,6 +321,7 @@
   </div>
 </div>
 
+<!-- МОДАЛКИ -->
 <div class="toast-container" id="toastContainer"></div>
 <div class="modal-overlay" id="dialogOverlay"><div class="modal glass-modal" id="dialogContent"></div></div>
 
@@ -463,7 +469,7 @@
   </div>
 </div>
 
-<!-- ОБНОВЛЕННАЯ МОДАЛКА ВЫВОДА/ПОПОЛНЕНИЯ -->
+<!-- ОБНОВЛЕННАЯ МОДАЛКА ВЫВОДА/ПОПОЛНЕНИЯ (БЕЗ РЕКВИЗИТОВ И КОМИССИИ) -->
 <div class="modal-overlay" id="walletActionModal">
   <div class="modal glass-modal" style="padding: 18px;">
     <h3 id="walletActionTitle" style="font-size: 16px; font-weight: 800; margin-bottom: 12px;">Пополнение</h3>
@@ -477,33 +483,35 @@
     
     <div class="field" style="margin-bottom: 12px;"><label>Сумма</label><input type="number" class="input" id="walletActionAmount" placeholder="0" style="height: 40px;"></div>
     
-    <!-- Поля только для USDT вывода -->
+    <!-- Выбор банка для RUB -->
+    <div class="field" id="walletBankGroup" style="margin-bottom: 12px;">
+      <label>Выберите банк</label>
+      <select id="walletBankSelect" class="input" style="height: 40px; font-size: 12px !important; background: var(--glass-bg); color: var(--txt);">
+        <option value="Сбербанк">Сбербанк</option>
+        <option value="Тинькофф">Тинькофф</option>
+        <option value="Альфа-Банк">Альфа-Банк</option>
+        <option value="ВТБ">ВТБ</option>
+        <option value="Райффайзен">Райффайзен</option>
+      </select>
+    </div>
+
+    <!-- Поля для USDT -->
     <div id="usdtWithdrawFields" style="display: none;">
       <div class="field" style="margin-bottom: 12px;">
         <label>Сеть</label>
         <select id="walletNetwork" class="input" style="height: 40px; font-size: 12px !important; background: var(--glass-bg); color: var(--txt);">
-          <option value="TRC20">TRC-20</option>
-          <option value="ERC20">ERC-20</option>
+          <option value="TRC-20">TRC-20 (Tron)</option>
+          <option value="ERC-20">ERC-20 (Ethereum)</option>
+          <option value="BEP-20">BEP-20 (BSC)</option>
         </select>
       </div>
       <div class="field" style="margin-bottom: 12px;">
         <label>Адрес кошелька</label>
         <input type="text" class="input" id="walletAddress" placeholder="Введите адрес" style="height: 40px;">
       </div>
-      <div class="inner-card" style="margin-bottom: 12px; border: 1px dashed var(--primary);">
-        <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;">
-          <span style="color: var(--dim);">Комиссия сети (+20%):</span>
-          <span id="withdrawFeeAmount" style="font-weight: 800; color: var(--red);">0 USDT</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 11px;">
-          <span style="color: var(--dim);">Итого к списанию:</span>
-          <span id="withdrawTotalAmount" style="font-weight: 800; color: var(--txt);">0 USDT</span>
-        </div>
-      </div>
     </div>
 
     <div class="field" style="margin-bottom: 12px;"><label>Telegram</label><input type="text" class="input" id="walletActionTg" placeholder="@username" style="height: 40px;"></div>
-    <div class="field" style="margin-bottom: 12px;" id="walletRequisitesField"><label>Реквизиты</label><input type="text" class="input" id="walletActionRequisites" placeholder="Номер карты" style="height: 40px;"></div>
     
     <button class="btn btn-primary btn-block" id="walletActionSubmit" style="height: 44px;">Отправить</button>
     <button class="btn btn-ghost btn-block" onclick="closeModal('walletActionModal')" style="margin-top: 6px; height: 40px;">Отмена</button>
@@ -593,31 +601,33 @@
   </div>
 </div>
 
+<!-- ОБНОВЛЕННАЯ МОДАЛКА РЕДАКТИРОВАНИЯ ОБЪЯВЛЕНИЯ -->
 <div class="modal-overlay" id="editAdModal">
   <div class="modal glass-modal" style="padding: 18px;">
     <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 12px;">Редактировать</h3>
-    <div class="field" style="margin-bottom: 12px;"><label>Цена (₽)</label><input class="input" type="number" id="edit-price" style="height: 40px;"></div>
-    <div class="field" style="margin-bottom: 12px;"><label>Мин. лимит</label><input class="input" type="number" id="edit-min" style="height: 40px;"></div>
-    <div class="field" style="margin-bottom: 12px;"><label>Макс. лимит</label><input class="input" type="number" id="edit-max" style="height: 40px;"></div>
+    <div class="grid-2-col">
+      <div class="field" style="margin-bottom: 12px;"><label>Цена (₽)</label><input class="input" type="number" id="edit-price" style="height: 40px;"></div>
+      <div class="field" style="margin-bottom: 12px;"><label>Объем (USDT)</label><input class="input" type="number" id="edit-amount" style="height: 40px;"></div>
+    </div>
+    <div class="grid-2-col">
+      <div class="field" style="margin-bottom: 12px;"><label>Мин. лимит</label><input class="input" type="number" id="edit-min" style="height: 40px;"></div>
+      <div class="field" style="margin-bottom: 12px;"><label>Макс. лимит</label><input class="input" type="number" id="edit-max" style="height: 40px;"></div>
+    </div>
+    
+    <div class="field" style="margin-bottom: 12px;">
+      <label>Способы оплаты</label>
+      <div class="icon-scroll" id="edit-payments" style="margin-bottom:0;">
+        <div class="pay-chip" data-val="СБП">🏦 СБП</div>
+        <div class="pay-chip" data-val="Тинькофф">🟡 Тинькофф</div>
+        <div class="pay-chip" data-val="Сбербанк">🟢 Сбер</div>
+        <div class="pay-chip" data-val="Альфа-Банк">🔴 Альфа</div>
+      </div>
+    </div>
+
     <div class="field" style="margin-bottom: 12px;"><label>Условия</label><textarea class="input" id="edit-terms" style="min-height: 50px; font-size: 12px !important;"></textarea></div>
     <div class="error-msg" id="editError" style="font-size: 10px;"></div>
     <button class="btn btn-primary btn-block" id="editSaveBtn" style="height: 40px;">Сохранить</button>
     <button class="btn btn-ghost btn-block" onclick="closeModal('editAdModal')" style="margin-top: 6px; height: 40px;">Отмена</button>
-  </div>
-</div>
-
-<script src="app.js"></script>
-<script>
-  setTimeout(() => {
-    const loader = document.getElementById('loader');
-    if (loader) {
-      loader.style.opacity = '0';
-      setTimeout(() => loader.style.display = 'none', 500);
-    }
-  }, 1500);
-</script>
-</body>
-</html>st btn-block" onclick="closeModal('editAdModal')" style="margin-top: 6px; height: 40px;">Отмена</button>
   </div>
 </div>
 
