@@ -148,7 +148,6 @@ app.patch('/api/users/me', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
-// ЗАЯВКИ
 app.post('/api/users/apply', auth, async (req, res) => {
   const { type } = req.body; 
   try {
@@ -170,7 +169,6 @@ app.post('/api/requests/finance', auth, async (req, res) => {
   } catch(e) { res.status(500).json({ error: 'db_error' }); }
 });
 
-// ПОЛУЧЕНИЕ ЗАЯВОК ПОЛЬЗОВАТЕЛЯ
 app.get('/api/requests/my', auth, async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM requests WHERE user_id = $1 ORDER BY created_at DESC", [req.user.id]);
@@ -196,14 +194,37 @@ async function shapeAd(a) {
   return { id: a.id, userId: a.user_id, username: u?.username || '?', displayName: u?.display_name || u?.username || '?', avatarUrl: u?.avatar_url || '', side: a.side, faceType: a.face_type, asset: a.asset, price: Number(a.price), amountTotal: Number(a.amount_total), amountLeft: Number(a.amount_left), totalRub: (Number(a.amount_left) * Number(a.price)).toFixed(2), minRub: Number(a.min_rub), maxRub: realMaxRub.toFixed(2), paymentMethods: a.payment_methods, terms: a.terms, active: a.active, paymentTime: Number(a.payment_time) || 30, createdAt: a.created_at, ...stats, isPro: u?.is_pro, isMerchant: u?.is_merchant, isMaker: u?.is_maker };
 }
 
+// ИСПРАВЛЕННЫЙ ФИЛЬТР ОБЪЯВЛЕНИЙ
 app.get('/api/ads', async (req, res) => {
   let query = "SELECT * FROM ads WHERE active = true AND amount_left > 0";
   const params = [];
+
   if (req.query.side) { params.push(req.query.side); query += ` AND side = $${params.length}`; }
   if (req.query.asset) { params.push(req.query.asset); query += ` AND asset = $${params.length}`; }
   if (req.query.face_type) { params.push(req.query.face_type); query += ` AND face_type = $${params.length}`; }
   if (req.query.payment) { params.push(req.query.payment); query += ` AND $${params.length} = ANY(payment_methods)`; }
-  query += " ORDER BY created_at DESC LIMIT 50";
+  
+  // ФИКС ФИЛЬТРА ПО СУММЕ
+  if (req.query.min_amount) { 
+    params.push(req.query.min_amount); 
+    query += ` AND max_rub >= $${params.length}`; // Объявление позволяет купить на сумму больше или равно минимальной
+  }
+  if (req.query.max_amount) { 
+    params.push(req.query.max_amount); 
+    query += ` AND min_rub <= $${params.length}`; // Объявление позволяет купить на сумму меньше или равно максимальной
+  }
+
+  // СОРТИРОВКА ПО ЦЕНЕ
+  if (req.query.price_sort === 'asc') {
+    query += " ORDER BY price ASC";
+  } else if (req.query.price_sort === 'desc') {
+    query += " ORDER BY price DESC";
+  } else {
+    query += " ORDER BY created_at DESC";
+  }
+
+  query += " LIMIT 50";
+
   try {
     const result = await pool.query(query, params);
     const items = await Promise.all(result.rows.map(shapeAd));
@@ -458,7 +479,6 @@ app.get('/api/reviews/user/:userId', async (req, res) => {
   res.json({ items: result.rows.map(r => ({ id: r.id, rating: r.rating, comment: r.comment, author: r.display_name, createdAt: r.created_at })) });
 });
 
-// АДМИНКА
 app.get('/api/admin/users', auth, async (req, res) => {
   if (!['admin', 'owner', 'deputy'].includes(req.user.role)) return res.status(403).json({ error: 'forbidden' });
   try {
@@ -528,14 +548,12 @@ app.patch('/api/admin/requests/:id', auth, async (req, res) => {
     const rRes = await client.query('SELECT * FROM requests WHERE id = $1 FOR UPDATE', [reqId]);
     const request = rRes.rows[0];
     
-    // Разрешаем менять статус, только если он не финальный
     if (!request || ['completed', 'rejected', 'cancelled'].includes(request.status)) {
       throw new Error('Заявка уже завершена или отменена');
     }
     
     await client.query('UPDATE requests SET status = $1 WHERE id = $2', [status, reqId]);
     
-    // Если админ одобряет заявку, меняем балансы
     if (status === 'approved') {
       if (request.type === 'maker_req') {
         await client.query('UPDATE users SET is_maker = true WHERE id = $1', [request.user_id]);
@@ -551,22 +569,17 @@ app.patch('/api/admin/requests/:id', auth, async (req, res) => {
         await client.query('UPDATE users SET balance_usdt = balance_usdt - $1 WHERE id = $2', [request.amount, request.user_id]);
       } else if (request.type === 'exchange') {
         const details = request.details;
-        // ИСПРАВЛЕН БАГ С ОБМЕНОМ
         if (details.exchange_type === 'buy') {
-          // Пользователь покупает USDT. amount - это рубли
           const rubAmount = Number(request.amount);
           const usdtAmount = rubAmount / details.rate;
           await client.query('UPDATE users SET balance_rub = balance_rub - $1, balance_usdt = balance_usdt + $2 WHERE id = $3', [rubAmount, usdtAmount, request.user_id]);
         } else {
-          // Пользователь продает USDT. amount - это USDT
           const usdtAmount = Number(request.amount);
           const rubAmount = usdtAmount * details.rate;
           await client.query('UPDATE users SET balance_usdt = balance_usdt - $1, balance_rub = balance_rub + $2 WHERE id = $3', [usdtAmount, rubAmount, request.user_id]);
         }
       }
     }
-    
-    // Если статус completed, мы просто фиксируем, что заявка выполнена (для истории)
     await client.query('COMMIT');
     res.json({ ok: true });
   } catch(e) {

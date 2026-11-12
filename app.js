@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const overlay = document.getElementById('dialogOverlay');
         const content = document.getElementById('dialogContent');
         if (!overlay || !content) return resolve(false);
-        content.innerHTML = `<h3 style="font-size:18px;font-weight:800;color:var(--txt)">${title}</h3><p style="font-size:14px;color:var(--dim);margin:10px 0;font-weight:500;">${message}</p><div style="display:flex;gap:8px;margin-top:16px"><button class="btn btn-ghost" style="flex:1;border:1px solid var(--glass-border);" id="dlgCancel">Отмена</button><button class="btn btn-primary" style="flex:1;" id="dlgOk">${okText}</button></div>`;
+        content.innerHTML = `<h3 style="font-size:16px;font-weight:800;color:var(--txt)">${title}</h3><p style="font-size:13px;color:var(--dim);margin:8px 0;font-weight:500;">${message}</p><div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-ghost" style="flex:1;border:1px solid var(--glass-border);height:40px;font-size:12px;" id="dlgCancel">Отмена</button><button class="btn btn-primary" style="flex:1;height:40px;font-size:12px;" id="dlgOk">${okText}</button></div>`;
         overlay.classList.add('active');
         document.getElementById('dlgCancel').onclick = () => { overlay.classList.remove('active'); resolve(false); };
         document.getElementById('dlgOk').onclick = () => { overlay.classList.remove('active'); resolve(true); };
@@ -71,7 +71,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeModal(id) { const el = document.getElementById(id); if (el) el.classList.remove('active'); }
     window.closeModal = closeModal;
 
-    // --- БАННЕРЫ ---
     (function initCarousel() {
       if (window.bannerInited) return;
       window.bannerInited = true;
@@ -89,7 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
       auto();
     })();
 
-    // --- УВЕДОМЛЕНИЯ ---
     let notifications = JSON.parse(localStorage.getItem('vexo_notifs')) || [];
     notifications = notifications.filter((v,i,a)=>a.findIndex(t=>(t.id === v.id))===i);
 
@@ -128,7 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
       updateNotifUI();
     });
 
-    // --- НАВИГАЦИЯ ---
     let previousScreen = 'home';
     const screenCache = {};
 
@@ -168,7 +165,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const backBtn = document.getElementById('backBtn');
     if (backBtn) backBtn.onclick = () => show(previousScreen);
 
-    // ТЕМА И ШРИФТ
     let currentTheme = localStorage.getItem('vexo_theme') || 'dark';
     function applyTheme(theme) {
       document.body.setAttribute('data-theme', theme);
@@ -198,7 +194,6 @@ document.addEventListener('DOMContentLoaded', () => {
       toast('Тема: ' + (currentTheme === 'dark' ? 'Тёмная' : 'Светлая'), 'info');
     });
 
-    // АВТОРИЗАЦИЯ
     let authMode = 'login';
     function setAuthMode(mode) {
       authMode = mode;
@@ -206,7 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('tabRegister')?.classList.toggle('active', mode === 'register');
       document.getElementById('emailField')?.classList.toggle('hidden', mode !== 'register');
       const l = document.getElementById('loginLabel');
-      if (l) l.textContent = mode === 'register' ? 'Никнейм (логин)' : 'Логин или Email';
+      if (l) l.textContent = mode === 'register' ? 'Никнейм' : 'Логин или Email';
       const b = document.getElementById('authSubmit');
       if (b) b.textContent = mode === 'login' ? 'Войти' : 'Зарегистрироваться';
       const er = document.getElementById('authError');
@@ -261,9 +256,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (lb) lb.classList.add('hidden');
         if (ab) {
           ab.classList.remove('hidden');
-          ab.style.background = 'var(--btn-bg)'; ab.style.color = 'var(--btn-txt)'; ab.style.width = '32px'; ab.style.height = '32px';
+          ab.style.background = 'var(--btn-bg)'; ab.style.color = 'var(--btn-txt)'; ab.style.width = '28px'; ab.style.height = '28px';
           ab.style.borderRadius = '50%'; ab.style.display = 'flex'; ab.style.alignItems = 'center'; ab.style.justifyContent = 'center';
-          ab.style.fontWeight = '800'; ab.style.fontSize = '14px';
+          ab.style.fontWeight = '800'; ab.style.fontSize = '12px';
           if (u.avatarUrl) {
             ab.innerHTML = `<img src="${u.avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none'; this.parentElement.innerHTML='${(u.displayName || u.username || '?')[0].toUpperCase()}';">`;
           } else {
@@ -286,25 +281,45 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // ГЛАВНАЯ
+    // ОБНОВЛЕННЫЙ РЕНДЕР ДЛЯ ГЛАВНОЙ (Мини-карточки)
+    function renderMiniAd(ad) {
+      const coinClass = ad.asset.toLowerCase();
+      const coinSymbol = ad.asset === 'USDT' ? '₮' : ad.asset === 'BTC' ? '₿' : 'T';
+      const pays = (ad.paymentMethods || []).join(', ');
+      
+      return `<div class="ad-card" style="padding: 10px; cursor:pointer;" onclick="openPublicProfile(${ad.userId})">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:8px;">
+             <div class="coin-icon ${coinClass}" style="width:32px;height:32px;font-size:14px;">${coinSymbol}</div>
+             <div>
+               <div style="font-weight:800; font-size:14px; color:var(--txt);">${ad.asset}</div>
+               <div style="font-size:10px; color:var(--dim); max-width:100px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${pays}</div>
+             </div>
+          </div>
+          <div style="text-align:right;">
+             <div style="font-weight:900; font-size:15px; color:var(--txt);">${fmt(ad.price)} ₽</div>
+             <div style="font-size:10px; color:var(--dim);">${ad.displayName}</div>
+          </div>
+        </div>
+      </div>`;
+    }
+
     async function loadHome() {
       const list = document.getElementById('homeTopAds');
       if (!list) return;
       try {
         const { items } = await API.req('GET', '/ads?side=sell');
         const top3 = items.slice(0, 3);
-        list.innerHTML = top3.length ? top3.map(renderAd).join('') : '<div class="empty-state">Нет предложений</div>';
-        bindAdButtons();
+        list.innerHTML = top3.length ? top3.map(renderMiniAd).join('') : '<div class="empty-state">Нет предложений</div>';
       } catch(e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
     }
 
-    // КОШЕЛЕК
     let walletActionType = 'deposit';
     async function loadWallet() {
       const u = API.user();
       const screen = document.getElementById('screen-wallet');
       if (!u) {
-        screen.innerHTML = `<div class="empty-state" style="margin-top:20px;"><div style="font-size:40px;margin-bottom:10px;">🔒</div>Войдите в аккаунт.<br><br><button class="btn btn-primary" onclick="document.getElementById('authModal').classList.add('active')">Войти</button></div>`;
+        screen.innerHTML = `<div class="empty-state" style="margin-top:20px;"><div style="font-size:30px;margin-bottom:10px;">🔒</div>Войдите в аккаунт.<br><br><button class="btn btn-primary btn-sm" onclick="document.getElementById('authModal').classList.add('active')">Войти</button></div>`;
       } else {
         screen.innerHTML = '<div class="empty-state">Загрузка...</div>';
         
@@ -321,20 +336,20 @@ document.addEventListener('DOMContentLoaded', () => {
           const estimatedRub = freshUser.balanceUsdt * usdtRate;
 
           screen.innerHTML = `
-            <h2 style="margin-bottom: 4px; font-size: 18px;">Кошелёк</h2>
-            <p style="color: var(--dim); font-size: 12px; margin-bottom: 16px;">Балансы и история операций</p>
-            <div class="wallet-hero">
-              <div class="lbl">Общий баланс в рублях</div>
-              <div class="amount">${fmt(freshUser.balanceRub)} <span>₽</span></div>
-              <div class="wallet-actions">
-                <button class="btn btn-primary" id="btnDeposit" style="flex:1;">Пополнить</button>
-                <button class="btn btn-ghost" id="btnWithdraw" style="flex:1;">Вывести</button>
+            <h2 style="margin-bottom: 4px; font-size: 16px;">Кошелёк</h2>
+            <p style="color: var(--dim); font-size: 11px; margin-bottom: 12px;">Балансы и история</p>
+            <div class="wallet-hero" style="padding: 20px; margin-bottom: 16px;">
+              <div class="lbl" style="font-size:11px;">Общий баланс</div>
+              <div class="amount" style="font-size:32px; margin-bottom:16px;">${fmt(freshUser.balanceRub)} <span>₽</span></div>
+              <div class="wallet-actions" style="gap:8px;">
+                <button class="btn btn-primary btn-sm" id="btnDeposit" style="flex:1; height:36px; font-size:12px;">Пополнить</button>
+                <button class="btn btn-ghost btn-sm" id="btnWithdraw" style="flex:1; height:36px; font-size:12px;">Вывести</button>
               </div>
             </div>
-            <h3 style="margin-top: 20px; font-size: 14px; margin-bottom: 12px;">Активы</h3>
+            <h3 style="margin-top: 12px; font-size: 13px; margin-bottom: 8px;">Активы</h3>
             <div class="wallet-list">
-              <div class="wallet-item"><div class="coin-icon rub">₽</div><div class="w-info"><div class="w-name" style="font-weight:700;">Российский рубль</div><div class="w-sub" style="font-size:11px;color:var(--dim);">RUB · фиат</div></div><div class="w-bal" style="margin-left:auto; font-weight:800;">${fmt(freshUser.balanceRub)} ₽</div></div>
-              <div class="wallet-item"><div class="coin-icon usdt">₮</div><div class="w-info"><div class="w-name" style="font-weight:700;">Tether</div><div class="w-sub" style="font-size:11px;color:var(--dim);">USDT · TRC-20</div></div><div class="w-bal" style="margin-left:auto; font-weight:800;">${fmtDec(freshUser.balanceUsdt, 2)} <span style="font-size:10px;color:var(--dim);">≈ ${fmt(estimatedRub)} ₽</span></div></div>
+              <div class="wallet-item" style="padding: 12px;"><div class="coin-icon rub" style="width:32px;height:32px;font-size:14px;">₽</div><div class="w-info"><div class="w-name" style="font-weight:700; font-size:13px;">Российский рубль</div><div class="w-sub" style="font-size:10px;color:var(--dim);">RUB · фиат</div></div><div class="w-bal" style="margin-left:auto; font-weight:800; font-size:14px;">${fmt(freshUser.balanceRub)} ₽</div></div>
+              <div class="wallet-item" style="padding: 12px;"><div class="coin-icon usdt" style="width:32px;height:32px;font-size:14px;">₮</div><div class="w-info"><div class="w-name" style="font-weight:700; font-size:13px;">Tether</div><div class="w-sub" style="font-size:10px;color:var(--dim);">USDT · TRC-20</div></div><div class="w-bal" style="margin-left:auto; font-weight:800; font-size:14px;">${fmtDec(freshUser.balanceUsdt, 2)} <span style="font-size:10px;color:var(--dim);">≈ ${fmt(estimatedRub)} ₽</span></div></div>
             </div>`;
             
           document.getElementById('btnDeposit').onclick = () => { walletActionType = 'deposit'; document.getElementById('walletActionTitle').textContent = 'Пополнение'; document.getElementById('walletActionModal').classList.add('active'); };
@@ -351,33 +366,37 @@ document.addEventListener('DOMContentLoaded', () => {
       const reqs = document.getElementById('walletActionRequisites')?.value.trim();
       
       if (!amount || Number(amount) <= 0) return toast('Введите сумму', 'error');
-      if (!tg) return toast('Введите ваш Telegram', 'error');
+      if (!tg) return toast('Введите Telegram', 'error');
       if (!reqs) return toast('Введите реквизиты', 'error');
       
       const currency = document.querySelector('#walletAssetSelect .seg-btn.active').dataset.val;
       const type = walletActionType === 'deposit' ? `deposit_${currency.toLowerCase()}` : `withdraw_${currency.toLowerCase()}`;
       
-      const btn = document.getElementById('walletActionSubmit'); btn.disabled = true; btn.textContent = 'Отправка...';
+      const btn = document.getElementById('walletActionSubmit'); btn.disabled = true; btn.textContent = '...';
       try {
         await API.req('POST', '/requests/finance', { type, amount: Number(amount), currency, requisites: reqs, tg_username: tg }); 
-        toast('Заявка создана! Ожидайте подтверждения.', 'success');
+        toast('Заявка создана!', 'success');
         addNotification('Заявка на ' + (walletActionType === 'deposit' ? 'пополнение' : 'вывод') + ' создана', 'info');
         closeModal('walletActionModal'); 
       } catch(e) {
         toast(e.message || 'Ошибка', 'error');
       } finally {
-        btn.disabled = false; btn.textContent = 'Отправить заявку';
+        btn.disabled = false; btn.textContent = 'Отправить';
       }
     });
 
-    // МАРКЕТ
+    // ИСПРАВЛЕННЫЙ ФИЛЬТР И ВКЛАДКИ КУПИТЬ/ПРОДАТЬ
     async function loadMarket() {
       const filters = {};
       const activeTab = document.querySelector('#marketSideTabs .trade-tab.active');
       if (activeTab && activeTab.dataset.side) filters.side = activeTab.dataset.side === 'buy' ? 'sell' : 'buy';
-      const faceChip = document.querySelector('#filterFace .chip.active'); if (faceChip && faceChip.dataset.val) filters.face_type = faceChip.dataset.val;
+      
       const assetChip = document.querySelector('#filterAsset .icon-chip.active'); if (assetChip && assetChip.dataset.val) filters.asset = assetChip.dataset.val;
+      
+      const faceChip = document.querySelector('#filterFace .icon-chip.active'); if (faceChip && faceChip.dataset.val) filters.face_type = faceChip.dataset.val;
       const payChip = document.querySelector('#filterPayment .icon-chip.active'); if (payChip && payChip.dataset.val) filters.payment = payChip.dataset.val;
+      const priceSort = document.querySelector('#filterPriceSort .icon-chip.active'); if (priceSort && priceSort.dataset.val) filters.price_sort = priceSort.dataset.val;
+      
       const fMin = document.getElementById('filterMinAmount')?.value;
       const fMax = document.getElementById('filterMaxAmount')?.value;
       if (fMin) filters.min_amount = fMin;
@@ -393,6 +412,16 @@ document.addEventListener('DOMContentLoaded', () => {
         bindAdButtons();
       } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
     }
+
+    // Слушатели для вкладок Купить/Продать
+    document.querySelectorAll('#marketSideTabs .trade-tab').forEach(tab => {
+      tab.onclick = () => {
+        document.querySelectorAll('#marketSideTabs .trade-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        screenCache.market = false;
+        loadMarket();
+      };
+    });
 
     document.getElementById('openFilterBtn')?.addEventListener('click', () => {
       document.getElementById('filterModal').classList.add('active');
@@ -482,11 +511,11 @@ document.addEventListener('DOMContentLoaded', () => {
           if (!API.user()) { document.getElementById('authModal').classList.add('active'); return; }
           
           const btn = document.getElementById('exSubmitBtn');
-          btn.disabled = true; btn.textContent = 'Обработка...';
+          btn.disabled = true; btn.textContent = '...';
           try {
               const finalRate = exMode === 'buy' ? basePrice * 1.03 : basePrice * 0.97;
               await API.req('POST', '/exchange', { type: exMode, amount: amount, rate: finalRate });
-              toast('Заявка создана! Ожидайте.', 'success');
+              toast('Заявка создана!', 'success');
               document.getElementById('exAmount').value = '';
               updateExchangeUI();
               screenCache.wallet = false;
@@ -502,36 +531,36 @@ document.addEventListener('DOMContentLoaded', () => {
       updateExchangeUI();
     }
 
+    // СТАНДАРТНЫЙ РЕНДЕР (Для маркета)
     function renderAd(ad) {
       const isSell = ad.side === 'sell';
       const faceLabel = ad.faceType === 'first' ? '1-е лицо' : '3-е лицо';
       window._ads = window._ads || {}; window._ads[ad.id] = ad;
       const pays = (ad.paymentMethods || []).map(p => `<span class="pay-tag" style="background:rgba(255,255,255,0.1); border:1px solid var(--glass-border); padding:2px 6px; border-radius:4px; font-size:10px; font-weight:600;">${p}</span>`).join('');
       
-      let avatarHtml = `<div class="avatar">${ad.displayName[0].toUpperCase()}</div>`;
-      if (ad.avatarUrl) avatarHtml = `<div class="avatar"><img src="${ad.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${ad.displayName[0].toUpperCase()}'"></div>`;
+      let avatarHtml = `<div class="avatar" style="width:36px; height:36px; font-size:14px;">${ad.displayName[0].toUpperCase()}</div>`;
+      if (ad.avatarUrl) avatarHtml = `<div class="avatar" style="width:36px; height:36px;"><img src="${ad.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${ad.displayName[0].toUpperCase()}'"></div>`;
       
-      const merchantBadge = ad.isMerchant ? `<span class="badge-merchant">MERCHANT</span>` : '';
-      const makerBadge = ad.isMaker ? `<span class="badge-maker">MAKER</span>` : '';
-      const proBadge = ad.isPro ? `<span class="badge-pro">PRO</span>` : '';
+      const merchantBadge = ad.isMerchant ? `<span class="badge-merchant">M</span>` : '';
+      const makerBadge = ad.isMaker ? `<span class="badge-maker">MK</span>` : '';
 
-      return `<div class="ad-card">
-        <div class="ad-head" onclick="openPublicProfile(${ad.userId})">
+      return `<div class="ad-card" style="padding: 14px; margin-bottom: 10px;">
+        <div class="ad-head" style="margin-bottom: 10px;" onclick="openPublicProfile(${ad.userId})">
           ${avatarHtml}
           <div class="ad-user">
-            <div class="ad-name">${ad.displayName} ${merchantBadge} ${makerBadge} ${proBadge} <span class="badge-face">${faceLabel}</span></div>
-            <div class="ad-meta"><span>★ ${ad.ratingAvg || '—'}</span> <span>${ad.dealsCompleted || 0} сделок</span></div>
+            <div class="ad-name" style="font-size:13px; margin-bottom:2px;">${ad.displayName} ${merchantBadge} ${makerBadge} <span class="badge-face" style="font-size:9px;">${faceLabel}</span></div>
+            <div class="ad-meta" style="font-size:11px;"><span>★ ${ad.ratingAvg || '—'}</span> <span>${ad.dealsCompleted || 0} сделок</span></div>
           </div>
         </div>
         <div class="ad-body">
           <div class="ad-price-block">
-             <div class="ad-price">${fmt(ad.price)} ₽</div>
-             <div class="ad-limits">Лимиты: ${fmt(ad.minRub)} - ${fmt(ad.maxRub)} RUB</div>
-             <div class="ad-amount">Доступно: ${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div>
-             ${pays ? `<div class="ad-pay-methods" style="justify-content:flex-start;margin-top:4px; display:flex; gap:4px;">${pays}</div>` : ''}
+             <div class="ad-price" style="font-size:18px;">${fmt(ad.price)} ₽</div>
+             <div class="ad-limits" style="font-size:11px;">Лимит: ${fmt(ad.minRub)} - ${fmt(ad.maxRub)} ₽</div>
+             <div class="ad-amount" style="font-size:11px;">Доступно: ${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div>
+             ${pays ? `<div class="ad-pay-methods" style="justify-content:flex-start;margin-top:4px; display:flex; gap:4px; flex-wrap:wrap;">${pays}</div>` : ''}
           </div>
           <div class="ad-action">
-             <button class="btn ${isSell ? 'btn-buy' : 'btn-sell'} btn-sm" data-ad-id="${ad.id}" style="min-width:100px;">${isSell ? 'Купить' : 'Продать'}</button>
+             <button class="btn ${isSell ? 'btn-buy' : 'btn-sell'} btn-sm" data-ad-id="${ad.id}" style="min-width:80px; height:32px; font-size:12px;">${isSell ? 'Купить' : 'Продать'}</button>
           </div>
         </div>
       </div>`;
@@ -552,31 +581,28 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!m || !c) return; c.innerHTML = '<div class="empty-state">Загрузка...</div>'; m.classList.add('active');
       try {
         const { user, stats, isFavorite } = await API.req('GET', '/users/' + userId);
-        let avatarHtml = `<div class="avatar lg" style="margin:0 auto 10px;">${user.displayName[0].toUpperCase()}</div>`;
-        if (user.avatarUrl) avatarHtml = `<div class="avatar lg" style="margin:0 auto 10px;"><img src="${user.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${user.displayName[0].toUpperCase()}'"></div>`;
+        let avatarHtml = `<div class="avatar lg" style="margin:0 auto 8px; width:60px; height:60px; font-size:24px;">${user.displayName[0].toUpperCase()}</div>`;
+        if (user.avatarUrl) avatarHtml = `<div class="avatar lg" style="margin:0 auto 8px; width:60px; height:60px;"><img src="${user.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${user.displayName[0].toUpperCase()}'"></div>`;
         let favBtn = '';
-        if (API.user() && API.user().id !== user.id) favBtn = `<button class="btn-fav ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(${user.id}, this)" style="position:absolute;top:20px;right:20px;font-size:24px;background:none;border:none;">${isFavorite ? '❤️' : '🤍'}</button>`;
+        if (API.user() && API.user().id !== user.id) favBtn = `<button class="btn-fav ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(${user.id}, this)" style="position:absolute;top:15px;right:15px;font-size:20px;background:none;border:none;">${isFavorite ? '❤️' : '🤍'}</button>`;
         
-        const merchantBadge = user.isMerchant ? `<span class="badge-merchant" style="margin-left:6px;">MERCHANT</span>` : '';
-        const makerBadge = user.isMaker ? `<span class="badge-maker" style="margin-left:6px;">MAKER</span>` : '';
-        const proBadge = user.isPro ? `<span class="badge-pro" style="margin-left:6px;">PRO</span>` : '';
+        const merchantBadge = user.isMerchant ? `<span class="badge-merchant" style="margin-left:4px;">M</span>` : '';
+        const makerBadge = user.isMaker ? `<span class="badge-maker" style="margin-left:4px;">MK</span>` : '';
 
         c.innerHTML = `
           ${favBtn}
-          <div style="text-align:center; margin-bottom: 20px; margin-top:10px;">
+          <div style="text-align:center; margin-bottom: 16px; margin-top:8px;">
             ${avatarHtml}
-            <h2 style="font-size:20px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;justify-content:center;color:var(--txt);">${user.displayName} ${merchantBadge} ${makerBadge} ${proBadge}</h2>
-            <div style="font-size:12px;color:var(--dim);font-weight:600;">@${user.username}</div>
+            <h2 style="font-size:16px;font-weight:800;margin-bottom:2px;display:flex;align-items:center;justify-content:center;color:var(--txt);">${user.displayName} ${merchantBadge} ${makerBadge}</h2>
+            <div style="font-size:11px;color:var(--dim);font-weight:600;">@${user.username}</div>
           </div>
-          <div class="stats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-            <div class="glass-card" style="padding:12px;text-align:center;"><div style="font-size:11px;color:var(--dim);">Сделок</div><div style="font-size:18px;font-weight:800;color:var(--txt);">${stats.dealsTotal}</div></div>
-            <div class="glass-card" style="padding:12px;text-align:center;"><div style="font-size:11px;color:var(--dim);">Успешных</div><div style="font-size:18px;font-weight:800;color:var(--txt);">${stats.successRate !== null ? stats.successRate + '%' : '—'}</div></div>
-            <div class="glass-card" style="padding:12px;text-align:center;"><div style="font-size:11px;color:var(--dim);">Отзывов</div><div style="font-size:18px;font-weight:800;color:var(--txt);">${stats.reviewsCount}</div></div>
-            <div class="glass-card" style="padding:12px;text-align:center;"><div style="font-size:11px;color:var(--dim);">Рейтинг</div><div style="font-size:18px;font-weight:800;color:var(--txt);">${stats.ratingAvg || '—'}</div></div>
+          <div class="stats" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <div class="glass-card" style="padding:8px;text-align:center;border-radius:12px;"><div style="font-size:10px;color:var(--dim);">Сделок</div><div style="font-size:14px;font-weight:800;color:var(--txt);">${stats.dealsTotal}</div></div>
+            <div class="glass-card" style="padding:8px;text-align:center;border-radius:12px;"><div style="font-size:10px;color:var(--dim);">Успешных</div><div style="font-size:14px;font-weight:800;color:var(--txt);">${stats.successRate !== null ? stats.successRate + '%' : '—'}</div></div>
           </div>
-          <div id="publicReviewsList" style="margin-top:16px;">Загрузка отзывов...</div>`;
+          <div id="publicReviewsList" style="margin-top:12px;">Загрузка отзывов...</div>`;
         loadPublicReviews(user.id);
-      } catch(e) { c.innerHTML = '<div class="empty-state">Ошибка загрузки профиля</div>'; }
+      } catch(e) { c.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     };
 
     window.toggleFavorite = async function(targetId, btnEl) {
@@ -593,8 +619,8 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const data = await API.req('GET', '/reviews/user/' + userId);
         const items = data.items || [];
-        list.innerHTML = `<div style="font-size:13px;font-weight:800;margin-bottom:12px;color:var(--txt);text-transform:uppercase;">Отзывы</div>` + 
-          (items.length ? items.map(r => `<div class="glass-card" style="padding:12px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong style="font-size:13px;color:var(--txt);">${r.author}</strong><span style="color:var(--txt);font-size:14px;">${'★'.repeat(r.rating)}</span></div><p style="font-size:13px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p></div>`).join('') : '<div class="empty-state">Отзывов пока нет</div>');
+        list.innerHTML = `<div style="font-size:12px;font-weight:800;margin-bottom:8px;color:var(--txt);text-transform:uppercase;">Отзывы</div>` + 
+          (items.length ? items.map(r => `<div class="glass-card" style="padding:10px;margin-bottom:6px;border-radius:10px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><strong style="font-size:12px;color:var(--txt);">${r.author}</strong><span style="color:var(--txt);font-size:12px;">${'★'.repeat(r.rating)}</span></div><p style="font-size:11px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p></div>`).join('') : '<div class="empty-state" style="padding:10px;">Отзывов пока нет</div>');
       } catch(e) { list.innerHTML = ''; }
     }
 
@@ -634,11 +660,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const amount = document.getElementById('f-amount')?.value;
       const min = document.getElementById('f-min')?.value;
       const max = document.getElementById('f-max')?.value;
-      if (!price || !amount || !min || !max) { if (errEl) errEl.textContent = 'Заполните все поля'; return; }
+      if (!price || !amount || !min || !max) { if (errEl) errEl.textContent = 'Заполните поля'; return; }
       
       const payment_time = document.querySelector('#f-time .pay-chip.active')?.dataset.val || 30;
 
-      const btn = document.getElementById('createBtn'); btn.disabled = true; btn.textContent = 'Публикация...';
+      const btn = document.getElementById('createBtn'); btn.disabled = true; btn.textContent = '...';
       const asset = document.querySelector('#f-asset-select .icon-chip.active')?.dataset.val;
       
       try {
@@ -651,11 +677,11 @@ document.addEventListener('DOMContentLoaded', () => {
           payment_time: Number(payment_time)
         });
         toast('Объявление опубликовано!', 'success');
-        addNotification('Вы успешно создали новое объявление.', 'success');
+        addNotification('Вы создали новое объявление.', 'success');
         screenCache.market = false; screenCache.home = false;
         show('market');
       } catch (err) {
-        const map = { max_exceeds_total: 'Максимальный лимит больше общего объёма', min_gt_max: 'Минимум больше максимума', bad_amounts: 'Проверьте числа' };
+        const map = { max_exceeds_total: 'Макс. лимит больше объема', min_gt_max: 'Мин больше макс', bad_amounts: 'Проверьте числа' };
         if (errEl) errEl.textContent = map[err.code] || err.message;
       } finally { btn.disabled = false; btn.textContent = 'Опубликовать'; }
     });
@@ -663,27 +689,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // ОРДЕРА
     async function loadOrders(filter) {
       const list = document.getElementById('ordersList'); if (!list) return;
-      if (!API.user()) { list.innerHTML = '<div class="empty-state">Войдите, чтобы увидеть ордера</div>'; return; }
+      if (!API.user()) { list.innerHTML = '<div class="empty-state">Войдите</div>'; return; }
       try {
         const { items } = await API.req('GET', '/orders/my?status=' + filter);
         const sc = { pending: 'var(--yellow)', accepted: 'var(--blue)', paid: 'var(--grn)', completed: 'var(--grn)', cancelled: 'var(--red)', declined: 'var(--red)', dispute: 'var(--gold)' };
         list.innerHTML = items.length ? items.map(o => `
-          <div class="ad-card" style="cursor:pointer;border-left:4px solid ${sc[o.status] || 'var(--dim)'}" data-order-id="${o.id}">
-            <div style="display:flex;justify-content:space-between;margin-bottom:10px">
-              <strong style="font-family:Inter,monospace;font-size:15px;color:var(--txt);">#${o.publicId}</strong>
-              <span style="color:${sc[o.status] || 'var(--txt)'};font-size:12px;font-weight:800">${o.statusLabel}</span>
+          <div class="ad-card" style="cursor:pointer;border-left:3px solid ${sc[o.status] || 'var(--dim)'}; padding:12px; margin-bottom:8px;" data-order-id="${o.id}">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+              <strong style="font-family:Inter,monospace;font-size:13px;color:var(--txt);">#${o.publicId}</strong>
+              <span style="color:${sc[o.status] || 'var(--txt)'};font-size:10px;font-weight:800">${o.statusLabel}</span>
             </div>
             <div class="ad-body">
-              <div><div style="font-size:11px;color:var(--dim);">Сумма</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmt(o.amountRub)} ₽</div></div>
-              <div><div style="font-size:11px;color:var(--dim);">Актив</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div>
+              <div><div style="font-size:10px;color:var(--dim);">Сумма</div><div style="font-size:13px;font-weight:800;color:var(--txt);">${fmt(o.amountRub)} ₽</div></div>
+              <div><div style="font-size:10px;color:var(--dim);">Актив</div><div style="font-size:13px;font-weight:800;color:var(--txt);">${fmtDec(o.amountAsset, 2)} ${o.asset}</div></div>
             </div>
-            <div style="font-size:12px;color:var(--dim);display:flex;justify-content:space-between;font-weight:600;margin-top:12px;">
+            <div style="font-size:10px;color:var(--dim);display:flex;justify-content:space-between;font-weight:600;margin-top:8px;">
               <span>${new Date(o.createdAt).toLocaleString('ru-RU')}</span>
               <span>${o.buyer.displayName} ↔ ${o.seller.displayName}</span>
             </div>
           </div>`).join('') : '<div class="empty-state">Ордеров нет</div>';
         list.querySelectorAll('[data-order-id]').forEach(el => { el.onclick = () => openOrderPage(+el.dataset.orderId); });
-      } catch(e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+      } catch(e) { list.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     }
 
     document.querySelectorAll('#ordersFilter .tab').forEach(c => {
@@ -702,7 +728,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const { order, history, terms } = await API.req('GET', '/orders/' + orderId);
         renderOrderPage(order, history, terms);
-      } catch (e) { container.innerHTML = '<div class="empty-state">Ошибка загрузки ордера</div>'; }
+      } catch (e) { container.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     }
 
     window.openAdminOrder = function(orderId) { previousScreen = 'admin'; openOrderPage(orderId); };
@@ -723,108 +749,108 @@ document.addEventListener('DOMContentLoaded', () => {
       
       if (order.status === 'pending') {
         if (isSeller) {
-          actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><button class="btn btn-primary" onclick="doAction(${order.id},'accept')" style="background:var(--grn);color:#fff;border:none;">Принять заявку</button><button class="btn btn-ghost" style="color:var(--red);border:1px solid var(--red);" onclick="doAction(${order.id},'decline')">Отклонить</button></div>`;
+          actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px"><button class="btn btn-primary btn-sm" onclick="doAction(${order.id},'accept')" style="background:var(--grn);color:#fff;border:none;height:36px;font-size:12px;">Принять</button><button class="btn btn-ghost btn-sm" style="color:var(--red);border:1px solid var(--red);height:36px;font-size:12px;" onclick="doAction(${order.id},'decline')">Отклонить</button></div>`;
         } else {
-          actionsHtml = `<div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:13px;margin-bottom:8px;font-weight:600;">Ожидайте подтверждения заявки продавцом</div>
-          <button class="btn btn-ghost btn-block" style="color:var(--red);" onclick="doAction(${order.id},'cancel')">Отменить заявку</button>`;
+          actionsHtml = `<div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:10px;padding:10px;text-align:center;color:var(--dim);font-size:12px;margin-bottom:6px;font-weight:600;">Ожидайте подтверждения</div>
+          <button class="btn btn-ghost btn-block btn-sm" style="color:var(--red);height:36px;font-size:12px;" onclick="doAction(${order.id},'cancel')">Отменить</button>`;
         }
       } 
       else if (order.status === 'accepted') {
         if (isBuyer) {
           actionsHtml = `
-          <div style="background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:12px;padding:16px;text-align:center;margin-bottom:16px;">
-            <div style="font-size:12px;color:var(--dim);margin-bottom:8px;">Время на оплату:</div>
-            <div id="paymentTimerDisplay" style="font-size:24px;font-weight:900;color:var(--yellow);margin-bottom:12px;">--:--</div>
+          <div style="background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:10px;padding:12px;text-align:center;margin-bottom:10px;">
+            <div style="font-size:11px;color:var(--dim);margin-bottom:6px;">Время на оплату:</div>
+            <div id="paymentTimerDisplay" style="font-size:20px;font-weight:900;color:var(--yellow);margin-bottom:8px;">--:--</div>
             <input type="file" id="receiptFile" style="display:none;" accept="image/*">
-            <button class="btn btn-primary btn-block" onclick="document.getElementById('receiptFile').click()" style="margin-bottom:8px;">Прикрепить чек</button>
-            <div id="fileName" style="font-size:11px;color:var(--grn);margin-bottom:12px;font-weight:600;"></div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-               <button class="btn btn-primary" onclick="doAction(${order.id},'paid')">Я оплатил</button>
-               <button class="btn btn-ghost" style="color:var(--red);" onclick="doAction(${order.id},'cancel')">Отменить</button>
+            <button class="btn btn-primary btn-sm" onclick="document.getElementById('receiptFile').click()" style="margin-bottom:6px;height:32px;font-size:11px;">Прикрепить чек</button>
+            <div id="fileName" style="font-size:10px;color:var(--grn);margin-bottom:8px;font-weight:600;"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+               <button class="btn btn-primary btn-sm" onclick="doAction(${order.id},'paid')" style="height:36px;font-size:12px;">Я оплатил</button>
+               <button class="btn btn-ghost btn-sm" style="color:var(--red);height:36px;font-size:12px;" onclick="doAction(${order.id},'cancel')">Отменить</button>
             </div>
           </div>`;
         } else {
-          actionsHtml = `<div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:13px;margin-bottom:8px;font-weight:600;">Ожидайте оплаты от покупателя</div><button class="btn btn-ghost btn-block" style="color:var(--gold);" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
+          actionsHtml = `<div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:10px;padding:10px;text-align:center;color:var(--dim);font-size:12px;margin-bottom:6px;font-weight:600;">Ожидайте оплаты</div><button class="btn btn-ghost btn-block btn-sm" style="color:var(--gold);height:36px;font-size:12px;" onclick="doAction(${order.id},'dispute')">Спор</button>`;
         }
       } 
       else if (order.status === 'paid') {
         if (isSeller) {
-          actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><button class="btn btn-primary" onclick="doAction(${order.id},'confirm')">Оплата получена</button><button class="btn btn-ghost" style="color:var(--red);" onclick="doAction(${order.id},'dispute')">Спор</button></div>`;
+          actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px"><button class="btn btn-primary btn-sm" onclick="doAction(${order.id},'confirm')" style="height:36px;font-size:12px;">Оплата получена</button><button class="btn btn-ghost btn-sm" style="color:var(--red);height:36px;font-size:12px;" onclick="doAction(${order.id},'dispute')">Спор</button></div>`;
         } else {
-          actionsHtml = `<div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:13px;margin-bottom:8px;font-weight:600;">Ожидайте подтверждения от продавца</div><button class="btn btn-ghost btn-block" style="color:var(--red);" onclick="doAction(${order.id},'dispute')">Открыть спор</button>`;
+          actionsHtml = `<div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:10px;padding:10px;text-align:center;color:var(--dim);font-size:12px;margin-bottom:6px;font-weight:600;">Ожидайте подтверждения</div><button class="btn btn-ghost btn-block btn-sm" style="color:var(--red);height:36px;font-size:12px;" onclick="doAction(${order.id},'dispute')">Спор</button>`;
         }
       } 
       else if (order.status === 'completed') {
-        actionsHtml = `<div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:14px;text-align:center;color:var(--grn);font-size:14px;font-weight:800;margin-bottom:10px">✓ Сделка завершена</div><button class="btn btn-primary btn-block" onclick="openReview(${order.id})" style="margin-bottom:16px;">Оставить отзыв</button>`;
+        actionsHtml = `<div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:10px;text-align:center;color:var(--grn);font-size:13px;font-weight:800;margin-bottom:8px">✓ Сделка завершена</div><button class="btn btn-primary btn-block btn-sm" onclick="openReview(${order.id})" style="margin-bottom:12px;height:36px;font-size:12px;">Оставить отзыв</button>`;
       } 
       else if (order.status === 'cancelled' || order.status === 'declined') {
-        actionsHtml = `<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:14px;text-align:center;color:var(--red);font-size:14px;margin-bottom:16px;font-weight:800;">Заявка ${order.status === 'declined' ? 'отклонена' : 'отменена'}</div>`;
+        actionsHtml = `<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:10px;text-align:center;color:var(--red);font-size:13px;margin-bottom:12px;font-weight:800;">Заявка ${order.status === 'declined' ? 'отклонена' : 'отменена'}</div>`;
       } 
       else if (order.status === 'dispute') {
-        if (isAdmin) actionsHtml = `<div style="background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:14px;text-align:center;color:var(--gold);font-size:14px;margin-bottom:12px;font-weight:800;">Вы админ. Решите спор:</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px"><button class="btn btn-primary" onclick="resolveDispute(${order.id}, 'completed')">Завершить</button><button class="btn btn-ghost" style="color:var(--red)" onclick="resolveDispute(${order.id}, 'cancelled')">Отменить</button></div>`;
-        else actionsHtml = `<div style="background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:14px;text-align:center;color:var(--gold);font-size:14px;margin-bottom:16px;font-weight:800;">Спор рассматривается администратором</div>`;
+        if (isAdmin) actionsHtml = `<div style="background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.3);border-radius:10px;padding:10px;text-align:center;color:var(--gold);font-size:13px;margin-bottom:8px;font-weight:800;">Решите спор:</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px"><button class="btn btn-primary btn-sm" onclick="resolveDispute(${order.id}, 'completed')" style="height:36px;font-size:12px;">Завершить</button><button class="btn btn-ghost btn-sm" style="color:var(--red);height:36px;font-size:12px;" onclick="resolveDispute(${order.id}, 'cancelled')">Отменить</button></div>`;
+        else actionsHtml = `<div style="background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.3);border-radius:10px;padding:10px;text-align:center;color:var(--gold);font-size:13px;margin-bottom:12px;font-weight:800;">Спор рассматривается</div>`;
       }
 
       let adminReceiptHtml = '';
       if (isAdmin && ['paid', 'dispute'].includes(order.status)) {
         adminReceiptHtml = `
-        <div class="glass-card" style="padding:16px;margin-bottom:16px;border:1px dashed var(--primary);">
+        <div class="glass-card" style="padding:12px;margin-bottom:12px;border:1px dashed var(--primary);">
           <div style="display:flex;justify-content:space-between;align-items:center;">
             <div>
-              <div style="font-size:12px;color:var(--dim);font-weight:700;margin-bottom:4px;">Чек об оплате (от покупателя)</div>
-              <div style="font-size:14px;font-weight:800;color:var(--txt);">Прикреплен</div>
+              <div style="font-size:10px;color:var(--dim);font-weight:700;margin-bottom:2px;">Чек об оплате</div>
+              <div style="font-size:12px;font-weight:800;color:var(--txt);">Прикреплен</div>
             </div>
-            <button class="btn btn-primary btn-sm" onclick="alert('Тут будет открываться картинка чека.')">Посмотреть</button>
+            <button class="btn btn-primary btn-sm" onclick="alert('Тут картинка чека')" style="height:28px;font-size:10px;">Посмотреть</button>
           </div>
         </div>`;
       }
 
-      const timelineHtml = (history || []).map(h => `<div style="display:flex;gap:12px;padding:8px 0"><div style="width:13px;height:13px;border-radius:50%;background:var(--txt);flex-shrink:0;margin-top:3px"></div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--txt);">${h.note || h.status}</div><div style="font-size:11px;color:var(--dim);font-weight:600;">${new Date(h.at).toLocaleString('ru-RU')}</div></div></div>`).join('');
+      const timelineHtml = (history || []).map(h => `<div style="display:flex;gap:8px;padding:6px 0"><div style="width:10px;height:10px;border-radius:50%;background:var(--txt);flex-shrink:0;margin-top:2px"></div><div style="flex:1"><div style="font-size:11px;font-weight:700;color:var(--txt);">${h.note || h.status}</div><div style="font-size:10px;color:var(--dim);font-weight:600;">${new Date(h.at).toLocaleString('ru-RU')}</div></div></div>`).join('');
       
       const container = document.getElementById('orderDetailContent');
       container.innerHTML = `
-        <div class="glass-card" style="padding: 24px; margin-bottom: 16px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-             <div style="font-size:12px;color:var(--dim);font-family:monospace;font-weight:700;">#${order.public_id}</div>
-             <div style="background:var(--glass-bg);color:${sc[order.status]};font-size:12px;font-weight:800;padding:4px 10px;border-radius:6px">${order.statusLabel}</div>
+        <div class="glass-card" style="padding: 16px; margin-bottom: 12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+             <div style="font-size:11px;color:var(--dim);font-family:monospace;font-weight:700;">#${order.public_id}</div>
+             <div style="background:var(--glass-bg);color:${sc[order.status]};font-size:11px;font-weight:800;padding:2px 8px;border-radius:4px">${order.statusLabel}</div>
           </div>
-          <h2 style="font-size:22px;font-weight:900;margin-bottom:8px;color:var(--txt)">${isBuyer ? 'Покупка ' : 'Продажа '}${order.asset}</h2>
-          <div style="font-size:36px;font-weight:900;color:var(--txt);font-variant-numeric:tabular-nums;">${fmt(order.amount_rub)}<span style="font-size:16px;color:var(--dim);font-weight:600;margin-left:4px">₽</span></div>
-          <div style="width:100%;height:6px;background:var(--glass-border);border-radius:3px;margin-top:20px;overflow:hidden"><div style="height:100%;width:${progress}%;background:${sc[order.status]};transition:0.3s"></div></div>
+          <h2 style="font-size:18px;font-weight:900;margin-bottom:4px;color:var(--txt)">${isBuyer ? 'Покупка ' : 'Продажа '}${order.asset}</h2>
+          <div style="font-size:28px;font-weight:900;color:var(--txt);font-variant-numeric:tabular-nums;">${fmt(order.amount_rub)}<span style="font-size:14px;color:var(--dim);font-weight:600;margin-left:2px">₽</span></div>
+          <div style="width:100%;height:4px;background:var(--glass-border);border-radius:2px;margin-top:12px;overflow:hidden"><div style="height:100%;width:${progress}%;background:${sc[order.status]};transition:0.3s"></div></div>
         </div>
         
-        <div class="glass-card" style="padding:16px;margin-bottom:16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;" onclick="openPublicProfile(${counterparty.id})">
-          <div style="display:flex;align-items:center;gap:12px;">
-             <div class="avatar" style="width:44px;height:44px;font-size:16px;">${counterparty.avatarUrl ? `<img src="${counterparty.avatarUrl}">` : counterparty.displayName[0].toUpperCase()}</div>
+        <div class="glass-card" style="padding:10px;margin-bottom:12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;" onclick="openPublicProfile(${counterparty.id})">
+          <div style="display:flex;align-items:center;gap:8px;">
+             <div class="avatar" style="width:32px;height:32px;font-size:12px;">${counterparty.avatarUrl ? `<img src="${counterparty.avatarUrl}">` : counterparty.displayName[0].toUpperCase()}</div>
              <div>
-               <div style="font-size:12px;color:var(--dim);font-weight:600;">${counterpartyRole}</div>
-               <div style="font-size:15px;font-weight:800;color:var(--txt);">${counterparty.displayName}</div>
+               <div style="font-size:10px;color:var(--dim);font-weight:600;">${counterpartyRole}</div>
+               <div style="font-size:13px;font-weight:800;color:var(--txt);">${counterparty.displayName}</div>
              </div>
           </div>
-          <button class="btn btn-ghost btn-sm" style="border:1px solid var(--glass-border);">Профиль</button>
+          <button class="btn btn-ghost btn-sm" style="border:1px solid var(--glass-border);height:28px;font-size:10px;">Профиль</button>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-          <div class="glass-card" style="padding:16px;"><div style="font-size:11px;color:var(--dim);font-weight:700;margin-bottom:4px;">Количество</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmtDec(order.amount_asset, 4)} ${order.asset}</div></div>
-          <div class="glass-card" style="padding:16px;"><div style="font-size:11px;color:var(--dim);font-weight:700;margin-bottom:4px;">Курс</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmt(order.price)} ₽</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+          <div class="glass-card" style="padding:10px;"><div style="font-size:10px;color:var(--dim);font-weight:700;margin-bottom:2px;">Количество</div><div style="font-size:13px;font-weight:800;color:var(--txt);">${fmtDec(order.amount_asset, 2)} ${order.asset}</div></div>
+          <div class="glass-card" style="padding:10px;"><div style="font-size:10px;color:var(--dim);font-weight:700;margin-bottom:2px;">Курс</div><div style="font-size:13px;font-weight:800;color:var(--txt);">${fmt(order.price)} ₽</div></div>
         </div>
         
-        <div class="glass-card" style="padding:16px;margin-bottom:16px;">
-          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-             <div style="font-size: 11px; font-weight: 800; color: var(--dim); text-transform: uppercase;">Время на оплату</div>
-             <div style="font-size: 12px; font-weight: 800; color: var(--yellow);">${order.paymentTime} минут</div>
+        <div class="glass-card" style="padding:12px;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+             <div style="font-size: 10px; font-weight: 800; color: var(--dim); text-transform: uppercase;">Время на оплату</div>
+             <div style="font-size: 11px; font-weight: 800; color: var(--yellow);">${order.paymentTime} мин</div>
           </div>
-          <div style="font-size: 11px; font-weight: 800; color: var(--dim); text-transform: uppercase; margin-bottom: 8px;">Условия сделки</div>
-          <div style="font-size: 13px; color: var(--txt); line-height: 1.5; font-weight: 500;">${terms || 'Стандартные условия сделки.'}</div>
+          <div style="font-size: 10px; font-weight: 800; color: var(--dim); text-transform: uppercase; margin-bottom: 4px;">Условия</div>
+          <div style="font-size: 11px; color: var(--txt); line-height: 1.3; font-weight: 500;">${terms || 'Стандартные условия.'}</div>
         </div>
         
         ${adminReceiptHtml}
         ${actionsHtml}
         
-        <button style="width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;padding:16px;margin-bottom:16px;color:var(--txt);font-size:14px; cursor:pointer;" onclick="openChatModal(${order.id})">
-          <div style="display:flex;align-items:center;gap:12px"><div class="avatar" style="width:40px;height:40px;font-size:18px">💬</div><div style="text-align:left;"><div style="font-weight:800; color:var(--txt);">Чат по сделке</div><div style="font-size:11px;color:var(--dim);font-weight:600;">Обсудить детали</div></div></div>
+        <button style="width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;padding:10px;margin-bottom:12px;color:var(--txt);font-size:12px; cursor:pointer;" onclick="openChatModal(${order.id})">
+          <div style="display:flex;align-items:center;gap:8px"><div class="avatar" style="width:28px;height:28px;font-size:14px">💬</div><div style="text-align:left;"><div style="font-weight:800; color:var(--txt);">Чат по сделке</div></div></div>
         </button>
-        <div class="glass-card" style="padding:16px"><div style="font-size:12px;font-weight:800;margin-bottom:14px;color:var(--dim);text-transform:uppercase">История</div>${timelineHtml}</div>`;
+        <div class="glass-card" style="padding:12px"><div style="font-size:11px;font-weight:800;margin-bottom:8px;color:var(--dim);text-transform:uppercase">История</div>${timelineHtml}</div>`;
 
       if (order.status === 'accepted') {
         const timerEl = document.getElementById('paymentTimerDisplay');
@@ -866,7 +892,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.doAction = async function(orderId, action) {
       if (action === 'cancel' && !await confirmAsync('Отмена', 'Отменить заявку?', 'Да')) return;
       if (action === 'confirm' && !await confirmAsync('Подтверждение', 'Подтвердить оплату?', 'Да')) return;
-      if (action === 'dispute' && !await confirmAsync('Спор', 'Вы уверены, что хотите открыть спор?', 'Да')) return;
+      if (action === 'dispute' && !await confirmAsync('Спор', 'Вы уверены?', 'Да')) return;
       if (action === 'decline' && !await confirmAsync('Отклонение', 'Отклонить заявку?', 'Да')) return;
       
       try { 
@@ -880,7 +906,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.resolveDispute = async function(orderId, resolution) {
-      if (!await confirmAsync('Решение спора', 'Вы уверены в решении?', 'Да')) return;
+      if (!await confirmAsync('Решение спора', 'Вы уверены?', 'Да')) return;
       try { await API.req('POST', `/orders/${orderId}/resolve`, { resolution }); toast('Спор решен', 'success'); openOrderPage(orderId); }
       catch (e) { toast(e.message, 'error'); }
     };
@@ -913,13 +939,13 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const { items } = await API.req('GET', '/chat/' + orderId);
         const body = document.getElementById('chatBody'); if (!body) return;
-        if (reset) body.innerHTML = '<div style="text-align:center;font-size:12px;color:var(--dim);font-weight:600;margin-bottom:10px;">Сделка создана.</div>';
+        if (reset) body.innerHTML = '<div style="text-align:center;font-size:11px;color:var(--dim);font-weight:600;margin-bottom:8px;">Сделка создана.</div>';
         const rendered = body.querySelectorAll('[data-msg-id]').length;
         items.slice(rendered).forEach(m => {
           const div = document.createElement('div');
           div.className = 'msg' + (m.isMine ? ' me' : '');
           div.dataset.msgId = m.id;
-          div.innerHTML = `<div class="avatar" style="width:28px;height:28px;font-size:11px">${m.senderUsername[0].toUpperCase()}</div><div><div class="msg-bubble">${m.text.replace(/</g, '&lt;')}</div><div style="font-size:10px;color:var(--dim);margin-top:4px;font-weight:600; text-align: ${m.isMine ? 'right' : 'left'}">${new Date(m.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div></div>`;
+          div.innerHTML = `<div class="avatar" style="width:24px;height:24px;font-size:10px">${m.senderUsername[0].toUpperCase()}</div><div><div class="msg-bubble" style="font-size:12px; padding:8px 12px;">${m.text.replace(/</g, '&lt;')}</div><div style="font-size:9px;color:var(--dim);margin-top:2px;font-weight:600; text-align: ${m.isMine ? 'right' : 'left'}">${new Date(m.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div></div>`;
           body.appendChild(div);
         });
         body.scrollTop = body.scrollHeight;
@@ -962,14 +988,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const u = API.user();
       const content = document.getElementById('profileContent');
       if (!content) return;
-      if (!u) { content.innerHTML = '<div class="empty-state"><button class="btn btn-primary" onclick="document.getElementById(\'authModal\').classList.add(\'active\')">Войти</button></div>'; return; }
+      if (!u) { content.innerHTML = '<div class="empty-state"><button class="btn btn-primary btn-sm" onclick="document.getElementById(\'authModal\').classList.add(\'active\')">Войти</button></div>'; return; }
       
       try {
         const { user, stats } = await API.req('GET', '/users/me');
         
         const proBadge = user.isPro ? `<span class="badge-pro">PRO</span>` : '';
-        const merchantBadge = user.isMerchant ? `<span class="badge-merchant">MERCHANT</span>` : '';
-        const makerBadge = user.isMaker ? `<span class="badge-maker">MAKER</span>` : '';
+        const merchantBadge = user.isMerchant ? `<span class="badge-merchant">M</span>` : '';
+        const makerBadge = user.isMaker ? `<span class="badge-maker">MK</span>` : '';
 
         const successRateStr = stats.successRate !== null ? `${stats.successRate}%` : '0%';
         const ratingAvgStr = stats.ratingAvg !== null ? stats.ratingAvg : '—';
@@ -980,54 +1006,54 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (profileTab === 'reviews') contentHtml = '<div id="myReviewsList"><div class="empty-state">Загрузка...</div></div>';
         else if (profileTab === 'requests') contentHtml = '<div id="myRequestsList"><div class="empty-state">Загрузка...</div></div>';
         
-        let avatarHtml = `<div class="avatar lg">${user.displayName[0].toUpperCase()}</div>`;
-        if (user.avatarUrl) avatarHtml = `<div class="avatar lg"><img src="${user.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${user.displayName[0].toUpperCase()}'"></div>`;
+        let avatarHtml = `<div class="avatar lg" style="width:60px; height:60px; font-size:24px;">${user.displayName[0].toUpperCase()}</div>`;
+        if (user.avatarUrl) avatarHtml = `<div class="avatar lg" style="width:60px; height:60px;"><img src="${user.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${user.displayName[0].toUpperCase()}'"></div>`;
 
         content.innerHTML = `
-          <div class="glass-card profile-header-card">
-            <div class="profile-info-left">
+          <div class="glass-card profile-header-card" style="padding:16px; margin-bottom:16px;">
+            <div class="profile-info-left" style="gap:12px;">
               ${avatarHtml}
               <div style="flex:1;min-width:0">
-                <h2 class="profile-name-row">${user.displayName} ${merchantBadge} ${makerBadge} ${proBadge}</h2>
-                <div style="font-size:12px;color:var(--dim);font-weight:600;">@${user.username}</div>
+                <h2 class="profile-name-row" style="font-size:18px;">${user.displayName} ${merchantBadge} ${makerBadge} ${proBadge}</h2>
+                <div style="font-size:11px;color:var(--dim);font-weight:600;">@${user.username}</div>
               </div>
             </div>
-            <button class="profile-settings-btn" onclick="openSettings()">⚙️</button>
+            <button class="profile-settings-btn" style="width:36px;height:36px;font-size:16px;" onclick="openSettings()">⚙️</button>
           </div>
           
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
-            <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;padding:16px;text-align:center;">
-              <div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Сделок</div>
-              <div style="font-size:18px;font-weight:800;">${stats.dealsTotal}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+            <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;padding:10px;text-align:center;">
+              <div style="font-size:10px;color:var(--dim);font-weight:600;margin-bottom:2px;">Сделок</div>
+              <div style="font-size:15px;font-weight:800;">${stats.dealsTotal}</div>
             </div>
-            <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;padding:16px;text-align:center;">
-              <div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Успешных</div>
-              <div style="font-size:18px;font-weight:800;">${successRateStr}</div>
+            <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;padding:10px;text-align:center;">
+              <div style="font-size:10px;color:var(--dim);font-weight:600;margin-bottom:2px;">Успешных</div>
+              <div style="font-size:15px;font-weight:800;">${successRateStr}</div>
             </div>
-            <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;padding:16px;text-align:center;">
-              <div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Отзывов</div>
-              <div style="font-size:18px;font-weight:800;">${stats.reviewsCount}</div>
+            <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;padding:10px;text-align:center;">
+              <div style="font-size:10px;color:var(--dim);font-weight:600;margin-bottom:2px;">Отзывов</div>
+              <div style="font-size:15px;font-weight:800;">${stats.reviewsCount}</div>
             </div>
-            <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;padding:16px;text-align:center;">
-              <div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Рейтинг</div>
-              <div style="font-size:18px;font-weight:800;">${ratingAvgStr}</div>
+            <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;padding:10px;text-align:center;">
+              <div style="font-size:10px;color:var(--dim);font-weight:600;margin-bottom:2px;">Рейтинг</div>
+              <div style="font-size:15px;font-weight:800;">${ratingAvgStr}</div>
             </div>
           </div>
           
-          <div class="profile-tabs">
-            <button class="profile-tab ${profileTab === 'ads' ? 'active' : ''}" onclick="switchProfileTab('ads')">Объявления</button>
-            <button class="profile-tab ${profileTab === 'history' ? 'active' : ''}" onclick="switchProfileTab('history')">История</button>
-            <button class="profile-tab ${profileTab === 'reviews' ? 'active' : ''}" onclick="switchProfileTab('reviews')">Отзывы</button>
-            <button class="profile-tab ${profileTab === 'requests' ? 'active' : ''}" onclick="switchProfileTab('requests')">Мои заявки</button>
+          <div class="profile-tabs" style="margin-bottom:12px; padding:4px;">
+            <button class="profile-tab ${profileTab === 'ads' ? 'active' : ''}" style="height:36px; font-size:12px; padding:0 12px;" onclick="switchProfileTab('ads')">Объявления</button>
+            <button class="profile-tab ${profileTab === 'history' ? 'active' : ''}" style="height:36px; font-size:12px; padding:0 12px;" onclick="switchProfileTab('history')">История</button>
+            <button class="profile-tab ${profileTab === 'reviews' ? 'active' : ''}" style="height:36px; font-size:12px; padding:0 12px;" onclick="switchProfileTab('reviews')">Отзывы</button>
+            <button class="profile-tab ${profileTab === 'requests' ? 'active' : ''}" style="height:36px; font-size:12px; padding:0 12px;" onclick="switchProfileTab('requests')">Заявки</button>
           </div>
           <div id="profileTabContent">${contentHtml}</div>
-          <div style="margin-top:24px"><button class="btn btn-ghost btn-block" onclick="logoutAction()" style="color:var(--red);border:1px solid rgba(239,68,68,.3);">Выйти из аккаунта</button></div>`;
+          <div style="margin-top:16px"><button class="btn btn-ghost btn-block btn-sm" onclick="logoutAction()" style="color:var(--red);border:1px solid rgba(239,68,68,.3); height:40px;">Выйти</button></div>`;
 
         if (profileTab === 'ads') loadMyAds();
         else if (profileTab === 'history') loadMyHistory();
         else if (profileTab === 'reviews') loadMyReviews();
         else if (profileTab === 'requests') loadMyRequests();
-      } catch (e) { content.innerHTML = '<div class="empty-state">Ошибка загрузки профиля</div>'; }
+      } catch (e) { content.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     }
     window.switchProfileTab = function(tab) { profileTab = tab; loadProfile(); };
 
@@ -1036,28 +1062,28 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const { items } = await API.req('GET', '/ads/my');
         list.innerHTML = items.length ? items.map(ad => `
-          <div class="glass-card" style="margin-bottom:12px;">
-            <div style="display:flex;justify-content:space-between;margin-bottom:12px">
-              <strong style="font-size:16px;">${ad.side === 'sell' ? 'Продажа' : 'Покупка'} ${ad.asset}</strong>
-              <span style="color:${ad.active ? 'var(--grn)' : 'var(--red)'};font-size:12px;font-weight:700;background:rgba(255,255,255,0.05);padding:4px 8px;border-radius:6px;">${ad.active ? 'Активно' : 'Неактивно'}</span>
+          <div class="glass-card" style="margin-bottom:8px; padding:12px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+              <strong style="font-size:14px;">${ad.side === 'sell' ? 'Продажа' : 'Покупка'} ${ad.asset}</strong>
+              <span style="color:${ad.active ? 'var(--grn)' : 'var(--red)'};font-size:10px;font-weight:700;background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:4px;">${ad.active ? 'Активно' : 'Неактивно'}</span>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
-              <div><div style="font-size:11px;color:var(--dim);font-weight:600;">Курс</div><div style="font-size:15px;font-weight:800;">${fmt(ad.price)} ₽</div></div>
-              <div><div style="font-size:11px;color:var(--dim);font-weight:600;">Остаток</div><div style="font-size:15px;font-weight:800;">${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+              <div><div style="font-size:10px;color:var(--dim);font-weight:600;">Курс</div><div style="font-size:13px;font-weight:800;">${fmt(ad.price)} ₽</div></div>
+              <div><div style="font-size:10px;color:var(--dim);font-weight:600;">Остаток</div><div style="font-size:13px;font-weight:800;">${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div></div>
             </div>
-            <div style="display:flex;gap:8px;">
-              <button class="btn btn-ghost btn-sm" style="flex:1; border:1px solid var(--glass-border);" onclick="toggleAdStatus(${ad.id}, ${ad.active})">${ad.active ? 'Снять' : 'Активировать'}</button>
-              <button class="btn btn-primary btn-sm" style="flex:1;" onclick="openEditAdModal(${ad.id})">Редактировать</button>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-ghost btn-sm" style="flex:1; border:1px solid var(--glass-border); height:32px; font-size:11px;" onclick="toggleAdStatus(${ad.id}, ${ad.active})">${ad.active ? 'Снять' : 'Вкл'}</button>
+              <button class="btn btn-primary btn-sm" style="flex:1; height:32px; font-size:11px;" onclick="openEditAdModal(${ad.id})">Изменить</button>
             </div>
           </div>
-        `).join('') : '<div class="empty-state">У вас нет объявлений</div>';
-      } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки объявлений</div>'; }
+        `).join('') : '<div class="empty-state">Нет объявлений</div>';
+      } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     }
 
     window.toggleAdStatus = async function(adId, currentStatus) {
       try {
         await API.req('PATCH', '/ads/' + adId, { active: !currentStatus });
-        toast(currentStatus ? 'Объявление снято' : 'Объявление активировано', 'success');
+        toast(currentStatus ? 'Снято' : 'Активировано', 'success');
         screenCache.market = false; loadMyAds();
       } catch(e) { toast('Ошибка', 'error'); }
     };
@@ -1070,7 +1096,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('edit-terms').value = ad.terms || '';
         document.getElementById('editError').textContent = '';
         document.getElementById('editSaveBtn').onclick = async () => {
-          const btn = document.getElementById('editSaveBtn'); btn.disabled = true; btn.textContent = 'Сохранение...';
+          const btn = document.getElementById('editSaveBtn'); btn.disabled = true; btn.textContent = '...';
           try {
             await API.req('PATCH', '/ads/' + adId, {
               price: document.getElementById('edit-price').value,
@@ -1079,7 +1105,7 @@ document.addEventListener('DOMContentLoaded', () => {
               payment_methods: ad.paymentMethods, 
               terms: document.getElementById('edit-terms').value
             });
-            toast('Объявление обновлено!', 'success');
+            toast('Обновлено!', 'success');
             closeModal('editAdModal'); screenCache.market = false; loadMyAds();
           } catch (err) {
             document.getElementById('editError').textContent = err.message;
@@ -1095,8 +1121,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const list = document.getElementById('myHistoryList'); if (!list) return;
       try {
         const { items } = await API.req('GET', '/orders/my?status=completed');
-        list.innerHTML = items.length ? items.map(o => `<div class="glass-card" style="margin-bottom:12px; border-left:4px solid var(--grn);"><div style="display:flex;justify-content:space-between;margin-bottom:12px"><strong style="font-size:15px;">#${o.publicId}</strong><span style="color:var(--grn);font-size:12px;font-weight:700;">Завершен</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div style="font-size:11px;color:var(--dim);font-weight:600;">Сумма</div><div style="font-size:15px;font-weight:800;">${fmt(o.amountRub)} ₽</div></div><div><div style="font-size:11px;color:var(--dim);font-weight:600;">Актив</div><div style="font-size:15px;font-weight:800;">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div></div></div>`).join('') : '<div class="empty-state">История пуста</div>';
-      } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+        list.innerHTML = items.length ? items.map(o => `<div class="glass-card" style="margin-bottom:8px; border-left:3px solid var(--grn); padding:12px;"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong style="font-size:13px;">#${o.publicId}</strong><span style="color:var(--grn);font-size:10px;font-weight:700;">Завершен</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div><div style="font-size:10px;color:var(--dim);font-weight:600;">Сумма</div><div style="font-size:13px;font-weight:800;">${fmt(o.amountRub)} ₽</div></div><div><div style="font-size:10px;color:var(--dim);font-weight:600;">Актив</div><div style="font-size:13px;font-weight:800;">${fmtDec(o.amountAsset, 2)} ${o.asset}</div></div></div></div>`).join('') : '<div class="empty-state">Пусто</div>';
+      } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     }
 
     async function loadMyReviews() {
@@ -1105,11 +1131,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const u = API.user();
         const data = await API.req('GET', '/reviews/user/' + u.id);
         const items = data.items || [];
-        list.innerHTML = items.length ? items.map(r => `<div class="glass-card" style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><strong style="font-size:14px;">${r.author}</strong><span style="color:var(--yellow);font-size:16px;">${'★'.repeat(r.rating)}</span></div><p style="font-size:13px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p></div>`).join('') : '<div class="empty-state">Отзывов нет</div>';
-      } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+        list.innerHTML = items.length ? items.map(r => `<div class="glass-card" style="margin-bottom:8px; padding:10px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><strong style="font-size:12px;">${r.author}</strong><span style="color:var(--yellow);font-size:12px;">${'★'.repeat(r.rating)}</span></div><p style="font-size:11px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p></div>`).join('') : '<div class="empty-state">Нет отзывов</div>';
+      } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     }
 
-    // МОИ ЗАЯВКИ
     async function loadMyRequests() {
       const list = document.getElementById('myRequestsList'); if (!list) return;
       try {
@@ -1130,22 +1155,21 @@ document.addEventListener('DOMContentLoaded', () => {
           if (r.type === 'withdraw_rub') typeLabel = 'Вывод RUB';
           if (r.type === 'deposit_usdt') typeLabel = 'Пополнение USDT';
           if (r.type === 'withdraw_usdt') typeLabel = 'Вывод USDT';
-          if (r.type === 'maker_req') typeLabel = 'Заявка на Мейкера';
-          if (r.type === 'merchant_req') typeLabel = 'Заявка на Мерчанта';
+          if (r.type === 'maker_req') typeLabel = 'Заявка Мейкера';
+          if (r.type === 'merchant_req') typeLabel = 'Заявка Мерчанта';
 
-          return `<div class="glass-card" style="margin-bottom:12px; border-left:4px solid ${st.c}; padding:16px;">
-            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-              <strong style="font-size:15px; color:var(--txt);">${typeLabel}</strong>
-              <span style="color:${st.c}; font-size:12px; font-weight:800; text-transform:uppercase;">${st.l}</span>
+          return `<div class="glass-card" style="margin-bottom:8px; border-left:3px solid ${st.c}; padding:12px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+              <strong style="font-size:13px; color:var(--txt);">${typeLabel}</strong>
+              <span style="color:${st.c}; font-size:10px; font-weight:800; text-transform:uppercase;">${st.l}</span>
             </div>
-            ${r.amount ? `<div style="font-size:13px; color:var(--dim);">Сумма: <strong style="color:var(--txt);">${fmt(r.amount)} ${r.currency}</strong></div>` : ''}
-            <div style="font-size:11px; color:var(--dim); margin-top:8px;">${new Date(r.created_at).toLocaleString('ru-RU')}</div>
+            ${r.amount ? `<div style="font-size:11px; color:var(--dim);">Сумма: <strong style="color:var(--txt);">${fmt(r.amount)} ${r.currency}</strong></div>` : ''}
+            <div style="font-size:10px; color:var(--dim); margin-top:4px;">${new Date(r.created_at).toLocaleString('ru-RU')}</div>
           </div>`;
-        }).join('') : '<div class="empty-state">У вас нет активных заявок</div>';
-      } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+        }).join('') : '<div class="empty-state">Нет заявок</div>';
+      } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     }
 
-    // НАСТРОЙКИ И СТАТУСЫ
     window.openSettings = async function() {
       const u = API.user(); if (!u) return;
       
@@ -1169,30 +1193,29 @@ document.addEventListener('DOMContentLoaded', () => {
         let progressHtml = '';
         
         if (user.isMaker) {
-          progressHtml += `<div style="font-size:13px; color:var(--dim); font-weight:700; display:flex; align-items:center; gap:6px;">☑ Статус Мейкера активен</div>`;
+          progressHtml += `<div style="font-size:12px; color:var(--dim); font-weight:700; display:flex; align-items:center; gap:4px;">☑ Мейкер активен</div>`;
         } else {
           progressHtml += `
-            <div style="background:var(--glass-bg); padding:12px; border-radius:12px; border:1px solid var(--glass-border);">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <div style="font-size:13px; font-weight:800; color:var(--gold);">Статус Мейкера</div>
-                <button class="btn btn-primary btn-sm" onclick="applyStatus('maker')" style="padding:4px 8px; font-size:11px; height:auto;">Подать заявку</button>
+            <div style="background:var(--glass-bg); padding:8px; border-radius:10px; border:1px solid var(--glass-border);">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <div style="font-size:11px; font-weight:800; color:var(--gold);">Статус Мейкера</div>
+                <button class="btn btn-primary btn-sm" onclick="applyStatus('maker')" style="padding:2px 6px; font-size:10px; height:24px;">Подать</button>
               </div>
-              <div style="font-size:12px; color:var(--dim); margin-bottom:6px;">Оборот: $${fmt(stats.volumeUsd)} / $3,000</div>
-              <div style="font-size:12px; color:var(--dim);">Успешных: ${stats.successRate}% / 80%</div>
+              <div style="font-size:10px; color:var(--dim); margin-bottom:2px;">Оборот: $${fmt(stats.volumeUsd)} / $3k</div>
+              <div style="font-size:10px; color:var(--dim);">Успешных: ${stats.successRate}% / 80%</div>
             </div>
           `;
         }
         
         if (user.isMerchant) {
-          progressHtml += `<div style="font-size:13px; color:var(--dim); font-weight:700; display:flex; align-items:center; gap:6px;">MERCHANT Статус Мерчанта активен</div>`;
+          progressHtml += `<div style="font-size:12px; color:var(--dim); font-weight:700; display:flex; align-items:center; gap:4px;">M Мерчант активен</div>`;
         } else {
           progressHtml += `
-            <div style="background:var(--glass-bg); padding:12px; border-radius:12px; border:1px solid var(--glass-border);">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <div style="font-size:13px; font-weight:800; color:var(--blue);">Статус Мерчанта</div>
-                <button class="btn btn-primary btn-sm" onclick="applyStatus('merchant')" style="padding:4px 8px; font-size:11px; height:auto;">Подать заявку</button>
+            <div style="background:var(--glass-bg); padding:8px; border-radius:10px; border:1px solid var(--glass-border);">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <div style="font-size:11px; font-weight:800; color:var(--blue);">Статус Мерчанта</div>
+                <button class="btn btn-primary btn-sm" onclick="applyStatus('merchant')" style="padding:2px 6px; font-size:10px; height:24px;">Подать</button>
               </div>
-              <div style="font-size:11px; color:var(--dim);">Для крупных трейдеров</div>
             </div>
           `;
         }
@@ -1222,7 +1245,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.applyStatus = async function(type) {
       try {
         await API.req('POST', '/users/apply', { type });
-        toast('Заявка отправлена на рассмотрение!', 'success');
+        toast('Заявка отправлена!', 'success');
         closeModal('settingsModal');
       } catch(e) {
         toast(e.message, 'error');
@@ -1230,7 +1253,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     document.getElementById('settingsSaveBtn')?.addEventListener('click', async () => {
-      const btn = document.getElementById('settingsSaveBtn'); btn.disabled = true; btn.textContent = 'Сохранение...';
+      const btn = document.getElementById('settingsSaveBtn'); btn.disabled = true; btn.textContent = '...';
       try {
         const payload = {
           displayName: document.getElementById('settingsName').value,
@@ -1240,19 +1263,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const curPass = document.getElementById('settingsCurrentPass').value;
         const newPass = document.getElementById('settingsNewPass').value;
         if (newPass) {
-           if (!curPass) throw new Error('Введите текущий пароль для смены');
+           if (!curPass) throw new Error('Введите текущий пароль');
            payload.currentPassword = curPass;
            payload.password = newPass;
         }
         const { user } = await API.req('PATCH', '/users/me', payload);
         localStorage.setItem('vexo_user', JSON.stringify(user));
         closeModal('settingsModal'); 
-        toast('Настройки сохранены', 'success'); 
-        addNotification('Вы обновили настройки профиля.', 'success');
+        toast('Сохранено', 'success'); 
+        addNotification('Настройки обновлены.', 'success');
         updateAuthUI(); screenCache.profile = false; loadProfile();
       } catch (e) {
         const er = document.getElementById('settingsError');
-        if (er) er.textContent = e.message === 'wrong_password' ? 'Неверный текущий пароль' : e.message;
+        if (er) er.textContent = e.message === 'wrong_password' ? 'Неверный пароль' : e.message;
       } finally { btn.disabled = false; btn.textContent = 'Сохранить'; }
     });
 
@@ -1294,7 +1317,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const btn = document.getElementById('orderSubmit');
           
           if (rub > 0 && (rub < ad.minRub || rub > realMaxRub)) {
-             if (errEl) errEl.textContent = `Сумма должна быть от ${fmt(ad.minRub)} до ${fmt(realMaxRub)} ₽`;
+             if (errEl) errEl.textContent = `Сумма от ${fmt(ad.minRub)} до ${fmt(realMaxRub)} ₽`;
              if (btn) { btn.style.opacity = '0.5'; btn.disabled = true; }
              amountInput.style.borderColor = 'var(--red)';
           } else {
@@ -1348,10 +1371,10 @@ document.addEventListener('DOMContentLoaded', () => {
               window._ads[ad.id] = freshAd;
               ad.price = freshAd.price;
               setText('orderRate', fmt(ad.price) + ' ₽');
-              toast('Внимание! Мейкер изменил курс. Цена обновлена.', 'error');
+              toast('Курс обновился!', 'error');
               if (amountInput.value) amountInput.dispatchEvent(new Event('input'));
             }
-          } catch(e) { console.log('Ошибка обновления цены', e); }
+          } catch(e) { console.log('Ошибка обновления', e); }
           timeLeft = 60;
           if (timerEl) timerEl.textContent = timeLeft + 's';
         }
@@ -1373,8 +1396,8 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const order = await API.req('POST', '/orders', { ad_id: currentAd.id, amount_rub: rub, payment_method: selectedPay });
         closeModal('orderModal'); 
-        toast('Заявка создана! Ожидайте подтверждения.', 'success'); 
-        addNotification(`Создана новая заявка #${order.publicId}`, 'success');
+        toast('Заявка создана!', 'success'); 
+        addNotification(`Новая заявка #${order.publicId}`, 'success');
         screenCache.orders = false; screenCache.market = false;
         openOrderPage(order.id);
       } catch (err) { if (errEl) errEl.textContent = err.message; }
@@ -1385,9 +1408,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (await confirmAsync('Выход', 'Выйти из аккаунта?', 'Выйти')) { localStorage.removeItem('vexo_token'); localStorage.removeItem('vexo_user'); location.reload(); }
     };
 
-    // ==========================================
-    // АДМИНКА (С КОМПАКТНЫМИ КАРТОЧКАМИ И МОДАЛКОЙ УПРАВЛЕНИЯ)
-    // ==========================================
+    // АДМИНКА
     let adminTab = 'users';
     let currentAdminUserId = null;
 
@@ -1400,53 +1421,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
       try {
         if (adminTab === 'users') {
-          content.innerHTML = 'Загрузка пользователей...';
+          content.innerHTML = 'Загрузка...';
           const { items } = await API.req('GET', '/admin/users');
           
           content.innerHTML = items.map(user => `
-            <div class="admin-user-card">
+            <div class="admin-user-card" style="padding:10px;">
               <div class="admin-user-info">
-                <div class="admin-user-name">${user.displayName} (@${user.username})</div>
-                <div class="admin-user-meta">Роль: ${user.role}</div>
+                <div class="admin-user-name" style="font-size:13px;">${user.displayName} (@${user.username})</div>
+                <div class="admin-user-meta" style="font-size:10px;">Роль: ${user.role}</div>
               </div>
-              <button class="btn btn-primary btn-sm" style="border-radius: 10px; padding: 8px 16px;" onclick="openAdminUserModal(${user.id})">Управление</button>
+              <button class="btn btn-primary btn-sm" style="border-radius: 8px; padding: 4px 10px; height:28px; font-size:11px;" onclick="openAdminUserModal(${user.id})">⚙️</button>
             </div>
           `).join('');
         } 
         else if (adminTab === 'disputes') {
-          content.innerHTML = 'Загрузка ордеров...';
+          content.innerHTML = 'Загрузка...';
           const { items } = await API.req('GET', '/admin/orders');
           
           if (!items.length) {
-             content.innerHTML = '<div class="empty-state">Нет активных споров</div>';
+             content.innerHTML = '<div class="empty-state">Нет споров</div>';
              return;
           }
           
           content.innerHTML = items.map(o => `
-            <div class="ad-card" style="cursor:pointer; border-left:4px solid ${o.status === 'dispute' ? 'var(--gold)' : 'var(--blue)'}" onclick="openAdminOrder(${o.id})">
-              <div style="display:flex;justify-content:space-between;margin-bottom:10px">
-                <strong style="font-family:Inter,monospace;font-size:15px;">#${o.publicId}</strong>
-                <span style="color:var(--txt);font-size:12px;font-weight:800">${o.statusLabel}</span>
+            <div class="ad-card" style="cursor:pointer; border-left:3px solid ${o.status === 'dispute' ? 'var(--gold)' : 'var(--blue)'}; padding:10px; margin-bottom:8px;" onclick="openAdminOrder(${o.id})">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <strong style="font-family:Inter,monospace;font-size:13px;">#${o.publicId}</strong>
+                <span style="color:var(--txt);font-size:10px;font-weight:800">${o.statusLabel}</span>
               </div>
               <div class="ad-body">
-                <div><div class="ad-lbl">Сумма</div><div class="ad-val">${fmt(o.amountRub)} ₽</div></div>
-                <div><div class="ad-lbl">Актив</div><div class="ad-val">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div>
+                <div><div class="ad-lbl" style="font-size:10px;color:var(--dim);">Сумма</div><div class="ad-val" style="font-size:13px;font-weight:800;">${fmt(o.amountRub)} ₽</div></div>
+                <div><div class="ad-lbl" style="font-size:10px;color:var(--dim);">Актив</div><div class="ad-val" style="font-size:13px;font-weight:800;">${fmtDec(o.amountAsset, 2)} ${o.asset}</div></div>
               </div>
             </div>
           `).join('');
         }
         else if (adminTab === 'requests') {
-          content.innerHTML = 'Загрузка заявок...';
+          content.innerHTML = 'Загрузка...';
           const { items } = await API.req('GET', '/admin/requests');
           
           if (!items.length) {
-             content.innerHTML = '<div class="empty-state">Нет активных заявок</div>';
+             content.innerHTML = '<div class="empty-state">Нет заявок</div>';
              return;
           }
 
           content.innerHTML = items.map(req => {
             const statusMap = {
-              pending: { l: 'В обработке', c: 'var(--yellow)' },
+              pending: { l: 'В ожидании', c: 'var(--yellow)' },
               approved: { l: 'Одобрено', c: 'var(--grn)' },
               rejected: { l: 'Отклонено', c: 'var(--red)' },
               cancelled: { l: 'Отменено', c: 'var(--dim)' },
@@ -1456,46 +1477,45 @@ document.addEventListener('DOMContentLoaded', () => {
             const isFinal = ['rejected', 'cancelled', 'completed'].includes(req.status);
 
             let typeLabel = req.type;
-            if (req.type === 'maker_req') typeLabel = 'Заявка на Мейкера';
-            if (req.type === 'merchant_req') typeLabel = 'Заявка на Мерчанта';
-            if (req.type === 'exchange') typeLabel = 'Быстрый Обмен';
-            if (req.type === 'deposit_rub') typeLabel = 'Пополнение RUB';
-            if (req.type === 'withdraw_rub') typeLabel = 'Вывод RUB';
-            if (req.type === 'deposit_usdt') typeLabel = 'Пополнение USDT';
-            if (req.type === 'withdraw_usdt') typeLabel = 'Вывод USDT';
+            if (req.type === 'maker_req') typeLabel = 'Мейкер';
+            if (req.type === 'merchant_req') typeLabel = 'Мерчант';
+            if (req.type === 'exchange') typeLabel = 'Обмен';
+            if (req.type === 'deposit_rub') typeLabel = 'Деп RUB';
+            if (req.type === 'withdraw_rub') typeLabel = 'Выв RUB';
+            if (req.type === 'deposit_usdt') typeLabel = 'Деп USDT';
+            if (req.type === 'withdraw_usdt') typeLabel = 'Выв USDT';
             
             const details = req.details || {};
             
             return `
-            <div class="glass-card" style="padding:16px; margin-bottom:12px; border-left:4px solid ${st.c};">
-              <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                <strong style="font-size:15px; color:var(--txt);">${typeLabel}</strong>
-                <span style="font-size:12px; font-weight:800; color:${st.c}; text-transform:uppercase;">${st.l}</span>
+            <div class="glass-card" style="padding:10px; margin-bottom:8px; border-left:3px solid ${st.c};">
+              <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                <strong style="font-size:13px; color:var(--txt);">${typeLabel}</strong>
+                <span style="font-size:10px; font-weight:800; color:${st.c}; text-transform:uppercase;">${st.l}</span>
               </div>
-              <div style="font-size:13px; color:var(--dim); margin-bottom:8px;">
-                Юзер: <span style="color:var(--txt); font-weight:700;">@${req.username}</span>
+              <div style="font-size:11px; color:var(--dim); margin-bottom:4px;">
+                @${req.username}
               </div>
-              ${req.amount ? `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
-                 <div style="font-size:12px; color:var(--dim);">Сумма:</div>
-                 <div style="font-size:15px; font-weight:800; color:var(--txt);">${fmt(req.amount)} ${req.currency}</div>
+              ${req.amount ? `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 4px;">
+                 <div style="font-size:10px; color:var(--dim);">Сумма:</div>
+                 <div style="font-size:13px; font-weight:800; color:var(--txt);">${fmt(req.amount)} ${req.currency}</div>
               </div>` : ''}
-              ${details.requisites ? `<div style="font-size:12px; color:var(--dim); margin-bottom:4px;">Реквизиты: <span style="color:var(--txt); font-weight:600;">${details.requisites}</span></div>` : ''}
-              ${details.tg_username ? `<div style="font-size:12px; color:var(--dim); margin-bottom:12px;">TG: <span style="color:var(--txt); font-weight:600;">${details.tg_username}</span></div>` : ''}
+              ${details.requisites ? `<div style="font-size:10px; color:var(--dim); margin-bottom:2px;">Рек: <span style="color:var(--txt); font-weight:600;">${details.requisites}</span></div>` : ''}
+              ${details.tg_username ? `<div style="font-size:10px; color:var(--dim); margin-bottom:6px;">TG: <span style="color:var(--txt); font-weight:600;">${details.tg_username}</span></div>` : ''}
               
               ${!isFinal ? `
-                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top:12px;">
-                  <button class="btn btn-primary btn-sm" style="background:var(--grn); padding:8px; font-size:12px; border-radius:8px;" onclick="updateRequestStatus(${req.id}, 'approved')">Одобрить</button>
-                  <button class="btn btn-ghost btn-sm" style="color:var(--red); border:1px solid var(--red); padding:8px; font-size:12px; border-radius:8px;" onclick="updateRequestStatus(${req.id}, 'rejected')">Отклонить</button>
-                  <button class="btn btn-ghost btn-sm" style="color:var(--dim); border:1px solid var(--glass-border); padding:8px; font-size:12px; border-radius:8px;" onclick="updateRequestStatus(${req.id}, 'cancelled')">Отменить</button>
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top:6px;">
+                  <button class="btn btn-primary btn-sm" style="background:var(--grn); padding:4px; font-size:10px; border-radius:6px; height:28px;" onclick="updateRequestStatus(${req.id}, 'approved')">✓</button>
+                  <button class="btn btn-ghost btn-sm" style="color:var(--red); border:1px solid var(--red); padding:4px; font-size:10px; border-radius:6px; height:28px;" onclick="updateRequestStatus(${req.id}, 'rejected')">✕</button>
+                  <button class="btn btn-ghost btn-sm" style="color:var(--dim); border:1px solid var(--glass-border); padding:4px; font-size:10px; border-radius:6px; height:28px;" onclick="updateRequestStatus(${req.id}, 'cancelled')">-</button>
                 </div>
               ` : ''}
             </div>
           `}).join('');
         }
-      } catch(e) { content.innerHTML = '<div class="empty-state">Ошибка загрузки данных</div>'; }
+      } catch(e) { content.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     }
 
-    // МОДАЛКА УПРАВЛЕНИЯ ЮЗЕРОМ
     window.openAdminUserModal = async function(userId) {
       currentAdminUserId = userId;
       const m = document.getElementById('adminUserModal');
@@ -1508,33 +1528,25 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const { user, stats } = await API.req('GET', '/users/' + userId);
         
-        let avatarHtml = `<div class="avatar">${user.displayName[0].toUpperCase()}</div>`;
-        if (user.avatarUrl) avatarHtml = `<div class="avatar"><img src="${user.avatarUrl}"></div>`;
+        let avatarHtml = `<div class="avatar" style="width:32px;height:32px;font-size:14px;">${user.displayName[0].toUpperCase()}</div>`;
+        if (user.avatarUrl) avatarHtml = `<div class="avatar" style="width:32px;height:32px;"><img src="${user.avatarUrl}"></div>`;
         
         info.innerHTML = `
-          <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
             ${avatarHtml}
             <div>
-              <h3 style="font-size:16px; font-weight:800; margin:0;">${user.displayName}</h3>
-              <div style="font-size:12px; color:var(--dim);">@${user.username} · ${user.email}</div>
+              <h3 style="font-size:14px; font-weight:800; margin:0;">${user.displayName}</h3>
+              <div style="font-size:10px; color:var(--dim);">@${user.username}</div>
             </div>
           </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-            <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:10px;">
-              <div style="font-size:10px; color:var(--dim);">Баланс RUB</div>
-              <div style="font-size:14px; font-weight:800; color:var(--txt);">${fmt(user.balanceRub)} ₽</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+            <div style="background:rgba(255,255,255,0.05); padding:6px; border-radius:8px;">
+              <div style="font-size:9px; color:var(--dim);">RUB</div>
+              <div style="font-size:12px; font-weight:800; color:var(--txt);">${fmt(user.balanceRub)} ₽</div>
             </div>
-            <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:10px;">
-              <div style="font-size:10px; color:var(--dim);">Баланс USDT</div>
-              <div style="font-size:14px; font-weight:800; color:var(--txt);">${fmtDec(user.balanceUsdt, 2)} ₮</div>
-            </div>
-            <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:10px;">
-              <div style="font-size:10px; color:var(--dim);">Сделок</div>
-              <div style="font-size:14px; font-weight:800; color:var(--txt);">${stats.dealsTotal}</div>
-            </div>
-            <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:10px;">
-              <div style="font-size:10px; color:var(--dim);">Успешных</div>
-              <div style="font-size:14px; font-weight:800; color:var(--txt);">${stats.successRate}%</div>
+            <div style="background:rgba(255,255,255,0.05); padding:6px; border-radius:8px;">
+              <div style="font-size:9px; color:var(--dim);">USDT</div>
+              <div style="font-size:12px; font-weight:800; color:var(--txt);">${fmtDec(user.balanceUsdt, 2)} ₮</div>
             </div>
           </div>
         `;
@@ -1560,7 +1572,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updBtn('admToggleMaker', user.isMaker);
         
       } catch (e) {
-        info.innerHTML = 'Ошибка загрузки данных';
+        info.innerHTML = 'Ошибка';
       }
     };
 
@@ -1604,7 +1616,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!await confirmAsync('Изменение', `Отметить как "${status}"?`, 'Да')) return;
       try {
         await API.req('PATCH', '/admin/requests/' + reqId, { status });
-        toast('Статус обновлен', 'success'); 
+        toast('Обновлено', 'success'); 
         loadAdmin(); screenCache.profile = false; screenCache.wallet = false;
       } catch(e) { toast(e.message || 'Ошибка', 'error'); }
     };
