@@ -159,12 +159,25 @@ app.post('/api/users/apply', auth, async (req, res) => {
 });
 
 app.post('/api/requests/finance', auth, async (req, res) => {
-  const { type, amount, currency, requisites, tg_username } = req.body;
+  const { type, amount, currency, requisites, tg_username, network, fee } = req.body;
   if (!amount || amount <= 0) return res.status(400).json({ error: 'bad_amount' });
   if (!requisites || !tg_username) return res.status(400).json({ error: 'Заполните все поля' });
+  
+  // Если это вывод USDT - проверяем баланс
+  if (type === 'withdraw_usdt') {
+      const totalNeeded = Number(amount) + Number(fee || 0);
+      if (Number(req.user.balance_usdt) < totalNeeded) {
+          return res.status(400).json({ error: 'Недостаточно средств' });
+      }
+  } else if (type === 'withdraw_rub') {
+      if (Number(req.user.balance_rub) < Number(amount)) {
+          return res.status(400).json({ error: 'Недостаточно средств' });
+      }
+  }
+
   try {
     await pool.query("INSERT INTO requests (user_id, type, amount, currency, details, status) VALUES ($1, $2, $3, $4, $5, 'pending')", 
-      [req.user.id, type, amount, currency, JSON.stringify({ requisites, tg_username })]);
+      [req.user.id, type, amount, currency, JSON.stringify({ requisites, tg_username, network, fee })]);
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: 'db_error' }); }
 });
@@ -194,7 +207,6 @@ async function shapeAd(a) {
   return { id: a.id, userId: a.user_id, username: u?.username || '?', displayName: u?.display_name || u?.username || '?', avatarUrl: u?.avatar_url || '', side: a.side, faceType: a.face_type, asset: a.asset, price: Number(a.price), amountTotal: Number(a.amount_total), amountLeft: Number(a.amount_left), totalRub: (Number(a.amount_left) * Number(a.price)).toFixed(2), minRub: Number(a.min_rub), maxRub: realMaxRub.toFixed(2), paymentMethods: a.payment_methods, terms: a.terms, active: a.active, paymentTime: Number(a.payment_time) || 30, createdAt: a.created_at, ...stats, isPro: u?.is_pro, isMerchant: u?.is_merchant, isMaker: u?.is_maker };
 }
 
-// ИСПРАВЛЕННЫЙ ФИЛЬТР ОБЪЯВЛЕНИЙ
 app.get('/api/ads', async (req, res) => {
   let query = "SELECT * FROM ads WHERE active = true AND amount_left > 0";
   const params = [];
@@ -204,17 +216,15 @@ app.get('/api/ads', async (req, res) => {
   if (req.query.face_type) { params.push(req.query.face_type); query += ` AND face_type = $${params.length}`; }
   if (req.query.payment) { params.push(req.query.payment); query += ` AND $${params.length} = ANY(payment_methods)`; }
   
-  // ФИКС ФИЛЬТРА ПО СУММЕ
   if (req.query.min_amount) { 
     params.push(req.query.min_amount); 
-    query += ` AND max_rub >= $${params.length}`; // Объявление позволяет купить на сумму больше или равно минимальной
+    query += ` AND max_rub >= $${params.length}`; 
   }
   if (req.query.max_amount) { 
     params.push(req.query.max_amount); 
-    query += ` AND min_rub <= $${params.length}`; // Объявление позволяет купить на сумму меньше или равно максимальной
+    query += ` AND min_rub <= $${params.length}`; 
   }
 
-  // СОРТИРОВКА ПО ЦЕНЕ
   if (req.query.price_sort === 'asc') {
     query += " ORDER BY price ASC";
   } else if (req.query.price_sort === 'desc') {
@@ -248,13 +258,28 @@ app.get('/api/ads/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
+// ПРОВЕРКА БАЛАНСА ПРИ СОЗДАНИИ ОБЪЯВЛЕНИЯ
 app.post('/api/ads', auth, async (req, res) => {
   const { side, face_type, asset, price, amount_total, min_rub, max_rub, payment_methods, terms, payment_time } = req.body;
   if (side === 'buy' && !req.user.is_maker && req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Для создания объявлений на покупку нужен статус Мейкера.' });
   }
+  
   const p = Number(price), at = Number(amount_total), mn = Number(min_rub), mx = Number(max_rub);
   if (!(p > 0) || !(at > 0) || !(mn > 0) || !(mx > 0) || mn > mx || mx > at * p) return res.status(400).json({ error: 'bad_amounts' });
+
+  // Проверка баланса
+  if (side === 'sell' && req.user.role !== 'admin') {
+      if (Number(req.user.balance_usdt) < at) {
+          return res.status(400).json({ error: 'Недостаточно USDT для создания объявления' });
+      }
+  }
+  if (side === 'buy' && req.user.role !== 'admin') {
+      if (Number(req.user.balance_rub) < mx) {
+          return res.status(400).json({ error: 'Недостаточно RUB для создания объявления' });
+      }
+  }
+
   try {
     const result = await pool.query(
       'INSERT INTO ads (user_id, side, face_type, asset, price, amount_total, amount_left, min_rub, max_rub, payment_methods, terms, payment_time) VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $8, $9, $10, $11) RETURNING *', 
@@ -287,6 +312,15 @@ app.patch('/api/ads/:id', auth, async (req, res) => {
 app.post('/api/exchange', auth, async (req, res) => {
   const { type, amount, rate } = req.body;
   if (!amount || amount <= 0) return res.status(400).json({ error: 'bad_amount' });
+  
+  // Проверка баланса для быстрого обмена
+  if (type === 'buy' && Number(req.user.balance_rub) < Number(amount)) {
+      return res.status(400).json({ error: 'Недостаточно RUB' });
+  }
+  if (type === 'sell' && Number(req.user.balance_usdt) < Number(amount)) {
+      return res.status(400).json({ error: 'Недостаточно USDT' });
+  }
+
   try {
     await pool.query("INSERT INTO requests (user_id, type, amount, currency, details, status) VALUES ($1, $2, $3, $4, $5, 'pending')", 
       [req.user.id, 'exchange', amount, type === 'buy' ? 'RUB' : 'USDT', JSON.stringify({ rate, exchange_type: type })]);
@@ -566,7 +600,10 @@ app.patch('/api/admin/requests/:id', auth, async (req, res) => {
       } else if (request.type === 'deposit_usdt') {
         await client.query('UPDATE users SET balance_usdt = balance_usdt + $1 WHERE id = $2', [request.amount, request.user_id]);
       } else if (request.type === 'withdraw_usdt') {
-        await client.query('UPDATE users SET balance_usdt = balance_usdt - $1 WHERE id = $2', [request.amount, request.user_id]);
+        const details = request.details || {};
+        const fee = Number(details.fee || 0);
+        const totalToDeduct = Number(request.amount) + fee;
+        await client.query('UPDATE users SET balance_usdt = balance_usdt - $1 WHERE id = $2', [totalToDeduct, request.user_id]);
       } else if (request.type === 'exchange') {
         const details = request.details;
         if (details.exchange_type === 'buy') {

@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
           localStorage.setItem('vexo_user', JSON.stringify(data.user));
           const freshUser = data.user;
           const estimatedRub = freshUser.balanceUsdt * usdtRate;
-          const totalBalanceRub = freshUser.balanceRub + estimatedRub;
+          const totalBalanceRub = freshUser.balanceRub + estimatedRub; 
 
           screen.innerHTML = `
             <h2 style="margin-bottom: 4px; font-size: 16px;">Кошелёк</h2>
@@ -327,6 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('#walletAssetSelect .seg-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('#walletAssetSelect .seg-btn[data-val="RUB"]').classList.add('active');
             document.getElementById('walletActionModal').classList.add('active'); 
+            toggleUsdtFields();
           };
           document.getElementById('btnWithdraw').onclick = () => { 
             walletActionType = 'withdraw'; 
@@ -334,6 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('#walletAssetSelect .seg-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('#walletAssetSelect .seg-btn[data-val="RUB"]').classList.add('active');
             document.getElementById('walletActionModal').classList.add('active'); 
+            toggleUsdtFields();
           };
         });
       }
@@ -343,27 +345,81 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.onclick = () => {
         document.querySelectorAll('#walletAssetSelect .seg-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+        toggleUsdtFields();
       };
     });
 
+    // Функция для скрытия/показа полей USDT и пересчета комиссии
+    function toggleUsdtFields() {
+      const currency = document.querySelector('#walletAssetSelect .seg-btn.active').dataset.val;
+      const usdtFields = document.getElementById('usdtWithdrawFields');
+      const reqsField = document.getElementById('walletRequisitesField');
+      
+      if (currency === 'USDT' && walletActionType === 'withdraw') {
+        usdtFields.style.display = 'block';
+        reqsField.style.display = 'none'; // Скрываем поле для карты, т.к. есть адрес
+        calculateFee();
+      } else {
+        usdtFields.style.display = 'none';
+        reqsField.style.display = 'block';
+      }
+    }
+
+    // Пересчет комиссии
+    function calculateFee() {
+      const amount = parseFloat(document.getElementById('walletActionAmount').value) || 0;
+      const network = document.getElementById('walletNetwork').value;
+      const baseFee = network === 'TRC20' ? 1.0 : 5.0; // Базовая комиссия сети
+      const totalFee = baseFee * 1.20; // +20% маржа платформы
+      
+      document.getElementById('withdrawFeeAmount').textContent = fmtDec(totalFee, 2) + ' USDT';
+      document.getElementById('withdrawTotalAmount').textContent = fmtDec(amount + totalFee, 2) + ' USDT';
+      return totalFee;
+    }
+
+    // Слушатели для пересчета при вводе суммы или смене сети
+    document.getElementById('walletActionAmount')?.addEventListener('input', () => {
+       if (document.querySelector('#walletAssetSelect .seg-btn.active').dataset.val === 'USDT') calculateFee();
+    });
+    document.getElementById('walletNetwork')?.addEventListener('change', calculateFee);
+
     let walletActionType = 'deposit';
     document.getElementById('walletActionSubmit')?.addEventListener('click', async () => {
-      if (!API.user()) { closeModal('walletActionModal'); document.getElementById('authModal')?.classList.add('active'); return; }
+      const u = API.user();
+      if (!u) { closeModal('walletActionModal'); document.getElementById('authModal')?.classList.add('active'); return; }
       
       const amount = document.getElementById('walletActionAmount')?.value;
       const tg = document.getElementById('walletActionTg')?.value.trim();
-      const reqs = document.getElementById('walletActionRequisites')?.value.trim();
+      const currency = document.querySelector('#walletAssetSelect .seg-btn.active').dataset.val;
       
       if (!amount || Number(amount) <= 0) return toast('Введите сумму', 'error');
       if (!tg) return toast('Введите Telegram', 'error');
-      if (!reqs) return toast('Введите реквизиты', 'error');
-      
-      const currency = document.querySelector('#walletAssetSelect .seg-btn.active').dataset.val;
-      const type = walletActionType === 'deposit' ? `deposit_${currency.toLowerCase()}` : `withdraw_${currency.toLowerCase()}`;
+
+      let payload = { type: walletActionType === 'deposit' ? `deposit_${currency.toLowerCase()}` : `withdraw_${currency.toLowerCase()}`, amount: Number(amount), currency, tg_username: tg };
+
+      if (currency === 'USDT' && walletActionType === 'withdraw') {
+        const network = document.getElementById('walletNetwork').value;
+        const address = document.getElementById('walletAddress').value.trim();
+        if (!address) return toast('Введите адрес кошелька', 'error');
+        
+        const fee = calculateFee();
+        const totalNeeded = Number(amount) + fee;
+
+        // ПРОВЕРКА БАЛАНСА
+        if (u.balanceUsdt < totalNeeded) return toast(`Недостаточно средств. Нужно: ${fmtDec(totalNeeded, 2)} USDT`, 'error');
+
+        payload.requisites = address;
+        payload.network = network;
+        payload.fee = fee;
+      } else {
+        const reqs = document.getElementById('walletActionRequisites')?.value.trim();
+        if (!reqs) return toast('Введите реквизиты', 'error');
+        payload.requisites = reqs;
+      }
       
       const btn = document.getElementById('walletActionSubmit'); btn.disabled = true; btn.textContent = '...';
       try {
-        await API.req('POST', '/requests/finance', { type, amount: Number(amount), currency, requisites: reqs, tg_username: tg }); 
+        await API.req('POST', '/requests/finance', payload); 
         toast('Заявка создана!', 'success');
         addNotification('Заявка на ' + (walletActionType === 'deposit' ? 'пополнение' : 'вывод') + ' создана', 'info');
         closeModal('walletActionModal'); 
@@ -379,8 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const activeTab = document.querySelector('#marketSideTabs .trade-tab.active');
       if (activeTab && activeTab.dataset.side) filters.side = activeTab.dataset.side === 'buy' ? 'sell' : 'buy';
       
-      const assetChip = document.querySelector('#filterAsset .icon-chip.active'); 
-      if (assetChip && assetChip.dataset.val) filters.asset = assetChip.dataset.val;
+      const assetChip = document.querySelector('#filterAsset .icon-chip.active'); if (assetChip && assetChip.dataset.val) filters.asset = assetChip.dataset.val;
       
       const faceChip = document.querySelector('#filterFace .icon-chip.active'); if (faceChip && faceChip.dataset.val) filters.face_type = faceChip.dataset.val;
       const payChip = document.querySelector('#filterPayment .icon-chip.active'); if (payChip && payChip.dataset.val) filters.payment = payChip.dataset.val;
@@ -402,20 +457,19 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
     }
 
-    // ФИКС: Добавлен обработчик клика на фильтры монет в Маркете
-    document.querySelectorAll('#filterAsset .icon-chip').forEach(chip => {
-      chip.onclick = () => {
-        document.querySelectorAll('#filterAsset .icon-chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
+    document.querySelectorAll('#marketSideTabs .trade-tab').forEach(tab => {
+      tab.onclick = () => {
+        document.querySelectorAll('#marketSideTabs .trade-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
         screenCache.market = false;
         loadMarket();
       };
     });
 
-    document.querySelectorAll('#marketSideTabs .trade-tab').forEach(tab => {
-      tab.onclick = () => {
-        document.querySelectorAll('#marketSideTabs .trade-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
+    document.querySelectorAll('#filterAsset .icon-chip').forEach(chip => {
+      chip.onclick = () => {
+        document.querySelectorAll('#filterAsset .icon-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
         screenCache.market = false;
         loadMarket();
       };
@@ -529,7 +583,6 @@ document.addEventListener('DOMContentLoaded', () => {
       updateExchangeUI();
     }
 
-    // ФИКС: Добавлена иконка монеты в объявление, чтобы было видно, что продается
     function renderAd(ad) {
       const isSell = ad.side === 'sell';
       const faceLabel = ad.faceType === 'first' ? '1-е лицо' : '3-е лицо';
@@ -543,10 +596,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const makerBadge = ad.isMaker ? `<span class="badge-maker" title="Maker">${ICONS.maker}</span>` : '';
       const proBadge = ad.isPro ? `<span class="badge-pro" title="PRO">${ICONS.pro}</span>` : '';
 
-      // Иконка актива
-      const coinClass = ad.asset.toLowerCase();
-      const coinSymbol = ad.asset === 'USDT' ? '₮' : ad.asset === 'BTC' ? '₿' : 'T';
-
       return `<div class="ad-card">
         <div class="ad-head" onclick="openPublicProfile(${ad.userId})">
           ${avatarHtml}
@@ -557,10 +606,6 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div class="ad-body">
           <div class="ad-price-block">
-             <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                <div class="coin-icon ${coinClass}" style="width:20px;height:20px;font-size:10px;">${coinSymbol}</div>
-                <span style="font-size:12px; font-weight:800; color:var(--dim);">${ad.asset}</span>
-             </div>
              <div class="ad-price">${fmt(ad.price)} ₽</div>
              <div class="ad-limits">Лимиты: ${fmt(ad.minRub)} - ${fmt(ad.maxRub)} RUB</div>
              <div class="ad-amount">Доступно: ${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div>
@@ -656,9 +701,11 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     });
 
+    // ОБНОВЛЕННАЯ ЛОГИКА СОЗДАНИЯ ОБЪЯВЛЕНИЯ С ПРОВЕРКОЙ БАЛАНСА
     document.getElementById('createBtn')?.addEventListener('click', async () => {
       const errEl = document.getElementById('createError'); if (errEl) errEl.textContent = '';
-      if (!API.user()) { if (errEl) errEl.textContent = 'Войдите в аккаунт'; setTimeout(() => document.getElementById('authModal')?.classList.add('active'), 500); return; }
+      const u = API.user();
+      if (!u) { if (errEl) errEl.textContent = 'Войдите в аккаунт'; setTimeout(() => document.getElementById('authModal')?.classList.add('active'), 500); return; }
       
       const payments = [...document.querySelectorAll('#f-payments .pay-chip.active')].map(c => c.dataset.val);
       if (!payments.length) { if (errEl) errEl.textContent = 'Выберите способ оплаты'; return; }
@@ -670,13 +717,27 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!price || !amount || !min || !max) { if (errEl) errEl.textContent = 'Заполните поля'; return; }
       
       const payment_time = document.querySelector('#f-time .pay-chip.active')?.dataset.val || 30;
+      const side = document.querySelector('#f-side .seg-btn.active')?.dataset.val;
+      const asset = document.querySelector('#f-asset-select .icon-chip.active')?.dataset.val;
+
+      // ПРОВЕРКА БАЛАНСА ДЛЯ P2P
+      if (side === 'sell') {
+         if (u.balanceUsdt < Number(amount)) {
+             toast(`Недостаточно ${asset} на балансе (Нужно: ${fmtDec(amount, 2)})`, 'error');
+             return;
+         }
+      } else if (side === 'buy') {
+         if (u.balanceRub < Number(max)) {
+             toast(`Недостаточно RUB на балансе (Нужно: ${fmt(max)} ₽)`, 'error');
+             return;
+         }
+      }
 
       const btn = document.getElementById('createBtn'); btn.disabled = true; btn.textContent = '...';
-      const asset = document.querySelector('#f-asset-select .icon-chip.active')?.dataset.val;
       
       try {
         await API.req('POST', '/ads', {
-          side: document.querySelector('#f-side .seg-btn.active')?.dataset.val,
+          side: side,
           face_type: document.querySelector('#f-face .seg-btn.active')?.dataset.val,
           asset: asset, price: price, amount_total: amount,
           min_rub: min, max_rub: max,
@@ -1480,6 +1541,8 @@ document.addEventListener('DOMContentLoaded', () => {
                  <div style="font-size:13px; font-weight:800; color:var(--txt);">${fmt(req.amount)} ${req.currency}</div>
               </div>` : ''}
               ${details.requisites ? `<div style="font-size:10px; color:var(--dim); margin-bottom:2px;">Рек: <span style="color:var(--txt); font-weight:600;">${details.requisites}</span></div>` : ''}
+              ${details.network ? `<div style="font-size:10px; color:var(--dim); margin-bottom:2px;">Сеть: <span style="color:var(--txt); font-weight:600;">${details.network}</span></div>` : ''}
+              ${details.fee ? `<div style="font-size:10px; color:var(--dim); margin-bottom:2px;">Комиссия: <span style="color:var(--red); font-weight:600;">${fmtDec(details.fee, 2)} USDT</span></div>` : ''}
               ${details.tg_username ? `<div style="font-size:10px; color:var(--dim); margin-bottom:6px;">TG: <span style="color:var(--txt); font-weight:600;">${details.tg_username}</span></div>` : ''}
               
               ${!isFinal ? `
