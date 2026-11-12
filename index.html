@@ -362,10 +362,19 @@
     <div class="field"><label>Email</label><input class="input" type="email" id="settingsEmail"></div>
     
     <div style="border-top: 1px solid var(--glass-border); margin: 20px 0; padding-top: 20px;">
-      <h4 style="font-size: 14px; font-weight: 800; margin-bottom: 12px; color: var(--dim);">Статусы и Достижения</h4>
-      <div id="statusProgressContainer" style="display: flex; flex-direction: column; gap: 10px;">
-        <!-- Сюда JS вставит прогресс -->
+      <h4 style="font-size: 14px; font-weight: 800; margin-bottom: 12px; color: var(--dim);">Внешний вид</h4>
+      <div class="field">
+        <label>Шрифт</label>
+        <div class="segmented glass-panel" id="fontWeightSelect">
+          <button type="button" class="seg-btn active" data-val="normal">Обычный</button>
+          <button type="button" class="seg-btn" data-val="bold">Жирный</button>
+        </div>
       </div>
+    </div>
+
+    <div style="border-top: 1px solid var(--glass-border); margin: 20px 0; padding-top: 20px;">
+      <h4 style="font-size: 14px; font-weight: 800; margin-bottom: 12px; color: var(--dim);">Статусы и Достижения</h4>
+      <div id="statusProgressContainer" style="display: flex; flex-direction: column; gap: 10px;"></div>
     </div>
 
     <div style="border-top: 1px solid var(--glass-border); margin: 20px 0; padding-top: 20px;">
@@ -386,9 +395,11 @@
   </div>
 </div>
 
+<!-- МОДАЛКА ВВОДА/ВЫВОДА -->
 <div class="modal-overlay" id="walletActionModal">
   <div class="modal glass-modal">
     <h3 id="walletActionTitle" style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Пополнение</h3>
+    
     <div class="field">
       <label>Выберите валюту</label>
       <div class="segmented glass-panel" id="walletAssetSelect">
@@ -396,9 +407,14 @@
         <button type="button" class="seg-btn" data-val="USDT">USDT (₮)</button>
       </div>
     </div>
+    
     <div class="field"><label>Сумма</label><input type="number" class="input" id="walletActionAmount" placeholder="Введите сумму"></div>
-    <div class="field" id="walletRequisitesField" style="display:none;"><label>Реквизиты для вывода</label><input type="text" class="input" id="walletActionRequisites" placeholder="Номер карты или адрес кошелька"></div>
-    <button class="btn btn-primary btn-block" id="walletActionSubmit">Перейти в Telegram</button>
+    
+    <div class="field"><label>Ваш Telegram (для связи)</label><input type="text" class="input" id="walletActionTg" placeholder="@username"></div>
+    
+    <div class="field"><label>Реквизиты (карта или кошелек)</label><input type="text" class="input" id="walletActionRequisites" placeholder="Номер карты или адрес кошелька"></div>
+    
+    <button class="btn btn-primary btn-block" id="walletActionSubmit">Отправить заявку</button>
     <button class="btn btn-ghost btn-block" onclick="closeModal('walletActionModal')" style="margin-top: 8px;">Отмена</button>
   </div>
 </div>

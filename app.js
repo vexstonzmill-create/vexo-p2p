@@ -8,7 +8,7 @@ window.addEventListener('error', (e) => {
 
 document.addEventListener('DOMContentLoaded', () => {
   try {
-    // Скрываем лоадер через 1 сек (после инициализации)
+    // ТРЕБОВАНИЕ 6: Скрываем лоадер
     setTimeout(() => {
       const loader = document.getElementById('loader');
       if (loader) loader.classList.add('hidden-loader');
@@ -89,11 +89,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let notifications = JSON.parse(localStorage.getItem('vexo_notifs')) || [];
     notifications = notifications.filter((v,i,a)=>a.findIndex(t=>(t.id === v.id))===i);
 
-    function addNotification(text) {
+    function addNotification(text, type = 'info') {
       const now = Date.now();
       const isDuplicate = notifications.some(n => n.text === text && (now - new Date(n.date).getTime() < 3000));
       if (isDuplicate) return;
-      notifications.unshift({ id: now, text, date: new Date().toISOString() });
+      notifications.unshift({ id: now, text, type, date: new Date().toISOString() });
       if (notifications.length > 20) notifications.pop();
       localStorage.setItem('vexo_notifs', JSON.stringify(notifications));
       updateNotifUI();
@@ -111,9 +111,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (dot) dot.classList.toggle('hidden', notifications.length === 0);
       if (list) {
         list.innerHTML = notifications.length ? notifications.map(n => `
-          <div class="glass-card" style="padding:12px; background: rgba(255,255,255,0.05); border-radius:16px;">
-            <div style="font-size:10px;color:var(--dim);margin-bottom:4px;">${new Date(n.date).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'})}</div>
-            <div style="font-size:13px;font-weight:600;color:var(--txt);">${n.text}</div>
+          <div class="notif-item ${n.type || 'info'}">
+            <div class="notif-date">${new Date(n.date).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'})}</div>
+            <div class="notif-text">${n.text}</div>
           </div>
         `).join('') : '<div class="empty-state">Нет новых уведомлений</div>';
       }
@@ -146,8 +146,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (name === 'orders' && !screenCache.orders) { loadOrders('active'); screenCache.orders = true; }
         if (name === 'profile' && !screenCache.profile) { loadProfile(); screenCache.profile = true; }
         if (name === 'home' && !screenCache.home) { loadHome(); screenCache.home = true; }
-        if (name === 'wallet' && !screenCache.wallet) { loadWallet(); screenCache.wallet = true; }
-        if (name === 'admin') { loadAdmin(); } // Админку грузим всегда новую
+        if (name === 'wallet') { loadWallet(); screenCache.wallet = true; } // Wallet всегда обновляем
+        if (name === 'admin') { loadAdmin(); } 
       } catch(e) { console.error('show error:', e); }
       
       window.scrollTo(0, 0);
@@ -165,13 +165,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const backBtn = document.getElementById('backBtn');
     if (backBtn) backBtn.onclick = () => show(previousScreen);
 
-    // ТЕМА
+    // ТЕМА И ШРИФТ
     let currentTheme = localStorage.getItem('vexo_theme') || 'dark';
     function applyTheme(theme) {
       document.body.setAttribute('data-theme', theme);
       localStorage.setItem('vexo_theme', theme);
     }
     applyTheme(currentTheme);
+
+    let currentFont = localStorage.getItem('vexo_font') || 'normal';
+    function applyFont(font) {
+      document.body.classList.remove('font-normal', 'font-bold');
+      document.body.classList.add('font-' + font);
+      localStorage.setItem('vexo_font', font);
+    }
+    applyFont(currentFont);
 
     document.getElementById('themeBtn')?.addEventListener('click', () => {
       currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -222,7 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
         closeModal('authModal');
         updateAuthUI();
         toast(authMode === 'login' ? 'Добро пожаловать!' : 'Аккаунт создан!', 'success');
-        screenCache.profile = false; // Сброс кэша профиля
+        screenCache.profile = false; 
         show('market');
       } catch (err) {
         const map = { invalid_credentials: 'Неверный логин или пароль', user_exists: 'Никнейм занят', email_exists: 'Email занят', short_password: 'Пароль мин. 8 символов' };
@@ -287,26 +295,60 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!u) {
         screen.innerHTML = `<div class="empty-state" style="margin-top:20px;"><div style="font-size:40px;margin-bottom:10px;">🔒</div>Войдите в аккаунт.<br><br><button class="btn btn-primary" onclick="document.getElementById('authModal').classList.add('active')">Войти</button></div>`;
       } else {
-        screen.innerHTML = `
-          <h2 style="margin-bottom: 4px; font-size: 18px;">Кошелёк</h2>
-          <p style="color: var(--dim); font-size: 12px; margin-bottom: 16px;">Балансы и история операций</p>
-          <div class="wallet-hero">
-            <div class="lbl">Общий баланс в рублях</div>
-            <div class="amount">${fmt(u.balanceRub)} <span>₽</span></div>
-            <div class="wallet-actions">
-              <button class="btn btn-primary" id="btnDeposit" style="flex:1;">Пополнить</button>
-              <button class="btn btn-ghost" id="btnWithdraw" style="flex:1;">Вывести</button>
+        // Запрашиваем свежие данные с сервера каждый раз
+        API.req('GET', '/users/me').then(data => {
+          localStorage.setItem('vexo_user', JSON.stringify(data.user));
+          const freshUser = data.user;
+          screen.innerHTML = `
+            <h2 style="margin-bottom: 4px; font-size: 18px;">Кошелёк</h2>
+            <p style="color: var(--dim); font-size: 12px; margin-bottom: 16px;">Балансы и история операций</p>
+            <div class="wallet-hero">
+              <div class="lbl">Общий баланс в рублях</div>
+              <div class="amount">${fmt(freshUser.balanceRub)} <span>₽</span></div>
+              <div class="wallet-actions">
+                <button class="btn btn-primary" id="btnDeposit" style="flex:1;">Пополнить</button>
+                <button class="btn btn-ghost" id="btnWithdraw" style="flex:1;">Вывести</button>
+              </div>
             </div>
-          </div>
-          <h3 style="margin-top: 20px; font-size: 14px; margin-bottom: 12px;">Активы</h3>
-          <div class="wallet-list">
-            <div class="wallet-item"><div class="coin-icon rub">₽</div><div class="w-info"><div class="w-name" style="font-weight:700;">Российский рубль</div><div class="w-sub" style="font-size:11px;color:var(--dim);">RUB · фиат</div></div><div class="w-bal" style="margin-left:auto; font-weight:800;">${fmt(u.balanceRub)} ₽</div></div>
-            <div class="wallet-item"><div class="coin-icon usdt">₮</div><div class="w-info"><div class="w-name" style="font-weight:700;">Tether</div><div class="w-sub" style="font-size:11px;color:var(--dim);">USDT · TRC-20</div></div><div class="w-bal" style="margin-left:auto; font-weight:800;">${fmtDec(u.balanceUsdt, 2)} <span style="font-size:10px;color:var(--dim);">≈ 0 ₽</span></div></div>
-          </div>`;
-        document.getElementById('btnDeposit').onclick = () => { walletActionType = 'deposit'; document.getElementById('walletActionTitle').textContent = 'Пополнение'; document.getElementById('walletRequisitesField').style.display = 'none'; document.getElementById('walletActionModal').classList.add('active'); };
-        document.getElementById('btnWithdraw').onclick = () => { walletActionType = 'withdraw'; document.getElementById('walletActionTitle').textContent = 'Вывод'; document.getElementById('walletRequisitesField').style.display = 'block'; document.getElementById('walletActionModal').classList.add('active'); };
+            <h3 style="margin-top: 20px; font-size: 14px; margin-bottom: 12px;">Активы</h3>
+            <div class="wallet-list">
+              <div class="wallet-item"><div class="coin-icon rub">₽</div><div class="w-info"><div class="w-name" style="font-weight:700;">Российский рубль</div><div class="w-sub" style="font-size:11px;color:var(--dim);">RUB · фиат</div></div><div class="w-bal" style="margin-left:auto; font-weight:800;">${fmt(freshUser.balanceRub)} ₽</div></div>
+              <div class="wallet-item"><div class="coin-icon usdt">₮</div><div class="w-info"><div class="w-name" style="font-weight:700;">Tether</div><div class="w-sub" style="font-size:11px;color:var(--dim);">USDT · TRC-20</div></div><div class="w-bal" style="margin-left:auto; font-weight:800;">${fmtDec(freshUser.balanceUsdt, 2)} <span style="font-size:10px;color:var(--dim);">≈ 0 ₽</span></div></div>
+            </div>`;
+            
+          document.getElementById('btnDeposit').onclick = () => { walletActionType = 'deposit'; document.getElementById('walletActionTitle').textContent = 'Пополнение'; document.getElementById('walletActionModal').classList.add('active'); };
+          document.getElementById('btnWithdraw').onclick = () => { walletActionType = 'withdraw'; document.getElementById('walletActionTitle').textContent = 'Вывод'; document.getElementById('walletActionModal').classList.add('active'); };
+        });
       }
     }
+
+    // ТРЕБОВАНИЕ: ЗАЯВКИ НА ВВОД/ВЫВОД БЕЗ ТЕЛЕГРАММА
+    document.getElementById('walletActionSubmit')?.addEventListener('click', async () => {
+      if (!API.user()) { closeModal('walletActionModal'); document.getElementById('authModal')?.classList.add('active'); return; }
+      
+      const amount = document.getElementById('walletActionAmount')?.value;
+      const tg = document.getElementById('walletActionTg')?.value.trim();
+      const reqs = document.getElementById('walletActionRequisites')?.value.trim();
+      
+      if (!amount || Number(amount) <= 0) return toast('Введите сумму', 'error');
+      if (!tg) return toast('Введите ваш Telegram', 'error');
+      if (!reqs) return toast('Введите реквизиты', 'error');
+      
+      const currency = document.querySelector('#walletAssetSelect .seg-btn.active').dataset.val;
+      const type = walletActionType === 'deposit' ? `deposit_${currency.toLowerCase()}` : `withdraw_${currency.toLowerCase()}`;
+      
+      const btn = document.getElementById('walletActionSubmit'); btn.disabled = true; btn.textContent = 'Отправка...';
+      try {
+        await API.req('POST', '/requests/finance', { type, amount: Number(amount), currency, requisites: reqs, tg_username: tg }); 
+        toast('Заявка создана! Ожидайте подтверждения.', 'success');
+        addNotification('Заявка на ' + (walletActionType === 'deposit' ? 'пополнение' : 'вывод') + ' создана', 'info');
+        closeModal('walletActionModal'); 
+      } catch(e) {
+        toast(e.message || 'Ошибка', 'error');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Отправить заявку';
+      }
+    });
 
     // МАРКЕТ
     async function loadMarket() {
@@ -337,7 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.getElementById('applyFiltersBtn')?.addEventListener('click', () => {
       closeModal('filterModal');
-      screenCache.market = false; // сброс кэша
+      screenCache.market = false; 
       loadMarket();
     });
 
@@ -590,7 +632,7 @@ document.addEventListener('DOMContentLoaded', () => {
           payment_time: Number(payment_time)
         });
         toast('Объявление опубликовано!', 'success');
-        addNotification('Вы успешно создали новое объявление.');
+        addNotification('Вы успешно создали новое объявление.', 'success');
         screenCache.market = false; screenCache.home = false;
         show('market');
       } catch (err) {
@@ -811,7 +853,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try { 
         await API.req('POST', `/orders/${orderId}/${action}`); 
         toast('Статус обновлён', 'success'); 
-        addNotification(`Статус ордера #${orderId} обновлен`);
+        addNotification(`Статус ордера #${orderId} обновлен`, 'info');
         screenCache.orders = false; screenCache.wallet = false;
         openOrderPage(orderId); 
       }
@@ -1056,6 +1098,10 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('settingsNewPass').value = '';
       document.getElementById('settingsError').textContent = '';
       
+      // Ставим активную кнопку шрифта
+      document.querySelectorAll('#fontWeightSelect .seg-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector(`#fontWeightSelect .seg-btn[data-val="${localStorage.getItem('vexo_font') || 'normal'}"]`).classList.add('active');
+      
       try {
         const { user, stats } = await API.req('GET', '/users/me');
         const container = document.getElementById('statusProgressContainer');
@@ -1099,6 +1145,15 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('settingsModal').classList.add('active');
     };
 
+    // Слушатель шрифта в настройках
+    document.querySelectorAll('#fontWeightSelect .seg-btn').forEach(b => {
+      b.onclick = () => {
+        document.querySelectorAll('#fontWeightSelect .seg-btn').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        applyFont(b.dataset.val);
+      };
+    });
+
     window.applyStatus = async function(type) {
       try {
         await API.req('POST', '/users/apply', { type });
@@ -1128,7 +1183,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('vexo_user', JSON.stringify(user));
         closeModal('settingsModal'); 
         toast('Настройки сохранены', 'success'); 
-        addNotification('Вы обновили настройки профиля.');
+        addNotification('Вы обновили настройки профиля.', 'success');
         updateAuthUI(); screenCache.profile = false; loadProfile();
       } catch (e) {
         const er = document.getElementById('settingsError');
@@ -1254,7 +1309,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const order = await API.req('POST', '/orders', { ad_id: currentAd.id, amount_rub: rub, payment_method: selectedPay });
         closeModal('orderModal'); 
         toast('Заявка создана! Ожидайте подтверждения.', 'success'); 
-        addNotification(`Создана новая заявка #${order.publicId}`);
+        addNotification(`Создана новая заявка #${order.publicId}`, 'success');
         screenCache.orders = false; screenCache.market = false;
         openOrderPage(order.id);
       } catch (err) { if (errEl) errEl.textContent = err.message; }
@@ -1264,25 +1319,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.logoutAction = async function() {
       if (await confirmAsync('Выход', 'Выйти из аккаунта?', 'Выйти')) { localStorage.removeItem('vexo_token'); localStorage.removeItem('vexo_user'); location.reload(); }
     };
-
-    document.getElementById('walletActionSubmit')?.addEventListener('click', async () => {
-      if (!API.user()) { closeModal('walletActionModal'); document.getElementById('authModal')?.classList.add('active'); return; }
-      const amount = document.getElementById('walletActionAmount')?.value;
-      if (!amount || Number(amount) <= 0) return toast('Введите корректную сумму', 'error');
-      
-      const currency = document.querySelector('#walletAssetSelect .seg-btn.active').dataset.val;
-      const type = walletActionType === 'deposit' ? `deposit_${currency.toLowerCase()}` : `withdraw_${currency.toLowerCase()}`;
-      
-      try {
-        await API.req('POST', '/admin/requests', { type, amount: Number(amount) }); 
-        // Временно используем админский эндпоинт для создания заявки, либо нужно добавить /api/requests
-        // Я добавлю логику через стандартный запрос, но чтобы это работало, сервер должен разрешать создавать заявки
-        toast('Заявка создана! Ожидайте.', 'success');
-        closeModal('walletActionModal'); 
-      } catch(e) {
-        toast('Ошибка', 'error');
-      }
-    });
 
     // ==========================================
     // АДМИНКА (ТРЕБОВАНИЕ 5)
@@ -1307,12 +1343,12 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="admin-user-info">
                 <div class="admin-user-name">${user.displayName} (@${user.username})</div>
                 <div class="admin-user-meta">Email: ${user.email} | Роль: ${user.role} | RUB: ${fmt(user.balanceRub)} | USDT: ${fmtDec(user.balanceUsdt, 2)}</div>
-                <div class="admin-status-btns">
-                  <button class="admin-badge-btn ${user.isPro ? 'active-pro' : ''}" onclick="toggleUserStatus(${user.id}, 'is_pro', ${user.isPro})">PRO</button>
-                  <button class="admin-badge-btn ${user.isMerchant ? 'active-merchant' : ''}" onclick="toggleUserStatus(${user.id}, 'is_merchant', ${user.isMerchant})">MERCHANT</button>
-                  <button class="admin-badge-btn ${user.isMaker ? 'active-maker' : ''}" onclick="toggleUserStatus(${user.id}, 'is_maker', ${user.isMaker})">MAKER</button>
-                  ${canManageBalance ? `<button class="btn btn-primary btn-sm" style="margin-left:10px; padding:4px 8px; font-size:10px;" onclick="openBalanceModal(${user.id}, '${user.username}')">💰 Баланс</button>` : ''}
-                </div>
+              </div>
+              <div class="admin-status-btns">
+                <button class="admin-badge-btn ${user.isPro ? 'active-pro' : ''}" onclick="toggleUserStatus(${user.id}, 'is_pro', ${user.isPro})">PRO</button>
+                <button class="admin-badge-btn ${user.isMerchant ? 'active-merchant' : ''}" onclick="toggleUserStatus(${user.id}, 'is_merchant', ${user.isMerchant})">MERCHANT</button>
+                <button class="admin-badge-btn ${user.isMaker ? 'active-maker' : ''}" onclick="toggleUserStatus(${user.id}, 'is_maker', ${user.isMaker})">MAKER</button>
+                ${canManageBalance ? `<button class="btn btn-primary btn-sm" style="margin-left:10px; padding:4px 8px; font-size:10px;" onclick="openBalanceModal(${user.id}, '${user.username}')">💰 Баланс</button>` : ''}
               </div>
             </div>
           `).join('');
@@ -1357,6 +1393,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (req.type === 'exchange') typeLabel = 'Быстрый Обмен';
             if (req.type === 'deposit_rub') typeLabel = 'Пополнение RUB';
             if (req.type === 'withdraw_rub') typeLabel = 'Вывод RUB';
+            if (req.type === 'deposit_usdt') typeLabel = 'Пополнение USDT';
+            if (req.type === 'withdraw_usdt') typeLabel = 'Вывод USDT';
+            
+            const details = req.details || {};
             
             return `
             <div class="glass-card" style="padding:12px; margin-bottom:8px; border-left:4px solid ${statusColor};">
@@ -1371,6 +1411,9 @@ document.addEventListener('DOMContentLoaded', () => {
                  <div style="font-size:11px; color:var(--dim);">Сумма:</div>
                  <div style="font-size:14px; font-weight:800; color:var(--txt);">${fmt(req.amount)} ${req.currency}</div>
               </div>` : ''}
+              ${details.requisites ? `<div style="font-size:11px; color:var(--dim); margin-bottom:4px;">Реквизиты: <span style="color:var(--txt);">${details.requisites}</span></div>` : ''}
+              ${details.tg_username ? `<div style="font-size:11px; color:var(--dim); margin-bottom:8px;">TG: <span style="color:var(--txt);">${details.tg_username}</span></div>` : ''}
+              
               ${isPending && canManageBalance ? `
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top:8px;">
                   <button class="btn btn-primary btn-sm" style="background:var(--grn); padding:6px; font-size:12px;" onclick="updateRequestStatus(${req.id}, 'approved')">Одобрить</button>
@@ -1441,7 +1484,7 @@ document.addEventListener('DOMContentLoaded', () => {
         await API.req('POST', '/admin/users/' + userId + '/balance', { currency, amount, action });
         toast('Баланс изменен', 'success');
         document.getElementById('balanceModal').classList.remove('active');
-        loadAdmin(); screenCache.wallet = false;
+        loadAdmin(); 
       } catch(e) { toast(e.message || 'Ошибка', 'error'); }
     };
 
@@ -1450,7 +1493,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         await API.req('PATCH', '/admin/requests/' + reqId, { status });
         toast('Статус обновлен', 'success'); 
-        loadAdmin(); screenCache.profile = false;
+        loadAdmin(); screenCache.profile = false; screenCache.wallet = false;
       } catch(e) { toast(e.message || 'Ошибка', 'error'); }
     };
 

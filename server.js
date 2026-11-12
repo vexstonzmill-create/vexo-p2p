@@ -161,6 +161,19 @@ app.post('/api/users/apply', auth, async (req, res) => {
   } catch(e) { res.status(500).json({ error: 'db_error' }); }
 });
 
+// ЗАЯВКИ НА ВВОД/ВЫВОД
+app.post('/api/requests/finance', auth, async (req, res) => {
+  const { type, amount, currency, requisites, tg_username } = req.body;
+  if (!amount || amount <= 0) return res.status(400).json({ error: 'bad_amount' });
+  if (!requisites || !tg_username) return res.status(400).json({ error: 'Заполните все поля' });
+
+  try {
+    await pool.query("INSERT INTO requests (user_id, type, amount, currency, details, status) VALUES ($1, $2, $3, $4, $5, 'pending')", 
+      [req.user.id, type, amount, currency, JSON.stringify({ requisites, tg_username })]);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: 'db_error' }); }
+});
+
 app.post('/api/users/:id/favorite', auth, async (req, res) => {
   const targetId = Number(req.params.id);
   if (targetId === req.user.id) return res.status(400).json({ error: 'self_fav' });
@@ -214,7 +227,7 @@ app.get('/api/ads/:id', async (req, res) => {
 app.post('/api/ads', auth, async (req, res) => {
   const { side, face_type, asset, price, amount_total, min_rub, max_rub, payment_methods, terms, payment_time } = req.body;
   
-  // ТРЕБОВАНИЕ 1: Мейкер нужен ТОЛЬКО для ПОКУПКИ (buy)
+  // Мейкер нужен ТОЛЬКО для ПОКУПКИ (buy)
   if (side === 'buy' && !req.user.is_maker && req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Для создания объявлений на покупку нужен статус Мейкера. Подайте заявку в настройках профиля.' });
   }
@@ -253,9 +266,9 @@ app.patch('/api/ads/:id', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
-// ОБМЕН (Заявка на быстрый обмен)
+// БЫСТРЫЙ ОБМЕН
 app.post('/api/exchange', auth, async (req, res) => {
-  const { type, amount, rate } = req.body; // type: 'buy' (rub->usdt) / 'sell' (usdt->rub)
+  const { type, amount, rate } = req.body;
   if (!amount || amount <= 0) return res.status(400).json({ error: 'bad_amount' });
   
   try {
@@ -464,7 +477,7 @@ app.get('/api/reviews/user/:userId', async (req, res) => {
 // АДМИНКА
 // ==========================================
 app.get('/api/admin/users', auth, async (req, res) => {
-  if (req.user.role !== 'admin' && req.user.role !== 'owner' && req.user.role !== 'deputy') return res.status(403).json({ error: 'forbidden' });
+  if (!['admin', 'owner', 'deputy'].includes(req.user.role)) return res.status(403).json({ error: 'forbidden' });
   try {
     const result = await pool.query('SELECT * FROM users ORDER BY created_at DESC');
     res.json({ items: result.rows.map(publicUser) });
@@ -472,7 +485,7 @@ app.get('/api/admin/users', auth, async (req, res) => {
 });
 
 app.patch('/api/admin/users/:id/status', auth, async (req, res) => {
-  if (req.user.role !== 'admin' && req.user.role !== 'owner' && req.user.role !== 'deputy') return res.status(403).json({ error: 'forbidden' });
+  if (!['admin', 'owner', 'deputy'].includes(req.user.role)) return res.status(403).json({ error: 'forbidden' });
   const { is_pro, is_merchant, is_maker } = req.body;
   try {
     const result = await pool.query(
@@ -484,8 +497,8 @@ app.patch('/api/admin/users/:id/status', auth, async (req, res) => {
 });
 
 app.post('/api/admin/users/:id/balance', auth, async (req, res) => {
-  if (req.user.role !== 'admin' && req.user.role !== 'owner' && req.user.role !== 'deputy') return res.status(403).json({ error: 'forbidden' });
-  const { currency, amount, action } = req.body; // action: 'add' or 'sub'
+  if (!['admin', 'owner', 'deputy'].includes(req.user.role)) return res.status(403).json({ error: 'forbidden' });
+  const { currency, amount, action } = req.body;
   const amt = Number(amount);
   if (!amt || amt <= 0) return res.status(400).json({ error: 'bad_amount' });
   
@@ -499,7 +512,7 @@ app.post('/api/admin/users/:id/balance', auth, async (req, res) => {
 });
 
 app.get('/api/admin/orders', auth, async (req, res) => {
-  if (req.user.role !== 'admin' && req.user.role !== 'owner' && req.user.role !== 'deputy') return res.status(403).json({ error: 'forbidden' });
+  if (!['admin', 'owner', 'deputy'].includes(req.user.role)) return res.status(403).json({ error: 'forbidden' });
   try {
     const result = await pool.query("SELECT * FROM orders WHERE status = 'dispute' OR status = 'pending' OR status = 'paid' ORDER BY created_at DESC");
     const items = await Promise.all(result.rows.map(shapeOrder));
@@ -508,7 +521,7 @@ app.get('/api/admin/orders', auth, async (req, res) => {
 });
 
 app.get('/api/admin/requests', auth, async (req, res) => {
-  if (req.user.role !== 'admin' && req.user.role !== 'owner' && req.user.role !== 'deputy') return res.status(403).json({ error: 'forbidden' });
+  if (!['admin', 'owner', 'deputy'].includes(req.user.role)) return res.status(403).json({ error: 'forbidden' });
   try {
     const result = await pool.query(`
       SELECT r.*, u.username FROM requests r 
@@ -520,8 +533,8 @@ app.get('/api/admin/requests', auth, async (req, res) => {
 });
 
 app.patch('/api/admin/requests/:id', auth, async (req, res) => {
-  if (req.user.role !== 'admin' && req.user.role !== 'owner' && req.user.role !== 'deputy') return res.status(403).json({ error: 'forbidden' });
-  const { status } = req.body; // 'approved' or 'rejected'
+  if (!['admin', 'owner', 'deputy'].includes(req.user.role)) return res.status(403).json({ error: 'forbidden' });
+  const { status } = req.body;
   const reqId = req.params.id;
   
   const client = await pool.connect();
@@ -542,16 +555,18 @@ app.patch('/api/admin/requests/:id', auth, async (req, res) => {
         await client.query('UPDATE users SET balance_rub = balance_rub + $1 WHERE id = $2', [request.amount, request.user_id]);
       } else if (request.type === 'withdraw_rub') {
         await client.query('UPDATE users SET balance_rub = balance_rub - $1 WHERE id = $2', [request.amount, request.user_id]);
+      } else if (request.type === 'deposit_usdt') {
+        await client.query('UPDATE users SET balance_usdt = balance_usdt + $1 WHERE id = $2', [request.amount, request.user_id]);
+      } else if (request.type === 'withdraw_usdt') {
+        await client.query('UPDATE users SET balance_usdt = balance_usdt - $1 WHERE id = $2', [request.amount, request.user_id]);
       } else if (request.type === 'exchange') {
         const details = request.details;
         const rubAmount = request.amount;
         const usdtAmount = rubAmount / details.rate;
         
         if (details.exchange_type === 'buy') {
-          // Клиент покупает USDT (отдает рубли)
           await client.query('UPDATE users SET balance_rub = balance_rub - $1, balance_usdt = balance_usdt + $2 WHERE id = $3', [rubAmount, usdtAmount, request.user_id]);
         } else {
-          // Клиент продает USDT (отдает USDT)
           await client.query('UPDATE users SET balance_usdt = balance_usdt - $1, balance_rub = balance_rub + $2 WHERE id = $3', [usdtAmount, rubAmount, request.user_id]);
         }
       }
