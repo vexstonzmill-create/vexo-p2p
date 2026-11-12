@@ -6,6 +6,10 @@ window.addEventListener('error', (e) => {
   console.error('VEXO CRASH:', e.message, 'at', e.filename, ':', e.lineno);
 });
 
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('VEXO PROMISE ERROR:', e.reason);
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   try {
     // Принудительное скрытие лоадера через 800мс
@@ -151,6 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       window.scrollTo(0, 0);
     }
+    window.show = show;
 
     document.querySelectorAll('[data-screen]').forEach(b => {
       b.onclick = e => {
@@ -1613,14 +1618,7 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch (err) {
     console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
   }
-});
-      } catch(e) { toast(e.message || 'Ошибка', 'error'); }
-    };
-
-    // СТАРТ
-    updateAuthUI();
-    updateNotifUI();
-    try { loadHome(); } catch(e) { console.error('Initial loadHome:', e); }
+});    try { loadHome(); } catch(e) { console.error('Initial loadHome:', e); }
 
   } catch (err) {
     console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
