@@ -283,7 +283,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // ИСПРАВЛЕННЫЙ БАЛАНС
     async function loadWallet() {
       const u = API.user();
       const screen = document.getElementById('screen-wallet');
@@ -303,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
           localStorage.setItem('vexo_user', JSON.stringify(data.user));
           const freshUser = data.user;
           const estimatedRub = freshUser.balanceUsdt * usdtRate;
-          const totalBalanceRub = freshUser.balanceRub + estimatedRub; // ИСПРАВЛЕНИЕ: Складываем RUB + (USDT * Курс)
+          const totalBalanceRub = freshUser.balanceRub + estimatedRub;
 
           screen.innerHTML = `
             <h2 style="margin-bottom: 4px; font-size: 16px;">Кошелёк</h2>
@@ -325,7 +324,6 @@ document.addEventListener('DOMContentLoaded', () => {
           document.getElementById('btnDeposit').onclick = () => { 
             walletActionType = 'deposit'; 
             document.getElementById('walletActionTitle').textContent = 'Пополнение'; 
-            // Сброс на RUB при открытии
             document.querySelectorAll('#walletAssetSelect .seg-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('#walletAssetSelect .seg-btn[data-val="RUB"]').classList.add('active');
             document.getElementById('walletActionModal').classList.add('active'); 
@@ -341,7 +339,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // ИСПРАВЛЕНИЕ: Клик по выбору валюты (RUB/USDT) в модалке
     document.querySelectorAll('#walletAssetSelect .seg-btn').forEach(btn => {
       btn.onclick = () => {
         document.querySelectorAll('#walletAssetSelect .seg-btn').forEach(b => b.classList.remove('active'));
@@ -382,7 +379,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const activeTab = document.querySelector('#marketSideTabs .trade-tab.active');
       if (activeTab && activeTab.dataset.side) filters.side = activeTab.dataset.side === 'buy' ? 'sell' : 'buy';
       
-      const assetChip = document.querySelector('#filterAsset .icon-chip.active'); if (assetChip && assetChip.dataset.val) filters.asset = assetChip.dataset.val;
+      const assetChip = document.querySelector('#filterAsset .icon-chip.active'); 
+      if (assetChip && assetChip.dataset.val) filters.asset = assetChip.dataset.val;
       
       const faceChip = document.querySelector('#filterFace .icon-chip.active'); if (faceChip && faceChip.dataset.val) filters.face_type = faceChip.dataset.val;
       const payChip = document.querySelector('#filterPayment .icon-chip.active'); if (payChip && payChip.dataset.val) filters.payment = payChip.dataset.val;
@@ -403,6 +401,16 @@ document.addEventListener('DOMContentLoaded', () => {
         bindAdButtons();
       } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
     }
+
+    // ФИКС: Добавлен обработчик клика на фильтры монет в Маркете
+    document.querySelectorAll('#filterAsset .icon-chip').forEach(chip => {
+      chip.onclick = () => {
+        document.querySelectorAll('#filterAsset .icon-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        screenCache.market = false;
+        loadMarket();
+      };
+    });
 
     document.querySelectorAll('#marketSideTabs .trade-tab').forEach(tab => {
       tab.onclick = () => {
@@ -521,6 +529,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateExchangeUI();
     }
 
+    // ФИКС: Добавлена иконка монеты в объявление, чтобы было видно, что продается
     function renderAd(ad) {
       const isSell = ad.side === 'sell';
       const faceLabel = ad.faceType === 'first' ? '1-е лицо' : '3-е лицо';
@@ -534,6 +543,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const makerBadge = ad.isMaker ? `<span class="badge-maker" title="Maker">${ICONS.maker}</span>` : '';
       const proBadge = ad.isPro ? `<span class="badge-pro" title="PRO">${ICONS.pro}</span>` : '';
 
+      // Иконка актива
+      const coinClass = ad.asset.toLowerCase();
+      const coinSymbol = ad.asset === 'USDT' ? '₮' : ad.asset === 'BTC' ? '₿' : 'T';
+
       return `<div class="ad-card">
         <div class="ad-head" onclick="openPublicProfile(${ad.userId})">
           ${avatarHtml}
@@ -544,6 +557,10 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div class="ad-body">
           <div class="ad-price-block">
+             <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                <div class="coin-icon ${coinClass}" style="width:20px;height:20px;font-size:10px;">${coinSymbol}</div>
+                <span style="font-size:12px; font-weight:800; color:var(--dim);">${ad.asset}</span>
+             </div>
              <div class="ad-price">${fmt(ad.price)} ₽</div>
              <div class="ad-limits">Лимиты: ${fmt(ad.minRub)} - ${fmt(ad.maxRub)} RUB</div>
              <div class="ad-amount">Доступно: ${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div>
@@ -1172,7 +1189,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let progressHtml = '';
         
-        // ОБНОВЛЕНИЕ СТАТУСОВ В НАСТРОЙКАХ
         if (user.isMaker) {
           progressHtml += `<div style="font-size:12px; color:var(--txt); font-weight:700; display:flex; align-items:center; gap:6px;"><span class="badge-maker" style="width:20px;height:20px;">${ICONS.maker}</span> Мейкер активен</div>`;
         } else {
