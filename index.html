@@ -216,9 +216,11 @@
           <div class="field">
             <label>Тип сделки</label>
             <div class="segmented" id="f-side">
-              <!-- Убрана покупка, оставлена только продажа -->
-              <button type="button" class="seg-btn buy active" data-val="sell" style="flex: 1;">Я продаю</button>
+              <!-- Кнопки восстановлены -->
+              <button type="button" class="seg-btn buy active" data-val="sell">Я продаю</button>
+              <button type="button" class="seg-btn sell" data-val="buy">Я покупаю (Мейкер)</button>
             </div>
+            <p id="makerWarning" style="display: none; color: var(--yellow); font-size: 10px; margin-top: 4px;">Для покупки нужен статус Мейкера</p>
           </div>
 
           <div class="field">
@@ -295,7 +297,6 @@
       <section class="screen" id="screen-admin">
         <h2 style="margin-bottom: 12px; font-size: 16px; font-weight: 800; color:var(--red);">🛡 Админка</h2>
         
-        <!-- ПОИСК В АДМИНКЕ -->
         <div class="field" id="adminSearchContainer" style="margin-bottom: 12px;">
           <input type="text" class="input" id="adminUserSearch" placeholder="Поиск по ID или нику..." style="height: 40px; font-size: 12px !important;">
         </div>
@@ -469,7 +470,6 @@
   </div>
 </div>
 
-<!-- ОБНОВЛЕННАЯ МОДАЛКА ВЫВОДА/ПОПОЛНЕНИЯ (БЕЗ РЕКВИЗИТОВ И КОМИССИИ) -->
 <div class="modal-overlay" id="walletActionModal">
   <div class="modal glass-modal" style="padding: 18px;">
     <h3 id="walletActionTitle" style="font-size: 16px; font-weight: 800; margin-bottom: 12px;">Пополнение</h3>
@@ -483,7 +483,6 @@
     
     <div class="field" style="margin-bottom: 12px;"><label>Сумма</label><input type="number" class="input" id="walletActionAmount" placeholder="0" style="height: 40px;"></div>
     
-    <!-- Выбор банка для RUB -->
     <div class="field" id="walletBankGroup" style="margin-bottom: 12px;">
       <label>Выберите банк</label>
       <select id="walletBankSelect" class="input" style="height: 40px; font-size: 12px !important; background: var(--glass-bg); color: var(--txt);">
@@ -495,7 +494,6 @@
       </select>
     </div>
 
-    <!-- Поля для USDT -->
     <div id="usdtWithdrawFields" style="display: none;">
       <div class="field" style="margin-bottom: 12px;">
         <label>Сеть</label>
@@ -601,7 +599,6 @@
   </div>
 </div>
 
-<!-- ОБНОВЛЕННАЯ МОДАЛКА РЕДАКТИРОВАНИЯ ОБЪЯВЛЕНИЯ -->
 <div class="modal-overlay" id="editAdModal">
   <div class="modal glass-modal" style="padding: 18px;">
     <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 12px;">Редактировать</h3>
@@ -637,6 +634,12 @@
     const loader = document.getElementById('loader');
     if (loader) {
       loader.style.opacity = '0';
+      setTimeout(() => loader.style.display = 'none', 500);
+    }
+  }, 1500);
+</script>
+</body>
+</html>acity = '0';
       setTimeout(() => loader.style.display = 'none', 500);
     }
   }, 1500);

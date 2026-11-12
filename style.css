@@ -151,21 +151,82 @@ body[data-theme="light"] .bn-btn { color: #475569 !important; }
   color: var(--txt);
 }
 
-/* Темный текст для неактивных кнопок в светлой теме */
-body[data-theme="light"] .btn:not(.btn-primary):not(.btn-buy):not(.btn-sell):not(.btn-ghost) { 
-  color: #0f172a !important; 
-}
+/* ========================================= */
+/* ЖЕСТКИЕ ПРАВИЛА ДЛЯ ЦВЕТОВ                */
+/* ========================================= */
+
+/* 1. Базовые кнопки (Ghost) в светлой теме */
 body[data-theme="light"] .btn-ghost {
   color: #0f172a !important;
-  border-color: rgba(0,0,0,0.15);
+  border-color: rgba(0,0,0,0.15) !important;
 }
+
+/* 2. Основные кнопки (Синие) */
+.btn-primary {
+  background: var(--btn-bg) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: var(--btn-glow) !important;
+}
+
+/* 3. Кнопки Купить (Зеленые) */
+.btn-buy {
+  background: linear-gradient(135deg, #34d399, #059669) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
+}
+
+/* 4. Кнопки Продать (Красные) */
+.btn-sell {
+  background: linear-gradient(135deg, #f87171, #dc2626) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4) !important;
+}
+
+/* 5. Кнопки в Баннерах (Всегда Белые) */
+.banner .btn-primary, 
+.banner .btn {
+  background: #ffffff !important;
+  color: #000000 !important;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2) !important;
+  border: none !important;
+}
+
+/* 6. Активные вкладки/пилюли (Всегда Синие) */
+.mode-btn.active, 
+.trade-tab.active, 
+.tab.active, 
+.seg-btn.active, 
+.chip.active, 
+.icon-chip.active, 
+.pay-chip.active, 
+.profile-tab.active {
+  background: var(--btn-bg) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  box-shadow: var(--btn-glow) !important;
+}
+
+/* 7. Неактивные вкладки/пилюли в светлой теме (Темный текст) */
+body[data-theme="light"] .seg-btn:not(.active),
+body[data-theme="light"] .trade-tab:not(.active),
+body[data-theme="light"] .tab:not(.active),
+body[data-theme="light"] .mode-btn:not(.active),
+body[data-theme="light"] .chip:not(.active),
+body[data-theme="light"] .icon-chip:not(.active),
+body[data-theme="light"] .pay-chip:not(.active),
+body[data-theme="light"] .profile-tab:not(.active) {
+  color: #0f172a !important;
+  background: #ffffff !important;
+  border-color: rgba(0,0,0,0.15) !important;
+}
+
+/* ========================================= */
 
 .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 .btn:active { transform: translateY(1px); box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); }
-
-.btn-primary { background: var(--btn-bg); color: var(--btn-txt) !important; border: none; box-shadow: var(--btn-glow); }
-.btn-buy { background: linear-gradient(135deg, #34d399, #059669); color: #fff !important; border: none; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); }
-.btn-sell { background: linear-gradient(135deg, #f87171, #dc2626); color: #fff !important; border: none; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); }
 
 .btn-block { width: 100%; }
 .btn-sm { height: 30px; padding: 0 12px; font-size: 11px; }
@@ -220,15 +281,12 @@ body[data-theme="light"] .badge-face { background: rgba(0,0,0,0.05); color: #475
 /* ПЕРЕКЛЮЧАТЕЛИ */
 .market-mode-switch { display: flex; padding: 4px; border-radius: 999px; margin-bottom: 12px; gap: 4px; background: var(--btn-glass-bg); border: 1px solid var(--btn-glass-border); box-shadow: var(--btn-glass-shadow); width: 100%; box-sizing: border-box; }
 .mode-btn { flex: 1; height: 36px; border-radius: 999px; color: var(--dim); font-weight: 800; font-size: 12px; transition: 0.3s; border: none; background: transparent; }
-body[data-theme="light"] .mode-btn:not(.active) { color: #0f172a !important; }
 
 .trade-tabs, .tabs { display: flex; gap: 4px; padding: 4px; border-radius: 999px; margin-bottom: 12px; background: var(--btn-glass-bg); border: 1px solid var(--btn-glass-border); box-shadow: var(--btn-glass-shadow); width: 100%; box-sizing: border-box; }
 .trade-tab, .tab { flex: 1; height: 36px; border-radius: 999px; font-size: 12px; font-weight: 800; color: var(--dim); transition: 0.3s; background: transparent; border: none; display: flex; align-items: center; justify-content: center; }
-body[data-theme="light"] .trade-tab:not(.active), body[data-theme="light"] .tab:not(.active) { color: #0f172a !important; }
 
 .segmented { display: flex; gap: 6px; width: 100%; }
 .seg-btn { flex: 1; height: 34px; padding: 0 8px; border-radius: 999px; background: var(--btn-glass-bg); border: 1px solid var(--btn-glass-border); color: var(--dim); font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.1); white-space: nowrap; }
-body[data-theme="light"] .seg-btn:not(.active) { background: #ffffff; border-color: rgba(0,0,0,0.15); color: #0f172a !important; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
 
 .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .field { margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px; }
@@ -308,7 +366,6 @@ body[data-theme="light"] .notif-item { background: #f8fafc; }
 
 .profile-tabs { display: flex; padding: 4px; gap: 4px; margin-bottom: 12px; overflow-x: auto; scrollbar-width: none; background: var(--btn-glass-bg); border-radius: 999px; border: 1px solid var(--btn-glass-border); }
 .profile-tab { height: 32px; padding: 0 12px; background: transparent; border: none; color: var(--dim); font-weight: 800; font-size: 11px; border-radius: 999px; cursor: pointer; white-space: nowrap; transition: 0.2s; }
-body[data-theme="light"] .profile-tab:not(.active) { color: #0f172a !important; }
 
 .admin-user-card { background: var(--btn-glass-bg); border: 1px solid var(--btn-glass-border); border-radius: 12px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 body[data-theme="light"] .admin-user-card { background: #ffffff; border-color: rgba(0,0,0,0.05); }
@@ -326,7 +383,6 @@ body[data-theme="light"] .admin-user-card { background: #ffffff; border-color: r
 .banner-text-content { position: relative; z-index: 2; max-width: 75%; }
 .banner h2 { font-size: 24px; margin-bottom: 10px; font-weight: 900; line-height: 1.2; color: #fff; letter-spacing: -0.5px; }
 .banner p { color: rgba(255,255,255,0.7); font-size: 14px; margin-bottom: 20px; font-weight: 500; }
-.banner .btn-primary { background: #fff; color: #000 !important; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
 .banner-decor { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 120px; height: 120px; pointer-events: none; z-index: 1; opacity: 0.8; }
 .banner-decor .coin-icon { position: absolute; width: 44px; height: 44px; font-size: 22px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); background: rgba(255,255,255,0.1); backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; }
 .float-1 { top: 0; right: 0; animation: float1 4s ease-in-out infinite; }
@@ -355,7 +411,6 @@ body[data-theme="light"] .admin-user-card { background: #ffffff; border-color: r
 .coin-icon.rub { background: linear-gradient(135deg, #94a3b8, #64748b); color: #fff; }
 
 .chip, .icon-chip, .pay-chip { height: 32px; padding: 0 12px; border-radius: 999px; background: var(--btn-glass-bg); border: 1px solid var(--btn-glass-border); color: var(--dim); font-size: 11px; font-weight: 700; white-space: nowrap; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-body[data-theme="light"] .chip:not(.active), body[data-theme="light"] .icon-chip:not(.active), body[data-theme="light"] .pay-chip:not(.active) { background: #ffffff; border-color: rgba(0,0,0,0.15); color: #475569 !important; }
 
 .chips, .icon-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; margin-bottom: 8px; }
 .chips::-webkit-scrollbar, .icon-scroll::-webkit-scrollbar { display: none; }
@@ -366,8 +421,8 @@ body[data-theme="light"] .chip:not(.active), body[data-theme="light"] .icon-chip
 .wallet-hero .amount { font-size: 28px; font-weight: 900; color: #fff; margin-bottom: 16px; letter-spacing: -1px; position: relative; z-index: 2; }
 .wallet-hero .amount span { font-size: 16px; color: rgba(255,255,255,0.7); }
 .wallet-actions { display: flex; gap: 8px; position: relative; z-index: 2; }
-.wallet-actions .btn-primary { background: rgba(255, 255, 255, 0.2); color: #fff !important; box-shadow: inset 0 1px 1px rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(10px); }
-.wallet-actions .btn-primary:hover { background: rgba(255, 255, 255, 0.3); }
+.wallet-actions .btn-primary { background: rgba(255, 255, 255, 0.2) !important; color: #fff !important; box-shadow: inset 0 1px 1px rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(10px); }
+.wallet-actions .btn-primary:hover { background: rgba(255, 255, 255, 0.3) !important; }
 .wallet-actions .btn-ghost { background: transparent; color: #fff !important; border: 1px solid rgba(255,255,255,0.3); }
 .wallet-item { display: flex; align-items: center; gap: 12px; background: var(--btn-glass-bg); border: 1px solid var(--btn-glass-border); padding: 12px; border-radius: 16px; margin-bottom: 8px; transition: 0.2s; box-shadow: var(--btn-glass-shadow); }
 body[data-theme="light"] .wallet-item { background: #ffffff; border-color: rgba(0,0,0,0.05); }
@@ -381,35 +436,7 @@ body[data-theme="light"] .news-item { background: #ffffff; border-color: rgba(0,
 .news-content { display: flex; flex-direction: column; gap: 4px; }
 .news-title { font-size: 13px; font-weight: 800; color: var(--txt); line-height: 1.2; }
 .news-date { font-size: 10px; color: var(--primary); font-weight: 700; }
-.news-badge.new { position: absolute; top: 10px; right: 10px; background: var(--grn); color: #fff; font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4); }
-
-/* ========================================= */
-/* ЖЕСТКИЙ ФИКС АКТИВНЫХ КНОПОК (СИНИЙ ФОН)  */
-/* ========================================= */
-.btn-primary, 
-.mode-btn.active, 
-.trade-tab.active, 
-.tab.active, 
-.seg-btn.active, 
-.chip.active, 
-.icon-chip.active, 
-.pay-chip.active, 
-.profile-tab.active {
-  background: var(--btn-bg) !important;
-  color: #ffffff !important;
-  border-color: transparent !important;
-  box-shadow: var(--btn-glow) !important;
-}
-
-body[data-theme="light"] .btn-primary,
-body[data-theme="light"] .mode-btn.active,
-body[data-theme="light"] .trade-tab.active,
-body[data-theme="light"] .tab.active,
-body[data-theme="light"] .seg-btn.active,
-body[data-theme="light"] .chip.active,
-body[data-theme="light"] .icon-chip.active,
-body[data-theme="light"] .pay-chip.active,
-body[data-theme="light"] .profile-tab.active {
+.news-badge.new { position: absolute; top: 10px; right: 10px; background: var(--grn); color: #fff; font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4); }[data-theme="light"] .profile-tab.active {
   background: var(--btn-bg) !important;
   color: #ffffff !important;
   border-color: transparent !important;
