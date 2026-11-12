@@ -12,7 +12,6 @@ window.addEventListener('unhandledrejection', (e) => {
 
 document.addEventListener('DOMContentLoaded', () => {
   try {
-    // Принудительное скрытие лоадера через 800мс
     setTimeout(() => {
       const loader = document.getElementById('loader');
       if (loader) {
@@ -1600,38 +1599,6 @@ document.addEventListener('DOMContentLoaded', () => {
         loadAdmin();
       };
     });
-
-    window.updateRequestStatus = async function(reqId, status) {
-      if (!await confirmAsync('Изменение', `Отметить как "${status}"?`, 'Да')) return;
-      try {
-        await API.req('PATCH', '/admin/requests/' + reqId, { status });
-        toast('Статус обновлен', 'success'); 
-        loadAdmin(); screenCache.profile = false; screenCache.wallet = false;
-      } catch(e) { toast(e.message || 'Ошибка', 'error'); }
-    };
-
-    // СТАРТ
-    updateAuthUI();
-    updateNotifUI();
-    try { loadHome(); } catch(e) { console.error('Initial loadHome:', e); }
-
-  } catch (err) {
-    console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
-  }
-});    try { loadHome(); } catch(e) { console.error('Initial loadHome:', e); }
-
-  } catch (err) {
-    console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
-  }
-});getElementById('balAmount').value);
-      if (!amount || amount <= 0) return toast('Введите сумму', 'error');
-      try {
-        await API.req('POST', '/admin/users/' + userId + '/balance', { currency, amount, action });
-        toast('Баланс изменен', 'success');
-        document.getElementById('balanceModal').classList.remove('active');
-        loadAdmin(); 
-      } catch(e) { toast(e.message || 'Ошибка', 'error'); }
-    };
 
     window.updateRequestStatus = async function(reqId, status) {
       if (!await confirmAsync('Изменение', `Отметить как "${status}"?`, 'Да')) return;
