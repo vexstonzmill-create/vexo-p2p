@@ -113,13 +113,11 @@
       </section>
 
       <section class="screen" id="screen-market">
-        <!-- ПЕРЕКЛЮЧАТЕЛЬ P2P / ОБМЕН -->
         <div class="market-mode-switch glass-panel" id="marketModeSwitch">
           <button class="mode-btn active" data-mode="p2p">P2P Маркет</button>
           <button class="mode-btn" data-mode="fast">⚡ Быстрый Обмен</button>
         </div>
 
-        <!-- P2P Контент -->
         <div id="p2p-market-content">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
             <h2 style="font-size: 18px; font-weight: 800;">Объявления</h2>
@@ -152,7 +150,6 @@
           <div id="adsList">Загрузка...</div>
         </div>
 
-        <!-- Быстрый Обмен Контент -->
         <div id="fast-exchange-content" style="display: none;">
           <div class="glass-card" style="padding: 20px;">
             <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 16px;">Быстрый обмен</h2>
@@ -234,10 +231,15 @@
             </div>
           </div>
 
-          <div class="field"><label>Цена за 1 <span id="f-asset-label">USDT</span> (₽)</label><input class="input" type="number" id="f-price" placeholder="Пример: 90"></div>
-          <div class="field"><label>Общий объем</label><input class="input" type="number" id="f-amount" placeholder="Пример: 500"></div>
-          <div class="field"><label>Мин. лимит (₽)</label><input class="input" type="number" id="f-min" placeholder="Пример: 3000"></div>
-          <div class="field"><label>Макс. лимит (₽)</label><input class="input" type="number" id="f-max" placeholder="Пример: 45000"></div>
+          <div class="grid-2-col">
+            <div class="field"><label>Цена за 1 <span id="f-asset-label">USDT</span> (₽)</label><input class="input" type="number" id="f-price" placeholder="Пример: 90"></div>
+            <div class="field"><label>Общий объем</label><input class="input" type="number" id="f-amount" placeholder="Пример: 500"></div>
+          </div>
+          <div class="grid-2-col">
+            <div class="field"><label>Мин. лимит (₽)</label><input class="input" type="number" id="f-min" placeholder="Пример: 3000"></div>
+            <div class="field"><label>Макс. лимит (₽)</label><input class="input" type="number" id="f-max" placeholder="Пример: 45000"></div>
+          </div>
+          
           <div class="field"><label>Условия</label><textarea class="input" id="f-terms" placeholder="ПРИНИМАЮ ТОЛЬКО СБП..." style="min-height: 60px;"></textarea></div>
 
           <div class="error-msg" id="createError"></div>
@@ -383,8 +385,12 @@
       <div class="field"><label>Новый пароль</label><input class="input" type="password" id="settingsNewPass" placeholder="Мин. 8 символов"></div>
     </div>
     <div class="error-msg" id="settingsError"></div>
-    <button class="btn btn-primary btn-block" id="settingsSaveBtn">Сохранить</button>
-    <button class="btn btn-ghost btn-block" onclick="closeModal('settingsModal')" style="margin-top: 8px;">Отмена</button>
+    
+    <!-- ИСПРАВЛЕННЫЕ КНОПКИ В НАСТРОЙКАХ -->
+    <div class="settings-actions">
+      <button class="btn btn-ghost" onclick="closeModal('settingsModal')">Отмена</button>
+      <button id="settingsSaveBtn" class="btn btn-primary">Сохранить</button>
+    </div>
   </div>
 </div>
 
@@ -395,7 +401,6 @@
   </div>
 </div>
 
-<!-- МОДАЛКА ВВОДА/ВЫВОДА -->
 <div class="modal-overlay" id="walletActionModal">
   <div class="modal glass-modal">
     <h3 id="walletActionTitle" style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Пополнение</h3>
@@ -506,7 +511,6 @@
   </div>
 </div>
 
-<!-- МОДАЛКА РЕДАКТИРОВАНИЯ ОБЪЯВЛЕНИЯ -->
 <div class="modal-overlay" id="editAdModal">
   <div class="modal glass-modal">
     <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Редактировать</h3>
@@ -517,6 +521,12 @@
     <div class="error-msg" id="editError"></div>
     <button class="btn btn-primary btn-block" id="editSaveBtn">Сохранить</button>
     <button class="btn btn-ghost btn-block" onclick="closeModal('editAdModal')" style="margin-top: 8px;">Отмена</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>tton>
   </div>
 </div>
 

@@ -8,7 +8,6 @@ window.addEventListener('error', (e) => {
 
 document.addEventListener('DOMContentLoaded', () => {
   try {
-    // ТРЕБОВАНИЕ 6: Скрываем лоадер
     setTimeout(() => {
       const loader = document.getElementById('loader');
       if (loader) loader.classList.add('hidden-loader');
@@ -69,8 +68,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeModal(id) { const el = document.getElementById(id); if (el) el.classList.remove('active'); }
     window.closeModal = closeModal;
 
-    // --- БАННЕРЫ ---
+    // --- БАННЕРЫ (ИНИЦИАЛИЗАЦИЯ ОДИН РАЗ) ---
     (function initCarousel() {
+      if (window.bannerInited) return;
+      window.bannerInited = true;
       const track = document.getElementById('bannerTrack');
       const dots = document.querySelectorAll('.banner-dot');
       const viewport = document.getElementById('bannerViewport');
@@ -124,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateNotifUI();
     });
 
-    // --- НАВИГАЦИЯ И КЭШИРОВАНИЕ (ТРЕБОВАНИЕ 7) ---
+    // --- НАВИГАЦИЯ И КЭШИРОВАНИЕ ---
     let previousScreen = 'home';
     const screenCache = {};
 
@@ -136,8 +137,6 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.nav-btn, .bn-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll(`[data-screen="${name}"]`).forEach(b => b.classList.add('active'));
       
-      const titleEl = document.getElementById('topbarTitle');
-      
       const backBtn = document.getElementById('backBtn');
       if (backBtn) backBtn.classList.toggle('hidden', !['order', 'admin'].includes(name));
       
@@ -146,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (name === 'orders' && !screenCache.orders) { loadOrders('active'); screenCache.orders = true; }
         if (name === 'profile' && !screenCache.profile) { loadProfile(); screenCache.profile = true; }
         if (name === 'home' && !screenCache.home) { loadHome(); screenCache.home = true; }
-        if (name === 'wallet') { loadWallet(); screenCache.wallet = true; } // Wallet всегда обновляем
+        if (name === 'wallet') { loadWallet(); screenCache.wallet = true; }
         if (name === 'admin') { loadAdmin(); } 
       } catch(e) { console.error('show error:', e); }
       
@@ -287,18 +286,28 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch(e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
     }
 
-    // КОШЕЛЕК
+    // КОШЕЛЕК (ИСПРАВЛЕН РАСЧЕТ USDT)
     let walletActionType = 'deposit';
-    function loadWallet() {
+    async function loadWallet() {
       const u = API.user();
       const screen = document.getElementById('screen-wallet');
       if (!u) {
         screen.innerHTML = `<div class="empty-state" style="margin-top:20px;"><div style="font-size:40px;margin-bottom:10px;">🔒</div>Войдите в аккаунт.<br><br><button class="btn btn-primary" onclick="document.getElementById('authModal').classList.add('active')">Войти</button></div>`;
       } else {
-        // Запрашиваем свежие данные с сервера каждый раз
+        screen.innerHTML = '<div class="empty-state">Загрузка...</div>';
+        
+        let usdtRate = 90;
+        try {
+          const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=rub');
+          const data = await res.json();
+          if (data && data.tether && data.tether.rub) usdtRate = data.tether.rub;
+        } catch(e) {}
+
         API.req('GET', '/users/me').then(data => {
           localStorage.setItem('vexo_user', JSON.stringify(data.user));
           const freshUser = data.user;
+          const estimatedRub = freshUser.balanceUsdt * usdtRate;
+
           screen.innerHTML = `
             <h2 style="margin-bottom: 4px; font-size: 18px;">Кошелёк</h2>
             <p style="color: var(--dim); font-size: 12px; margin-bottom: 16px;">Балансы и история операций</p>
@@ -313,7 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <h3 style="margin-top: 20px; font-size: 14px; margin-bottom: 12px;">Активы</h3>
             <div class="wallet-list">
               <div class="wallet-item"><div class="coin-icon rub">₽</div><div class="w-info"><div class="w-name" style="font-weight:700;">Российский рубль</div><div class="w-sub" style="font-size:11px;color:var(--dim);">RUB · фиат</div></div><div class="w-bal" style="margin-left:auto; font-weight:800;">${fmt(freshUser.balanceRub)} ₽</div></div>
-              <div class="wallet-item"><div class="coin-icon usdt">₮</div><div class="w-info"><div class="w-name" style="font-weight:700;">Tether</div><div class="w-sub" style="font-size:11px;color:var(--dim);">USDT · TRC-20</div></div><div class="w-bal" style="margin-left:auto; font-weight:800;">${fmtDec(freshUser.balanceUsdt, 2)} <span style="font-size:10px;color:var(--dim);">≈ 0 ₽</span></div></div>
+              <div class="wallet-item"><div class="coin-icon usdt">₮</div><div class="w-info"><div class="w-name" style="font-weight:700;">Tether</div><div class="w-sub" style="font-size:11px;color:var(--dim);">USDT · TRC-20</div></div><div class="w-bal" style="margin-left:auto; font-weight:800;">${fmtDec(freshUser.balanceUsdt, 2)} <span style="font-size:10px;color:var(--dim);">≈ ${fmt(estimatedRub)} ₽</span></div></div>
             </div>`;
             
           document.getElementById('btnDeposit').onclick = () => { walletActionType = 'deposit'; document.getElementById('walletActionTitle').textContent = 'Пополнение'; document.getElementById('walletActionModal').classList.add('active'); };
@@ -322,7 +331,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // ТРЕБОВАНИЕ: ЗАЯВКИ НА ВВОД/ВЫВОД БЕЗ ТЕЛЕГРАММА
     document.getElementById('walletActionSubmit')?.addEventListener('click', async () => {
       if (!API.user()) { closeModal('walletActionModal'); document.getElementById('authModal')?.classList.add('active'); return; }
       
@@ -487,7 +495,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const isSell = ad.side === 'sell';
       const faceLabel = ad.faceType === 'first' ? '1-е лицо' : '3-е лицо';
       window._ads = window._ads || {}; window._ads[ad.id] = ad;
-      const pays = (ad.paymentMethods || []).map(p => `<span class="pay-tag">${p}</span>`).join('');
+      const pays = (ad.paymentMethods || []).map(p => `<span class="pay-tag" style="background:rgba(255,255,255,0.1); border:1px solid var(--glass-border); padding:2px 6px; border-radius:4px; font-size:10px; font-weight:600;">${p}</span>`).join('');
       
       let avatarHtml = `<div class="avatar">${ad.displayName[0].toUpperCase()}</div>`;
       if (ad.avatarUrl) avatarHtml = `<div class="avatar"><img src="${ad.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${ad.displayName[0].toUpperCase()}'"></div>`;
@@ -509,7 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
              <div class="ad-price">${fmt(ad.price)} ₽</div>
              <div class="ad-limits">Лимиты: ${fmt(ad.minRub)} - ${fmt(ad.maxRub)} RUB</div>
              <div class="ad-amount">Доступно: ${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div>
-             ${pays ? `<div class="ad-pay-methods" style="justify-content:flex-start;margin-top:4px;">${pays}</div>` : ''}
+             ${pays ? `<div class="ad-pay-methods" style="justify-content:flex-start;margin-top:4px; display:flex; gap:4px;">${pays}</div>` : ''}
           </div>
           <div class="ad-action">
              <button class="btn ${isSell ? 'btn-buy' : 'btn-sell'} btn-sm" data-ad-id="${ad.id}" style="min-width:100px;">${isSell ? 'Купить' : 'Продать'}</button>
@@ -655,8 +663,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <span style="color:${sc[o.status] || 'var(--txt)'};font-size:12px;font-weight:800">${o.statusLabel}</span>
             </div>
             <div class="ad-body">
-              <div><div class="ad-lbl">Сумма</div><div class="ad-val">${fmt(o.amountRub)} ₽</div></div>
-              <div><div class="ad-lbl">Актив</div><div class="ad-val">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div>
+              <div><div style="font-size:11px;color:var(--dim);">Сумма</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmt(o.amountRub)} ₽</div></div>
+              <div><div style="font-size:11px;color:var(--dim);">Актив</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmtDec(o.amountAsset, 4)} ${o.asset}</div></div>
             </div>
             <div style="font-size:12px;color:var(--dim);display:flex;justify-content:space-between;font-weight:600;margin-top:12px;">
               <span>${new Date(o.createdAt).toLocaleString('ru-RU')}</span>
@@ -704,7 +712,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       if (order.status === 'pending') {
         if (isSeller) {
-          actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><button class="btn btn-primary" onclick="doAction(${order.id},'accept')" style="background:var(--grn);color:#fff;border:none;">Принять заявку</button><button class="btn btn-ghost" style="color:var(--red);border-color:var(--red);" onclick="doAction(${order.id},'decline')">Отклонить</button></div>`;
+          actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><button class="btn btn-primary" onclick="doAction(${order.id},'accept')" style="background:var(--grn);color:#fff;border:none;">Принять заявку</button><button class="btn btn-ghost" style="color:var(--red);border:1px solid var(--red);" onclick="doAction(${order.id},'decline')">Отклонить</button></div>`;
         } else {
           actionsHtml = `<div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:13px;margin-bottom:8px;font-weight:600;">Ожидайте подтверждения заявки продавцом</div>
           <button class="btn btn-ghost btn-block" style="color:var(--red);" onclick="doAction(${order.id},'cancel')">Отменить заявку</button>`;
@@ -937,7 +945,7 @@ document.addEventListener('DOMContentLoaded', () => {
       finally { btn.disabled = false; }
     });
 
-    // ПРОФИЛЬ (ТРЕБОВАНИЕ 3: ФИКС ШЕСТЕРЕНКИ И ИКОНОК)
+    // ПРОФИЛЬ
     let profileTab = 'ads';
     async function loadProfile() {
       const u = API.user();
@@ -1098,7 +1106,6 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('settingsNewPass').value = '';
       document.getElementById('settingsError').textContent = '';
       
-      // Ставим активную кнопку шрифта
       document.querySelectorAll('#fontWeightSelect .seg-btn').forEach(b => b.classList.remove('active'));
       document.querySelector(`#fontWeightSelect .seg-btn[data-val="${localStorage.getItem('vexo_font') || 'normal'}"]`).classList.add('active');
       
@@ -1108,7 +1115,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let progressHtml = '';
         
-        // Статус Мейкера
         if (user.isMaker) {
           progressHtml += `<div style="font-size:13px; color:var(--dim); font-weight:700; display:flex; align-items:center; gap:6px;">☑ Статус Мейкера активен</div>`;
         } else {
@@ -1124,7 +1130,6 @@ document.addEventListener('DOMContentLoaded', () => {
           `;
         }
         
-        // Статус Мерчанта
         if (user.isMerchant) {
           progressHtml += `<div style="font-size:13px; color:var(--dim); font-weight:700; display:flex; align-items:center; gap:6px;">MERCHANT Статус Мерчанта активен</div>`;
         } else {
@@ -1145,7 +1150,6 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('settingsModal').classList.add('active');
     };
 
-    // Слушатель шрифта в настройках
     document.querySelectorAll('#fontWeightSelect .seg-btn').forEach(b => {
       b.onclick = () => {
         document.querySelectorAll('#fontWeightSelect .seg-btn').forEach(x => x.classList.remove('active'));
@@ -1320,9 +1324,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (await confirmAsync('Выход', 'Выйти из аккаунта?', 'Выйти')) { localStorage.removeItem('vexo_token'); localStorage.removeItem('vexo_user'); location.reload(); }
     };
 
-    // ==========================================
-    // АДМИНКА (ТРЕБОВАНИЕ 5)
-    // ==========================================
+    // АДМИНКА
     let adminTab = 'users';
 
     async function loadAdmin() {
