@@ -45,11 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
         el.className = 'toast ' + type;
         el.textContent = msg;
         c.appendChild(el);
-        setTimeout(() => { 
-          el.style.opacity = '0'; 
-          el.style.transition = '.3s'; 
-          setTimeout(() => el.remove(), 300); 
-        }, 3000);
+        setTimeout(() => { el.style.opacity = '0'; el.style.transition = '.3s'; setTimeout(() => el.remove(), 300); }, 3000);
       } catch(e) { console.error(e); }
     }
 
@@ -180,7 +176,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     applyFont(currentFont);
 
-    // НОВОЕ: МАСШТАБ ИНТЕРФЕЙСА (ZOOM)
     let currentZoom = localStorage.getItem('vexo_zoom') || 'medium';
     function applyZoom(size) {
       document.body.classList.remove('zoom-small', 'zoom-medium', 'zoom-large');
@@ -1383,9 +1378,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // ==========================================
-    // АДМИНКА
+    // АДМИНКА (С КОМПАКТНЫМИ КАРТОЧКАМИ И МОДАЛКОЙ УПРАВЛЕНИЯ)
     // ==========================================
     let adminTab = 'users';
+    let currentAdminUserId = null;
 
     async function loadAdmin() {
       const u = API.user();
@@ -1393,7 +1389,6 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const content = document.getElementById('adminContent');
       if (!content) return;
-      const canManageBalance = ['admin', 'owner', 'deputy'].includes(u.role);
 
       try {
         if (adminTab === 'users') {
@@ -1402,17 +1397,11 @@ document.addEventListener('DOMContentLoaded', () => {
           
           content.innerHTML = items.map(user => `
             <div class="admin-user-card">
-              <div class="admin-user-info" style="cursor:pointer;" onclick="openUserStats(${user.id})">
+              <div class="admin-user-info">
                 <div class="admin-user-name">${user.displayName} (@${user.username})</div>
-                <div class="admin-user-meta">Email: ${user.email} | Роль: ${user.role}</div>
-                <div class="admin-user-meta">RUB: ${fmt(user.balanceRub)} | USDT: ${fmtDec(user.balanceUsdt, 2)}</div>
+                <div class="admin-user-meta">Роль: ${user.role}</div>
               </div>
-              <div class="admin-status-btns">
-                <button class="admin-badge-btn ${user.isPro ? 'active-pro' : ''}" onclick="toggleUserStatus(${user.id}, 'is_pro', ${user.isPro})">PRO</button>
-                <button class="admin-badge-btn ${user.isMerchant ? 'active-merchant' : ''}" onclick="toggleUserStatus(${user.id}, 'is_merchant', ${user.isMerchant})">MERCHANT</button>
-                <button class="admin-badge-btn ${user.isMaker ? 'active-maker' : ''}" onclick="toggleUserStatus(${user.id}, 'is_maker', ${user.isMaker})">MAKER</button>
-                ${canManageBalance ? `<button class="btn btn-primary btn-sm" style="margin-left:8px; padding:6px 10px; font-size:11px;" onclick="openBalanceModal(${user.id}, '${user.username}')">💰 Баланс</button>` : ''}
-              </div>
+              <button class="btn btn-primary btn-sm" style="border-radius: 10px; padding: 8px 16px;" onclick="openAdminUserModal(${user.id})">Управление</button>
             </div>
           `).join('');
         } 
@@ -1485,7 +1474,7 @@ document.addEventListener('DOMContentLoaded', () => {
               ${details.requisites ? `<div style="font-size:12px; color:var(--dim); margin-bottom:4px;">Реквизиты: <span style="color:var(--txt); font-weight:600;">${details.requisites}</span></div>` : ''}
               ${details.tg_username ? `<div style="font-size:12px; color:var(--dim); margin-bottom:12px;">TG: <span style="color:var(--txt); font-weight:600;">${details.tg_username}</span></div>` : ''}
               
-              ${!isFinal && canManageBalance ? `
+              ${!isFinal ? `
                 <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top:12px;">
                   <button class="btn btn-primary btn-sm" style="background:var(--grn); padding:8px; font-size:12px; border-radius:8px;" onclick="updateRequestStatus(${req.id}, 'approved')">Одобрить</button>
                   <button class="btn btn-ghost btn-sm" style="color:var(--red); border:1px solid var(--red); padding:8px; font-size:12px; border-radius:8px;" onclick="updateRequestStatus(${req.id}, 'rejected')">Отклонить</button>
@@ -1498,35 +1487,101 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch(e) { content.innerHTML = '<div class="empty-state">Ошибка загрузки данных</div>'; }
     }
 
-    // СТАТИСТИКА ЮЗЕРА В АДМИНКЕ
-    window.openUserStats = async function(userId) {
-      const m = document.getElementById('publicProfileModal'); 
-      const c = document.getElementById('publicProfileContent');
-      if (!m || !c) return; 
-      c.innerHTML = '<div class="empty-state">Загрузка...</div>'; 
+    // МОДАЛКА УПРАВЛЕНИЯ ЮЗЕРОМ
+    window.openAdminUserModal = async function(userId) {
+      currentAdminUserId = userId;
+      const m = document.getElementById('adminUserModal');
+      const info = document.getElementById('adminUserInfo');
+      if (!m || !info) return;
+      
+      info.innerHTML = 'Загрузка...';
       m.classList.add('active');
       
       try {
         const { user, stats } = await API.req('GET', '/users/' + userId);
-        let avatarHtml = `<div class="avatar lg" style="margin:0 auto 10px;">${user.displayName[0].toUpperCase()}</div>`;
-        if (user.avatarUrl) avatarHtml = `<div class="avatar lg" style="margin:0 auto 10px;"><img src="${user.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${user.displayName[0].toUpperCase()}'"></div>`;
         
-        c.innerHTML = `
-          <div style="text-align:center; margin-bottom: 20px; margin-top:10px;">
+        let avatarHtml = `<div class="avatar">${user.displayName[0].toUpperCase()}</div>`;
+        if (user.avatarUrl) avatarHtml = `<div class="avatar"><img src="${user.avatarUrl}"></div>`;
+        
+        info.innerHTML = `
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
             ${avatarHtml}
-            <h2 style="font-size:20px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;justify-content:center;color:var(--txt);">${user.displayName}</h2>
-            <div style="font-size:13px;color:var(--dim);font-weight:600;">@${user.username}</div>
-            <div style="font-size:12px;color:var(--dim);margin-top:8px;">Email: ${user.email}</div>
-            <div style="font-size:12px;color:var(--dim);">Баланс: ${fmt(user.balanceRub)} RUB | ${fmtDec(user.balanceUsdt, 2)} USDT</div>
+            <div>
+              <h3 style="font-size:16px; font-weight:800; margin:0;">${user.displayName}</h3>
+              <div style="font-size:12px; color:var(--dim);">@${user.username} · ${user.email}</div>
+            </div>
           </div>
-          <div class="stats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-            <div class="glass-card" style="padding:16px;text-align:center;"><div style="font-size:12px;color:var(--dim);">Сделок</div><div style="font-size:20px;font-weight:800;color:var(--txt);">${stats.dealsTotal}</div></div>
-            <div class="glass-card" style="padding:16px;text-align:center;"><div style="font-size:12px;color:var(--dim);">Успешных</div><div style="font-size:20px;font-weight:800;color:var(--txt);">${stats.successRate}%</div></div>
-            <div class="glass-card" style="padding:16px;text-align:center;"><div style="font-size:12px;color:var(--dim);">Отзывов</div><div style="font-size:20px;font-weight:800;color:var(--txt);">${stats.reviewsCount}</div></div>
-            <div class="glass-card" style="padding:16px;text-align:center;"><div style="font-size:12px;color:var(--dim);">Рейтинг</div><div style="font-size:20px;font-weight:800;color:var(--txt);">${stats.ratingAvg || '—'}</div></div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:10px;">
+              <div style="font-size:10px; color:var(--dim);">Баланс RUB</div>
+              <div style="font-size:14px; font-weight:800; color:var(--txt);">${fmt(user.balanceRub)} ₽</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:10px;">
+              <div style="font-size:10px; color:var(--dim);">Баланс USDT</div>
+              <div style="font-size:14px; font-weight:800; color:var(--txt);">${fmtDec(user.balanceUsdt, 2)} ₮</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:10px;">
+              <div style="font-size:10px; color:var(--dim);">Сделок</div>
+              <div style="font-size:14px; font-weight:800; color:var(--txt);">${stats.dealsTotal}</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:10px;">
+              <div style="font-size:10px; color:var(--dim);">Успешных</div>
+              <div style="font-size:14px; font-weight:800; color:var(--txt);">${stats.successRate}%</div>
+            </div>
           </div>
         `;
-      } catch(e) { c.innerHTML = '<div class="empty-state">Ошибка загрузки профиля</div>'; }
+        
+        // Обновляем состояние кнопок-статусов
+        const updBtn = (id, isActive) => {
+          const btn = document.getElementById(id);
+          if (!btn) return;
+          if (isActive) {
+            btn.classList.add('btn-primary');
+            btn.classList.remove('btn-ghost');
+            btn.style.background = 'var(--grn)';
+            btn.style.color = '#fff';
+          } else {
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-ghost');
+            btn.style.background = '';
+            btn.style.color = '';
+          }
+        };
+        
+        updBtn('admTogglePro', user.isPro);
+        updBtn('admToggleMerchant', user.isMerchant);
+        updBtn('admToggleMaker', user.isMaker);
+        
+      } catch (e) {
+        info.innerHTML = 'Ошибка загрузки данных';
+      }
+    };
+
+    window.toggleAdminUserStatus = async function(field) {
+      if (!currentAdminUserId) return;
+      const u = await API.req('GET', '/users/' + currentAdminUserId);
+      const payload = {};
+      payload[field] = !u.user[field === 'is_pro' ? 'isPro' : field === 'is_merchant' ? 'isMerchant' : 'isMaker'];
+      
+      try {
+        await API.req('PATCH', '/admin/users/' + currentAdminUserId + '/status', payload);
+        toast('Статус обновлен', 'success');
+        openAdminUserModal(currentAdminUserId); // Перезагружаем модалку
+      } catch(e) { toast('Ошибка', 'error'); }
+    };
+
+    window.adminChangeBalance = async function(action) {
+      if (!currentAdminUserId) return;
+      const currency = document.getElementById('admBalanceCurrency').value;
+      const amount = parseFloat(document.getElementById('admBalanceAmount').value);
+      if (!amount || amount <= 0) return toast('Введите сумму', 'error');
+      
+      try {
+        await API.req('POST', '/admin/users/' + currentAdminUserId + '/balance', { currency, amount, action });
+        toast('Баланс изменен', 'success');
+        document.getElementById('admBalanceAmount').value = '';
+        openAdminUserModal(currentAdminUserId); // Перезагружаем модалку
+      } catch(e) { toast(e.message || 'Ошибка', 'error'); }
     };
 
     document.querySelectorAll('#adminTabs .tab').forEach(c => {
@@ -1538,50 +1593,30 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     });
 
-    window.toggleUserStatus = async function(userId, field, currentVal) {
+    window.openUserStats = async function(userId) {
+      // Старая функция, оставил на случай если где-то вызывается, 
+      // но теперь используется openAdminUserModal
+      openAdminUserModal(userId);
+    };
+
+    window.updateRequestStatus = async function(reqId, status) {
+      if (!await confirmAsync('Изменение', `Отметить как "${status}"?`, 'Да')) return;
       try {
-        const payload = {};
-        payload[field] = !currentVal;
-        await API.req('PATCH', '/admin/users/' + userId + '/status', payload);
-        toast('Статус обновлен', 'success');
-        loadAdmin(); 
-      } catch(e) { toast('Ошибка', 'error'); }
+        await API.req('PATCH', '/admin/requests/' + reqId, { status });
+        toast('Статус обновлен', 'success'); 
+        loadAdmin(); screenCache.profile = false; screenCache.wallet = false;
+      } catch(e) { toast(e.message || 'Ошибка', 'error'); }
     };
 
-    window.openBalanceModal = function(userId, username) {
-      let m = document.getElementById('balanceModal');
-      if (!m) {
-        m = document.createElement('div');
-        m.id = 'balanceModal'; m.className = 'modal-overlay';
-        m.innerHTML = `
-          <div class="modal glass-modal">
-            <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Баланс: @${username}</h3>
-            <div class="field">
-              <label>Валюта</label>
-              <select id="balCurrency" class="input">
-                <option value="rub">RUB</option>
-                <option value="usdt">USDT</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Сумма</label>
-              <input type="number" id="balAmount" class="input" placeholder="1000">
-            </div>
-            <div style="display: flex; gap: 8px; margin-bottom: 16px;">
-              <button class="btn btn-primary" style="flex:1; background: var(--grn);" onclick="changeBalance(${userId}, 'add')">Начислить (+)</button>
-              <button class="btn btn-primary" style="flex:1; background: var(--red);" onclick="changeBalance(${userId}, 'sub')">Списать (-)</button>
-            </div>
-            <button class="btn btn-ghost btn-block" onclick="document.getElementById('balanceModal').classList.remove('active')">Отмена</button>
-          </div>
-        `;
-        document.body.appendChild(m);
-      }
-      m.classList.add('active');
-    };
+    // СТАРТ
+    updateAuthUI();
+    updateNotifUI();
+    try { loadHome(); } catch(e) { console.error('Initial loadHome:', e); }
 
-    window.changeBalance = async function(userId, action) {
-      const currency = document.getElementById('balCurrency').value;
-      const amount = parseFloat(document.getElementById('balAmount').value);
+  } catch (err) {
+    console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
+  }
+});getElementById('balAmount').value);
       if (!amount || amount <= 0) return toast('Введите сумму', 'error');
       try {
         await API.req('POST', '/admin/users/' + userId + '/balance', { currency, amount, action });

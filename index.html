@@ -7,9 +7,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-<body data-theme="dark">
+<body data-theme="dark" class="zoom-medium">
 
-<!-- ЭКРАН ЗАГРУЗКИ -->
 <div id="loader">
   <div class="spinner"></div>
   <div class="loader-text">Загрузка VEXO...</div>
@@ -113,7 +112,8 @@
       </section>
 
       <section class="screen" id="screen-market">
-        <div class="market-mode-switch glass-panel" id="marketModeSwitch">
+        <!-- ПЕРЕКЛЮЧАТЕЛЬ P2P / ОБМЕН -->
+        <div class="market-mode-switch" id="marketModeSwitch">
           <button class="mode-btn active" data-mode="p2p">P2P Маркет</button>
           <button class="mode-btn" data-mode="fast">⚡ Быстрый Обмен</button>
         </div>
@@ -121,27 +121,25 @@
         <div id="p2p-market-content">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
             <h2 style="font-size: 18px; font-weight: 800;">Объявления</h2>
-            <div style="display: flex; gap: 6px;">
-              <button class="btn btn-ghost btn-sm" id="openFilterBtn" style="border: 1px solid var(--glass-border); padding: 6px 12px; border-radius: 10px; display: flex; gap: 6px;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-                Фильтры
-              </button>
-            </div>
+            <button class="btn btn-ghost btn-sm" id="openFilterBtn" style="border: 1px solid var(--glass-border); padding: 8px 14px; border-radius: 12px; display: flex; gap: 6px; font-size: 13px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+              Фильтры
+            </button>
           </div>
 
-          <div class="trade-tabs glass-panel" id="marketSideTabs">
+          <div class="trade-tabs" id="marketSideTabs">
             <button class="trade-tab active" data-side="buy">Купить</button>
             <button class="trade-tab" data-side="sell">Продать</button>
           </div>
 
-          <div class="icon-scroll" id="filterAsset" style="margin-bottom: 8px;">
+          <div class="icon-scroll" id="filterAsset" style="margin-bottom: 12px;">
             <div class="icon-chip active" data-val="">Все активы</div>
             <div class="icon-chip" data-val="USDT"><div class="coin-icon usdt">₮</div> USDT</div>
             <div class="icon-chip" data-val="BTC"><div class="coin-icon btc">₿</div> BTC</div>
             <div class="icon-chip" data-val="TON"><div class="coin-icon ton">T</div> TON</div>
           </div>
           
-          <div class="chips" id="filterFace" style="margin-bottom: 12px;">
+          <div class="chips" id="filterFace" style="margin-bottom: 16px;">
             <button class="chip active" data-val="">Все лица</button>
             <button class="chip" data-val="first">1-е лицо</button>
             <button class="chip" data-val="third">3-е лицо</button>
@@ -155,7 +153,7 @@
             <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 16px;">Быстрый обмен</h2>
             <p style="font-size: 13px; color: var(--dim); margin-bottom: 20px;">Мгновенный обмен USDT по актуальному рыночному курсу.</p>
 
-            <div class="trade-tabs glass-panel" style="margin-bottom: 20px;">
+            <div class="trade-tabs" style="margin-bottom: 20px;">
               <button class="trade-tab active" id="exTabBuy">Купить USDT</button>
               <button class="trade-tab" id="exTabSell">Продать USDT</button>
             </div>
@@ -187,7 +185,7 @@
         <div class="glass-card">
           <div class="field">
             <label>Тип сделки</label>
-            <div class="segmented glass-panel" id="f-side">
+            <div class="segmented" id="f-side">
               <button type="button" class="seg-btn buy active" data-val="sell">Я продаю</button>
               <button type="button" class="seg-btn sell" data-val="buy">Я покупаю (Мейкер)</button>
             </div>
@@ -196,7 +194,7 @@
 
           <div class="field">
             <label>Тип лица</label>
-            <div class="segmented glass-panel" id="f-face">
+            <div class="segmented" id="f-face">
               <button type="button" class="seg-btn active" data-val="first">1-е лицо</button>
               <button type="button" class="seg-btn" data-val="third">3-е лицо</button>
             </div>
@@ -249,7 +247,7 @@
 
       <section class="screen" id="screen-orders">
         <h2 style="margin-bottom: 16px; font-size: 18px; font-weight: 800;">Мои ордера</h2>
-        <div class="tabs glass-panel" id="ordersFilter">
+        <div class="tabs" id="ordersFilter">
           <button class="tab active" data-val="active">Активные</button>
           <button class="tab" data-val="completed">Завершённые</button>
           <button class="tab" data-val="cancelled">Отменённые</button>
@@ -267,7 +265,7 @@
 
       <section class="screen" id="screen-admin">
         <h2 style="margin-bottom: 16px; font-size: 18px; font-weight: 800; color:var(--red);">🛡 Панель Администратора</h2>
-        <div class="tabs glass-panel" id="adminTabs" style="margin-bottom:20px;">
+        <div class="tabs" id="adminTabs" style="margin-bottom:20px;">
           <button class="tab active" data-val="users">Пользователи</button>
           <button class="tab" data-val="disputes">Споры</button>
           <button class="tab" data-val="requests">Заявки</button>
@@ -291,7 +289,47 @@
 <div class="toast-container" id="toastContainer"></div>
 <div class="modal-overlay" id="dialogOverlay"><div class="modal glass-modal" id="dialogContent"></div></div>
 
-<!-- МОДАЛКИ -->
+<!-- МОДАЛКА УПРАВЛЕНИЯ ЮЗЕРОМ (АДМИН) -->
+<div class="modal-overlay" id="adminUserModal">
+  <div class="modal glass-modal" style="width: 100%; max-width: 400px;">
+    <div class="modal-header" style="padding: 0; margin-bottom: 16px;">
+      <h3 style="font-size: 18px; font-weight: 800;">Управление юзером</h3>
+      <button class="btn btn-ghost btn-sm" style="padding: 4px 8px; border-radius: 8px;" onclick="closeModal('adminUserModal')">✕</button>
+    </div>
+    
+    <div id="adminUserInfo" style="background: rgba(0,0,0,0.1); padding: 16px; border-radius: 16px; margin-bottom: 16px;">
+      <!-- Данные юзера подгрузятся через JS -->
+    </div>
+
+    <div class="field">
+      <label>Статусы</label>
+      <div class="grid-2-col" id="adminUserToggles">
+        <button class="btn btn-ghost" id="admTogglePro" onclick="toggleAdminUserStatus('is_pro')">PRO</button>
+        <button class="btn btn-ghost" id="admToggleMerchant" onclick="toggleAdminUserStatus('is_merchant')">MERCHANT</button>
+        <button class="btn btn-ghost" id="admToggleMaker" onclick="toggleAdminUserStatus('is_maker')">MAKER</button>
+      </div>
+    </div>
+
+    <div style="border-top: 1px solid var(--glass-border); margin: 16px 0; padding-top: 16px;">
+      <label style="font-size: 13px; font-weight: 800; color: var(--dim); margin-bottom: 8px; display: block;">Изменить баланс</label>
+      <div class="grid-2-col" style="margin-bottom: 12px;">
+        <select id="admBalanceCurrency" class="input" style="height: 46px;">
+          <option value="rub">RUB (₽)</option>
+          <option value="usdt">USDT (₮)</option>
+        </select>
+        <input type="number" id="admBalanceAmount" class="input" placeholder="Сумма">
+      </div>
+      <div class="grid-2-col">
+        <button class="btn btn-primary" style="background: var(--grn);" onclick="adminChangeBalance('add')">Начислить (+)</button>
+        <button class="btn btn-primary" style="background: var(--red);" onclick="adminChangeBalance('sub')">Списать (-)</button>
+      </div>
+    </div>
+
+    <button class="btn btn-ghost btn-block" onclick="closeModal('adminUserModal')" style="margin-top: 12px;">Закрыть</button>
+  </div>
+</div>
+
+<!-- ОСТАЛЬНЫЕ МОДАЛКИ -->
 <div class="modal-overlay" id="filterModal">
   <div class="modal glass-modal">
     <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Фильтры</h3>
@@ -367,9 +405,17 @@
       <h4 style="font-size: 14px; font-weight: 800; margin-bottom: 12px; color: var(--dim);">Внешний вид</h4>
       <div class="field">
         <label>Шрифт</label>
-        <div class="segmented glass-panel" id="fontWeightSelect">
+        <div class="segmented" id="fontWeightSelect">
           <button type="button" class="seg-btn active" data-val="normal">Обычный</button>
           <button type="button" class="seg-btn" data-val="bold">Жирный</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Размер интерфейса</label>
+        <div class="segmented" id="sizeSelect">
+          <button type="button" class="seg-btn" data-val="small">Меньше</button>
+          <button type="button" class="seg-btn active" data-val="medium">Средний</button>
+          <button type="button" class="seg-btn" data-val="large">Больше</button>
         </div>
       </div>
     </div>
@@ -406,7 +452,7 @@
     
     <div class="field">
       <label>Выберите валюту</label>
-      <div class="segmented glass-panel" id="walletAssetSelect">
+      <div class="segmented" id="walletAssetSelect">
         <button type="button" class="seg-btn active" data-val="RUB">RUB (₽)</button>
         <button type="button" class="seg-btn" data-val="USDT">USDT (₮)</button>
       </div>
@@ -520,18 +566,6 @@
     <div class="error-msg" id="editError"></div>
     <button class="btn btn-primary btn-block" id="editSaveBtn">Сохранить</button>
     <button class="btn btn-ghost btn-block" onclick="closeModal('editAdModal')" style="margin-top: 8px;">Отмена</button>
-  </div>
-</div>
-
-<script src="app.js"></script>
-</body>
-</html>а</button>
-  </div>
-</div>
-
-<script src="app.js"></script>
-</body>
-</html>tton>
   </div>
 </div>
 
