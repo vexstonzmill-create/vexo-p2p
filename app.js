@@ -8,9 +8,13 @@ window.addEventListener('error', (e) => {
 
 document.addEventListener('DOMContentLoaded', () => {
   try {
+    // Принудительное скрытие лоадера через 800мс
     setTimeout(() => {
       const loader = document.getElementById('loader');
-      if (loader) loader.classList.add('hidden-loader');
+      if (loader) {
+        loader.classList.add('hidden-loader');
+        loader.style.display = 'none';
+      }
     }, 800);
 
     const API = {
@@ -1531,7 +1535,6 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         `;
         
-        // Обновляем состояние кнопок-статусов
         const updBtn = (id, isActive) => {
           const btn = document.getElementById(id);
           if (!btn) return;
@@ -1566,7 +1569,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         await API.req('PATCH', '/admin/users/' + currentAdminUserId + '/status', payload);
         toast('Статус обновлен', 'success');
-        openAdminUserModal(currentAdminUserId); // Перезагружаем модалку
+        openAdminUserModal(currentAdminUserId); 
       } catch(e) { toast('Ошибка', 'error'); }
     };
 
@@ -1580,7 +1583,7 @@ document.addEventListener('DOMContentLoaded', () => {
         await API.req('POST', '/admin/users/' + currentAdminUserId + '/balance', { currency, amount, action });
         toast('Баланс изменен', 'success');
         document.getElementById('admBalanceAmount').value = '';
-        openAdminUserModal(currentAdminUserId); // Перезагружаем модалку
+        openAdminUserModal(currentAdminUserId); 
       } catch(e) { toast(e.message || 'Ошибка', 'error'); }
     };
 
@@ -1593,18 +1596,24 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     });
 
-    window.openUserStats = async function(userId) {
-      // Старая функция, оставил на случай если где-то вызывается, 
-      // но теперь используется openAdminUserModal
-      openAdminUserModal(userId);
-    };
-
     window.updateRequestStatus = async function(reqId, status) {
       if (!await confirmAsync('Изменение', `Отметить как "${status}"?`, 'Да')) return;
       try {
         await API.req('PATCH', '/admin/requests/' + reqId, { status });
         toast('Статус обновлен', 'success'); 
         loadAdmin(); screenCache.profile = false; screenCache.wallet = false;
+      } catch(e) { toast(e.message || 'Ошибка', 'error'); }
+    };
+
+    // СТАРТ
+    updateAuthUI();
+    updateNotifUI();
+    try { loadHome(); } catch(e) { console.error('Initial loadHome:', e); }
+
+  } catch (err) {
+    console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
+  }
+});
       } catch(e) { toast(e.message || 'Ошибка', 'error'); }
     };
 

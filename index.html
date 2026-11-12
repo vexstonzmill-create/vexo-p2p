@@ -112,7 +112,6 @@
       </section>
 
       <section class="screen" id="screen-market">
-        <!-- ПЕРЕКЛЮЧАТЕЛЬ P2P / ОБМЕН -->
         <div class="market-mode-switch" id="marketModeSwitch">
           <button class="mode-btn active" data-mode="p2p">P2P Маркет</button>
           <button class="mode-btn" data-mode="fast">⚡ Быстрый Обмен</button>
@@ -570,5 +569,16 @@
 </div>
 
 <script src="app.js"></script>
+
+<!-- ЗАЩИТА ОТ БЕСКОНЕЧНОЙ ЗАГРУЗКИ -->
+<script>
+  setTimeout(() => {
+    const loader = document.getElementById('loader');
+    if (loader) {
+      loader.style.opacity = '0';
+      setTimeout(() => loader.style.display = 'none', 500);
+    }
+  }, 1500);
+</script>
 </body>
 </html>
