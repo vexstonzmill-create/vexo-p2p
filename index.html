@@ -31,6 +31,7 @@
     <button class="nav-btn" data-screen="orders">Мои ордера</button>
     <button class="nav-btn" data-screen="wallet">Кошелёк</button>
     <button class="nav-btn" data-screen="profile">Профиль</button>
+    <button class="nav-btn" data-screen="rules">Правила</button>
     <button class="nav-btn" data-screen="admin" id="adminNavBtn" style="display:none; color:var(--red); font-weight:900;">🛡 Админка</button>
   </aside>
 
@@ -55,6 +56,7 @@
     </header>
 
     <main class="content">
+      <!-- HOME -->
       <section class="screen active" id="screen-home">
         <div class="banner-carousel">
           <div class="banner-viewport" id="bannerViewport">
@@ -128,29 +130,9 @@
             </div>
           </div>
         </div>
-
-        <div class="glass-card" style="margin-bottom: 16px;">
-          <h2 style="font-size: 14px; margin-bottom: 12px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 18px;">📰</span> Новости
-          </h2>
-          <div class="news-list">
-            <div class="news-item">
-              <div class="news-badge new">New</div>
-              <div class="news-content">
-                <div class="news-title">Запуск платформы VEXO!</div>
-                <div class="news-date">Сегодня</div>
-              </div>
-            </div>
-            <div class="news-item">
-              <div class="news-content">
-                <div class="news-title">Обновление интерфейса и фильтров</div>
-                <div class="news-date">Вчера</div>
-              </div>
-            </div>
-          </div>
-        </div>
       </section>
 
+      <!-- MARKET -->
       <section class="screen" id="screen-market">
         <div class="market-mode-switch" id="marketModeSwitch">
           <button class="mode-btn active" data-mode="p2p">P2P Маркет</button>
@@ -211,6 +193,7 @@
         </div>
       </section>
 
+      <!-- CREATE -->
       <section class="screen" id="screen-create">
         <h2 style="margin-bottom: 12px; font-size: 16px; font-weight: 800;">Создать объявление</h2>
         
@@ -276,11 +259,12 @@
         </div>
       </section>
 
+      <!-- SPREAD CALCULATOR -->
       <section class="screen" id="screen-spread">
         <h2 style="margin-bottom: 12px; font-size: 16px; font-weight: 800;">Калькулятор спреда</h2>
         
         <div class="glass-card" style="padding: 16px;">
-          <p style="font-size: 12px; color: var(--dim); margin-bottom: 16px;">Введите цены покупки и продажи, чтобы рассчитать чистую прибыль с учетом объема.</p>
+          <p style="font-size: 12px; color: var(--dim); margin-bottom: 16px;">Введите цены покупки и продажи, чтобы рассчитать чистую прибыль.</p>
 
           <div class="field" style="margin-bottom: 12px;">
             <label>Цена покупки (₽)</label>
@@ -298,8 +282,11 @@
               <input class="input" type="number" id="calc-amount" placeholder="1000" style="height: 44px;">
             </div>
             <div class="field" style="margin-bottom: 0;">
-              <label>Комиссия (₽)</label>
-              <input class="input" type="number" id="calc-fee" placeholder="0" style="height: 44px;">
+              <label>Комиссия</label>
+              <div style="display: flex; gap: 4px;">
+                <input class="input" type="number" id="calc-fee" placeholder="0" style="height: 44px;">
+                <button class="btn btn-ghost" id="calc-fee-type" data-type="rub" style="width: 50px; height: 44px; padding: 0; font-size: 12px; border: 1px solid var(--glass-border); flex-shrink: 0;">₽</button>
+              </div>
             </div>
           </div>
 
@@ -318,21 +305,10 @@
               <strong id="calc-profit" style="font-size: 20px; color: var(--grn);">0.00 ₽</strong>
             </div>
           </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div style="background: var(--glass-bg); padding: 10px; border-radius: 10px; text-align: center;">
-              <div style="font-size: 10px; color: var(--dim); margin-bottom: 2px;">Потрачено</div>
-              <div id="calc-total-buy" style="font-size: 13px; font-weight: 800;">0 ₽</div>
-            </div>
-            <div style="background: var(--glass-bg); padding: 10px; border-radius: 10px; text-align: center;">
-              <div style="font-size: 10px; color: var(--dim); margin-bottom: 2px;">Получено</div>
-              <div id="calc-total-sell" style="font-size: 13px; font-weight: 800;">0 ₽</div>
-            </div>
-          </div>
-
         </div>
       </section>
 
+      <!-- ORDERS -->
       <section class="screen" id="screen-orders">
         <h2 style="margin-bottom: 12px; font-size: 16px; font-weight: 800;">Мои ордера</h2>
         <div class="tabs" id="ordersFilter">
@@ -346,11 +322,34 @@
       <section class="screen" id="screen-order"><div id="orderDetailContent"></div></section>
       <section class="screen" id="screen-wallet"></section>
 
+      <!-- PROFILE -->
       <section class="screen" id="screen-profile">
         <h2 style="margin-bottom: 12px; font-size: 16px; font-weight: 800;">Профиль</h2>
         <div id="profileContent">Загрузка...</div>
       </section>
 
+      <!-- RULES -->
+      <section class="screen" id="screen-rules">
+        <h2 style="margin-bottom: 12px; font-size: 16px; font-weight: 800;">Правила платформы</h2>
+        <div class="glass-card" style="padding: 16px; line-height: 1.5; font-size: 13px;">
+          <h3 style="color: var(--primary); margin-bottom: 8px;">1. Общие положения</h3>
+          <p style="margin-bottom: 12px; color: var(--txt);">VEXO — это P2P-платформа для безопасного обмена криптовалюты. Администрация не является стороной сделки, а лишь предоставляет техническую площадку.</p>
+          
+          <h3 style="color: var(--primary); margin-bottom: 8px;">2. Обязанности продавца</h3>
+          <p style="margin-bottom: 12px; color: var(--txt);">Продавец обязан иметь актив на балансе. После подтверждения заявки покупателем, продавец должен подтвердить получение фиата в течение 15 минут после отметки "Оплачено".</p>
+          
+          <h3 style="color: var(--primary); margin-bottom: 8px;">3. Обязанности покупателя</h3>
+          <p style="margin-bottom: 12px; color: var(--txt);">Покупатель обязан перевести точную сумму по реквизитам и прикрепить чек. Перевод должен быть выполнен с того же банковского счета, который указан в профиле.</p>
+          
+          <h3 style="color: var(--primary); margin-bottom: 8px;">4. Споры и мошенничество</h3>
+          <p style="margin-bottom: 12px; color: var(--txt);">При возникновении спора Администрация вправе запросить видео/фото подтверждение. При выявлении мошенничества аккаунт блокируется, средства замораживаются.</p>
+          
+          <h3 style="color: var(--primary); margin-bottom: 8px;">5. Комиссия</h3>
+          <p style="margin-bottom: 12px; color: var(--txt);">Платформа взимает комиссию с продавца в размере 0.5% с каждой успешной сделки.</p>
+        </div>
+      </section>
+
+      <!-- ADMIN -->
       <section class="screen" id="screen-admin">
         <h2 style="margin-bottom: 12px; font-size: 16px; font-weight: 800; color:var(--red);">🛡 Админка</h2>
         
@@ -382,6 +381,14 @@
 
 <div class="toast-container" id="toastContainer"></div>
 <div class="modal-overlay" id="dialogOverlay"><div class="modal glass-modal" id="dialogContent"></div></div>
+
+<!-- МОДАЛКА ПРОСМОТРА ЧЕКА -->
+<div class="modal-overlay" id="receiptViewModal">
+  <div class="modal glass-modal" style="padding: 10px; background: #000;">
+    <button style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 20px; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; z-index: 10;" onclick="closeModal('receiptViewModal')">✕</button>
+    <div id="receiptViewContent" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 12px;"></div>
+  </div>
+</div>
 
 <div class="modal-overlay" id="adminUserModal">
   <div class="modal glass-modal" style="width: 100%; max-width: 400px;">
@@ -637,6 +644,8 @@
     </div>
     <div class="chat-body" id="chatBody"></div>
     <div class="chat-input-row" style="padding: 10px;">
+      <input type="file" id="chatFileInput" style="display:none;" accept="image/*,video/*,application/pdf">
+      <button id="chatAttachBtn" style="background: transparent; border: none; font-size: 20px; color: var(--dim); cursor: pointer; padding: 0 8px;">📎</button>
       <input type="text" id="chatInput" placeholder="Сообщение..." maxlength="500" style="height: 40px;">
       <button id="chatSend" style="width: 40px; height: 40px; font-size: 16px;">➤</button>
     </div>

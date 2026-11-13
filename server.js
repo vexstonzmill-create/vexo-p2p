@@ -8,9 +8,7 @@ const { Pool } = require('pg');
 
 const PORT = Number(process.env.PORT) || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_vexo_key_that_is_long_enough_12345';
-// ВАЖНО: Замени на свой токен!
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8859024431:AAF9vvyC0AGHJNZfjhQ989yryflRMtXYvoQ'; 
-// ВАЖНО: Замени на свой реальный домен!
 const APP_URL = process.env.APP_URL || 'https://vexo-p2p.onrender.com'; 
 
 const pool = new Pool({
@@ -23,14 +21,17 @@ async function initDB() {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username VARCHAR(50) UNIQUE NOT NULL, display_name VARCHAR(50), email VARCHAR(100) UNIQUE NOT NULL, password_hash VARCHAR(255) NOT NULL, role VARCHAR(20) DEFAULT 'user', kyc_status VARCHAR(20) DEFAULT 'none', avatar_url TEXT, favorites INT[] DEFAULT '{}', volume_usd NUMERIC DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS ads (id SERIAL PRIMARY KEY, user_id INT REFERENCES users(id), side VARCHAR(10), face_type VARCHAR(20), asset VARCHAR(20), price NUMERIC, amount_total NUMERIC, amount_left NUMERIC, min_rub NUMERIC, max_rub NUMERIC, payment_methods TEXT[], terms TEXT, active BOOLEAN DEFAULT true, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
-      CREATE TABLE IF NOT EXISTS orders (id SERIAL PRIMARY KEY, public_id VARCHAR(20) UNIQUE, ad_id INT REFERENCES ads(id), buyer_id INT REFERENCES users(id), seller_id INT REFERENCES users(id), asset VARCHAR(20), price NUMERIC, amount_rub NUMERIC, amount_asset NUMERIC, face_type VARCHAR(20), payment_method VARCHAR(50), status VARCHAR(20) DEFAULT 'pending', history JSONB DEFAULT '[]', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, expires_at TIMESTAMP);
-      CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, order_id INT REFERENCES orders(id), sender_id INT REFERENCES users(id), text TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS orders (id SERIAL PRIMARY KEY, public_id VARCHAR(20) UNIQUE, ad_id INT REFERENCES ads(id), buyer_id INT REFERENCES users(id), seller_id INT REFERENCES users(id), asset VARCHAR(20), price NUMERIC, amount_rub NUMERIC, amount_asset NUMERIC, face_type VARCHAR(20), payment_method VARCHAR(50), status VARCHAR(20) DEFAULT 'pending', history JSONB DEFAULT '[]', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, expires_at TIMESTAMP, receipt_data TEXT);
+      CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, order_id INT REFERENCES orders(id), sender_id INT REFERENCES users(id), text TEXT, media_data TEXT, media_type VARCHAR(50), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS reviews (id SERIAL PRIMARY KEY, order_id INT REFERENCES orders(id), author_id INT REFERENCES users(id), target_id INT REFERENCES users(id), rating INT, comment TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS requests (id SERIAL PRIMARY KEY, user_id INT REFERENCES users(id), type VARCHAR(50), amount NUMERIC, currency VARCHAR(10), status VARCHAR(20) DEFAULT 'pending', details JSONB, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
     `);
     
     await pool.query(`ALTER TABLE ads ADD COLUMN IF NOT EXISTS payment_time INT DEFAULT 30;`);
     await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_time INT DEFAULT 30;`);
+    await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS receipt_data TEXT;`);
+    await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS media_data TEXT;`);
+    await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS media_type VARCHAR(50);`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS balance_rub NUMERIC DEFAULT 0;`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS balance_usdt NUMERIC DEFAULT 0;`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_pro BOOLEAN DEFAULT false;`);
@@ -46,7 +47,8 @@ async function initDB() {
 initDB();
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -83,8 +85,6 @@ function formatOrderMsg(order, title) {
 💵 Сумма: <b>${new Intl.NumberFormat('ru-RU').format(order.amount_rub)} ₽</b>
 💳 Оплата: <b>${order.payment_method}</b>
 📝 Тип: <b>${order.face_type === 'first' ? '1-е лицо' : '3-е лицо'}</b>
-
-👤 Контрагент: @${order.counterparty_username || 'Скрыт'}
     `.trim();
 }
 
@@ -158,23 +158,31 @@ app.post('/api/telegram/webhook', async (req, res) => {
         const o = orderRes.rows[0];
         if (!o) return res.sendStatus(200);
 
+        const adRes = await pool.query('SELECT user_id FROM ads WHERE id = $1', [o.ad_id]);
+        const adCreatorId = adRes.rows[0]?.user_id;
+
         let successText = "";
         let success = false;
 
-        if (action === 'accept' && o.seller_id === userId && o.status === 'pending') {
-            await transition(o.id, 'accepted', 'Заявка принята продавцом');
+        if (action === 'accept' && o.status === 'pending' && userId === adCreatorId) {
+            await transition(o.id, 'accepted', 'Заявка принята');
             success = true; successText = "✅ Заявка принята!";
-            notifyUser(o.buyer_id, formatOrderMsg({...o, counterparty_username: 'Продавец'}, "✅ Продавец принял заявку!"));
+            const targetId = o.buyer_id === userId ? o.seller_id : o.buyer_id;
+            const isRequesterBuyer = targetId === o.buyer_id;
+            const btn = isRequesterBuyer ? [[{ text: "💸 Я оплатил", callback_data: `paid:${o.id}` }]] : [];
+            notifyUser(targetId, formatOrderMsg({...o, counterparty_username: 'Контрагент'}, "✅ Заявка принята!"), btn);
         } 
-        else if (action === 'decline' && o.seller_id === userId && o.status === 'pending') {
-            await transition(o.id, 'declined', 'Заявка отклонена продавцом');
+        else if (action === 'decline' && o.status === 'pending' && userId === adCreatorId) {
+            await transition(o.id, 'declined', 'Заявка отклонена');
             success = true; successText = "❌ Заявка отклонена!";
-            notifyUser(o.buyer_id, formatOrderMsg({...o, counterparty_username: 'Продавец'}, "❌ Продавец отклонил заявку"));
+            const targetId = o.buyer_id === userId ? o.seller_id : o.buyer_id;
+            notifyUser(targetId, formatOrderMsg({...o, counterparty_username: 'Контрагент'}, "❌ Заявка отклонена"));
         }
         else if (action === 'paid' && o.buyer_id === userId && o.status === 'accepted') {
             await transition(o.id, 'paid', 'Оплата отправлена');
             success = true; successText = "💰 Оплата отправлена!";
-            notifyUser(o.seller_id, formatOrderMsg({...o, counterparty_username: 'Покупатель'}, "💰 Покупатель нажал 'Оплатил'!"));
+            const btn = [[{ text: "✅ Подтвердить получение", callback_data: `confirm:${o.id}` }], [{ text: "🛡 Открыть спор", callback_data: `dispute:${o.id}` }]];
+            notifyUser(o.seller_id, formatOrderMsg({...o, counterparty_username: 'Покупатель'}, "💰 Покупатель нажал 'Оплатил'!"), btn);
         }
         else if (action === 'confirm' && o.seller_id === userId && o.status === 'paid') {
             await transition(o.id, 'completed', 'Завершён');
@@ -185,6 +193,12 @@ app.post('/api/telegram/webhook', async (req, res) => {
             await pool.query('UPDATE users SET balance_rub = balance_rub + $1 WHERE id = $2', [o.amount_rub, o.seller_id]);
             success = true; successText = "🎉 Сделка завершена!";
             notifyUser(o.buyer_id, formatOrderMsg({...o, counterparty_username: 'Продавец'}, "🎉 Сделка завершена!"));
+        }
+        else if (action === 'dispute' && (o.buyer_id === userId || o.seller_id === userId) && ['accepted', 'paid'].includes(o.status)) {
+            await transition(o.id, 'dispute', 'Открыт спор через TG');
+            success = true; successText = "🛡 Спор открыт!";
+            const targetId = o.buyer_id === userId ? o.seller_id : o.buyer_id;
+            notifyUser(targetId, formatOrderMsg({...o, counterparty_username: 'Контрагент'}, "🛑 Открыт спор!"));
         }
 
         await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
@@ -431,7 +445,6 @@ app.post('/api/ads', auth, async (req, res) => {
   const p = Number(price), at = Number(amount_total), mn = Number(min_rub), mx = Number(max_rub);
   if (!(p > 0) || !(at > 0) || !(mn > 0) || !(mx > 0) || mn > mx || mx > at * p) return res.status(400).json({ error: 'bad_amounts' });
   
-  // Только мейкеры/мерчанты/админы могут создавать объявления о продаже
   if (side === 'sell') {
     const isStaff = ['admin', 'owner', 'deputy'].includes(req.user.role);
     const canCreateSellAd = isStaff || req.user.is_maker || req.user.is_merchant;
@@ -445,6 +458,18 @@ app.post('/api/ads', auth, async (req, res) => {
       [req.user.id, side, face_type, asset, p, at, mn, mx, payment_methods, terms, payment_time || 30]
     );
     res.status(201).json(await shapeAd(result.rows[0]));
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
+});
+
+app.delete('/api/ads/:id', auth, async (req, res) => {
+  try {
+    const adRes = await pool.query('SELECT * FROM ads WHERE id = $1', [req.params.id]);
+    const ad = adRes.rows[0];
+    if (!ad || ad.user_id !== req.user.id) return res.status(403).json({ error: 'forbidden' });
+    
+    // Мягкое удаление (деактивация)
+    await pool.query('UPDATE ads SET active = false, amount_left = 0 WHERE id = $1', [req.params.id]);
+    res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
@@ -489,7 +514,7 @@ async function shapeOrder(o) {
   const bRes = await pool.query('SELECT * FROM users WHERE id = $1', [o.buyer_id]);
   const sRes = await pool.query('SELECT * FROM users WHERE id = $1', [o.seller_id]);
   const buyer = bRes.rows[0]; const seller = sRes.rows[0];
-  return { id: o.id, publicId: o.public_id, adId: o.ad_id, asset: o.asset, price: Number(o.price), amountRub: Number(o.amount_rub), amountAsset: Number(o.amount_asset), faceType: o.face_type, paymentMethod: o.payment_method, paymentTime: Number(o.payment_time) || 30, status: o.status, statusLabel: STATUS_LABEL[o.status] || o.status, buyer: { id: o.buyer_id, username: buyer?.username, displayName: buyer?.display_name || buyer?.username, avatarUrl: buyer?.avatar_url }, seller: { id: o.seller_id, username: seller?.username, displayName: seller?.display_name || seller?.username, avatarUrl: seller?.avatar_url }, createdAt: o.created_at, expiresAt: o.expires_at, buyer_id: o.buyer_id, seller_id: o.seller_id, amount_rub: o.amount_rub, amount_asset: o.amount_asset, public_id: o.public_id, payment_method: o.payment_method, face_type: o.face_type };
+  return { id: o.id, publicId: o.public_id, adId: o.ad_id, asset: o.asset, price: Number(o.price), amountRub: Number(o.amount_rub), amountAsset: Number(o.amount_asset), faceType: o.face_type, paymentMethod: o.payment_method, paymentTime: Number(o.payment_time) || 30, status: o.status, statusLabel: STATUS_LABEL[o.status] || o.status, buyer: { id: o.buyer_id, username: buyer?.username, displayName: buyer?.display_name || buyer?.username, avatarUrl: buyer?.avatar_url }, seller: { id: o.seller_id, username: seller?.username, displayName: seller?.display_name || seller?.username, avatarUrl: seller?.avatar_url }, createdAt: o.created_at, expiresAt: o.expires_at, buyer_id: o.buyer_id, seller_id: o.seller_id, amount_rub: o.amount_rub, amount_asset: o.amount_asset, public_id: o.public_id, payment_method: o.payment_method, face_type: o.face_type, receipt_data: o.receipt_data };
 }
 
 app.post('/api/orders', auth, async (req, res) => {
@@ -519,11 +544,13 @@ app.post('/api/orders', auth, async (req, res) => {
     );
     await client.query('COMMIT');
     const orderData = { ...orderRes.rows[0], counterparty_username: req.user.username };
-    const sellerTgId = (await pool.query('SELECT telegram_id FROM users WHERE id = $1', [sellerId])).rows[0]?.telegram_id;
-    if (sellerTgId) {
-        const msg = formatOrderMsg(orderData, "🔥 Новая заявка на покупку!");
-        const buttons = [[{ text: "✅ Принять заявку", callback_data: `accept:${orderData.id}` }], [{ text: "❌ Отклонить", callback_data: `decline:${orderData.id}` }]];
-        await sendTG(sellerTgId, msg, buttons);
+    
+    // УВЕДОМЛЕНИЕ ВСЕГДА ЛЕТИТ СОЗДАТЕЛЮ ОБЪЯВЛЕНИЯ (тому, кто должен принять)
+    const targetTgId = (await pool.query('SELECT telegram_id FROM users WHERE id = $1', [ad.user_id])).rows[0]?.telegram_id;
+    if (targetTgId) {
+        const msg = formatOrderMsg(orderData, "🔥 Новая заявка!");
+        const buttons = [[{ text: "✅ Принять", callback_data: `accept:${orderData.id}` }], [{ text: "❌ Отклонить", callback_data: `decline:${orderData.id}` }]];
+        await sendTG(targetTgId, msg, buttons);
     }
     res.status(201).json(await shapeOrder(orderRes.rows[0]));
   } catch (err) {
@@ -566,14 +593,17 @@ async function transition(orderId, to, note, client = pool) {
 app.post('/api/orders/:id/accept', auth, async (req, res) => {
   const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
   const o = oRes.rows[0];
-  if (o.seller_id !== req.user.id || o.status !== 'pending') return res.status(403).json({ error: 'Доступ запрещен' });
-  await transition(o.id, 'accepted', 'Заявка принята продавцом');
-  const buyerTgId = (await pool.query('SELECT telegram_id FROM users WHERE id = $1', [o.buyer_id])).rows[0]?.telegram_id;
-  if (buyerTgId) {
-     const oData = {...o, counterparty_username: req.user.username};
-     const msg = formatOrderMsg(oData, "✅ Заявка принята!");
-     const btn = [[{ text: "💸 Я оплатил", callback_data: `paid:${o.id}` }]];
-     await sendTG(buyerTgId, msg, btn);
+  const adRes = await pool.query('SELECT user_id FROM ads WHERE id = $1', [o.ad_id]);
+  if (adRes.rows[0].user_id !== req.user.id || o.status !== 'pending') return res.status(403).json({ error: 'Доступ запрещен' });
+  await transition(o.id, 'accepted', 'Заявка принята');
+  
+  const targetId = o.buyer_id === req.user.id ? o.seller_id : o.buyer_id;
+  const targetTgId = (await pool.query('SELECT telegram_id FROM users WHERE id = $1', [targetId])).rows[0]?.telegram_id;
+  if (targetTgId) {
+     const isRequesterBuyer = targetId === o.buyer_id;
+     const msg = formatOrderMsg({...o, counterparty_username: req.user.username}, "✅ Заявка принята!");
+     const btn = isRequesterBuyer ? [[{ text: "💸 Я оплатил", callback_data: `paid:${o.id}` }]] : [];
+     await sendTG(targetTgId, msg, btn);
   }
   res.json({ ok: true });
 });
@@ -581,21 +611,30 @@ app.post('/api/orders/:id/accept', auth, async (req, res) => {
 app.post('/api/orders/:id/decline', auth, async (req, res) => {
   const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
   const o = oRes.rows[0];
-  if (o.seller_id !== req.user.id || o.status !== 'pending') return res.status(403).json({ error: 'Доступ запрещен' });
-  await transition(o.id, 'declined', 'Заявка отклонена продавцом');
-  const buyerTgId = (await pool.query('SELECT telegram_id FROM users WHERE id = $1', [o.buyer_id])).rows[0]?.telegram_id;
-  if (buyerTgId) {
+  const adRes = await pool.query('SELECT user_id FROM ads WHERE id = $1', [o.ad_id]);
+  if (adRes.rows[0].user_id !== req.user.id || o.status !== 'pending') return res.status(403).json({ error: 'Доступ запрещен' });
+  await transition(o.id, 'declined', 'Заявка отклонена');
+  
+  const targetId = o.buyer_id === req.user.id ? o.seller_id : o.buyer_id;
+  const targetTgId = (await pool.query('SELECT telegram_id FROM users WHERE id = $1', [targetId])).rows[0]?.telegram_id;
+  if (targetTgId) {
      const oData = {...o, counterparty_username: req.user.username};
-     await sendTG(buyerTgId, formatOrderMsg(oData, "❌ Заявка отклонена продавцом"));
+     await sendTG(targetTgId, formatOrderMsg(oData, "❌ Заявка отклонена"));
   }
   res.json({ ok: true });
 });
 
 app.post('/api/orders/:id/paid', auth, async (req, res) => {
+  const { receipt_data } = req.body;
   const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
   const o = oRes.rows[0];
   if (o.buyer_id !== req.user.id || o.status !== 'accepted') return res.status(409).json({ error: 'Неверный статус' });
+  
   await transition(o.id, 'paid', 'Оплата отправлена'); 
+  if (receipt_data) {
+      await pool.query('UPDATE orders SET receipt_data = $1 WHERE id = $2', [receipt_data, o.id]);
+  }
+
   const sellerTgId = (await pool.query('SELECT telegram_id FROM users WHERE id = $1', [o.seller_id])).rows[0]?.telegram_id;
   if (sellerTgId) {
      const oData = {...o, counterparty_username: req.user.username};
@@ -692,15 +731,16 @@ app.get('/api/chat/:orderId', auth, async (req, res) => {
   const o = oRes.rows[0];
   if (!o || (o.buyer_id !== req.user.id && o.seller_id !== req.user.id && req.user.role !== 'admin')) return res.status(403).json({ error: 'forbidden' });
   const result = await pool.query(`SELECT m.*, u.username FROM messages m JOIN users u ON m.sender_id = u.id WHERE m.order_id = $1 ORDER BY m.created_at ASC`, [o.id]);
-  res.json({ items: result.rows.map(m => ({ id: m.id, senderId: m.sender_id, senderUsername: m.username, text: m.text, createdAt: m.created_at, isMine: m.sender_id === req.user.id })) });
+  res.json({ items: result.rows.map(m => ({ id: m.id, senderId: m.sender_id, senderUsername: m.username, text: m.text, media_data: m.media_data, media_type: m.media_type, createdAt: m.created_at, isMine: m.sender_id === req.user.id })) });
 });
 
 app.post('/api/chat/:orderId', auth, async (req, res) => {
+  const { text, media_data, media_type } = req.body;
   const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.orderId]);
   const o = oRes.rows[0];
   if (!o || ['completed', 'cancelled', 'declined'].includes(o.status)) return res.status(409).json({ error: 'closed' });
   if (o.buyer_id !== req.user.id && o.seller_id !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
-  const result = await pool.query('INSERT INTO messages (order_id, sender_id, text) VALUES ($1, $2, $3) RETURNING *', [o.id, req.user.id, req.body.text]);
+  const result = await pool.query('INSERT INTO messages (order_id, sender_id, text, media_data, media_type) VALUES ($1, $2, $3, $4, $5) RETURNING *', [o.id, req.user.id, text || '', media_data || null, media_type || null]);
   res.status(201).json({ ...result.rows[0], isMine: true });
 });
 

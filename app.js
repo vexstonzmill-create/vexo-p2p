@@ -38,6 +38,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
 
+    const fileToBase64 = (file) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
+
     // --- TELEGRAM MINI APP + FULLSCREEN ---
     async function initTelegramAuth() {
       if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
@@ -75,14 +82,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // --- ОБРАБОТКА ГЛУБОКИХ ССЫЛОК (DEEP LINKS) ---
     function initDeepLink() {
       const urlParams = new URLSearchParams(window.location.search);
       const targetScreen = urlParams.get('screen');
-      
-      if (targetScreen) {
-        setTimeout(() => show(targetScreen), 300);
-      }
+      if (targetScreen) setTimeout(() => show(targetScreen), 300);
     }
 
     initTelegramAuth();
@@ -127,34 +130,48 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeModal(id) { const el = document.getElementById(id); if (el) el.classList.remove('active'); }
     window.closeModal = closeModal;
 
-    // --- ЛОГИКА КАЛЬКУЛЯТОРА СПРЕДА (защита от двойной инициализации) ---
+    // --- SPREAD CALCULATOR ---
+    let feeType = 'rub';
     function initSpreadCalculator() {
       if (window._spreadInited) return;
       const buyInput = document.getElementById('calc-buy-price');
       const sellInput = document.getElementById('calc-sell-price');
       const amountInput = document.getElementById('calc-amount');
       const feeInput = document.getElementById('calc-fee');
+      const feeBtn = document.getElementById('calc-fee-type');
       if (!buyInput) return;
       window._spreadInited = true;
+
+      feeBtn.onclick = () => {
+        feeType = feeType === 'rub' ? 'pct' : 'rub';
+        feeBtn.textContent = feeType === 'rub' ? '₽' : '%';
+        feeBtn.classList.toggle('btn-primary', feeType === 'pct');
+        calculate();
+      };
 
       const calculate = () => {
         const buy = parseFloat(buyInput.value) || 0;
         const sell = parseFloat(sellInput.value) || 0;
         const amount = parseFloat(amountInput.value) || 0;
-        const fee = parseFloat(feeInput.value) || 0;
+        const feeVal = parseFloat(feeInput.value) || 0;
+        
         const spreadVal = sell - buy;
         const spreadPct = buy > 0 ? (spreadVal / buy) * 100 : 0;
         const totalBuy = buy * amount;
         const totalSell = sell * amount;
-        const profit = (spreadVal * amount) - fee;
+        
+        let feeAmount = feeVal;
+        if (feeType === 'pct') {
+            feeAmount = totalSell * (feeVal / 100);
+        }
+        
+        const profit = (spreadVal * amount) - feeAmount;
 
         document.getElementById('calc-spread-val').textContent = fmtDec(spreadVal, 2) + ' ₽';
         document.getElementById('calc-spread-pct').textContent = fmtDec(spreadPct, 2) + ' %';
-        document.getElementById('calc-total-buy').textContent = fmt(totalBuy) + ' ₽';
-        document.getElementById('calc-total-sell').textContent = fmt(totalSell) + ' ₽';
-
+        document.getElementById('calc-profit').textContent = fmtDec(profit, 2) + ' ₽';
+        
         const profitEl = document.getElementById('calc-profit');
-        profitEl.textContent = fmtDec(profit, 2) + ' ₽';
         if (profit > 0) profitEl.style.color = 'var(--grn)';
         else if (profit < 0) profitEl.style.color = 'var(--red)';
         else profitEl.style.color = 'var(--txt)';
@@ -260,6 +277,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function show(name) {
+      if (window.orderPollInterval) clearInterval(window.orderPollInterval);
+      if (window.orderTimerInterval) clearInterval(window.orderTimerInterval);
+
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       const target = document.getElementById('screen-' + name);
       if (target) target.classList.add('active');
@@ -885,10 +905,30 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const { order, history, terms } = await API.req('GET', '/orders/' + orderId);
         renderOrderPage(order, history, terms);
+
+        // Поллинг для обновления статуса (кнопки в тг)
+        if (window.orderPollInterval) clearInterval(window.orderPollInterval);
+        window.orderPollInterval = setInterval(async () => {
+           try {
+               const freshData = await API.req('GET', '/orders/' + orderId);
+               if (freshData.order.status !== order.status) {
+                   renderOrderPage(freshData.order, freshData.history, freshData.terms);
+                   toast('Статус обновлен', 'info');
+               }
+           } catch(e) {}
+        }, 5000);
+
       } catch (e) { container.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     }
 
     window.openAdminOrder = function(orderId) { previousScreen = 'admin'; openOrderPage(orderId); };
+
+    window.viewReceipt = function(data) {
+        if (!data) return toast('Чек не прикреплен', 'error');
+        const content = document.getElementById('receiptViewContent');
+        content.innerHTML = `<img src="${data}" style="max-width:100%; max-height:80vh; border-radius:8px;">`;
+        document.getElementById('receiptViewModal').classList.add('active');
+    };
 
     function renderOrderPage(order, history, terms) {
       const u = API.user(), isBuyer = order.buyer_id === u.id, isSeller = order.seller_id === u.id, isAdmin = ['admin', 'owner', 'deputy'].includes(u.role);
@@ -904,6 +944,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       let actionsHtml = '';
       
+      // ПРАВИЛЬНАЯ ЛОГИКА: Принимает/Отклоняет СОЗДАТЕЛЬ ОБЪЯВЛЕНИЯ (или админ)
+      const adCreatorId = order.seller_id; // В текущей архитектуре заявку создает покупатель, значит продавец - создатель.
+      
       if (order.status === 'pending') {
         if (isSeller) {
           actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px"><button class="btn btn-primary btn-sm" onclick="doAction(${order.id},'accept')" style="background:var(--grn);color:#fff;border:none;height:36px;font-size:12px;">Принять</button><button class="btn btn-ghost btn-sm" style="color:var(--red);border:1px solid var(--red);height:36px;font-size:12px;" onclick="doAction(${order.id},'decline')">Отклонить</button></div>`;
@@ -918,7 +961,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:10px;padding:12px;text-align:center;margin-bottom:10px;">
             <div style="font-size:11px;color:var(--dim);margin-bottom:6px;">Время на оплату:</div>
             <div id="paymentTimerDisplay" style="font-size:20px;font-weight:900;color:var(--yellow);margin-bottom:8px;">--:--</div>
-            <input type="file" id="receiptFile" style="display:none;" accept="image/*">
+            <input type="file" id="receiptFile" style="display:none;" accept="image/*,application/pdf">
             <button class="btn btn-primary btn-sm" onclick="document.getElementById('receiptFile').click()" style="margin-bottom:6px;height:32px;font-size:11px;">Прикрепить чек</button>
             <div id="fileName" style="font-size:10px;color:var(--grn);margin-bottom:8px;font-weight:600;"></div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
@@ -949,7 +992,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       let adminReceiptHtml = '';
-      if (isAdmin && ['paid', 'dispute'].includes(order.status)) {
+      if ((isAdmin || isSeller) && ['paid', 'dispute'].includes(order.status) && order.receipt_data) {
         adminReceiptHtml = `
         <div class="glass-card" style="padding:12px;margin-bottom:12px;border:1px dashed var(--primary);">
           <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -957,7 +1000,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <div style="font-size:10px;color:var(--dim);font-weight:700;margin-bottom:2px;">Чек об оплате</div>
               <div style="font-size:12px;font-weight:800;color:var(--txt);">Прикреплен</div>
             </div>
-            <button class="btn btn-primary btn-sm" onclick="alert('Тут картинка чека')" style="height:28px;font-size:10px;">Посмотреть</button>
+            <button class="btn btn-primary btn-sm" onclick="viewReceipt('${order.receipt_data}')" style="height:28px;font-size:10px;">Посмотреть</button>
           </div>
         </div>`;
       }
@@ -1030,37 +1073,43 @@ document.addEventListener('DOMContentLoaded', () => {
              }
            }, 1000);
         }
-      } else {
-         if (window.orderTimerInterval) clearInterval(window.orderTimerInterval);
       }
 
+      let tempReceiptData = null;
       const fileInput = document.getElementById('receiptFile');
       if (fileInput) {
-        fileInput.onchange = (e) => {
+        fileInput.onchange = async (e) => {
           const file = e.target.files[0];
           if (file) {
-            document.getElementById('fileName').textContent = `✓ Файл прикреплен`;
-            toast('Чек успешно прикреплен!', 'success');
+            document.getElementById('fileName').textContent = `Загрузка...`;
+            try {
+                tempReceiptData = await fileToBase64(file);
+                document.getElementById('fileName').textContent = `✓ Чек прикреплен`;
+                toast('Чек прикреплен!', 'success');
+            } catch(err) { toast('Ошибка чтения файла', 'error'); }
           }
         };
       }
-    }
 
-    window.doAction = async function(orderId, action) {
-      if (action === 'cancel' && !await confirmAsync('Отмена', 'Отменить заявку?', 'Да')) return;
-      if (action === 'confirm' && !await confirmAsync('Подтверждение', 'Подтвердить оплату?', 'Да')) return;
-      if (action === 'dispute' && !await confirmAsync('Спор', 'Вы уверены?', 'Да')) return;
-      if (action === 'decline' && !await confirmAsync('Отклонение', 'Отклонить заявку?', 'Да')) return;
-      
-      try { 
-        await API.req('POST', `/orders/${orderId}/${action}`); 
-        toast('Статус обновлён', 'success'); 
-        addNotification(`Статус ордера #${orderId} обновлен`, 'info');
-        screenCache.orders = false; screenCache.wallet = false;
-        openOrderPage(orderId); 
-      }
-      catch (e) { toast(e.message, 'error'); }
-    };
+      window.doAction = async function(orderId, action) {
+        if (action === 'cancel' && !await confirmAsync('Отмена', 'Отменить заявку?', 'Да')) return;
+        if (action === 'confirm' && !await confirmAsync('Подтверждение', 'Подтвердить оплату?', 'Да')) return;
+        if (action === 'dispute' && !await confirmAsync('Спор', 'Вы уверены?', 'Да')) return;
+        if (action === 'decline' && !await confirmAsync('Отклонение', 'Отклонить заявку?', 'Да')) return;
+        
+        try { 
+          const body = {};
+          if (action === 'paid' && tempReceiptData) body.receipt_data = tempReceiptData;
+
+          await API.req('POST', `/orders/${orderId}/${action}`, body); 
+          toast('Статус обновлён', 'success'); 
+          addNotification(`Статус ордера #${orderId} обновлен`, 'info');
+          screenCache.orders = false; screenCache.wallet = false;
+          openOrderPage(orderId); 
+        }
+        catch (e) { toast(e.message, 'error'); }
+      };
+    }
 
     window.resolveDispute = async function(orderId, resolution) {
       if (!await confirmAsync('Решение спора', 'Вы уверены?', 'Да')) return;
@@ -1080,6 +1129,24 @@ document.addEventListener('DOMContentLoaded', () => {
       const m = document.getElementById('chatModal'); if (m) m.classList.remove('active');
       if (chatPollTimer) clearInterval(chatPollTimer); chatPollTimer = null;
     };
+
+    document.getElementById('chatAttachBtn')?.addEventListener('click', () => {
+        document.getElementById('chatFileInput').click();
+    });
+
+    document.getElementById('chatFileInput')?.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file || !currentChatOrderId) return;
+        
+        try {
+            const base64 = await fileToBase64(file);
+            await API.req('POST', '/chat/' + currentChatOrderId, { media_data: base64, media_type: file.type, text: '' });
+            loadChat(currentChatOrderId, false);
+            e.target.value = '';
+        } catch(err) {
+            toast('Ошибка загрузки файла', 'error');
+        }
+    });
 
     document.getElementById('chatSend')?.addEventListener('click', async () => {
       const input = document.getElementById('chatInput');
@@ -1101,7 +1168,19 @@ document.addEventListener('DOMContentLoaded', () => {
           const div = document.createElement('div');
           div.className = 'msg' + (m.isMine ? ' me' : '');
           div.dataset.msgId = m.id;
-          div.innerHTML = `<div class="avatar" style="width:24px;height:24px;font-size:10px">${m.senderUsername[0].toUpperCase()}</div><div><div class="msg-bubble" style="font-size:12px; padding:8px 12px;">${m.text.replace(/</g, '&lt;')}</div><div style="font-size:9px;color:var(--dim);margin-top:2px;font-weight:600; text-align: ${m.isMine ? 'right' : 'left'}">${new Date(m.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div></div>`;
+          
+          let mediaHtml = '';
+          if (m.media_data && m.media_type) {
+              if (m.media_type.startsWith('image/')) {
+                  mediaHtml = `<img src="${m.media_data}" style="max-width:100%; border-radius:8px; margin-bottom:4px; cursor:pointer;" onclick="viewReceipt('${m.media_data}')">`;
+              } else if (m.media_type.startsWith('video/')) {
+                  mediaHtml = `<video src="${m.media_data}" controls style="max-width:100%; border-radius:8px; margin-bottom:4px;"></video>`;
+              } else if (m.media_type === 'application/pdf') {
+                  mediaHtml = `<a href="${m.media_data}" download="document.pdf" style="display:inline-block; padding:8px; background:var(--btn-glass-bg); color:var(--txt); border-radius:8px; text-decoration:none; font-size:11px; margin-bottom:4px;">📄 Скачать PDF</a>`;
+              }
+          }
+
+          div.innerHTML = `<div class="avatar" style="width:24px;height:24px;font-size:10px">${m.senderUsername[0].toUpperCase()}</div><div><div class="msg-bubble" style="font-size:12px; padding:8px 12px;">${mediaHtml}${m.text ? m.text.replace(/</g, '&lt;') : ''}</div><div style="font-size:9px;color:var(--dim);margin-top:2px;font-weight:600; text-align: ${m.isMine ? 'right' : 'left'}">${new Date(m.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div></div>`;
           body.appendChild(div);
         });
         body.scrollTop = body.scrollHeight;
@@ -1220,7 +1299,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="glass-card" style="margin-bottom:8px; padding:12px;">
             <div style="display:flex;justify-content:space-between;margin-bottom:8px">
               <strong style="font-size:14px;">${ad.side === 'sell' ? 'Продажа' : 'Покупка'} ${ad.asset}</strong>
-              <span style="color:${ad.active ? 'var(--grn)' : 'var(--red)'};font-size:10px;font-weight:700;background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:4px;">${ad.active ? 'Активно' : 'Неактивно'}</span>
+              <span style="color:${ad.active ? 'var(--grn)' : 'var(--red)'};font-size:10px;font-weight:700;background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:4px;">${ad.active ? 'Активно' : 'Удалено'}</span>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
               <div><div style="font-size:10px;color:var(--dim);font-weight:600;">Курс</div><div style="font-size:13px;font-weight:800;">${fmt(ad.price)} ₽</div></div>
@@ -1229,11 +1308,22 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="display:flex;gap:6px;">
               <button class="btn btn-ghost btn-sm" style="flex:1; border:1px solid var(--glass-border); height:32px; font-size:11px;" onclick="toggleAdStatus(${ad.id}, ${ad.active})">${ad.active ? 'Снять' : 'Вкл'}</button>
               <button class="btn btn-primary btn-sm" style="flex:1; height:32px; font-size:11px;" onclick="openEditAdModal(${ad.id})">Изменить</button>
+              <button class="btn btn-ghost btn-sm" style="width:32px; border:1px solid var(--red); height:32px; color: var(--red); padding:0;" onclick="deleteAd(${ad.id})">🗑</button>
             </div>
           </div>
         `).join('') : '<div class="empty-state">Нет объявлений</div>';
       } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     }
+
+    window.deleteAd = async function(adId) {
+      if (!await confirmAsync('Удаление', 'Удалить объявление? Действие необратимо.', 'Удалить')) return;
+      try {
+          await API.req('DELETE', '/ads/' + adId);
+          toast('Объявление удалено', 'success');
+          loadMyAds();
+          screenCache.market = false;
+      } catch(e) { toast(e.message || 'Ошибка', 'error'); }
+    };
 
     window.toggleAdStatus = async function(adId, currentStatus) {
       try {
@@ -1435,7 +1525,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const ad = (window._ads || {})[adId];
       if (!ad) return;
       currentAd = ad; selectedPay = ad.paymentMethods?.[0] || null;
-      window.currentAd = ad; // на случай если где-то ещё понадобится
+      window.currentAd = ad;
       const isBuy = ad.side === 'sell';
       
       const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
@@ -1452,7 +1542,6 @@ document.addEventListener('DOMContentLoaded', () => {
       setText('orderTerms', ad.terms || 'Стандартные условия сделки.');
       setText('orderError', '');
 
-      // Фикс: клик на карточку контрагента теперь вешается через JS
       const ownerProfileEl = document.getElementById('orderAdOwnerProfile');
       if (ownerProfileEl) {
         ownerProfileEl.onclick = () => openPublicProfile(ad.userId);
