@@ -445,11 +445,15 @@ app.post('/api/ads', auth, async (req, res) => {
   const p = Number(price), at = Number(amount_total), mn = Number(min_rub), mx = Number(max_rub);
   if (!(p > 0) || !(at > 0) || !(mn > 0) || !(mx > 0) || mn > mx || mx > at * p) return res.status(400).json({ error: 'bad_amounts' });
   
-  if (side === 'sell') {
+  // "Я покупаю" (side='buy') требует мейкера. "Я продаю" (side='sell') не требует.
+  if (side === 'buy') {
     const isStaff = ['admin', 'owner', 'deputy'].includes(req.user.role);
-    const canCreateSellAd = isStaff || req.user.is_maker || req.user.is_merchant;
-    if (!canCreateSellAd) return res.status(403).json({ error: 'Только мейкеры и мерчанты могут создавать объявления о продаже' });
-    if (!isStaff && Number(req.user.balance_usdt) < at) return res.status(400).json({ error: 'Недостаточно USDT' });
+    const canCreateBuyAd = isStaff || req.user.is_maker || req.user.is_merchant;
+    if (!canCreateBuyAd) return res.status(403).json({ error: 'Только мейкеры и мерчанты могут создавать объявления о покупке' });
+    if (!isStaff && Number(req.user.balance_rub) < at * p) return res.status(400).json({ error: 'Недостаточно RUB' });
+  }
+  if (side === 'sell') {
+    if (Number(req.user.balance_usdt) < at) return res.status(400).json({ error: 'Недостаточно USDT' });
   }
 
   try {
@@ -467,8 +471,13 @@ app.delete('/api/ads/:id', auth, async (req, res) => {
     const ad = adRes.rows[0];
     if (!ad || ad.user_id !== req.user.id) return res.status(403).json({ error: 'forbidden' });
     
-    // Мягкое удаление (деактивация)
-    await pool.query('UPDATE ads SET active = false, amount_left = 0 WHERE id = $1', [req.params.id]);
+    try {
+      // Полное удаление из БД
+      await pool.query('DELETE FROM ads WHERE id = $1', [req.params.id]);
+    } catch(e) {
+      // Если есть привязанные ордера, скрываем
+      await pool.query('UPDATE ads SET active = false, amount_left = 0 WHERE id = $1', [req.params.id]);
+    }
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
@@ -513,8 +522,11 @@ const STATUS_LABEL = { pending: 'Ожидает', accepted: 'К оплате', p
 async function shapeOrder(o) {
   const bRes = await pool.query('SELECT * FROM users WHERE id = $1', [o.buyer_id]);
   const sRes = await pool.query('SELECT * FROM users WHERE id = $1', [o.seller_id]);
+  const adRes = await pool.query('SELECT user_id FROM ads WHERE id = $1', [o.ad_id]);
+  const adUserId = adRes.rows[0]?.user_id || null;
+  
   const buyer = bRes.rows[0]; const seller = sRes.rows[0];
-  return { id: o.id, publicId: o.public_id, adId: o.ad_id, asset: o.asset, price: Number(o.price), amountRub: Number(o.amount_rub), amountAsset: Number(o.amount_asset), faceType: o.face_type, paymentMethod: o.payment_method, paymentTime: Number(o.payment_time) || 30, status: o.status, statusLabel: STATUS_LABEL[o.status] || o.status, buyer: { id: o.buyer_id, username: buyer?.username, displayName: buyer?.display_name || buyer?.username, avatarUrl: buyer?.avatar_url }, seller: { id: o.seller_id, username: seller?.username, displayName: seller?.display_name || seller?.username, avatarUrl: seller?.avatar_url }, createdAt: o.created_at, expiresAt: o.expires_at, buyer_id: o.buyer_id, seller_id: o.seller_id, amount_rub: o.amount_rub, amount_asset: o.amount_asset, public_id: o.public_id, payment_method: o.payment_method, face_type: o.face_type, receipt_data: o.receipt_data };
+  return { id: o.id, publicId: o.public_id, adId: o.ad_id, adUserId: adUserId, asset: o.asset, price: Number(o.price), amountRub: Number(o.amount_rub), amountAsset: Number(o.amount_asset), faceType: o.face_type, paymentMethod: o.payment_method, paymentTime: Number(o.payment_time) || 30, status: o.status, statusLabel: STATUS_LABEL[o.status] || o.status, buyer: { id: o.buyer_id, username: buyer?.username, displayName: buyer?.display_name || buyer?.username, avatarUrl: buyer?.avatar_url }, seller: { id: o.seller_id, username: seller?.username, displayName: seller?.display_name || seller?.username, avatarUrl: seller?.avatar_url }, createdAt: o.created_at, expiresAt: o.expires_at, buyer_id: o.buyer_id, seller_id: o.seller_id, amount_rub: o.amount_rub, amount_asset: o.amount_asset, public_id: o.public_id, payment_method: o.payment_method, face_type: o.face_type, receipt_data: o.receipt_data };
 }
 
 app.post('/api/orders', auth, async (req, res) => {
@@ -545,7 +557,7 @@ app.post('/api/orders', auth, async (req, res) => {
     await client.query('COMMIT');
     const orderData = { ...orderRes.rows[0], counterparty_username: req.user.username };
     
-    // УВЕДОМЛЕНИЕ ВСЕГДА ЛЕТИТ СОЗДАТЕЛЮ ОБЪЯВЛЕНИЯ (тому, кто должен принять)
+    // УВЕДОМЛЕНИЕ ВСЕГДА ЛЕТИТ СОЗДАТЕЛЮ ОБЪЯВЛЕНИЯ
     const targetTgId = (await pool.query('SELECT telegram_id FROM users WHERE id = $1', [ad.user_id])).rows[0]?.telegram_id;
     if (targetTgId) {
         const msg = formatOrderMsg(orderData, "🔥 Новая заявка!");

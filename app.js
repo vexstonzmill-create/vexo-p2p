@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function initTelegramAuth() {
       if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
         const tg = window.Telegram.WebApp;
+        document.body.classList.add('tg-fullscreen');
         try { tg.ready(); } catch(e) {}
         try { tg.expand(); } catch(e) {}
         try { if (tg.requestFullscreen) tg.requestFullscreen(); } catch(e) { console.log('FS err', e); }
@@ -129,6 +130,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function closeModal(id) { const el = document.getElementById(id); if (el) el.classList.remove('active'); }
     window.closeModal = closeModal;
+
+    // Sidebar Logic
+    window.toggleSidebar = function(open) {
+      const sidebar = document.querySelector('.sidebar');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      if (open) {
+        sidebar.classList.add('mobile-open');
+        backdrop.classList.add('active');
+      } else {
+        sidebar.classList.remove('mobile-open');
+        backdrop.classList.remove('active');
+      }
+    };
+    document.getElementById('menuBtn')?.addEventListener('click', () => toggleSidebar(true));
 
     // --- SPREAD CALCULATOR ---
     let feeType = 'rub';
@@ -254,31 +269,34 @@ document.addEventListener('DOMContentLoaded', () => {
       const u = API.user();
       if (!u) return;
       const isStaff = ['admin', 'owner', 'deputy'].includes(u.role);
-      const canSell = isStaff || u.isMaker || u.isMerchant;
+      const canBuy = isStaff || u.isMaker || u.isMerchant;
       const sellBtn = document.querySelector('#f-side .seg-btn[data-val="sell"]');
       const buyBtn  = document.querySelector('#f-side .seg-btn[data-val="buy"]');
       if (!sellBtn || !buyBtn) return;
+      
       if (!sellBtn.dataset.origText) sellBtn.dataset.origText = sellBtn.textContent;
-      if (!canSell) {
-        sellBtn.disabled = true;
-        sellBtn.style.opacity = '0.4';
-        sellBtn.style.cursor = 'not-allowed';
-        sellBtn.textContent = 'Я продаю (нужен Мейкер)';
-        if (sellBtn.classList.contains('active')) {
-          sellBtn.classList.remove('active');
-          buyBtn.classList.add('active');
+      if (!buyBtn.dataset.origText) buyBtn.dataset.origText = buyBtn.textContent;
+
+      if (!canBuy) {
+        buyBtn.disabled = true;
+        buyBtn.style.opacity = '0.4';
+        buyBtn.style.cursor = 'not-allowed';
+        if (buyBtn.classList.contains('active')) {
+          buyBtn.classList.remove('active');
+          sellBtn.classList.add('active');
         }
       } else {
-        sellBtn.disabled = false;
-        sellBtn.style.opacity = '1';
-        sellBtn.style.cursor = '';
-        sellBtn.textContent = sellBtn.dataset.origText;
+        buyBtn.disabled = false;
+        buyBtn.style.opacity = '1';
+        buyBtn.style.cursor = '';
       }
     }
 
     function show(name) {
       if (window.orderPollInterval) clearInterval(window.orderPollInterval);
       if (window.orderTimerInterval) clearInterval(window.orderTimerInterval);
+      
+      toggleSidebar(false); // Close sidebar when navigating
 
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       const target = document.getElementById('screen-' + name);
@@ -826,19 +844,19 @@ document.addEventListener('DOMContentLoaded', () => {
       const side = document.querySelector('#f-side .seg-btn.active')?.dataset.val;
       const asset = document.querySelector('#f-asset-select .icon-chip.active')?.dataset.val;
 
-      if (side === 'sell') {
+      if (side === 'buy') {
          const isStaff = ['admin', 'owner', 'deputy'].includes(u.role);
          if (!isStaff && !u.isMaker && !u.isMerchant) {
-             toast('Только мейкеры и мерчанты могут создавать объявления о продаже', 'error');
+             toast('Только мейкеры и мерчанты могут создавать объявления о покупке', 'error');
              return;
          }
-         if (u.balanceUsdt < Number(amount)) {
-             toast(`Недостаточно ${asset} на балансе (Нужно: ${fmtDec(amount, 2)})`, 'error');
-             return;
-         }
-      } else if (side === 'buy') {
          if (u.balanceRub < Number(max)) {
              toast(`Недостаточно RUB на балансе (Нужно: ${fmt(max)} ₽)`, 'error');
+             return;
+         }
+      } else if (side === 'sell') {
+         if (u.balanceUsdt < Number(amount)) {
+             toast(`Недостаточно ${asset} на балансе (Нужно: ${fmtDec(amount, 2)})`, 'error');
              return;
          }
       }
@@ -932,6 +950,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderOrderPage(order, history, terms) {
       const u = API.user(), isBuyer = order.buyer_id === u.id, isSeller = order.seller_id === u.id, isAdmin = ['admin', 'owner', 'deputy'].includes(u.role);
+      const isAdCreator = u.id === order.adUserId;
+      
       const sc = { pending: '#FFD60A', accepted: '#3b82f6', paid: '#22c55e', completed: '#22c55e', cancelled: '#ef4444', declined: '#ef4444', dispute: '#D4AF37' };
       let progress = 20;
       if (order.status === 'accepted') progress = 40;
@@ -944,11 +964,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       let actionsHtml = '';
       
-      // ПРАВИЛЬНАЯ ЛОГИКА: Принимает/Отклоняет СОЗДАТЕЛЬ ОБЪЯВЛЕНИЯ (или админ)
-      const adCreatorId = order.seller_id; // В текущей архитектуре заявку создает покупатель, значит продавец - создатель.
-      
+      // Принимает/Отклоняет ТОЛЬКО СОЗДАТЕЛЬ ОБЪЯВЛЕНИЯ
       if (order.status === 'pending') {
-        if (isSeller) {
+        if (isAdCreator) {
           actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px"><button class="btn btn-primary btn-sm" onclick="doAction(${order.id},'accept')" style="background:var(--grn);color:#fff;border:none;height:36px;font-size:12px;">Принять</button><button class="btn btn-ghost btn-sm" style="color:var(--red);border:1px solid var(--red);height:36px;font-size:12px;" onclick="doAction(${order.id},'decline')">Отклонить</button></div>`;
         } else {
           actionsHtml = `<div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:10px;padding:10px;text-align:center;color:var(--dim);font-size:12px;margin-bottom:6px;font-weight:600;">Ожидайте подтверждения</div>

@@ -21,6 +21,8 @@
   <div class="blob blob-3"></div>
 </div>
 
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
+
 <div class="app">
   <aside class="sidebar glass-panel">
     <div class="logo"><div class="logo-mark">V</div><span class="logo-text">vexo</span></div>
@@ -38,7 +40,9 @@
   <div class="main">
     <header class="topbar glass-panel">
       <div style="display: flex; align-items: center; gap: 8px;">
-        <button class="btn btn-sm btn-ghost hidden" id="backBtn" style="padding: 4px; border-radius: 50%; width: 28px; height: 28px;">←</button>
+        <button class="btn btn-sm btn-ghost" id="menuBtn" style="padding: 4px; width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
         <div class="logo"><div class="logo-mark" style="width: 22px; height: 22px; font-size: 11px;">V</div><span class="logo-text" style="font-size: 16px;">vexo</span></div>
       </div>
       
@@ -202,7 +206,7 @@
             <label>Тип сделки</label>
             <div class="segmented" id="f-side">
               <button type="button" class="seg-btn buy active" data-val="sell">Я продаю</button>
-              <button type="button" class="seg-btn sell" data-val="buy">Я покупаю</button>
+              <button type="button" class="seg-btn sell" data-val="buy">Я покупаю <span style="font-size:14px; margin-left:4px; color:#fbbf24;">⭐</span></button>
             </div>
           </div>
 
@@ -369,12 +373,7 @@
     <nav class="bottom-nav glass-panel">
       <button class="bn-btn active" data-screen="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Главная</button>
       <button class="bn-btn" data-screen="market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Маркет</button>
-      <button class="bn-btn" data-screen="create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Создать</button>
-      <button class="bn-btn" data-screen="spread"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8" y2="10.01"/><line x1="12" y1="10" x2="12" y2="10.01"/><line x1="16" y1="10" x2="16" y2="10.01"/><line x1="8" y1="14" x2="8" y2="14.01"/><line x1="12" y1="14" x2="12" y2="14.01"/><line x1="16" y1="14" x2="16" y2="14.01"/><line x1="8" y1="18" x2="8" y2="18.01"/><line x1="12" y1="18" x2="12" y2="18.01"/><line x1="16" y1="18" x2="16" y2="18.01"/></svg>Спред</button>
-      <button class="bn-btn" data-screen="orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>Ордера</button>
-      <button class="bn-btn" data-screen="wallet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M16 12h4"/></svg>Кошелёк</button>
       <button class="bn-btn" data-screen="profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Профиль</button>
-      <button class="bn-btn" data-screen="admin" id="adminBnBtn" style="display:none; color:var(--red);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Админ</button>
     </nav>
   </div>
 </div>
@@ -678,6 +677,25 @@
     </div>
     
     <div class="field" style="margin-bottom: 12px;">
+      <label>Способы оплаты</label>
+      <div class="icon-scroll" id="edit-payments" style="margin-bottom:0;">
+        <div class="pay-chip" data-val="СБП">🏦 СБП</div>
+        <div class="pay-chip" data-val="Тинькофф">🟡 Тинькофф</div>
+        <div class="pay-chip" data-val="Сбербанк">🟢 Сбер</div>
+        <div class="pay-chip" data-val="Альфа-Банк">🔴 Альфа</div>
+      </div>
+    </div>
+
+    <div class="field" style="margin-bottom: 12px;"><label>Условия</label><textarea class="input" id="edit-terms" style="min-height: 50px; font-size: 12px !important;"></textarea></div>
+    <div class="error-msg" id="editError" style="font-size: 10px;"></div>
+    <button class="btn btn-primary btn-block" id="editSaveBtn" style="height: 40px;">Сохранить</button>
+    <button class="btn btn-ghost btn-block" onclick="closeModal('editAdModal')" style="margin-top: 6px; height: 40px;">Отмена</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html> style="margin-bottom: 12px;">
       <label>Способы оплаты</label>
       <div class="icon-scroll" id="edit-payments" style="margin-bottom:0;">
         <div class="pay-chip" data-val="СБП">🏦 СБП</div>
