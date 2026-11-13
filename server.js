@@ -8,6 +8,8 @@ const { Pool } = require('pg');
 
 const PORT = Number(process.env.PORT) || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_vexo_key_that_is_long_enough_12345';
+// ВСТАВЛЕН ТВОЙ ТОКЕН (ЗАМЕНИ НА НОВЫЙ!)
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8859024431:AAF9vvyC0AGHJNZfjhQ989yryflRMtXYvoQ'; 
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_UDtaHhd5Zr6s@ep-divine-sun-bawvlsl5-pooler.c-8.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
@@ -32,6 +34,8 @@ async function initDB() {
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_pro BOOLEAN DEFAULT false;`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_merchant BOOLEAN DEFAULT false;`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_maker BOOLEAN DEFAULT false;`);
+    // Добавляем колонку для Telegram ID
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS telegram_id BIGINT UNIQUE;`);
     
     console.log('✓ Database tables initialized');
   } catch (err) {
@@ -50,6 +54,47 @@ app.use((req, res, next) => {
   next();
 });
 
+// --- ФУНКЦИИ TELEGRAM ---
+
+// Отправка сообщения в Telegram
+async function sendTG(tgId, text) {
+  if (!BOT_TOKEN || !tgId) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: tgId, text, parse_mode: 'HTML' })
+    });
+  } catch (e) { console.error('TG Send Error:', e); }
+}
+
+// Удобная функция для отправки уведомления конкретному юзеру по его ID в БД
+async function notifyUser(userId, text) {
+    try {
+        const res = await pool.query('SELECT telegram_id FROM users WHERE id = $1', [userId]);
+        if (res.rows[0] && res.rows[0].telegram_id) {
+            await sendTG(res.rows[0].telegram_id, text);
+        }
+    } catch (e) { console.error('Notify error:', e); }
+}
+
+// Проверка подписи initData от Telegram Mini App
+function validateTelegramWebAppData(telegramInitData) {
+  const urlParams = new URLSearchParams(telegramInitData);
+  const hash = urlParams.get('hash');
+  urlParams.delete('hash');
+  urlParams.sort();
+  let dataCheckString = '';
+  for (const [key, value] of urlParams) {
+    dataCheckString += `${key}=${value}\n`;
+  }
+  dataCheckString = dataCheckString.slice(0, -1);
+  const secretKey = crypto.createHmac('sha256', 'WebAppData').update(BOT_TOKEN).digest();
+  const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+  return calculatedHash === hash;
+}
+
+// --- MIDDLEWARE АВТОРИЗАЦИИ ---
 async function auth(req, res, next) {
   const h = req.headers.authorization || '';
   const token = h.startsWith('Bearer ') ? h.slice(7) : null;
@@ -70,7 +115,8 @@ function publicUser(u) {
     email: u.email, role: u.role, kycStatus: u.kyc_status, avatarUrl: u.avatar_url || '', 
     volumeUsd: Number(u.volume_usd), createdAt: u.created_at,
     balanceRub: Number(u.balance_rub || 0), balanceUsdt: Number(u.balance_usdt || 0),
-    isPro: u.is_pro || false, isMerchant: u.is_merchant || false, isMaker: u.is_maker || false
+    isPro: u.is_pro || false, isMerchant: u.is_merchant || false, isMaker: u.is_maker || false,
+    telegramId: u.telegram_id
   };
 }
 
@@ -89,6 +135,50 @@ async function getUserStats(userId) {
   
   return { dealsTotal: total, dealsCompleted: completed, successRate, reviewsCount: ratings.length, ratingAvg: avg, volumeUsd };
 }
+
+// --- АВТОРИЗАЦИЯ ---
+
+// Вход через Telegram
+app.post('/api/auth/telegram', async (req, res) => {
+  const { initData } = req.body;
+  if (!initData || !validateTelegramWebAppData(initData)) {
+    return res.status(401).json({ error: 'invalid_telegram_data' });
+  }
+  
+  try {
+    const urlParams = new URLSearchParams(initData);
+    const tgUser = JSON.parse(urlParams.get('user'));
+    
+    let userRes = await pool.query('SELECT * FROM users WHERE telegram_id = $1', [tgUser.id]);
+    let user = userRes.rows[0];
+
+    if (!user) {
+      userRes = await pool.query('SELECT * FROM users WHERE username = $1', [tgUser.username || 'tg_' + tgUser.id]);
+      user = userRes.rows[0];
+
+      if (user) {
+        await pool.query('UPDATE users SET telegram_id = $1 WHERE id = $2', [tgUser.id, user.id]);
+        user.telegram_id = tgUser.id;
+      } else {
+        const dummyEmail = `tg_${tgUser.id}@vexo.local`;
+        const dummyPass = await bcrypt.hash(crypto.randomBytes(16).toString('hex'), 10);
+        const displayName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || tgUser.username || 'Telegram User';
+        
+        const newUserRes = await pool.query(
+          'INSERT INTO users (username, display_name, email, password_hash, telegram_id, avatar_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+          [tgUser.username || 'tg_' + tgUser.id, displayName, dummyEmail, dummyPass, tgUser.id, tgUser.photo_url || null]
+        );
+        user = newUserRes.rows[0];
+      }
+    }
+
+    const token = jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: publicUser(user) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'db_error' });
+  }
+});
 
 app.post('/api/auth/register', async (req, res) => {
   const { username, email, password } = req.body || {};
@@ -277,7 +367,6 @@ app.post('/api/ads', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
-// ОБНОВЛЕНИЕ С ПОДДЕРЖКОЙ ИЗМЕНЕНИЯ ОБЪЕМА И СПОСОБОВ ОПЛАТЫ
 app.patch('/api/ads/:id', auth, async (req, res) => {
   const { price, min_rub, max_rub, payment_methods, terms, amount_total, active } = req.body;
   try {
@@ -359,6 +448,10 @@ app.post('/api/orders', auth, async (req, res) => {
       [publicId, ad.id, buyerId, sellerId, ad.asset, ad.price, rub, assetQty, ad.face_type, payment_method, history, ad.payment_time || 30, 'pending']
     );
     await client.query('COMMIT');
+    
+    // Уведомление продавцу
+    notifyUser(sellerId, `🔔 <b>Новая заявка!</b>\nПокупатель хочет купить ${assetQty.toFixed(2)} ${ad.asset} за ${rub} ₽.\nЗайдите в приложение, чтобы принять заявку.`);
+
     res.status(201).json(await shapeOrder(orderRes.rows[0]));
   } catch (err) {
     await client.query('ROLLBACK');
@@ -403,6 +496,10 @@ app.post('/api/orders/:id/accept', auth, async (req, res) => {
   const o = oRes.rows[0];
   if (o.seller_id !== req.user.id || o.status !== 'pending') return res.status(403).json({ error: 'Доступ запрещен' });
   await transition(o.id, 'accepted', 'Заявка принята продавцом');
+  
+  // Уведомление покупателю
+  notifyUser(o.buyer_id, `✅ <b>Заявка принята!</b>\nПродавец принял вашу заявку на ${Number(o.amount_asset).toFixed(2)} ${o.asset}.\nПереведите ${Number(o.amount_rub)} ₽ и нажмите "Я оплатил".`);
+
   res.json({ ok: true });
 });
 
@@ -411,6 +508,9 @@ app.post('/api/orders/:id/decline', auth, async (req, res) => {
   const o = oRes.rows[0];
   if (o.seller_id !== req.user.id || o.status !== 'pending') return res.status(403).json({ error: 'Доступ запрещен' });
   await transition(o.id, 'declined', 'Заявка отклонена продавцом');
+  
+  notifyUser(o.buyer_id, `❌ <b>Заявка отклонена</b>\nПродавец отклонил вашу заявку.`);
+
   res.json({ ok: true });
 });
 
@@ -418,7 +518,12 @@ app.post('/api/orders/:id/paid', auth, async (req, res) => {
   const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
   const o = oRes.rows[0];
   if (o.buyer_id !== req.user.id || o.status !== 'accepted') return res.status(409).json({ error: 'Неверный статус' });
-  await transition(o.id, 'paid', 'Оплата отправлена'); res.json({ ok: true });
+  await transition(o.id, 'paid', 'Оплата отправлена'); 
+  
+  // Уведомление продавцу
+  notifyUser(o.seller_id, `💰 <b>Покупатель оплатил!</b>\nПокупатель нажал "Я оплатил" по сделке на ${Number(o.amount_rub)} ₽.\nПроверьте поступление средств и подтвердите сделку.`);
+
+  res.json({ ok: true });
 });
 
 app.post('/api/orders/:id/confirm', auth, async (req, res) => {
@@ -432,7 +537,16 @@ app.post('/api/orders/:id/confirm', auth, async (req, res) => {
     const volumeToAdd = Number(o.amount_rub) / 90;
     await client.query('UPDATE users SET volume_usd = volume_usd + $1 WHERE id = $2', [volumeToAdd, o.buyer_id]);
     await client.query('UPDATE users SET volume_usd = volume_usd + $1 WHERE id = $2', [volumeToAdd, o.seller_id]);
+    
+    // Начисление балансов (упрощенно)
+    await client.query('UPDATE users SET balance_usdt = balance_usdt + $1 WHERE id = $2', [o.amount_asset, o.buyer_id]);
+    await client.query('UPDATE users SET balance_rub = balance_rub + $1 WHERE id = $2', [o.amount_rub, o.seller_id]);
+
     await client.query('COMMIT');
+
+    notifyUser(o.buyer_id, `🎉 <b>Сделка завершена!</b>\nПродавец подтвердил получение денег. ${Number(o.amount_asset).toFixed(2)} ${o.asset} зачислены на ваш баланс.`);
+    notifyUser(o.seller_id, `🎉 <b>Сделка завершена!</b>\n${Number(o.amount_rub)} ₽ зачислены на ваш баланс.`);
+
     res.json({ ok: true });
   } catch (e) { await client.query('ROLLBACK'); res.status(409).json({ error: 'Ошибка' }); }
   finally { client.release(); }
@@ -443,7 +557,12 @@ app.post('/api/orders/:id/cancel', auth, async (req, res) => {
   const o = oRes.rows[0];
   if (!['pending', 'accepted', 'paid'].includes(o.status)) return res.status(409).json({ error: 'bad' });
   if (o.buyer_id !== req.user.id && o.seller_id !== req.user.id) return res.status(403).json({ error: 'forbidden' });
-  await transition(o.id, 'cancelled', 'Отменён пользователем'); res.json({ ok: true });
+  await transition(o.id, 'cancelled', 'Отменён пользователем'); 
+  
+  const targetId = o.buyer_id === req.user.id ? o.seller_id : o.buyer_id;
+  notifyUser(targetId, `⚠️ <b>Сделка отменена</b>\nКонтрагент отменил сделку.`);
+
+  res.json({ ok: true });
 });
 
 app.post('/api/orders/:id/dispute', auth, async (req, res) => {
@@ -451,7 +570,12 @@ app.post('/api/orders/:id/dispute', auth, async (req, res) => {
   const o = oRes.rows[0];
   if (!o || !['pending', 'accepted', 'paid'].includes(o.status)) return res.status(409).json({ error: 'bad' });
   if (o.buyer_id !== req.user.id && o.seller_id !== req.user.id) return res.status(403).json({ error: 'forbidden' });
-  await transition(o.id, 'dispute', 'Открыт спор: ' + (req.body?.reason || '')); res.json({ ok: true });
+  await transition(o.id, 'dispute', 'Открыт спор: ' + (req.body?.reason || '')); 
+  
+  const targetId = o.buyer_id === req.user.id ? o.seller_id : o.buyer_id;
+  notifyUser(targetId, `🛑 <b>Открыт спор!</b>\nКонтрагент открыл спор по сделке. Пожалуйста, свяжитесь с поддержкой.`);
+
+  res.json({ ok: true });
 });
 
 app.post('/api/orders/:id/resolve', auth, async (req, res) => {
@@ -470,8 +594,14 @@ app.post('/api/orders/:id/resolve', auth, async (req, res) => {
       const volumeToAdd = Number(o.amount_rub) / 90;
       await client.query('UPDATE users SET volume_usd = volume_usd + $1 WHERE id = $2', [volumeToAdd, o.buyer_id]);
       await client.query('UPDATE users SET volume_usd = volume_usd + $1 WHERE id = $2', [volumeToAdd, o.seller_id]);
+      await client.query('UPDATE users SET balance_usdt = balance_usdt + $1 WHERE id = $2', [o.amount_asset, o.buyer_id]);
+      await client.query('UPDATE users SET balance_rub = balance_rub + $1 WHERE id = $2', [o.amount_rub, o.seller_id]);
     }
     await client.query('COMMIT');
+
+    notifyUser(o.buyer_id, `⚖️ <b>Спор решен!</b>\nАдминистрация вынесла решение: ${resolution === 'completed' ? 'в пользу продавца' : 'в пользу покупателя'}.`);
+    notifyUser(o.seller_id, `⚖️ <b>Спор решен!</b>\nАдминистрация вынесла решение: ${resolution === 'completed' ? 'в пользу продавца' : 'в пользу покупателя'}.`);
+
     res.json({ ok: true });
   } catch (e) { await client.query('ROLLBACK'); res.status(409).json({ error: 'bad' }); }
   finally { client.release(); }
@@ -611,6 +741,11 @@ app.patch('/api/admin/requests/:id', auth, async (req, res) => {
       }
     }
     await client.query('COMMIT');
+    
+    // Уведомление пользователю о статусе заявки
+    const statusText = status === 'approved' ? 'одобрена ✅' : status === 'rejected' ? 'отклонена ❌' : 'отменена';
+    notifyUser(request.user_id, `📄 <b>Статус заявки обновлен</b>\nВаша заявка была ${statusText}.`);
+
     res.json({ ok: true });
   } catch(e) {
     await client.query('ROLLBACK');

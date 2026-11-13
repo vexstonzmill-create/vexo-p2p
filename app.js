@@ -38,6 +38,42 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
 
+    // --- ЛОГИКА TELEGRAM MINI APP ---
+    async function initTelegramAuth() {
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
+        window.Telegram.WebApp.setHeaderColor('#030712');
+        window.Telegram.WebApp.expand(); 
+
+        const initData = window.Telegram.WebApp.initData;
+        
+        if (API.token()) return; 
+
+        try {
+          const res = await fetch('/api/auth/telegram', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ initData })
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            localStorage.setItem('vexo_token', data.token);
+            localStorage.setItem('vexo_user', JSON.stringify(data.user));
+            
+            updateAuthUI();
+            // Тихо обновляем кэш экранов, если они были открыты
+            screenCache.profile = false; screenCache.wallet = false;
+            toast('Вход через Telegram выполнен!', 'success');
+          }
+        } catch(e) {
+          console.error('TG Auth Error:', e);
+        }
+      }
+    }
+
+    // Запускаем авторизацию
+    initTelegramAuth();
+
     const fmt = (n) => new Intl.NumberFormat('ru-RU').format(n || 0);
     const fmtDec = (n, d = 2) => new Intl.NumberFormat('ru-RU', { minimumFractionDigits: d, maximumFractionDigits: d }).format(n || 0);
 
@@ -659,7 +695,6 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     });
 
-    // Клики по кнопкам "Я продаю / Я покупаю"
     document.querySelectorAll('#f-side .seg-btn').forEach(b => {
       b.onclick = () => {
         document.querySelectorAll('#f-side .seg-btn').forEach(x => x.classList.remove('active'));
@@ -667,7 +702,6 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     });
 
-    // Клики по кнопкам "1-е лицо / 3-е лицо"
     document.querySelectorAll('#f-face .seg-btn').forEach(b => {
       b.onclick = () => {
         document.querySelectorAll('#f-face .seg-btn').forEach(x => x.classList.remove('active'));
@@ -1083,7 +1117,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="profile-tab ${profileTab === 'requests' ? 'active' : ''}" onclick="switchProfileTab('requests')">Заявки</button>
           </div>
           <div id="profileTabContent">${contentHtml}</div>
-          <div style="margin-top:16px"><button class="btn btn-ghost btn-block btn-sm" onclick="logoutAction()" style="color:var(--red) !important;border:1px solid rgba(239,68,68,.3) !important; height:40px;">Выйти</button></div>`;
+          <div style="margin-top:16px"><button class="btn btn-ghost btn-block btn-sm" onclick="logoutAction()" style="color:#ef4444 !important;border:1px solid rgba(239,68,68,.3) !important; height:40px;">Выйти</button></div>`;
 
         if (profileTab === 'ads') loadMyAds();
         else if (profileTab === 'history') loadMyHistory();

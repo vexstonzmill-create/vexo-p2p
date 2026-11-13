@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>VEXO</title>
+  <!-- СКРИПТ TELEGRAM MINI APP -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -217,7 +220,6 @@
             <label>Тип сделки</label>
             <div class="segmented" id="f-side">
               <button type="button" class="seg-btn buy active" data-val="sell">Я продаю</button>
-              <!-- Текст исправлен -->
               <button type="button" class="seg-btn sell" data-val="buy">Я покупаю</button>
             </div>
           </div>
@@ -321,7 +323,6 @@
   </div>
 </div>
 
-<!-- МОДАЛКИ -->
 <div class="toast-container" id="toastContainer"></div>
 <div class="modal-overlay" id="dialogOverlay"><div class="modal glass-modal" id="dialogContent"></div></div>
 
@@ -638,7 +639,7 @@
   }, 1500);
 </script>
 </body>
-</html>st loader = document.getElementById('loader');
+</html>oader');
     if (loader) {
       loader.style.opacity = '0';
       setTimeout(() => loader.style.display = 'none', 500);
