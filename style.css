@@ -107,18 +107,21 @@ body.tg-fullscreen .main { padding-top: 50px; }
 .logo-mark { width: 24px; height: 24px; border-radius: 8px; background: linear-gradient(135deg, #60a5fa, #3b82f6); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4); }
 .logo-text { font-size: 18px; font-weight: 900; letter-spacing: -1px; color: var(--txt); }
 
+/* Фикс прозрачности сайдбара */
 .sidebar { 
   display: none; width: 220px; padding: 12px; flex-direction: column; 
   position: fixed; top: 0; left: 0; height: 100vh; z-index: 1001; 
   border-radius: 0; border-left: none; margin: 0; 
   transform: translateX(-100%); transition: transform 0.3s ease; 
+  background: var(--bg) !important;
+  border-right: 1px solid var(--glass-border);
 }
 .sidebar.mobile-open { display: flex; transform: translateX(0); }
 @media(min-width: 1024px) { 
-  .sidebar { display: flex; position: sticky; transform: none; margin: 8px 0 8px 8px; height: calc(100vh - 16px); border-radius: 0 16px 16px 0; } 
+  .sidebar { display: flex; position: sticky; transform: none; margin: 8px 0 8px 8px; height: calc(100vh - 16px); border-radius: 0 16px 16px 0; background: var(--glass-bg) !important; } 
 }
 
-.sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; backdrop-filter: blur(4px); }
+.sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; backdrop-filter: blur(4px); }
 .sidebar-backdrop.active { display: block; }
 
 .nav-btn { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 12px; color: var(--dim); font-weight: 600; width: 100%; text-align: left; margin-bottom: 4px; font-size: 13px; transition: 0.2s; background: transparent; border: none;}
@@ -416,7 +419,7 @@ body[data-theme="light"] .wallet-item { background: #ffffff; border-color: rgba(
 .news-list { display: flex; flex-direction: column; gap: 8px; }
 .news-item { background: var(--btn-glass-bg); border: 1px solid var(--btn-glass-border); border-radius: 12px; padding: 10px; position: relative; overflow: hidden; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 3px solid var(--primary); }
 .news-item:hover { transform: translateY(-1px); border-left-color: var(--primary); }
-body[data-theme="light"] .news-item { background: #ffffff; border-color: rgba(0,0,0,0.05); border-left-color: var(--primary); }t-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4); } color: #fff; font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4); }[data-theme="light"] .profile-tab.active {
+body[data-theme="light"] .news-item { background: #ffffff; border-color: rgba(0,0,0,0.05); border-left-color: var(--primary); }ing: 2px 6px; border-radius: 4px; text-transform: uppercase; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4); }[data-theme="light"] .profile-tab.active {
   background: var(--btn-bg) !important;
   color: #ffffff !important;
   border-color: transparent !important;
