@@ -8,8 +8,10 @@ const { Pool } = require('pg');
 
 const PORT = Number(process.env.PORT) || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_vexo_key_that_is_long_enough_12345';
-// ВСТАВЛЕН ТВОЙ ТОКЕН (ЗАМЕНИ НА НОВЫЙ!)
+// ВАЖНО: Замени на свой токен!
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8859024431:AAF9vvyC0AGHJNZfjhQ989yryflRMtXYvoQ'; 
+// ВАЖНО: Замени на свой реальный домен!
+const APP_URL = process.env.APP_URL || 'https://vexo-p2p.onrender.com'; 
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_UDtaHhd5Zr6s@ep-divine-sun-bawvlsl5-pooler.c-8.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
@@ -34,7 +36,6 @@ async function initDB() {
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_pro BOOLEAN DEFAULT false;`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_merchant BOOLEAN DEFAULT false;`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_maker BOOLEAN DEFAULT false;`);
-    // Добавляем колонку для Telegram ID
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS telegram_id BIGINT UNIQUE;`);
     
     console.log('✓ Database tables initialized');
@@ -54,47 +55,162 @@ app.use((req, res, next) => {
   next();
 });
 
-// --- ФУНКЦИИ TELEGRAM ---
-
-// Отправка сообщения в Telegram
-async function sendTG(tgId, text) {
+// --- TELEGRAM HELPERS ---
+async function sendTG(tgId, text, buttons = null) {
   if (!BOT_TOKEN || !tgId) return;
   try {
+    const payload = { chat_id: tgId, text, parse_mode: 'HTML', disable_web_page_preview: true };
+    if (buttons) payload.reply_markup = { inline_keyboard: buttons };
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: tgId, text, parse_mode: 'HTML' })
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
     });
   } catch (e) { console.error('TG Send Error:', e); }
 }
 
-// Удобная функция для отправки уведомления конкретному юзеру по его ID в БД
-async function notifyUser(userId, text) {
+async function notifyUser(userId, text, buttons = null) {
     try {
         const res = await pool.query('SELECT telegram_id FROM users WHERE id = $1', [userId]);
-        if (res.rows[0] && res.rows[0].telegram_id) {
-            await sendTG(res.rows[0].telegram_id, text);
-        }
+        if (res.rows[0] && res.rows[0].telegram_id) await sendTG(res.rows[0].telegram_id, text, buttons);
     } catch (e) { console.error('Notify error:', e); }
 }
 
-// Проверка подписи initData от Telegram Mini App
+function formatOrderMsg(order, title) {
+    return `
+🔥 <b>${title}</b>
+
+🆔 Ордер: <code>#${order.public_id}</code>
+🪙 Актив: <b>${Number(order.amount_asset).toFixed(2)} ${order.asset}</b>
+💵 Сумма: <b>${new Intl.NumberFormat('ru-RU').format(order.amount_rub)} ₽</b>
+💳 Оплата: <b>${order.payment_method}</b>
+📝 Тип: <b>${order.face_type === 'first' ? '1-е лицо' : '3-е лицо'}</b>
+
+👤 Контрагент: @${order.counterparty_username || 'Скрыт'}
+    `.trim();
+}
+
 function validateTelegramWebAppData(telegramInitData) {
   const urlParams = new URLSearchParams(telegramInitData);
   const hash = urlParams.get('hash');
   urlParams.delete('hash');
   urlParams.sort();
   let dataCheckString = '';
-  for (const [key, value] of urlParams) {
-    dataCheckString += `${key}=${value}\n`;
-  }
+  for (const [key, value] of urlParams) dataCheckString += `${key}=${value}\n`;
   dataCheckString = dataCheckString.slice(0, -1);
   const secretKey = crypto.createHmac('sha256', 'WebAppData').update(BOT_TOKEN).digest();
   const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
   return calculatedHash === hash;
 }
 
-// --- MIDDLEWARE АВТОРИЗАЦИИ ---
+// --- WEBHOOK ---
+app.post('/api/telegram/webhook', async (req, res) => {
+    try {
+        if (req.body.message) {
+            const msg = req.body.message;
+            const chatId = msg.chat.id;
+            const text = msg.text;
+
+            if (text === '/start') {
+                const replyMarkup = {
+                    inline_keyboard: [
+                        [{ text: "🚀 Открыть VEXO", web_app: { url: APP_URL } }],
+                        [
+                            { text: "📈 Маркет", web_app: { url: APP_URL + '/?screen=market' } },
+                            { text: "👤 Профиль", web_app: { url: APP_URL + '/?screen=profile' } }
+                        ],
+                        [{ text: "💰 Кошелёк", web_app: { url: APP_URL + '/?screen=wallet' } }]
+                    ]
+                };
+                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        chat_id: chatId, 
+                        text: "👋 <b>Добро пожаловать в VEXO P2P!</b>\n\nЗдесь вы можете безопасно обменивать криптовалюту на рубли.\nНажмите на кнопку ниже, чтобы открыть приложение:", 
+                        parse_mode: 'HTML',
+                        reply_markup: replyMarkup 
+                    })
+                });
+            }
+            return res.sendStatus(200);
+        }
+
+        const { callback_query } = req.body;
+        if (!callback_query) return res.sendStatus(200);
+
+        const data = callback_query.data;
+        const tgId = callback_query.from.id;
+        const messageId = callback_query.message.message_id;
+        const chatId = callback_query.message.chat.id;
+        
+        const [action, orderIdStr] = data.split(':');
+        const orderId = parseInt(orderIdStr);
+
+        const userRes = await pool.query('SELECT id, role FROM users WHERE telegram_id = $1', [tgId]);
+        if (userRes.rows.length === 0) {
+            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ callback_query_id: callback_query.id, text: "Вы не авторизованы. Откройте приложение через /start", show_alert: true })
+            });
+            return res.sendStatus(200);
+        }
+        const userId = userRes.rows[0].id;
+
+        const orderRes = await pool.query('SELECT * FROM orders WHERE id = $1', [orderId]);
+        const o = orderRes.rows[0];
+        if (!o) return res.sendStatus(200);
+
+        let successText = "";
+        let success = false;
+
+        if (action === 'accept' && o.seller_id === userId && o.status === 'pending') {
+            await transition(o.id, 'accepted', 'Заявка принята продавцом');
+            success = true; successText = "✅ Заявка принята!";
+            notifyUser(o.buyer_id, formatOrderMsg({...o, counterparty_username: 'Продавец'}, "✅ Продавец принял заявку!"));
+        } 
+        else if (action === 'decline' && o.seller_id === userId && o.status === 'pending') {
+            await transition(o.id, 'declined', 'Заявка отклонена продавцом');
+            success = true; successText = "❌ Заявка отклонена!";
+            notifyUser(o.buyer_id, formatOrderMsg({...o, counterparty_username: 'Продавец'}, "❌ Продавец отклонил заявку"));
+        }
+        else if (action === 'paid' && o.buyer_id === userId && o.status === 'accepted') {
+            await transition(o.id, 'paid', 'Оплата отправлена');
+            success = true; successText = "💰 Оплата отправлена!";
+            notifyUser(o.seller_id, formatOrderMsg({...o, counterparty_username: 'Покупатель'}, "💰 Покупатель нажал 'Оплатил'!"));
+        }
+        else if (action === 'confirm' && o.seller_id === userId && o.status === 'paid') {
+            await transition(o.id, 'completed', 'Завершён');
+            const volumeToAdd = Number(o.amount_rub) / 90;
+            await pool.query('UPDATE users SET volume_usd = volume_usd + $1 WHERE id = $2', [volumeToAdd, o.buyer_id]);
+            await pool.query('UPDATE users SET volume_usd = volume_usd + $1 WHERE id = $2', [volumeToAdd, o.seller_id]);
+            await pool.query('UPDATE users SET balance_usdt = balance_usdt + $1 WHERE id = $2', [o.amount_asset, o.buyer_id]);
+            await pool.query('UPDATE users SET balance_rub = balance_rub + $1 WHERE id = $2', [o.amount_rub, o.seller_id]);
+            success = true; successText = "🎉 Сделка завершена!";
+            notifyUser(o.buyer_id, formatOrderMsg({...o, counterparty_username: 'Продавец'}, "🎉 Сделка завершена!"));
+        }
+
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ callback_query_id: callback_query.id, text: success ? successText : "Действие недоступно", show_alert: !success })
+        });
+
+        if (success) {
+            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/editMessageReplyMarkup`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: chatId, message_id: messageId, reply_markup: { inline_keyboard: [] } })
+            });
+            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: chatId, text: `✅ <i>Статус обновлен: ${successText}</i>`, parse_mode: 'HTML' })
+            });
+        }
+
+        res.sendStatus(200);
+    } catch (e) {
+        console.error('Webhook error:', e);
+        res.sendStatus(500);
+    }
+});
+
+// --- AUTH & USERS ---
 async function auth(req, res, next) {
   const h = req.headers.authorization || '';
   const token = h.startsWith('Bearer ') ? h.slice(7) : null;
@@ -136,26 +252,17 @@ async function getUserStats(userId) {
   return { dealsTotal: total, dealsCompleted: completed, successRate, reviewsCount: ratings.length, ratingAvg: avg, volumeUsd };
 }
 
-// --- АВТОРИЗАЦИЯ ---
-
-// Вход через Telegram
 app.post('/api/auth/telegram', async (req, res) => {
   const { initData } = req.body;
-  if (!initData || !validateTelegramWebAppData(initData)) {
-    return res.status(401).json({ error: 'invalid_telegram_data' });
-  }
-  
+  if (!initData || !validateTelegramWebAppData(initData)) return res.status(401).json({ error: 'invalid_telegram_data' });
   try {
     const urlParams = new URLSearchParams(initData);
     const tgUser = JSON.parse(urlParams.get('user'));
-    
     let userRes = await pool.query('SELECT * FROM users WHERE telegram_id = $1', [tgUser.id]);
     let user = userRes.rows[0];
-
     if (!user) {
       userRes = await pool.query('SELECT * FROM users WHERE username = $1', [tgUser.username || 'tg_' + tgUser.id]);
       user = userRes.rows[0];
-
       if (user) {
         await pool.query('UPDATE users SET telegram_id = $1 WHERE id = $2', [tgUser.id, user.id]);
         user.telegram_id = tgUser.id;
@@ -163,7 +270,6 @@ app.post('/api/auth/telegram', async (req, res) => {
         const dummyEmail = `tg_${tgUser.id}@vexo.local`;
         const dummyPass = await bcrypt.hash(crypto.randomBytes(16).toString('hex'), 10);
         const displayName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || tgUser.username || 'Telegram User';
-        
         const newUserRes = await pool.query(
           'INSERT INTO users (username, display_name, email, password_hash, telegram_id, avatar_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
           [tgUser.username || 'tg_' + tgUser.id, displayName, dummyEmail, dummyPass, tgUser.id, tgUser.photo_url || null]
@@ -171,13 +277,9 @@ app.post('/api/auth/telegram', async (req, res) => {
         user = newUserRes.rows[0];
       }
     }
-
     const token = jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user: publicUser(user) });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'db_error' });
-  }
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
 app.post('/api/auth/register', async (req, res) => {
@@ -253,15 +355,8 @@ app.post('/api/requests/finance', auth, async (req, res) => {
   if (!amount || amount <= 0) return res.status(400).json({ error: 'bad_amount' });
   if (!requisites || !tg_username) return res.status(400).json({ error: 'Заполните все поля' });
   
-  if (type === 'withdraw_usdt') {
-      if (Number(req.user.balance_usdt) < Number(amount)) {
-          return res.status(400).json({ error: 'Недостаточно средств' });
-      }
-  } else if (type === 'withdraw_rub') {
-      if (Number(req.user.balance_rub) < Number(amount)) {
-          return res.status(400).json({ error: 'Недостаточно средств' });
-      }
-  }
+  if (type === 'withdraw_usdt' && Number(req.user.balance_usdt) < Number(amount)) return res.status(400).json({ error: 'Недостаточно средств' });
+  if (type === 'withdraw_rub' && Number(req.user.balance_rub) < Number(amount)) return res.status(400).json({ error: 'Недостаточно средств' });
 
   try {
     await pool.query("INSERT INTO requests (user_id, type, amount, currency, details, status) VALUES ($1, $2, $3, $4, $5, 'pending')", 
@@ -298,31 +393,16 @@ async function shapeAd(a) {
 app.get('/api/ads', async (req, res) => {
   let query = "SELECT * FROM ads WHERE active = true AND amount_left > 0";
   const params = [];
-
   if (req.query.side) { params.push(req.query.side); query += ` AND side = $${params.length}`; }
   if (req.query.asset) { params.push(req.query.asset); query += ` AND asset = $${params.length}`; }
   if (req.query.face_type) { params.push(req.query.face_type); query += ` AND face_type = $${params.length}`; }
   if (req.query.payment) { params.push(req.query.payment); query += ` AND $${params.length} = ANY(payment_methods)`; }
-  
-  if (req.query.min_amount) { 
-    params.push(req.query.min_amount); 
-    query += ` AND max_rub >= $${params.length}`; 
-  }
-  if (req.query.max_amount) { 
-    params.push(req.query.max_amount); 
-    query += ` AND min_rub <= $${params.length}`; 
-  }
-
-  if (req.query.price_sort === 'asc') {
-    query += " ORDER BY price ASC";
-  } else if (req.query.price_sort === 'desc') {
-    query += " ORDER BY price DESC";
-  } else {
-    query += " ORDER BY created_at DESC";
-  }
-
+  if (req.query.min_amount) { params.push(req.query.min_amount); query += ` AND max_rub >= $${params.length}`; }
+  if (req.query.max_amount) { params.push(req.query.max_amount); query += ` AND min_rub <= $${params.length}`; }
+  if (req.query.price_sort === 'asc') query += " ORDER BY price ASC";
+  else if (req.query.price_sort === 'desc') query += " ORDER BY price DESC";
+  else query += " ORDER BY created_at DESC";
   query += " LIMIT 50";
-
   try {
     const result = await pool.query(query, params);
     const items = await Promise.all(result.rows.map(shapeAd));
@@ -348,14 +428,15 @@ app.get('/api/ads/:id', async (req, res) => {
 
 app.post('/api/ads', auth, async (req, res) => {
   const { side, face_type, asset, price, amount_total, min_rub, max_rub, payment_methods, terms, payment_time } = req.body;
-  
   const p = Number(price), at = Number(amount_total), mn = Number(min_rub), mx = Number(max_rub);
   if (!(p > 0) || !(at > 0) || !(mn > 0) || !(mx > 0) || mn > mx || mx > at * p) return res.status(400).json({ error: 'bad_amounts' });
-
-  if (side === 'sell' && req.user.role !== 'admin') {
-      if (Number(req.user.balance_usdt) < at) {
-          return res.status(400).json({ error: 'Недостаточно USDT для создания объявления' });
-      }
+  
+  // Только мейкеры/мерчанты/админы могут создавать объявления о продаже
+  if (side === 'sell') {
+    const isStaff = ['admin', 'owner', 'deputy'].includes(req.user.role);
+    const canCreateSellAd = isStaff || req.user.is_maker || req.user.is_merchant;
+    if (!canCreateSellAd) return res.status(403).json({ error: 'Только мейкеры и мерчанты могут создавать объявления о продаже' });
+    if (!isStaff && Number(req.user.balance_usdt) < at) return res.status(400).json({ error: 'Недостаточно USDT' });
   }
 
   try {
@@ -373,20 +454,15 @@ app.patch('/api/ads/:id', auth, async (req, res) => {
     const adRes = await pool.query('SELECT * FROM ads WHERE id = $1', [req.params.id]);
     const ad = adRes.rows[0];
     if (!ad || ad.user_id !== req.user.id) return res.status(403).json({ error: 'forbidden' });
-    
     if (active !== undefined && !price) {
        const result = await pool.query('UPDATE ads SET active = $1 WHERE id = $2 RETURNING *', [active, req.params.id]);
        return res.json(await shapeAd(result.rows[0]));
     }
-    
     const p = Number(price), mn = Number(min_rub), mx = Number(max_rub), at = Number(amount_total);
     if (!(p > 0) || !(mn > 0) || !(mx > 0) || mn > mx || !(at > 0)) return res.status(400).json({ error: 'bad_amounts' });
-
     const diff = at - Number(ad.amount_total);
     const newAmountLeft = Number(ad.amount_left) + diff;
-
-    if (newAmountLeft < 0) return res.status(400).json({ error: 'Недостаточно средств на балансе для увеличения объема' });
-
+    if (newAmountLeft < 0) return res.status(400).json({ error: 'Недостаточно средств' });
     const result = await pool.query(
       'UPDATE ads SET price = $1, min_rub = $2, max_rub = $3, payment_methods = $4, terms = $5, amount_total = $6, amount_left = $7 WHERE id = $8 RETURNING *',
       [p, mn, mx, payment_methods, terms, at, newAmountLeft, req.params.id]
@@ -398,14 +474,8 @@ app.patch('/api/ads/:id', auth, async (req, res) => {
 app.post('/api/exchange', auth, async (req, res) => {
   const { type, amount, rate } = req.body;
   if (!amount || amount <= 0) return res.status(400).json({ error: 'bad_amount' });
-  
-  if (type === 'buy' && Number(req.user.balance_rub) < Number(amount)) {
-      return res.status(400).json({ error: 'Недостаточно RUB' });
-  }
-  if (type === 'sell' && Number(req.user.balance_usdt) < Number(amount)) {
-      return res.status(400).json({ error: 'Недостаточно USDT' });
-  }
-
+  if (type === 'buy' && Number(req.user.balance_rub) < Number(amount)) return res.status(400).json({ error: 'Недостаточно RUB' });
+  if (type === 'sell' && Number(req.user.balance_usdt) < Number(amount)) return res.status(400).json({ error: 'Недостаточно USDT' });
   try {
     await pool.query("INSERT INTO requests (user_id, type, amount, currency, details, status) VALUES ($1, $2, $3, $4, $5, 'pending')", 
       [req.user.id, 'exchange', amount, type === 'buy' ? 'RUB' : 'USDT', JSON.stringify({ rate, exchange_type: type })]);
@@ -448,14 +518,16 @@ app.post('/api/orders', auth, async (req, res) => {
       [publicId, ad.id, buyerId, sellerId, ad.asset, ad.price, rub, assetQty, ad.face_type, payment_method, history, ad.payment_time || 30, 'pending']
     );
     await client.query('COMMIT');
-    
-    // Уведомление продавцу
-    notifyUser(sellerId, `🔔 <b>Новая заявка!</b>\nПокупатель хочет купить ${assetQty.toFixed(2)} ${ad.asset} за ${rub} ₽.\nЗайдите в приложение, чтобы принять заявку.`);
-
+    const orderData = { ...orderRes.rows[0], counterparty_username: req.user.username };
+    const sellerTgId = (await pool.query('SELECT telegram_id FROM users WHERE id = $1', [sellerId])).rows[0]?.telegram_id;
+    if (sellerTgId) {
+        const msg = formatOrderMsg(orderData, "🔥 Новая заявка на покупку!");
+        const buttons = [[{ text: "✅ Принять заявку", callback_data: `accept:${orderData.id}` }], [{ text: "❌ Отклонить", callback_data: `decline:${orderData.id}` }]];
+        await sendTG(sellerTgId, msg, buttons);
+    }
     res.status(201).json(await shapeOrder(orderRes.rows[0]));
   } catch (err) {
-    await client.query('ROLLBACK');
-    res.status(400).json({ error: err.message || 'order_error' });
+    await client.query('ROLLBACK'); res.status(400).json({ error: err.message || 'order_error' });
   } finally { client.release(); }
 });
 
@@ -496,10 +568,13 @@ app.post('/api/orders/:id/accept', auth, async (req, res) => {
   const o = oRes.rows[0];
   if (o.seller_id !== req.user.id || o.status !== 'pending') return res.status(403).json({ error: 'Доступ запрещен' });
   await transition(o.id, 'accepted', 'Заявка принята продавцом');
-  
-  // Уведомление покупателю
-  notifyUser(o.buyer_id, `✅ <b>Заявка принята!</b>\nПродавец принял вашу заявку на ${Number(o.amount_asset).toFixed(2)} ${o.asset}.\nПереведите ${Number(o.amount_rub)} ₽ и нажмите "Я оплатил".`);
-
+  const buyerTgId = (await pool.query('SELECT telegram_id FROM users WHERE id = $1', [o.buyer_id])).rows[0]?.telegram_id;
+  if (buyerTgId) {
+     const oData = {...o, counterparty_username: req.user.username};
+     const msg = formatOrderMsg(oData, "✅ Заявка принята!");
+     const btn = [[{ text: "💸 Я оплатил", callback_data: `paid:${o.id}` }]];
+     await sendTG(buyerTgId, msg, btn);
+  }
   res.json({ ok: true });
 });
 
@@ -508,9 +583,11 @@ app.post('/api/orders/:id/decline', auth, async (req, res) => {
   const o = oRes.rows[0];
   if (o.seller_id !== req.user.id || o.status !== 'pending') return res.status(403).json({ error: 'Доступ запрещен' });
   await transition(o.id, 'declined', 'Заявка отклонена продавцом');
-  
-  notifyUser(o.buyer_id, `❌ <b>Заявка отклонена</b>\nПродавец отклонил вашу заявку.`);
-
+  const buyerTgId = (await pool.query('SELECT telegram_id FROM users WHERE id = $1', [o.buyer_id])).rows[0]?.telegram_id;
+  if (buyerTgId) {
+     const oData = {...o, counterparty_username: req.user.username};
+     await sendTG(buyerTgId, formatOrderMsg(oData, "❌ Заявка отклонена продавцом"));
+  }
   res.json({ ok: true });
 });
 
@@ -519,10 +596,13 @@ app.post('/api/orders/:id/paid', auth, async (req, res) => {
   const o = oRes.rows[0];
   if (o.buyer_id !== req.user.id || o.status !== 'accepted') return res.status(409).json({ error: 'Неверный статус' });
   await transition(o.id, 'paid', 'Оплата отправлена'); 
-  
-  // Уведомление продавцу
-  notifyUser(o.seller_id, `💰 <b>Покупатель оплатил!</b>\nПокупатель нажал "Я оплатил" по сделке на ${Number(o.amount_rub)} ₽.\nПроверьте поступление средств и подтвердите сделку.`);
-
+  const sellerTgId = (await pool.query('SELECT telegram_id FROM users WHERE id = $1', [o.seller_id])).rows[0]?.telegram_id;
+  if (sellerTgId) {
+     const oData = {...o, counterparty_username: req.user.username};
+     const msg = formatOrderMsg(oData, "💰 Покупатель нажал 'Оплатил'!");
+     const btn = [[{ text: "✅ Подтвердить получение", callback_data: `confirm:${o.id}` }], [{ text: "🛡 Открыть спор", callback_data: `dispute:${o.id}` }]];
+     await sendTG(sellerTgId, msg, btn);
+  }
   res.json({ ok: true });
 });
 
@@ -537,16 +617,14 @@ app.post('/api/orders/:id/confirm', auth, async (req, res) => {
     const volumeToAdd = Number(o.amount_rub) / 90;
     await client.query('UPDATE users SET volume_usd = volume_usd + $1 WHERE id = $2', [volumeToAdd, o.buyer_id]);
     await client.query('UPDATE users SET volume_usd = volume_usd + $1 WHERE id = $2', [volumeToAdd, o.seller_id]);
-    
-    // Начисление балансов (упрощенно)
     await client.query('UPDATE users SET balance_usdt = balance_usdt + $1 WHERE id = $2', [o.amount_asset, o.buyer_id]);
     await client.query('UPDATE users SET balance_rub = balance_rub + $1 WHERE id = $2', [o.amount_rub, o.seller_id]);
-
     await client.query('COMMIT');
-
-    notifyUser(o.buyer_id, `🎉 <b>Сделка завершена!</b>\nПродавец подтвердил получение денег. ${Number(o.amount_asset).toFixed(2)} ${o.asset} зачислены на ваш баланс.`);
-    notifyUser(o.seller_id, `🎉 <b>Сделка завершена!</b>\n${Number(o.amount_rub)} ₽ зачислены на ваш баланс.`);
-
+    const buyerTgId = (await pool.query('SELECT telegram_id FROM users WHERE id = $1', [o.buyer_id])).rows[0]?.telegram_id;
+    if (buyerTgId) {
+       const oData = {...o, counterparty_username: req.user.username};
+       await sendTG(buyerTgId, formatOrderMsg(oData, "🎉 Сделка завершена! Средства зачислены."));
+    }
     res.json({ ok: true });
   } catch (e) { await client.query('ROLLBACK'); res.status(409).json({ error: 'Ошибка' }); }
   finally { client.release(); }
@@ -558,10 +636,12 @@ app.post('/api/orders/:id/cancel', auth, async (req, res) => {
   if (!['pending', 'accepted', 'paid'].includes(o.status)) return res.status(409).json({ error: 'bad' });
   if (o.buyer_id !== req.user.id && o.seller_id !== req.user.id) return res.status(403).json({ error: 'forbidden' });
   await transition(o.id, 'cancelled', 'Отменён пользователем'); 
-  
   const targetId = o.buyer_id === req.user.id ? o.seller_id : o.buyer_id;
-  notifyUser(targetId, `⚠️ <b>Сделка отменена</b>\nКонтрагент отменил сделку.`);
-
+  const targetTgId = (await pool.query('SELECT telegram_id FROM users WHERE id = $1', [targetId])).rows[0]?.telegram_id;
+  if (targetTgId) {
+      const oData = {...o, counterparty_username: req.user.username};
+      await sendTG(targetTgId, formatOrderMsg(oData, "⚠️ Контрагент отменил сделку."));
+  }
   res.json({ ok: true });
 });
 
@@ -571,10 +651,12 @@ app.post('/api/orders/:id/dispute', auth, async (req, res) => {
   if (!o || !['pending', 'accepted', 'paid'].includes(o.status)) return res.status(409).json({ error: 'bad' });
   if (o.buyer_id !== req.user.id && o.seller_id !== req.user.id) return res.status(403).json({ error: 'forbidden' });
   await transition(o.id, 'dispute', 'Открыт спор: ' + (req.body?.reason || '')); 
-  
   const targetId = o.buyer_id === req.user.id ? o.seller_id : o.buyer_id;
-  notifyUser(targetId, `🛑 <b>Открыт спор!</b>\nКонтрагент открыл спор по сделке. Пожалуйста, свяжитесь с поддержкой.`);
-
+  const targetTgId = (await pool.query('SELECT telegram_id FROM users WHERE id = $1', [targetId])).rows[0]?.telegram_id;
+  if (targetTgId) {
+      const oData = {...o, counterparty_username: req.user.username};
+      await sendTG(targetTgId, formatOrderMsg(oData, "🛑 Внимание! Открыт спор."));
+  }
   res.json({ ok: true });
 });
 
@@ -598,10 +680,8 @@ app.post('/api/orders/:id/resolve', auth, async (req, res) => {
       await client.query('UPDATE users SET balance_rub = balance_rub + $1 WHERE id = $2', [o.amount_rub, o.seller_id]);
     }
     await client.query('COMMIT');
-
-    notifyUser(o.buyer_id, `⚖️ <b>Спор решен!</b>\nАдминистрация вынесла решение: ${resolution === 'completed' ? 'в пользу продавца' : 'в пользу покупателя'}.`);
-    notifyUser(o.seller_id, `⚖️ <b>Спор решен!</b>\nАдминистрация вынесла решение: ${resolution === 'completed' ? 'в пользу продавца' : 'в пользу покупателя'}.`);
-
+    notifyUser(o.buyer_id, `⚖️ <b>Спор решен!</b>\nАдминистрация вынесла решение.`);
+    notifyUser(o.seller_id, `⚖️ <b>Спор решен!</b>\nАдминистрация вынесла решение.`);
     res.json({ ok: true });
   } catch (e) { await client.query('ROLLBACK'); res.status(409).json({ error: 'bad' }); }
   finally { client.release(); }
@@ -639,6 +719,7 @@ app.get('/api/reviews/user/:userId', async (req, res) => {
   res.json({ items: result.rows.map(r => ({ id: r.id, rating: r.rating, comment: r.comment, author: r.display_name, createdAt: r.created_at })) });
 });
 
+// --- ADMIN ROUTES ---
 app.get('/api/admin/users', auth, async (req, res) => {
   if (!['admin', 'owner', 'deputy'].includes(req.user.role)) return res.status(403).json({ error: 'forbidden' });
   try {
@@ -688,11 +769,7 @@ app.get('/api/admin/orders', auth, async (req, res) => {
 app.get('/api/admin/requests', auth, async (req, res) => {
   if (!['admin', 'owner', 'deputy'].includes(req.user.role)) return res.status(403).json({ error: 'forbidden' });
   try {
-    const result = await pool.query(`
-      SELECT r.*, u.username FROM requests r 
-      JOIN users u ON r.user_id = u.id 
-      ORDER BY r.created_at DESC
-    `);
+    const result = await pool.query(`SELECT r.*, u.username FROM requests r JOIN users u ON r.user_id = u.id ORDER BY r.created_at DESC`);
     res.json({ items: result.rows });
   } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
@@ -701,56 +778,37 @@ app.patch('/api/admin/requests/:id', auth, async (req, res) => {
   if (!['admin', 'owner', 'deputy'].includes(req.user.role)) return res.status(403).json({ error: 'forbidden' });
   const { status } = req.body; 
   const reqId = req.params.id;
-  
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     const rRes = await client.query('SELECT * FROM requests WHERE id = $1 FOR UPDATE', [reqId]);
     const request = rRes.rows[0];
-    
-    if (!request || ['completed', 'rejected', 'cancelled'].includes(request.status)) {
-      throw new Error('Заявка уже завершена или отменена');
-    }
-    
+    if (!request || ['completed', 'rejected', 'cancelled'].includes(request.status)) throw new Error('Заявка уже завершена');
     await client.query('UPDATE requests SET status = $1 WHERE id = $2', [status, reqId]);
-    
     if (status === 'approved') {
-      if (request.type === 'maker_req') {
-        await client.query('UPDATE users SET is_maker = true WHERE id = $1', [request.user_id]);
-      } else if (request.type === 'merchant_req') {
-        await client.query('UPDATE users SET is_merchant = true WHERE id = $1', [request.user_id]);
-      } else if (request.type === 'deposit_rub') {
-        await client.query('UPDATE users SET balance_rub = balance_rub + $1 WHERE id = $2', [request.amount, request.user_id]);
-      } else if (request.type === 'withdraw_rub') {
-        await client.query('UPDATE users SET balance_rub = balance_rub - $1 WHERE id = $2', [request.amount, request.user_id]);
-      } else if (request.type === 'deposit_usdt') {
-        await client.query('UPDATE users SET balance_usdt = balance_usdt + $1 WHERE id = $2', [request.amount, request.user_id]);
-      } else if (request.type === 'withdraw_usdt') {
-        await client.query('UPDATE users SET balance_usdt = balance_usdt - $1 WHERE id = $2', [request.amount, request.user_id]);
-      } else if (request.type === 'exchange') {
+      if (request.type === 'maker_req') await client.query('UPDATE users SET is_maker = true WHERE id = $1', [request.user_id]);
+      else if (request.type === 'merchant_req') await client.query('UPDATE users SET is_merchant = true WHERE id = $1', [request.user_id]);
+      else if (request.type === 'deposit_rub') await client.query('UPDATE users SET balance_rub = balance_rub + $1 WHERE id = $2', [request.amount, request.user_id]);
+      else if (request.type === 'withdraw_rub') await client.query('UPDATE users SET balance_rub = balance_rub - $1 WHERE id = $2', [request.amount, request.user_id]);
+      else if (request.type === 'deposit_usdt') await client.query('UPDATE users SET balance_usdt = balance_usdt + $1 WHERE id = $2', [request.amount, request.user_id]);
+      else if (request.type === 'withdraw_usdt') await client.query('UPDATE users SET balance_usdt = balance_usdt - $1 WHERE id = $2', [request.amount, request.user_id]);
+      else if (request.type === 'exchange') {
         const details = request.details;
         if (details.exchange_type === 'buy') {
-          const rubAmount = Number(request.amount);
-          const usdtAmount = rubAmount / details.rate;
+          const rubAmount = Number(request.amount); const usdtAmount = rubAmount / details.rate;
           await client.query('UPDATE users SET balance_rub = balance_rub - $1, balance_usdt = balance_usdt + $2 WHERE id = $3', [rubAmount, usdtAmount, request.user_id]);
         } else {
-          const usdtAmount = Number(request.amount);
-          const rubAmount = usdtAmount * details.rate;
+          const usdtAmount = Number(request.amount); const rubAmount = usdtAmount * details.rate;
           await client.query('UPDATE users SET balance_usdt = balance_usdt - $1, balance_rub = balance_rub + $2 WHERE id = $3', [usdtAmount, rubAmount, request.user_id]);
         }
       }
     }
     await client.query('COMMIT');
-    
-    // Уведомление пользователю о статусе заявки
     const statusText = status === 'approved' ? 'одобрена ✅' : status === 'rejected' ? 'отклонена ❌' : 'отменена';
     notifyUser(request.user_id, `📄 <b>Статус заявки обновлен</b>\nВаша заявка была ${statusText}.`);
-
     res.json({ ok: true });
-  } catch(e) {
-    await client.query('ROLLBACK');
-    res.status(400).json({ error: e.message || 'error' });
-  } finally { client.release(); }
+  } catch(e) { await client.query('ROLLBACK'); res.status(400).json({ error: e.message || 'error' }); }
+  finally { client.release(); }
 });
 
 app.use(express.static(path.join(__dirname)));

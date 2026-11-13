@@ -38,13 +38,18 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
 
-    // --- ЛОГИКА TELEGRAM MINI APP ---
+    // --- TELEGRAM MINI APP + FULLSCREEN ---
     async function initTelegramAuth() {
       if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
-        window.Telegram.WebApp.setHeaderColor('#030712');
-        window.Telegram.WebApp.expand(); 
+        const tg = window.Telegram.WebApp;
+        try { tg.ready(); } catch(e) {}
+        try { tg.expand(); } catch(e) {}
+        try { if (tg.requestFullscreen) tg.requestFullscreen(); } catch(e) { console.log('FS err', e); }
+        try { if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch(e) {}
+        try { tg.setHeaderColor('#030712'); } catch(e) {}
+        try { tg.setBackgroundColor('#030712'); } catch(e) {}
 
-        const initData = window.Telegram.WebApp.initData;
+        const initData = tg.initData;
         
         if (API.token()) return; 
 
@@ -61,7 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('vexo_user', JSON.stringify(data.user));
             
             updateAuthUI();
-            // Тихо обновляем кэш экранов, если они были открыты
             screenCache.profile = false; screenCache.wallet = false;
             toast('Вход через Telegram выполнен!', 'success');
           }
@@ -71,8 +75,18 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Запускаем авторизацию
+    // --- ОБРАБОТКА ГЛУБОКИХ ССЫЛОК (DEEP LINKS) ---
+    function initDeepLink() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetScreen = urlParams.get('screen');
+      
+      if (targetScreen) {
+        setTimeout(() => show(targetScreen), 300);
+      }
+    }
+
     initTelegramAuth();
+    initDeepLink();
 
     const fmt = (n) => new Intl.NumberFormat('ru-RU').format(n || 0);
     const fmtDec = (n, d = 2) => new Intl.NumberFormat('ru-RU', { minimumFractionDigits: d, maximumFractionDigits: d }).format(n || 0);
@@ -112,6 +126,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function closeModal(id) { const el = document.getElementById(id); if (el) el.classList.remove('active'); }
     window.closeModal = closeModal;
+
+    // --- ЛОГИКА КАЛЬКУЛЯТОРА СПРЕДА (защита от двойной инициализации) ---
+    function initSpreadCalculator() {
+      if (window._spreadInited) return;
+      const buyInput = document.getElementById('calc-buy-price');
+      const sellInput = document.getElementById('calc-sell-price');
+      const amountInput = document.getElementById('calc-amount');
+      const feeInput = document.getElementById('calc-fee');
+      if (!buyInput) return;
+      window._spreadInited = true;
+
+      const calculate = () => {
+        const buy = parseFloat(buyInput.value) || 0;
+        const sell = parseFloat(sellInput.value) || 0;
+        const amount = parseFloat(amountInput.value) || 0;
+        const fee = parseFloat(feeInput.value) || 0;
+        const spreadVal = sell - buy;
+        const spreadPct = buy > 0 ? (spreadVal / buy) * 100 : 0;
+        const totalBuy = buy * amount;
+        const totalSell = sell * amount;
+        const profit = (spreadVal * amount) - fee;
+
+        document.getElementById('calc-spread-val').textContent = fmtDec(spreadVal, 2) + ' ₽';
+        document.getElementById('calc-spread-pct').textContent = fmtDec(spreadPct, 2) + ' %';
+        document.getElementById('calc-total-buy').textContent = fmt(totalBuy) + ' ₽';
+        document.getElementById('calc-total-sell').textContent = fmt(totalSell) + ' ₽';
+
+        const profitEl = document.getElementById('calc-profit');
+        profitEl.textContent = fmtDec(profit, 2) + ' ₽';
+        if (profit > 0) profitEl.style.color = 'var(--grn)';
+        else if (profit < 0) profitEl.style.color = 'var(--red)';
+        else profitEl.style.color = 'var(--txt)';
+      };
+
+      [buyInput, sellInput, amountInput, feeInput].forEach(input => input.addEventListener('input', calculate));
+    }
 
     (function initCarousel() {
       if (window.bannerInited) return;
@@ -183,6 +233,32 @@ document.addEventListener('DOMContentLoaded', () => {
     let previousScreen = 'home';
     const screenCache = {};
 
+    function initCreateScreen() {
+      const u = API.user();
+      if (!u) return;
+      const isStaff = ['admin', 'owner', 'deputy'].includes(u.role);
+      const canSell = isStaff || u.isMaker || u.isMerchant;
+      const sellBtn = document.querySelector('#f-side .seg-btn[data-val="sell"]');
+      const buyBtn  = document.querySelector('#f-side .seg-btn[data-val="buy"]');
+      if (!sellBtn || !buyBtn) return;
+      if (!sellBtn.dataset.origText) sellBtn.dataset.origText = sellBtn.textContent;
+      if (!canSell) {
+        sellBtn.disabled = true;
+        sellBtn.style.opacity = '0.4';
+        sellBtn.style.cursor = 'not-allowed';
+        sellBtn.textContent = 'Я продаю (нужен Мейкер)';
+        if (sellBtn.classList.contains('active')) {
+          sellBtn.classList.remove('active');
+          buyBtn.classList.add('active');
+        }
+      } else {
+        sellBtn.disabled = false;
+        sellBtn.style.opacity = '1';
+        sellBtn.style.cursor = '';
+        sellBtn.textContent = sellBtn.dataset.origText;
+      }
+    }
+
     function show(name) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       const target = document.getElementById('screen-' + name);
@@ -201,6 +277,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (name === 'home' && !screenCache.home) { loadHomeRate(); screenCache.home = true; }
         if (name === 'wallet') { loadWallet(); screenCache.wallet = true; }
         if (name === 'admin') { loadAdmin(); } 
+        if (name === 'spread') { initSpreadCalculator(); }
+        if (name === 'create') { initCreateScreen(); }
       } catch(e) { console.error('show error:', e); }
       
       window.scrollTo(0, 0);
@@ -348,7 +426,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="amount">${fmt(totalBalanceRub)} <span>₽</span></div>
               <div class="wallet-actions">
                 <button class="btn btn-primary btn-sm" id="btnDeposit" style="flex:1;">Пополнить</button>
-                <button class="btn btn-primary btn-sm" id="btnWithdraw" style="flex:1;">Вывести</button>
+                <button class="btn btn-ghost btn-sm" id="btnWithdraw" style="flex:1;">Вывести</button>
               </div>
             </div>
             <h3 style="margin-top: 12px; font-size: 13px; margin-bottom: 8px;">Активы</h3>
@@ -697,6 +775,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('#f-side .seg-btn').forEach(b => {
       b.onclick = () => {
+        if (b.disabled) return;
         document.querySelectorAll('#f-side .seg-btn').forEach(x => x.classList.remove('active'));
         b.classList.add('active');
       };
@@ -728,6 +807,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const asset = document.querySelector('#f-asset-select .icon-chip.active')?.dataset.val;
 
       if (side === 'sell') {
+         const isStaff = ['admin', 'owner', 'deputy'].includes(u.role);
+         if (!isStaff && !u.isMaker && !u.isMerchant) {
+             toast('Только мейкеры и мерчанты могут создавать объявления о продаже', 'error');
+             return;
+         }
          if (u.balanceUsdt < Number(amount)) {
              toast(`Недостаточно ${asset} на балансе (Нужно: ${fmtDec(amount, 2)})`, 'error');
              return;
@@ -1062,6 +1146,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       try {
         const { user, stats } = await API.req('GET', '/users/me');
+        localStorage.setItem('vexo_user', JSON.stringify(user));
         
         const proBadge = user.isPro ? `<span class="badge-pro" title="PRO">${ICONS.pro}</span>` : '';
         const merchantBadge = user.isMerchant ? `<span class="badge-merchant" title="Merchant">${ICONS.merchant}</span>` : '';
@@ -1350,6 +1435,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const ad = (window._ads || {})[adId];
       if (!ad) return;
       currentAd = ad; selectedPay = ad.paymentMethods?.[0] || null;
+      window.currentAd = ad; // на случай если где-то ещё понадобится
       const isBuy = ad.side === 'sell';
       
       const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
@@ -1365,6 +1451,12 @@ document.addEventListener('DOMContentLoaded', () => {
       setText('orderTotalBottom', '0 RUB');
       setText('orderTerms', ad.terms || 'Стандартные условия сделки.');
       setText('orderError', '');
+
+      // Фикс: клик на карточку контрагента теперь вешается через JS
+      const ownerProfileEl = document.getElementById('orderAdOwnerProfile');
+      if (ownerProfileEl) {
+        ownerProfileEl.onclick = () => openPublicProfile(ad.userId);
+      }
 
       const amountInput = document.getElementById('orderAmount');
       if (amountInput) {
@@ -1710,6 +1802,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // СТАРТ
+    initSpreadCalculator();
     updateAuthUI();
     updateNotifUI();
     try { loadHomeRate(); } catch(e) { console.error('Initial loadHomeRate:', e); }

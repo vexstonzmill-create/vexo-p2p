@@ -2,11 +2,9 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
   <title>VEXO</title>
-  <!-- СКРИПТ TELEGRAM MINI APP -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -29,6 +27,7 @@
     <button class="nav-btn active" data-screen="home">Главная</button>
     <button class="nav-btn" data-screen="market">Маркет</button>
     <button class="nav-btn" data-screen="create">Создать объявление</button>
+    <button class="nav-btn" data-screen="spread">Калькулятор</button>
     <button class="nav-btn" data-screen="orders">Мои ордера</button>
     <button class="nav-btn" data-screen="wallet">Кошелёк</button>
     <button class="nav-btn" data-screen="profile">Профиль</button>
@@ -277,6 +276,63 @@
         </div>
       </section>
 
+      <section class="screen" id="screen-spread">
+        <h2 style="margin-bottom: 12px; font-size: 16px; font-weight: 800;">Калькулятор спреда</h2>
+        
+        <div class="glass-card" style="padding: 16px;">
+          <p style="font-size: 12px; color: var(--dim); margin-bottom: 16px;">Введите цены покупки и продажи, чтобы рассчитать чистую прибыль с учетом объема.</p>
+
+          <div class="field" style="margin-bottom: 12px;">
+            <label>Цена покупки (₽)</label>
+            <input class="input" type="number" id="calc-buy-price" placeholder="Например: 85.00" style="height: 50px; font-size: 18px; font-weight: 800;">
+          </div>
+
+          <div class="field" style="margin-bottom: 12px;">
+            <label>Цена продажи (₽)</label>
+            <input class="input" type="number" id="calc-sell-price" placeholder="Например: 90.00" style="height: 50px; font-size: 18px; font-weight: 800;">
+          </div>
+
+          <div class="grid-2-col" style="margin-bottom: 16px;">
+            <div class="field" style="margin-bottom: 0;">
+              <label>Объем (USDT)</label>
+              <input class="input" type="number" id="calc-amount" placeholder="1000" style="height: 44px;">
+            </div>
+            <div class="field" style="margin-bottom: 0;">
+              <label>Комиссия (₽)</label>
+              <input class="input" type="number" id="calc-fee" placeholder="0" style="height: 44px;">
+            </div>
+          </div>
+
+          <div class="inner-card" style="padding: 16px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="font-size: 13px; color: var(--dim); font-weight: 600;">Разница (Спред):</span>
+              <strong id="calc-spread-val" style="font-size: 14px; color: var(--txt);">0.00 ₽</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="font-size: 13px; color: var(--dim); font-weight: 600;">Спред в %:</span>
+              <strong id="calc-spread-pct" style="font-size: 14px; color: var(--txt);">0.00 %</strong>
+            </div>
+            <div style="height: 1px; background: var(--glass-border); margin: 12px 0;"></div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 14px; color: var(--txt); font-weight: 800;">Чистая прибыль:</span>
+              <strong id="calc-profit" style="font-size: 20px; color: var(--grn);">0.00 ₽</strong>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div style="background: var(--glass-bg); padding: 10px; border-radius: 10px; text-align: center;">
+              <div style="font-size: 10px; color: var(--dim); margin-bottom: 2px;">Потрачено</div>
+              <div id="calc-total-buy" style="font-size: 13px; font-weight: 800;">0 ₽</div>
+            </div>
+            <div style="background: var(--glass-bg); padding: 10px; border-radius: 10px; text-align: center;">
+              <div style="font-size: 10px; color: var(--dim); margin-bottom: 2px;">Получено</div>
+              <div id="calc-total-sell" style="font-size: 13px; font-weight: 800;">0 ₽</div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
       <section class="screen" id="screen-orders">
         <h2 style="margin-bottom: 12px; font-size: 16px; font-weight: 800;">Мои ордера</h2>
         <div class="tabs" id="ordersFilter">
@@ -315,6 +371,7 @@
       <button class="bn-btn active" data-screen="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Главная</button>
       <button class="bn-btn" data-screen="market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Маркет</button>
       <button class="bn-btn" data-screen="create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Создать</button>
+      <button class="bn-btn" data-screen="spread"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8" y2="10.01"/><line x1="12" y1="10" x2="12" y2="10.01"/><line x1="16" y1="10" x2="16" y2="10.01"/><line x1="8" y1="14" x2="8" y2="14.01"/><line x1="12" y1="14" x2="12" y2="14.01"/><line x1="16" y1="14" x2="16" y2="14.01"/><line x1="8" y1="18" x2="8" y2="18.01"/><line x1="12" y1="18" x2="12" y2="18.01"/><line x1="16" y1="18" x2="16" y2="18.01"/></svg>Спред</button>
       <button class="bn-btn" data-screen="orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>Ордера</button>
       <button class="bn-btn" data-screen="wallet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M16 12h4"/></svg>Кошелёк</button>
       <button class="bn-btn" data-screen="profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Профиль</button>
@@ -545,7 +602,7 @@
     <div class="field" style="margin-bottom: 0;">
       <div class="icon-scroll" id="orderPayments"></div>
     </div>
-    <div id="orderAdOwnerProfile" class="inner-card" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 10px;" onclick="openPublicProfile(window._ads[currentAd.id].userId)">
+    <div id="orderAdOwnerProfile" class="inner-card" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 10px;">
       <div class="avatar" id="orderAvatar" style="width: 28px; height: 28px; font-size: 12px;">?</div>
       <div>
         <div style="font-weight: 800; font-size: 12px;" id="orderUsername">-</div>
@@ -629,28 +686,5 @@
 </div>
 
 <script src="app.js"></script>
-<script>
-  setTimeout(() => {
-    const loader = document.getElementById('loader');
-    if (loader) {
-      loader.style.opacity = '0';
-      setTimeout(() => loader.style.display = 'none', 500);
-    }
-  }, 1500);
-</script>
-</body>
-</html>oader');
-    if (loader) {
-      loader.style.opacity = '0';
-      setTimeout(() => loader.style.display = 'none', 500);
-    }
-  }, 1500);
-</script>
-</body>
-</html>acity = '0';
-      setTimeout(() => loader.style.display = 'none', 500);
-    }
-  }, 1500);
-</script>
 </body>
 </html>
