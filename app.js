@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }, 800);
 
-    // --- ИКОНКИ БАНКОВ ---
     const PAY_ICONS = {
       'СБП': `<svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" fill="#0055BB"/><path d="M0 0h12v12H0z" fill="#FF0033"/><path d="M12 12h12v12H12z" fill="#00CC00"/><path d="M12 0h12v12H12z" fill="#FFCC00"/><path d="M0 12h12v12H0z" fill="#0055BB"/><path d="M6 8h12v2H6zM6 14h12v2H6z" fill="#fff"/></svg>`,
       'Тинькофф': `<svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" rx="4" fill="#FFDD2D"/><path d="M12 5l6 3v4c0 3.5-2.5 6.5-6 7-3.5-.5-6-3.5-6-7V8l6-3z" fill="#000"/></svg>`,
@@ -223,10 +222,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=rub');
         const data = await res.json();
         if (data && data.tether && data.tether.rub) {
-          document.getElementById('homeUsdtRate').textContent = fmt(data.tether.rub) + ' ₽';
+          document.getElementById('homeUsdtRate').textContent = fmtDec(data.tether.rub, 2) + ' ₽';
         }
       } catch(e) {
-        document.getElementById('homeUsdtRate').textContent = '90 ₽'; 
+        document.getElementById('homeUsdtRate').textContent = '90.00 ₽'; 
       }
     }
 
@@ -317,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         if (name === 'market') { 
           if (!screenCache.market) { loadMarket(); screenCache.market = true; }
-          document.querySelector('.mm-tab[data-mtab="p2p"]')?.click();
+          document.querySelector('.mode-btn[data-mode="p2p"]')?.click();
         }
         if (name === 'profile' && !screenCache.profile) { loadProfile(); screenCache.profile = true; }
         if (name === 'home' && !screenCache.home) { loadHomeRate(); screenCache.home = true; }
@@ -483,7 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <p style="color: var(--dim); font-size: 13px; margin-bottom: 16px;">Балансы и история</p>
             <div class="wallet-hero">
               <div class="lbl">Общий баланс</div>
-              <div class="amount">${fmt(totalBalanceRub)} <span>₽</span></div>
+              <div class="amount">${fmtDec(totalBalanceRub, 2)} <span>₽</span></div>
               <div class="wallet-actions">
                 <button class="btn btn-primary btn-sm" id="btnDeposit" style="flex:1;">Пополнить</button>
                 <button class="btn btn-ghost btn-sm" id="btnWithdraw" style="flex:1;">Вывести</button>
@@ -491,8 +490,22 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <h3 style="margin-top: 16px; font-size: 15px; margin-bottom: 12px;">Активы</h3>
             <div class="wallet-list">
-              <div class="wallet-item"><div class="coin-icon rub">₽</div><div class="w-info"><div class="w-name" style="font-weight:700; font-size:15px;">Российский рубль</div><div class="w-sub" style="font-size:12px;color:var(--dim);">RUB · фиат</div></div><div class="w-bal" style="margin-left:auto; font-weight:800; font-size:16px;">${fmt(freshUser.balanceRub)} ₽</div></div>
-              <div class="wallet-item"><div class="coin-icon usdt">₮</div><div class="w-info"><div class="w-name" style="font-weight:700; font-size:15px;">Tether</div><div class="w-sub" style="font-size:12px;color:var(--dim);">USDT · TRC-20</div></div><div class="w-bal" style="margin-left:auto; font-weight:800; font-size:16px;">${fmtDec(freshUser.balanceUsdt, 2)} <span style="font-size:12px;color:var(--dim);">≈ ${fmt(estimatedRub)} ₽</span></div></div>
+              <div class="wallet-item">
+                <div class="coin-icon rub">₽</div>
+                <div class="w-info">
+                  <div class="w-name" style="font-weight:700; font-size:15px;">Российский рубль</div>
+                  <div class="w-sub" style="font-size:12px;color:var(--dim);">RUB · фиат</div>
+                </div>
+                <div class="w-bal" style="margin-left:auto; font-weight:800; font-size:16px;">${fmtDec(freshUser.balanceRub, 2)} ₽</div>
+              </div>
+              <div class="wallet-item">
+                <div class="coin-icon usdt">₮</div>
+                <div class="w-info">
+                  <div class="w-name" style="font-weight:700; font-size:15px;">Tether</div>
+                  <div class="w-sub" style="font-size:12px;color:var(--dim);">USDT · TRC-20</div>
+                </div>
+                <div class="w-bal" style="margin-left:auto; font-weight:800; font-size:16px;">${fmtDec(freshUser.balanceUsdt, 2)} <span style="font-size:12px;color:var(--dim);">≈ ${fmtDec(estimatedRub, 2)} ₽</span></div>
+              </div>
             </div>`;
             
           document.getElementById('btnDeposit').onclick = () => { 
@@ -543,30 +556,61 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!u) { closeModal('walletActionModal'); document.getElementById('authModal')?.classList.add('active'); return; }
       
       const amount = document.getElementById('walletActionAmount')?.value;
-      const tg = document.getElementById('walletActionTg')?.value.trim();
       const currency = document.querySelector('#walletAssetSelect .seg-btn.active').dataset.val;
       
       if (!amount || Number(amount) <= 0) return toast('Введите сумму', 'error');
-      if (!tg) return toast('Введите Telegram', 'error');
+
+      const btn = document.getElementById('walletActionSubmit'); 
+      btn.disabled = true; btn.textContent = '...';
+
+      // 1. АВТОМАТИЧЕСКОЕ ПОПОЛНЕНИЕ USDT (ЧЕРЕЗ NOWPAYMENTS)
+      if (walletActionType === 'deposit' && currency === 'USDT') {
+        try {
+          const data = await API.req('POST', '/wallet/deposit-crypto', { amount: Number(amount), currency: 'usdt' });
+          
+          closeModal('walletActionModal');
+          const overlay = document.getElementById('dialogOverlay');
+          const content = document.getElementById('dialogContent');
+          
+          // Показываем адрес и сумму для перевода
+          content.innerHTML = `
+            <h3 style="font-size:18px;font-weight:800;color:var(--txt);margin-bottom:8px;">Оплата USDT</h3>
+            <p style="font-size:14px;color:var(--dim);margin-bottom:12px;">Отправьте ровно <b>${data.pay_amount} USDT</b> на адрес:</p>
+            <div style="background:rgba(0,0,0,0.4);padding:14px;border-radius:12px;word-break:break-all;font-family:monospace;font-size:15px;color:var(--grn);margin-bottom:16px;border:1px solid var(--glass-border);text-align:center;">
+              ${data.pay_address}
+            </div>
+            <p style="font-size:12px;color:var(--yellow);margin-bottom:16px;line-height: 1.4;">⚠️ Внимание! Сеть должна быть <b>TRC-20 (Tron)</b>. Баланс зачислится автоматически после подтверждения транзакции в сети (1-3 минуты).</p>
+            <button class="btn btn-primary" style="width:100%;height:44px;" onclick="document.getElementById('dialogOverlay').classList.remove('active'); loadWallet();">Я понял</button>
+          `;
+          overlay.classList.add('active');
+          
+        } catch(e) {
+          toast(e.message || 'Ошибка платежного шлюза', 'error');
+        } finally {
+          btn.disabled = false; btn.textContent = 'Отправить';
+        }
+        return; // Выходим из функции
+      }
+
+      // 2. РУЧНОЙ ВЫВОД (ИЛИ ПОПОЛНЕНИЕ RUB)
+      const tg = document.getElementById('walletActionTg')?.value.trim();
+      if (!tg) { btn.disabled = false; btn.textContent = 'Отправить'; return toast('Введите Telegram', 'error'); }
 
       let payload = { type: walletActionType === 'deposit' ? `deposit_${currency.toLowerCase()}` : `withdraw_${currency.toLowerCase()}`, amount: Number(amount), currency, tg_username: tg, user_id: u.id };
 
       if (currency === 'RUB') {
-        const bank = document.getElementById('walletBankSelect').value;
-        payload.requisites = bank; 
+        payload.requisites = document.getElementById('walletBankSelect').value;
       } else {
-        const network = document.getElementById('walletNetwork').value;
         const address = document.getElementById('walletAddress').value.trim();
-        if (!address) return toast('Введите адрес кошелька', 'error');
+        if (!address) { btn.disabled = false; btn.textContent = 'Отправить'; return toast('Введите адрес кошелька', 'error'); }
         payload.requisites = address;
-        payload.network = network;
+        payload.network = document.getElementById('walletNetwork').value;
       }
       
-      const btn = document.getElementById('walletActionSubmit'); btn.disabled = true; btn.textContent = '...';
       try {
         await API.req('POST', '/requests/finance', payload); 
         toast('Заявка создана!', 'success');
-        addNotification('Заявка на ' + (walletActionType === 'deposit' ? 'пополнение' : 'вывод') + ' создана', 'info');
+        addNotification('Заявка на вывод создана', 'info');
         closeModal('walletActionModal'); 
       } catch(e) {
         toast(e.message || 'Ошибка', 'error');
@@ -633,12 +677,26 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.onclick = () => {
         document.querySelectorAll('#marketModeSwitch .mode-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+
+        const mainTabs = document.getElementById('marketMainTabs');
+        const fastContent = document.getElementById('fast-exchange-content');
+        const tabContents = document.querySelectorAll('.market-tab-content');
+
         if (btn.dataset.mode === 'p2p') {
-          document.getElementById('p2p-market-content').style.display = 'block';
-          document.getElementById('fast-exchange-content').style.display = 'none';
+          mainTabs.style.display = 'flex';
+          tabContents.forEach(c => c.classList.remove('active'));
+          
+          const activeTab = document.querySelector('.mm-tab.active');
+          if (activeTab) {
+            document.getElementById('mtab-' + activeTab.dataset.mtab).classList.add('active');
+          } else {
+            document.getElementById('mtab-p2p').classList.add('active');
+          }
+          fastContent.style.display = 'none';
         } else {
-          document.getElementById('p2p-market-content').style.display = 'none';
-          document.getElementById('fast-exchange-content').style.display = 'block';
+          mainTabs.style.display = 'none';
+          tabContents.forEach(c => c.classList.remove('active'));
+          fastContent.style.display = 'block';
           initFastExchange();
         }
       };
@@ -676,7 +734,7 @@ document.addEventListener('DOMContentLoaded', () => {
               rate = basePrice * 0.97; 
               result = amount * rate; 
               document.getElementById('exInputLabel').textContent = 'Сумма в USDT';
-              document.getElementById('exResultDisplay').textContent = `${fmt(result)} RUB`;
+              document.getElementById('exResultDisplay').textContent = `${fmtDec(result, 2)} RUB`;
               document.getElementById('exSubmitBtn').style.background = 'var(--red)';
               document.getElementById('exSubmitBtn').textContent = 'Продать USDT';
           }
@@ -733,7 +791,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const faceLabel = ad.faceType === 'first' ? '1-е лицо' : '3-е лицо';
       window._ads = window._ads || {}; window._ads[ad.id] = ad;
       
-      // Применяем иконки
       const pays = (ad.paymentMethods || []).map(p => `<span class="pay-tag" style="background:rgba(255,255,255,0.1); border:1px solid var(--glass-border); padding:4px 8px; border-radius:6px; font-size:11px; font-weight:600; color:var(--txt); display:inline-flex; align-items:center; gap:4px;">${getPayIcon(p)} ${p}</span>`).join('');
       
       let avatarHtml = `<div class="avatar">${ad.displayName[0].toUpperCase()}</div>`;
@@ -753,7 +810,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div class="ad-body">
           <div class="ad-price-block">
-             <div class="ad-price">${fmt(ad.price)} ₽</div>
+             <div class="ad-price">${fmtDec(ad.price, 2)} ₽</div>
              <div class="ad-limits">Лимиты: ${fmt(ad.minRub)} - ${fmt(ad.maxRub)} RUB</div>
              <div class="ad-amount">Доступно: ${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div>
              ${pays ? `<div class="ad-pay-methods" style="justify-content:flex-start;margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;">${pays}</div>` : ''}
@@ -920,7 +977,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <span style="color:${sc[o.status] || 'var(--txt)'};font-size:12px;font-weight:800">${o.statusLabel}</span>
             </div>
             <div class="ad-body">
-              <div><div style="font-size:12px;color:var(--dim);">Сумма</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmt(o.amountRub)} ₽</div></div>
+              <div><div style="font-size:12px;color:var(--dim);">Сумма</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmtDec(o.amountRub, 2)} ₽</div></div>
               <div><div style="font-size:12px;color:var(--dim);">Актив</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmtDec(o.amountAsset, 2)} ${o.asset}</div></div>
             </div>
             <div style="font-size:12px;color:var(--dim);display:flex;justify-content:space-between;font-weight:600;margin-top:12px;">
@@ -1056,7 +1113,7 @@ document.addEventListener('DOMContentLoaded', () => {
              <div style="background:var(--glass-bg);color:${sc[order.status]};font-size:13px;font-weight:800;padding:4px 10px;border-radius:6px">${order.statusLabel}</div>
           </div>
           <h2 style="font-size:22px;font-weight:900;margin-bottom:6px;color:var(--txt)">${isBuyer ? 'Покупка ' : 'Продажа '}${order.asset}</h2>
-          <div style="font-size:32px;font-weight:900;color:var(--txt);font-variant-numeric:tabular-nums;">${fmt(order.amount_rub)}<span style="font-size:16px;color:var(--dim);font-weight:600;margin-left:4px">₽</span></div>
+          <div style="font-size:32px;font-weight:900;color:var(--txt);font-variant-numeric:tabular-nums;">${fmtDec(order.amount_rub, 2)}<span style="font-size:16px;color:var(--dim);font-weight:600;margin-left:4px">₽</span></div>
           <div style="width:100%;height:6px;background:var(--glass-border);border-radius:3px;margin-top:16px;overflow:hidden"><div style="height:100%;width:${progress}%;background:${sc[order.status]};transition:0.3s"></div></div>
         </div>
         
@@ -1073,7 +1130,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
           <div class="glass-card" style="padding:14px;"><div style="font-size:12px;color:var(--dim);font-weight:700;margin-bottom:4px;">Количество</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmtDec(order.amount_asset, 2)} ${order.asset}</div></div>
-          <div class="glass-card" style="padding:14px;"><div style="font-size:12px;color:var(--dim);font-weight:700;margin-bottom:4px;">Курс</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmt(order.price)} ₽</div></div>
+          <div class="glass-card" style="padding:14px;"><div style="font-size:12px;color:var(--dim);font-weight:700;margin-bottom:4px;">Курс</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmtDec(order.price, 2)} ₽</div></div>
         </div>
         
         <div class="glass-card" style="padding:16px;margin-bottom:16px;">
@@ -1335,7 +1392,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       try {
         const { items } = await API.req('GET', '/ads/my');
-        const activeItems = items.filter(ad => ad.active);
+        const activeItems = items.filter(ad => ad.active); 
 
         list.innerHTML = activeItems.length ? activeItems.map(ad => `
           <div class="glass-card" style="margin-bottom:12px; padding:16px;">
@@ -1389,7 +1446,6 @@ document.addEventListener('DOMContentLoaded', () => {
         allPayments.forEach(p => {
            const el = document.createElement('div');
            el.className = 'pay-chip' + (ad.paymentMethods.includes(p) ? ' active' : '');
-           // Добавляем иконку в редактирование
            el.innerHTML = `${getPayIcon(p)} ${p}`;
            el.style.display = 'inline-flex'; el.style.alignItems = 'center'; el.style.gap = '4px';
            el.onclick = () => el.classList.toggle('active');
@@ -1428,7 +1484,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const list = document.getElementById('myHistoryList'); if (!list) return;
       try {
         const { items } = await API.req('GET', '/orders/my?status=completed');
-        list.innerHTML = items.length ? items.map(o => `<div class="glass-card" style="margin-bottom:12px; border-left:4px solid var(--grn); padding:16px;"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><strong style="font-size:15px;">#${o.publicId}</strong><span style="color:var(--grn);font-size:12px;font-weight:700;">Завершен</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div><div style="font-size:12px;color:var(--dim);font-weight:600;">Сумма</div><div style="font-size:15px;font-weight:800;">${fmt(o.amountRub)} ₽</div></div><div><div style="font-size:12px;color:var(--dim);font-weight:600;">Актив</div><div style="font-size:15px;font-weight:800;">${fmtDec(o.amountAsset, 2)} ${o.asset}</div></div></div></div>`).join('') : '<div class="empty-state">Пусто</div>';
+        list.innerHTML = items.length ? items.map(o => `<div class="glass-card" style="margin-bottom:12px; border-left:4px solid var(--grn); padding:16px;"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><strong style="font-size:15px;">#${o.publicId}</strong><span style="color:var(--grn);font-size:12px;font-weight:700;">Завершен</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div><div style="font-size:12px;color:var(--dim);font-weight:600;">Сумма</div><div style="font-size:15px;font-weight:800;">${fmtDec(o.amountRub, 2)} ₽</div></div><div><div style="font-size:12px;color:var(--dim);font-weight:600;">Актив</div><div style="font-size:15px;font-weight:800;">${fmtDec(o.amountAsset, 2)} ${o.asset}</div></div></div></div>`).join('') : '<div class="empty-state">Пусто</div>';
       } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     }
 
@@ -1470,7 +1526,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <strong style="font-size:15px; color:var(--txt);">${typeLabel} (ID: ${r.user_id})</strong>
               <span style="color:${st.c}; font-size:12px; font-weight:800; text-transform:uppercase;">${st.l}</span>
             </div>
-            ${r.amount ? `<div style="font-size:13px; color:var(--dim);">Сумма: <strong style="color:var(--txt);">${fmt(r.amount)} ${r.currency}</strong></div>` : ''}
+            ${r.amount ? `<div style="font-size:13px; color:var(--dim);">Сумма: <strong style="color:var(--txt);">${fmtDec(r.amount, 2)} ${r.currency}</strong></div>` : ''}
             <div style="font-size:12px; color:var(--dim); margin-top:6px;">${new Date(r.created_at).toLocaleString('ru-RU')}</div>
           </div>`;
         }).join('') : '<div class="empty-state">Нет заявок</div>';
@@ -1502,7 +1558,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="font-size:13px; font-weight:800; color:var(--gold);">Статус Мейкера</div>
                 <button class="btn btn-primary btn-sm" onclick="applyStatus('maker')" style="padding:4px 8px; font-size:12px; height:28px;">Подать</button>
               </div>
-              <div style="font-size:12px; color:var(--dim); margin-bottom:2px;">Оборот: $${fmt(stats.volumeUsd)} / $3k</div>
+              <div style="font-size:12px; color:var(--dim); margin-bottom:2px;">Оборот: $${fmtDec(stats.volumeUsd, 2)} / $3k</div>
               <div style="font-size:12px; color:var(--dim);">Успешных: ${stats.successRate}% / 80%</div>
             </div>
           `;
@@ -1630,7 +1686,6 @@ document.addEventListener('DOMContentLoaded', () => {
       (ad.paymentMethods || []).forEach(p => {
         const el = document.createElement('div');
         el.className = 'pay-chip' + (p === selectedPay ? ' active' : ''); 
-        // Добавляем иконку в модалку оформления
         el.innerHTML = `${getPayIcon(p)} ${p}`;
         el.style.display = 'inline-flex'; el.style.alignItems = 'center'; el.style.gap = '4px';
         el.onclick = () => { payBox.querySelectorAll('.pay-chip').forEach(x => x.classList.remove('active')); el.classList.add('active'); selectedPay = p; };
@@ -1736,7 +1791,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="admin-user-card">
                 <div class="admin-user-info">
                   <div class="admin-user-name">ID: ${user.id} | ${user.displayName} (@${user.username})</div>
-                  <div class="admin-user-meta">Роль: ${user.role} | Бал: ${fmt(user.balanceRub)} ₽</div>
+                  <div class="admin-user-meta">Роль: ${user.role} | Бал: ${fmtDec(user.balanceRub, 2)} ₽</div>
                 </div>
                 <button class="btn btn-primary btn-sm" style="border-radius: 8px; padding: 6px 12px; height:32px; font-size:13px;" onclick="openAdminUserModal(${user.id})">⚙️</button>
               </div>
@@ -1764,7 +1819,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span style="color:var(--txt);font-size:12px;font-weight:800">${o.statusLabel}</span>
               </div>
               <div class="ad-body">
-                <div><div class="ad-lbl" style="font-size:12px;color:var(--dim);">Сумма</div><div class="ad-val" style="font-size:15px;font-weight:800;">${fmt(o.amountRub)} ₽</div></div>
+                <div><div class="ad-lbl" style="font-size:12px;color:var(--dim);">Сумма</div><div class="ad-val" style="font-size:15px;font-weight:800;">${fmtDec(o.amountRub, 2)} ₽</div></div>
                 <div><div class="ad-lbl" style="font-size:12px;color:var(--dim);">Актив</div><div class="ad-val" style="font-size:15px;font-weight:800;">${fmtDec(o.amountAsset, 2)} ${o.asset}</div></div>
               </div>
             </div>
@@ -1813,7 +1868,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
               ${req.amount ? `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
                  <div style="font-size:12px; color:var(--dim);">Сумма:</div>
-                 <div style="font-size:15px; font-weight:800; color:var(--txt);">${fmt(req.amount)} ${req.currency}</div>
+                 <div style="font-size:15px; font-weight:800; color:var(--txt);">${fmtDec(req.amount, 2)} ${req.currency}</div>
               </div>` : ''}
               ${details.requisites ? `<div style="font-size:12px; color:var(--dim); margin-bottom:4px;">Рек: <span style="color:var(--txt); font-weight:600;">${details.requisites}</span></div>` : ''}
               ${details.network ? `<div style="font-size:12px; color:var(--dim); margin-bottom:4px;">Сеть: <span style="color:var(--txt); font-weight:600;">${details.network}</span></div>` : ''}
@@ -1858,7 +1913,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
             <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:10px;">
               <div style="font-size:11px; color:var(--dim);">RUB</div>
-              <div style="font-size:14px; font-weight:800; color:var(--txt);">${fmt(user.balanceRub)} ₽</div>
+              <div style="font-size:14px; font-weight:800; color:var(--txt);">${fmtDec(user.balanceRub, 2)} ₽</div>
             </div>
             <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:10px;">
               <div style="font-size:11px; color:var(--dim);">USDT</div>
