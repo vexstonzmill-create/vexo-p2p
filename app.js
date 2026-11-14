@@ -296,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (window.orderPollInterval) clearInterval(window.orderPollInterval);
       if (window.orderTimerInterval) clearInterval(window.orderTimerInterval);
       
-      toggleSidebar(false); // Close sidebar when navigating
+      toggleSidebar(false);
 
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       const target = document.getElementById('screen-' + name);
@@ -924,7 +924,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const { order, history, terms } = await API.req('GET', '/orders/' + orderId);
         renderOrderPage(order, history, terms);
 
-        // Поллинг для обновления статуса (кнопки в тг)
         if (window.orderPollInterval) clearInterval(window.orderPollInterval);
         window.orderPollInterval = setInterval(async () => {
            try {
@@ -964,7 +963,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       let actionsHtml = '';
       
-      // Принимает/Отклоняет ТОЛЬКО СОЗДАТЕЛЬ ОБЪЯВЛЕНИЯ
       if (order.status === 'pending') {
         if (isAdCreator) {
           actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px"><button class="btn btn-primary btn-sm" onclick="doAction(${order.id},'accept')" style="background:var(--grn);color:#fff;border:none;height:36px;font-size:12px;">Принять</button><button class="btn btn-ghost btn-sm" style="color:var(--red);border:1px solid var(--red);height:36px;font-size:12px;" onclick="doAction(${order.id},'decline')">Отклонить</button></div>`;
@@ -1313,23 +1311,25 @@ document.addEventListener('DOMContentLoaded', () => {
       const list = document.getElementById('myAdsList'); if (!list) return;
       try {
         const { items } = await API.req('GET', '/ads/my');
-        list.innerHTML = items.length ? items.map(ad => `
+        const activeItems = items.filter(ad => ad.active); // Страховка от кэша
+
+        list.innerHTML = activeItems.length ? activeItems.map(ad => `
           <div class="glass-card" style="margin-bottom:8px; padding:12px;">
             <div style="display:flex;justify-content:space-between;margin-bottom:8px">
               <strong style="font-size:14px;">${ad.side === 'sell' ? 'Продажа' : 'Покупка'} ${ad.asset}</strong>
-              <span style="color:${ad.active ? 'var(--grn)' : 'var(--red)'};font-size:10px;font-weight:700;background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:4px;">${ad.active ? 'Активно' : 'Удалено'}</span>
+              <span style="color:var(--grn);font-size:10px;font-weight:700;background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:4px;">Активно</span>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
               <div><div style="font-size:10px;color:var(--dim);font-weight:600;">Курс</div><div style="font-size:13px;font-weight:800;">${fmt(ad.price)} ₽</div></div>
               <div><div style="font-size:10px;color:var(--dim);font-weight:600;">Остаток</div><div style="font-size:13px;font-weight:800;">${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div></div>
             </div>
             <div style="display:flex;gap:6px;">
-              <button class="btn btn-ghost btn-sm" style="flex:1; border:1px solid var(--glass-border); height:32px; font-size:11px;" onclick="toggleAdStatus(${ad.id}, ${ad.active})">${ad.active ? 'Снять' : 'Вкл'}</button>
+              <button class="btn btn-ghost btn-sm" style="flex:1; border:1px solid var(--glass-border); height:32px; font-size:11px;" onclick="toggleAdStatus(${ad.id}, ${ad.active})">Снять</button>
               <button class="btn btn-primary btn-sm" style="flex:1; height:32px; font-size:11px;" onclick="openEditAdModal(${ad.id})">Изменить</button>
               <button class="btn btn-ghost btn-sm" style="width:32px; border:1px solid var(--red); height:32px; color: var(--red); padding:0;" onclick="deleteAd(${ad.id})">🗑</button>
             </div>
           </div>
-        `).join('') : '<div class="empty-state">Нет объявлений</div>';
+        `).join('') : '<div class="empty-state">Нет активных объявлений</div>';
       } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     }
 
@@ -1912,6 +1912,12 @@ document.addEventListener('DOMContentLoaded', () => {
     initSpreadCalculator();
     updateAuthUI();
     updateNotifUI();
+    try { loadHomeRate(); } catch(e) { console.error('Initial loadHomeRate:', e); }
+
+  } catch (err) {
+    console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
+  }
+});updateNotifUI();
     try { loadHomeRate(); } catch(e) { console.error('Initial loadHomeRate:', e); }
 
   } catch (err) {

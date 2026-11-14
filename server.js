@@ -426,7 +426,8 @@ app.get('/api/ads', async (req, res) => {
 
 app.get('/api/ads/my', auth, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM ads WHERE user_id = $1 ORDER BY created_at DESC', [req.user.id]);
+    // Фильтруем только активные, чтобы удаленные/скрытые не висели в профиле
+    const result = await pool.query('SELECT * FROM ads WHERE user_id = $1 AND active = true ORDER BY created_at DESC', [req.user.id]);
     const items = await Promise.all(result.rows.map(shapeAd));
     res.json({ items });
   } catch(e) { res.json({ items: [] }); }
@@ -445,7 +446,6 @@ app.post('/api/ads', auth, async (req, res) => {
   const p = Number(price), at = Number(amount_total), mn = Number(min_rub), mx = Number(max_rub);
   if (!(p > 0) || !(at > 0) || !(mn > 0) || !(mx > 0) || mn > mx || mx > at * p) return res.status(400).json({ error: 'bad_amounts' });
   
-  // "Я покупаю" (side='buy') требует мейкера. "Я продаю" (side='sell') не требует.
   if (side === 'buy') {
     const isStaff = ['admin', 'owner', 'deputy'].includes(req.user.role);
     const canCreateBuyAd = isStaff || req.user.is_maker || req.user.is_merchant;
@@ -472,7 +472,7 @@ app.delete('/api/ads/:id', auth, async (req, res) => {
     if (!ad || ad.user_id !== req.user.id) return res.status(403).json({ error: 'forbidden' });
     
     try {
-      // Полное удаление из БД
+      // Пытаемся удалить полностью
       await pool.query('DELETE FROM ads WHERE id = $1', [req.params.id]);
     } catch(e) {
       // Если есть привязанные ордера, скрываем
@@ -557,7 +557,6 @@ app.post('/api/orders', auth, async (req, res) => {
     await client.query('COMMIT');
     const orderData = { ...orderRes.rows[0], counterparty_username: req.user.username };
     
-    // УВЕДОМЛЕНИЕ ВСЕГДА ЛЕТИТ СОЗДАТЕЛЮ ОБЪЯВЛЕНИЯ
     const targetTgId = (await pool.query('SELECT telegram_id FROM users WHERE id = $1', [ad.user_id])).rows[0]?.telegram_id;
     if (targetTgId) {
         const msg = formatOrderMsg(orderData, "🔥 Новая заявка!");
@@ -869,4 +868,4 @@ app.get('*', (req, res, next) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.listen(PORT, () => console.log('VEXO P2P running on port ' + PORT));
+app.listen(PORT, () => console.log('VEXO P2P running on port ' + PORT));console.log('VEXO P2P running on port ' + PORT));
