@@ -45,7 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
       reader.onerror = error => reject(error);
     });
 
-    // --- TELEGRAM MINI APP + FULLSCREEN ---
     async function initTelegramAuth() {
       if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
         const tg = window.Telegram.WebApp;
@@ -131,7 +130,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeModal(id) { const el = document.getElementById(id); if (el) el.classList.remove('active'); }
     window.closeModal = closeModal;
 
-    // Sidebar Logic
     window.toggleSidebar = function(open) {
       const sidebar = document.querySelector('.sidebar');
       const backdrop = document.getElementById('sidebarBackdrop');
@@ -145,7 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     document.getElementById('menuBtn')?.addEventListener('click', () => toggleSidebar(true));
 
-    // --- SPREAD CALCULATOR ---
     let feeType = 'rub';
     function initSpreadCalculator() {
       if (window._spreadInited) return;
@@ -1912,12 +1909,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initSpreadCalculator();
     updateAuthUI();
     updateNotifUI();
-    try { loadHomeRate(); } catch(e) { console.error('Initial loadHomeRate:', e); }
-
-  } catch (err) {
-    console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
-  }
-});updateNotifUI();
     try { loadHomeRate(); } catch(e) { console.error('Initial loadHomeRate:', e); }
 
   } catch (err) {

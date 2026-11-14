@@ -426,7 +426,6 @@ app.get('/api/ads', async (req, res) => {
 
 app.get('/api/ads/my', auth, async (req, res) => {
   try {
-    // Фильтруем только активные, чтобы удаленные/скрытые не висели в профиле
     const result = await pool.query('SELECT * FROM ads WHERE user_id = $1 AND active = true ORDER BY created_at DESC', [req.user.id]);
     const items = await Promise.all(result.rows.map(shapeAd));
     res.json({ items });
@@ -472,10 +471,8 @@ app.delete('/api/ads/:id', auth, async (req, res) => {
     if (!ad || ad.user_id !== req.user.id) return res.status(403).json({ error: 'forbidden' });
     
     try {
-      // Пытаемся удалить полностью
       await pool.query('DELETE FROM ads WHERE id = $1', [req.params.id]);
     } catch(e) {
-      // Если есть привязанные ордера, скрываем
       await pool.query('UPDATE ads SET active = false, amount_left = 0 WHERE id = $1', [req.params.id]);
     }
     res.json({ ok: true });
@@ -868,4 +865,4 @@ app.get('*', (req, res, next) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.listen(PORT, () => console.log('VEXO P2P running on port ' + PORT));console.log('VEXO P2P running on port ' + PORT));
+app.listen(PORT, () => console.log('VEXO P2P running on port ' + PORT));
