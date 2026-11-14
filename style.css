@@ -6,10 +6,12 @@
   --primary: #3b82f6; 
   --primary-hover: #2563eb;
   
+  /* Обновленные кнопки с эффектом глянца */
   --btn-bg: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%); 
   --btn-txt: #ffffff;
   --btn-glow: 0 4px 15px rgba(37, 99, 235, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.6), inset 0 -2px 4px rgba(0,0,0,0.2);
   
+  /* Стеклянные панели как на референсе */
   --btn-glass-bg: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
   --btn-glass-border: rgba(255, 255, 255, 0.12);
   --btn-glass-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.2), inset 0 -1px 1px rgba(0, 0, 0, 0.3);
@@ -82,6 +84,7 @@ body > script, body > style, body > template, body > noscript { display: none !i
 @keyframes spin { to { transform: rotate(360deg); } }
 .loader-text { font-size: 17px; font-weight: 800; color: var(--txt); letter-spacing: -0.5px; }
 
+/* Сочный фон с глубокими каплями */
 .bg-blobs { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #030712 80%); transition: background 0.4s ease; }
 body[data-theme="light"] .bg-blobs { background: radial-gradient(circle at 50% 0%, #bfdbfe 0%, #e2e8f0 80%); }
 .blob { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.6; animation: float 20s infinite ease-in-out alternate; }
@@ -91,6 +94,7 @@ body[data-theme="light"] .bg-blobs { background: radial-gradient(circle at 50% 0
 .blob-4 { width: 40vw; height: 40vw; background: #0ea5e9; top: 10%; right: 10%; animation-delay: -15s; }
 @keyframes float { 0% { transform: translate(0, 0) scale(1); } 33% { transform: translate(8vw, 5vh) scale(1.1); } 66% { transform: translate(-5vw, 15vh) scale(0.9); } 100% { transform: translate(10vw, -5vh) scale(1); } }
 
+/* Объемное жидкое стекло */
 .glass-panel { background: var(--glass-bg); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); border: 1px solid var(--glass-border); box-shadow: var(--glass-highlight); transition: background 0.4s, border 0.4s; }
 .glass-card { background: var(--glass-bg); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); border: 1px solid var(--glass-border); border-radius: 20px; padding: 16px; box-shadow: var(--glass-highlight); transition: background 0.4s, border 0.4s; }
 .inner-card { background: rgba(0,0,0,0.25); border-radius: 14px; padding: 12px; border: 1px solid rgba(255,255,255,0.08); box-shadow: inset 0 2px 5px rgba(0,0,0,0.2); }
@@ -177,6 +181,7 @@ body.tg-fullscreen .topbar { top: 70px; }
 body[data-theme="light"] .bn-btn.active { background: rgba(0,0,0,0.05); color: var(--primary); }
 body[data-theme="light"] .bn-btn { color: #475569 !important; }
 
+/* ОБЪЕМНЫЕ КНОПКИ */
 .btn { 
   display: inline-flex; align-items: center; justify-content: center; gap: 8px; 
   height: 44px; padding: 0 20px; border-radius: 999px;
@@ -216,6 +221,7 @@ body[data-theme="light"] .btn-ghost {
 .btn-block { width: 100%; }
 .btn-sm { height: 36px; padding: 0 14px; font-size: 13px; }
 
+/* ГЛУБОКИЕ ИНПУТЫ */
 .input { 
   width: 100%; height: 48px; padding: 0 16px; 
   background: rgba(0, 0, 0, 0.3) !important; 
@@ -301,11 +307,7 @@ body[data-theme="light"] .avatar { background: #e2e8f0; }
 .avatar img { width: 100%; height: 100%; object-fit: cover; }
 .avatar.lg { width: 80px; height: 80px; font-size: 32px; border-width: 3px; }
 .ad-user { flex: 1; min-width: 0; }
-.ad-name { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 15px; margin-bottom: 4px; flex-wrap: wrap; }
-.ad-meta { display: flex; gap: 12px; font-size: 13px; color: var(--dim); font-weight: 500; }
-.ad-body { display: flex; justify-content: space-between; align-items: flex-end; }
-.ad-price-block { display: flex; flex-direction: column; gap: 4px; }
-.ad-price { font-size: 22px; font-weight: 900; color: var(--txt); }
+.ad-name { display: flex; align-items: center; gap: 6px; font-weight: 800; fontght: 900; color: var(--txt); }
 .ad-limits { font-size: 13px; color: var(--dim); font-weight: 500; }
 .ad-amount { font-size: 13px; color: var(--dim); }
 .ad-action { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }

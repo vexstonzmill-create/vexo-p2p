@@ -556,61 +556,30 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!u) { closeModal('walletActionModal'); document.getElementById('authModal')?.classList.add('active'); return; }
       
       const amount = document.getElementById('walletActionAmount')?.value;
+      const tg = document.getElementById('walletActionTg')?.value.trim();
       const currency = document.querySelector('#walletAssetSelect .seg-btn.active').dataset.val;
       
       if (!amount || Number(amount) <= 0) return toast('Введите сумму', 'error');
-
-      const btn = document.getElementById('walletActionSubmit'); 
-      btn.disabled = true; btn.textContent = '...';
-
-      // 1. АВТОМАТИЧЕСКОЕ ПОПОЛНЕНИЕ USDT (ЧЕРЕЗ NOWPAYMENTS)
-      if (walletActionType === 'deposit' && currency === 'USDT') {
-        try {
-          const data = await API.req('POST', '/wallet/deposit-crypto', { amount: Number(amount), currency: 'usdt' });
-          
-          closeModal('walletActionModal');
-          const overlay = document.getElementById('dialogOverlay');
-          const content = document.getElementById('dialogContent');
-          
-          // Показываем адрес и сумму для перевода
-          content.innerHTML = `
-            <h3 style="font-size:18px;font-weight:800;color:var(--txt);margin-bottom:8px;">Оплата USDT</h3>
-            <p style="font-size:14px;color:var(--dim);margin-bottom:12px;">Отправьте ровно <b>${data.pay_amount} USDT</b> на адрес:</p>
-            <div style="background:rgba(0,0,0,0.4);padding:14px;border-radius:12px;word-break:break-all;font-family:monospace;font-size:15px;color:var(--grn);margin-bottom:16px;border:1px solid var(--glass-border);text-align:center;">
-              ${data.pay_address}
-            </div>
-            <p style="font-size:12px;color:var(--yellow);margin-bottom:16px;line-height: 1.4;">⚠️ Внимание! Сеть должна быть <b>TRC-20 (Tron)</b>. Баланс зачислится автоматически после подтверждения транзакции в сети (1-3 минуты).</p>
-            <button class="btn btn-primary" style="width:100%;height:44px;" onclick="document.getElementById('dialogOverlay').classList.remove('active'); loadWallet();">Я понял</button>
-          `;
-          overlay.classList.add('active');
-          
-        } catch(e) {
-          toast(e.message || 'Ошибка платежного шлюза', 'error');
-        } finally {
-          btn.disabled = false; btn.textContent = 'Отправить';
-        }
-        return; // Выходим из функции
-      }
-
-      // 2. РУЧНОЙ ВЫВОД (ИЛИ ПОПОЛНЕНИЕ RUB)
-      const tg = document.getElementById('walletActionTg')?.value.trim();
-      if (!tg) { btn.disabled = false; btn.textContent = 'Отправить'; return toast('Введите Telegram', 'error'); }
+      if (!tg) return toast('Введите Telegram', 'error');
 
       let payload = { type: walletActionType === 'deposit' ? `deposit_${currency.toLowerCase()}` : `withdraw_${currency.toLowerCase()}`, amount: Number(amount), currency, tg_username: tg, user_id: u.id };
 
       if (currency === 'RUB') {
-        payload.requisites = document.getElementById('walletBankSelect').value;
+        const bank = document.getElementById('walletBankSelect').value;
+        payload.requisites = bank; 
       } else {
+        const network = document.getElementById('walletNetwork').value;
         const address = document.getElementById('walletAddress').value.trim();
-        if (!address) { btn.disabled = false; btn.textContent = 'Отправить'; return toast('Введите адрес кошелька', 'error'); }
+        if (!address) return toast('Введите адрес кошелька', 'error');
         payload.requisites = address;
-        payload.network = document.getElementById('walletNetwork').value;
+        payload.network = network;
       }
       
+      const btn = document.getElementById('walletActionSubmit'); btn.disabled = true; btn.textContent = '...';
       try {
         await API.req('POST', '/requests/finance', payload); 
         toast('Заявка создана!', 'success');
-        addNotification('Заявка на вывод создана', 'info');
+        addNotification('Заявка на ' + (walletActionType === 'deposit' ? 'пополнение' : 'вывод') + ' создана', 'info');
         closeModal('walletActionModal'); 
       } catch(e) {
         toast(e.message || 'Ошибка', 'error');
@@ -1952,6 +1921,56 @@ document.addEventListener('DOMContentLoaded', () => {
       const u = await API.req('GET', '/users/' + currentAdminUserId);
       const payload = {};
       payload[field] = !u.user[field === 'is_pro' ? 'isPro' : field === 'is_merchant' ? 'isMerchant' : 'isMaker'];
+      
+      try {
+        await API.req('PATCH', '/admin/users/' + currentAdminUserId + '/status', payload);
+        toast('Статус обновлен', 'success');
+        openAdminUserModal(currentAdminUserId); 
+      } catch(e) { toast('Ошибка', 'error'); }
+    };
+
+    window.adminChangeBalance = async function(action) {
+      if (!currentAdminUserId) return;
+      const currency = document.getElementById('admBalanceCurrency').value;
+      const amount = parseFloat(document.getElementById('admBalanceAmount').value);
+      if (!amount || amount <= 0) return toast('Введите сумму', 'error');
+      
+      try {
+        await API.req('POST', '/admin/users/' + currentAdminUserId + '/balance', { currency, amount, action });
+        toast('Баланс изменен', 'success');
+        document.getElementById('admBalanceAmount').value = '';
+        openAdminUserModal(currentAdminUserId); 
+      } catch(e) { toast(e.message || 'Ошибка', 'error'); }
+    };
+
+    document.querySelectorAll('#adminTabs .tab').forEach(c => {
+      c.onclick = () => {
+        document.querySelectorAll('#adminTabs .tab').forEach(x => x.classList.remove('active'));
+        c.classList.add('active');
+        adminTab = c.dataset.val;
+        loadAdmin();
+      };
+    });
+
+    window.updateRequestStatus = async function(reqId, status) {
+      if (!await confirmAsync('Изменение', `Отметить как "${status}"?`, 'Да')) return;
+      try {
+        await API.req('PATCH', '/admin/requests/' + reqId, { status });
+        toast('Обновлено', 'success'); 
+        loadAdmin(); screenCache.profile = false; screenCache.wallet = false;
+      } catch(e) { toast(e.message || 'Ошибка', 'error'); }
+    };
+
+    // СТАРТ
+    initSpreadCalculator();
+    updateAuthUI();
+    updateNotifUI();
+    try { loadHomeRate(); } catch(e) { console.error('Initial loadHomeRate:', e); }
+
+  } catch (err) {
+    console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
+  }
+});u.user[field === 'is_pro' ? 'isPro' : field === 'is_merchant' ? 'isMerchant' : 'isMaker'];
       
       try {
         await API.req('PATCH', '/admin/users/' + currentAdminUserId + '/status', payload);

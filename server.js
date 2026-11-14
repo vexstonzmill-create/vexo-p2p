@@ -11,11 +11,6 @@ const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_vexo_key_that_is_long
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8859024431:AAF9vvyC0AGHJNZfjhQ989yryflRMtXYvoQ'; 
 const APP_URL = process.env.APP_URL || 'https://vexo-p2p.onrender.com'; 
 
-// --- NOWPAYMENTS CONFIG ---
-// Вставь сюда свои новые ключи!
-const NOWPAYMENTS_API_KEY = '82K2B0E-4ZBMK77-QY3018Y-37HH1J0';
-const NOWPAYMENTS_IPN_SECRET = '/pPK8fFs+yLnbET9jpGcqZGCa6hNMh4j';
-
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_UDtaHhd5Zr6s@ep-divine-sun-bawvlsl5-pooler.c-8.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
   ssl: { rejectUnauthorized: false }
@@ -30,7 +25,6 @@ async function initDB() {
       CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, order_id INT REFERENCES orders(id), sender_id INT REFERENCES users(id), text TEXT, media_data TEXT, media_type VARCHAR(50), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS reviews (id SERIAL PRIMARY KEY, order_id INT REFERENCES orders(id), author_id INT REFERENCES users(id), target_id INT REFERENCES users(id), rating INT, comment TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS requests (id SERIAL PRIMARY KEY, user_id INT REFERENCES users(id), type VARCHAR(50), amount NUMERIC, currency VARCHAR(10), status VARCHAR(20) DEFAULT 'pending', details JSONB, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
-      CREATE TABLE IF NOT EXISTS crypto_deposits (id SERIAL PRIMARY KEY, user_id INT REFERENCES users(id), payment_id VARCHAR(100) UNIQUE NOT NULL, amount NUMERIC, currency VARCHAR(20), status VARCHAR(50), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
     `);
     
     await pool.query(`ALTER TABLE ads ADD COLUMN IF NOT EXISTS payment_time INT DEFAULT 30;`);
@@ -106,100 +100,6 @@ function validateTelegramWebAppData(telegramInitData) {
   const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
   return calculatedHash === hash;
 }
-
-// --- NOWPAYMENTS INTEGRATION ---
-
-// 1. Создание счета на пополнение USDT
-app.post('/api/wallet/deposit-crypto', auth, async (req, res) => {
-  const { amount, currency } = req.body; 
-  if (!amount || amount <= 0) return res.status(400).json({ error: 'bad_amount' });
-
-  try {
-    const orderId = `dep_${req.user.id}_${Date.now()}`; 
-    const response = await fetch('https://api.nowpayments.io/v1/payment', {
-      method: 'POST',
-      headers: {
-        'x-api-key': NOWPAYMENTS_API_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        price_amount: amount,
-        price_currency: 'usd',
-        pay_currency: currency, // 'usdt'
-        order_id: orderId,
-        order_description: `Deposit to VEXO P2P User ID: ${req.user.id}`,
-        ipn_callback_url: `${APP_URL}/api/webhook/nowpayments`
-      })
-    });
-
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Payment creation failed');
-
-    res.json({
-      pay_address: data.pay_address,
-      pay_amount: data.pay_amount,
-      payment_id: data.payment_id
-    });
-  } catch (err) {
-    console.error('NOWPayments Error:', err);
-    res.status(500).json({ error: 'crypto_gateway_error' });
-  }
-});
-
-// 2. Вебхук для автоматического зачисления средств
-app.post('/api/webhook/nowpayments', async (req, res) => {
-  const sig = req.headers['x-nowpayments-sig'];
-  if (!sig) return res.status(401).send('No signature');
-
-  const hmac = crypto.createHmac('sha512', NOWPAYMENTS_IPN_SECRET);
-  const sortedBody = JSON.stringify(req.body, Object.keys(req.body).sort());
-  hmac.update(sortedBody);
-  const digest = hmac.digest('hex');
-
-  if (digest !== sig) {
-    console.error('Invalid IPN signature');
-    return res.status(401).send('Invalid signature');
-  }
-
-  const { payment_status, order_id, price_amount, pay_currency, payment_id } = req.body;
-
-  if (payment_status === 'finished' || payment_status === 'confirmed') {
-    try {
-      const check = await pool.query('SELECT id FROM crypto_deposits WHERE payment_id = $1', [payment_id]);
-      if (check.rows.length > 0) return res.sendStatus(200);
-
-      const userId = order_id.split('_')[1];
-      const amountUsdt = Number(price_amount);
-
-      const client = await pool.connect();
-      try {
-        await client.query('BEGIN');
-        
-        await client.query(
-          'INSERT INTO crypto_deposits (user_id, payment_id, amount, currency, status) VALUES ($1, $2, $3, $4, $5)',
-          [userId, payment_id, amountUsdt, pay_currency, payment_status]
-        );
-
-        await client.query('UPDATE users SET balance_usdt = balance_usdt + $1 WHERE id = $2', [amountUsdt, userId]);
-
-        await client.query('COMMIT');
-        
-        notifyUser(userId, `💰 <b>Баланс пополнен!</b>\nЗачислено: ${amountUsdt} USDT\nСеть: ${pay_currency.toUpperCase()}`);
-
-      } catch (dbErr) {
-        await client.query('ROLLBACK');
-        throw dbErr;
-      } finally {
-        client.release();
-      }
-    } catch (e) {
-      console.error('IPN DB Error:', e);
-      return res.status(500).send('DB Error');
-    }
-  }
-
-  res.sendStatus(200);
-});
 
 // --- WEBHOOK ---
 app.post('/api/telegram/webhook', async (req, res) => {
@@ -910,6 +810,62 @@ app.get('/api/admin/orders', auth, async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM orders WHERE status = 'dispute' OR status = 'pending' OR status = 'paid' ORDER BY created_at DESC");
     const items = await Promise.all(result.rows.map(shapeOrder));
+    res.json({ items });
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
+});
+
+app.get('/api/admin/requests', auth, async (req, res) => {
+  if (!['admin', 'owner', 'deputy'].includes(req.user.role)) return res.status(403).json({ error: 'forbidden' });
+  try {
+    const result = await pool.query(`SELECT r.*, u.username FROM requests r JOIN users u ON r.user_id = u.id ORDER BY r.created_at DESC`);
+    res.json({ items: result.rows });
+  } catch (err) { res.status(500).json({ error: 'db_error' }); }
+});
+
+app.patch('/api/admin/requests/:id', auth, async (req, res) => {
+  if (!['admin', 'owner', 'deputy'].includes(req.user.role)) return res.status(403).json({ error: 'forbidden' });
+  const { status } = req.body; 
+  const reqId = req.params.id;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const rRes = await client.query('SELECT * FROM requests WHERE id = $1 FOR UPDATE', [reqId]);
+    const request = rRes.rows[0];
+    if (!request || ['completed', 'rejected', 'cancelled'].includes(request.status)) throw new Error('Заявка уже завершена');
+    await client.query('UPDATE requests SET status = $1 WHERE id = $2', [status, reqId]);
+    if (status === 'approved') {
+      if (request.type === 'maker_req') await client.query('UPDATE users SET is_maker = true WHERE id = $1', [request.user_id]);
+      else if (request.type === 'merchant_req') await client.query('UPDATE users SET is_merchant = true WHERE id = $1', [request.user_id]);
+      else if (request.type === 'deposit_rub') await client.query('UPDATE users SET balance_rub = balance_rub + $1 WHERE id = $2', [request.amount, request.user_id]);
+      else if (request.type === 'withdraw_rub') await client.query('UPDATE users SET balance_rub = balance_rub - $1 WHERE id = $2', [request.amount, request.user_id]);
+      else if (request.type === 'deposit_usdt') await client.query('UPDATE users SET balance_usdt = balance_usdt + $1 WHERE id = $2', [request.amount, request.user_id]);
+      else if (request.type === 'withdraw_usdt') await client.query('UPDATE users SET balance_usdt = balance_usdt - $1 WHERE id = $2', [request.amount, request.user_id]);
+      else if (request.type === 'exchange') {
+        const details = request.details;
+        if (details.exchange_type === 'buy') {
+          const rubAmount = Number(request.amount); const usdtAmount = rubAmount / details.rate;
+          await client.query('UPDATE users SET balance_rub = balance_rub - $1, balance_usdt = balance_usdt + $2 WHERE id = $3', [rubAmount, usdtAmount, request.user_id]);
+        } else {
+          const usdtAmount = Number(request.amount); const rubAmount = usdtAmount * details.rate;
+          await client.query('UPDATE users SET balance_usdt = balance_usdt - $1, balance_rub = balance_rub + $2 WHERE id = $3', [usdtAmount, rubAmount, request.user_id]);
+        }
+      }
+    }
+    await client.query('COMMIT');
+    const statusText = status === 'approved' ? 'одобрена ✅' : status === 'rejected' ? 'отклонена ❌' : 'отменена';
+    notifyUser(request.user_id, `📄 <b>Статус заявки обновлен</b>\nВаша заявка была ${statusText}.`);
+    res.json({ ok: true });
+  } catch(e) { await client.query('ROLLBACK'); res.status(400).json({ error: e.message || 'error' }); }
+  finally { client.release(); }
+});
+
+app.use(express.static(path.join(__dirname)));
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) return next();
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.listen(PORT, () => console.log('VEXO P2P running on port ' + PORT));const items = await Promise.all(result.rows.map(shapeOrder));
     res.json({ items });
   } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
