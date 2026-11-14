@@ -18,8 +18,6 @@
 <div class="bg-blobs">
   <div class="blob blob-1"></div>
   <div class="blob blob-2"></div>
-  <div class="blob blob-3"></div>
-  <div class="blob blob-4"></div>
 </div>
 
 <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
@@ -27,14 +25,30 @@
 <div class="app">
   <aside class="sidebar">
     <div class="logo"><div class="logo-mark">V</div><span class="logo-text">vexo</span></div>
-    <button class="nav-btn active" data-screen="home">Главная</button>
-    <button class="nav-btn" data-screen="market">Маркет</button>
-    <button class="nav-btn" data-screen="create">Создать объявление</button>
-    <button class="nav-btn" data-screen="spread">Калькулятор</button>
-    <button class="nav-btn" data-screen="orders">Мои ордера</button>
-    <button class="nav-btn" data-screen="wallet">Кошелёк</button>
-    <button class="nav-btn" data-screen="profile">Профиль</button>
-    <button class="nav-btn" data-screen="rules">Правила</button>
+    <button class="nav-btn active" data-screen="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg> Главная
+    </button>
+    <button class="nav-btn" data-screen="market">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Маркет
+    </button>
+    <button class="nav-btn" data-screen="create">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Создать
+    </button>
+    <button class="nav-btn" data-screen="spread">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg> Калькулятор
+    </button>
+    <button class="nav-btn" data-screen="orders">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Мои ордера
+    </button>
+    <button class="nav-btn" data-screen="wallet">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/></svg> Кошелёк
+    </button>
+    <button class="nav-btn" data-screen="profile">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Профиль
+    </button>
+    <button class="nav-btn" data-screen="rules">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> Правила
+    </button>
     <button class="nav-btn" data-screen="admin" id="adminNavBtn" style="display:none; color:var(--red); font-weight:900;">🛡 Админка</button>
   </aside>
 
@@ -61,85 +75,75 @@
     </header>
 
     <main class="content">
-      <!-- HOME -->
+      <!-- HOME (НОВЫЙ ДИЗАЙН - BENTO GRID) -->
       <section class="screen active" id="screen-home">
-        <div class="banner-carousel">
-          <div class="banner-viewport" id="bannerViewport">
-            <div class="banner-track" id="bannerTrack">
-              <div class="banner banner-platform">
-                <div class="banner-decor">
-                  <div class="coin-icon usdt float-1">₮</div>
-                  <div class="coin-icon btc float-2">₿</div>
-                  <div class="coin-icon ton float-3">T</div>
-                </div>
-                <div class="banner-text-content">
-                  <h2>Добро пожаловать в <br><span>vexo</span></h2>
-                  <p>Самый быстрый и безопасный обмен криптовалюты на рубли.</p>
-                  <button class="btn btn-primary btn-sm" data-screen="market" style="width: fit-content; padding: 10px 20px; font-size: 13px;">Перейти в Маркет</button>
-                </div>
-              </div>
-              <div class="banner banner-tg">
-                <div class="banner-tg-logo">
-                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .24z"/></svg>
-                </div>
-                <div class="banner-text-content">
-                  <h2>Акции и розыгрыши</h2>
-                  <p>Подписывайтесь на наш Telegram-канал!</p>
-                  <a href="https://t.me/vexoio_bot" target="_blank" class="btn btn-primary btn-sm" style="width: fit-content; text-decoration: none; padding: 10px 20px; font-size: 13px;">В Telegram</a>
-                </div>
-              </div>
+        <div class="bento-grid">
+          
+          <!-- Приветствие -->
+          <div class="widget-card span-2" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">Добро пожаловать! 👋</h2>
+              <p style="font-size: 13px; color: var(--dim);">Твой безопасный P2P обменник</p>
             </div>
+            <button class="btn btn-primary btn-sm" data-screen="market" style="border-radius: 12px; height: 40px;">В Маркет</button>
           </div>
-          <div class="banner-dots">
-            <button class="banner-dot active" data-slide="0"></button>
-            <button class="banner-dot" data-slide="1"></button>
-          </div>
-        </div>
 
-        <div class="glass-card" style="margin-bottom: 16px;">
-          <h2 style="font-size: 15px; margin-bottom: 12px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 20px;">📈</span> Рыночный курс
-          </h2>
-          <div style="display: flex; justify-content: space-between; background: var(--inner-card); padding: 14px; border-radius: 12px; align-items: center;">
-             <div style="display: flex; align-items: center; gap: 10px;">
-                <div class="coin-icon usdt" style="width: 36px; height: 36px; font-size: 18px;">₮</div>
-                <div>
-                   <div style="font-weight: 800; font-size: 15px;">USDT / RUB</div>
-                   <div style="font-size: 11px; color: var(--dim);">Tether TRC-20</div>
-                </div>
-             </div>
-             <div style="text-align: right;">
-                <div id="homeUsdtRate" style="font-weight: 900; font-size: 20px; color: var(--grn);">-- ₽</div>
-             </div>
+          <!-- Курс USDT (как виджет с графиком) -->
+          <div class="widget-card">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 12px;">
+              <div class="coin-icon usdt" style="width:32px; height:32px; font-size:16px;">₮</div>
+              <span style="font-size: 11px; background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 8px; color: var(--dim);">Live</span>
+            </div>
+            <div style="font-size: 12px; color: var(--dim); font-weight: 600; margin-bottom: 4px;">USDT / RUB</div>
+            <div id="homeUsdtRate" style="font-size: 26px; font-weight: 900; color: var(--txt);">-- ₽</div>
+            <!-- Фейковый график для красоты -->
+            <div class="mini-chart">
+              <div class="chart-bar" style="height: 40%"></div>
+              <div class="chart-bar" style="height: 60%"></div>
+              <div class="chart-bar" style="height: 30%"></div>
+              <div class="chart-bar" style="height: 80%"></div>
+              <div class="chart-bar active" style="height: 100%"></div>
+            </div>
           </div>
-        </div>
 
-        <div class="glass-card" style="margin-bottom: 20px;">
-          <h2 style="font-size: 15px; margin-bottom: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 20px;">🚀</span> Как это работает?
-          </h2>
-          <div class="steps-wrapper">
-            <div class="step-item">
-              <div class="step-icon" style="background: var(--btn-bg); color: #fff; box-shadow: var(--btn-glow); width: 32px; height: 32px; font-size: 15px;">1</div>
-              <div class="step-text" style="font-size: 14px;">Выберите подходящее объявление в <b>Маркете</b></div>
+          <!-- Кошелек (Баланс) -->
+          <div class="widget-card" style="display:flex; flex-direction:column; justify-content:space-between;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div class="coin-icon rub" style="width:32px; height:32px; font-size:16px;">₽</div>
+              <button class="btn btn-ghost btn-sm" data-screen="wallet" style="padding: 4px 8px; height: 28px; font-size: 11px; border-radius: 8px;">Все</button>
             </div>
-            <div class="step-line"></div>
-            <div class="step-item">
-              <div class="step-icon" style="background: var(--btn-bg); color: #fff; box-shadow: var(--btn-glow); width: 32px; height: 32px; font-size: 15px;">2</div>
-              <div class="step-text" style="font-size: 14px;">Переведите рубли продавцу по реквизитам</div>
-            </div>
-            <div class="step-line"></div>
-            <div class="step-item">
-              <div class="step-icon" style="background: var(--grn); color: #fff; box-shadow: 0 4px 12px rgba(16,185,129,0.4); width: 32px; height: 32px; font-size: 15px;">3</div>
-              <div class="step-text" style="font-size: 14px;">Получите USDT на свой кошелек</div>
+            <div>
+              <div style="font-size: 12px; color: var(--dim); font-weight: 600; margin-bottom: 4px;">Общий баланс</div>
+              <div id="homeBalance" style="font-size: 24px; font-weight: 900; color: var(--txt);">0.00 ₽</div>
             </div>
           </div>
+
+          <!-- Как это работает (Шаги) -->
+          <div class="widget-card span-2">
+            <h3 style="font-size: 15px; font-weight: 800; margin-bottom: 16px;">Как это работает?</h3>
+            <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between;">
+              <div style="text-align:center; flex:1;">
+                <div class="neumorphic-step">1</div>
+                <div style="font-size:11px; font-weight:700; color:var(--dim);">Выбор</div>
+              </div>
+              <div style="height:2px; flex:1; background:var(--glass-border); border-radius:2px;"></div>
+              <div style="text-align:center; flex:1;">
+                <div class="neumorphic-step">2</div>
+                <div style="font-size:11px; font-weight:700; color:var(--dim);">Оплата</div>
+              </div>
+              <div style="height:2px; flex:1; background:var(--glass-border); border-radius:2px;"></div>
+              <div style="text-align:center; flex:1;">
+                <div class="neumorphic-step active">3</div>
+                <div style="font-size:11px; font-weight:700; color:var(--txt);">Крипта</div>
+              </div>
+            </div>
+          </div>
+          
         </div>
       </section>
 
       <!-- MARKET (С ВКЛАДКАМИ) -->
       <section class="screen" id="screen-market">
-        
         <div class="market-mode-switch" id="marketModeSwitch">
           <button class="mode-btn active" data-mode="p2p">P2P</button>
           <button class="mode-btn" data-mode="fast">⚡ Быстрый</button>
@@ -151,7 +155,6 @@
           <button class="mm-tab" data-mtab="orders">Ордера</button>
         </div>
 
-        <!-- Вкладка 1: Маркет -->
         <div class="market-tab-content active" id="mtab-p2p">
           <div id="p2p-market-content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -178,13 +181,11 @@
           </div>
         </div>
 
-        <!-- Вкладка 2: Мои объявления -->
         <div class="market-tab-content" id="mtab-ads">
           <button class="btn btn-primary btn-block" style="margin-bottom: 16px; height: 48px;" onclick="show('create')">+ Создать объявление</button>
           <div id="myAdsList">Загрузка...</div>
         </div>
 
-        <!-- Вкладка 3: Ордера -->
         <div class="market-tab-content" id="mtab-orders">
           <div class="tabs" id="ordersFilter" style="margin-bottom: 12px;">
             <button class="tab active" data-val="active">Активные</button>
@@ -194,21 +195,17 @@
           <div id="ordersList">Загрузка...</div>
         </div>
 
-        <!-- Быстрый обмен -->
         <div id="fast-exchange-content" style="display: none;">
           <div class="glass-card" style="padding: 16px;">
             <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 12px;">Быстрый обмен</h2>
-            
             <div class="trade-tabs" style="margin-bottom: 16px;">
               <button class="trade-tab active" id="exTabBuy">Купить USDT</button>
               <button class="trade-tab" id="exTabSell">Продать USDT</button>
             </div>
-
             <div class="field">
               <label id="exInputLabel">Сумма в RUB</label>
               <input type="number" id="exAmount" class="input" style="font-size: 22px; font-weight: 800; height: 55px;" placeholder="0">
             </div>
-
             <div class="inner-card" style="margin-bottom: 16px; padding: 12px;">
               <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
                 <span style="font-size: 14px; color: var(--dim);">Курс:</span>
@@ -219,17 +216,14 @@
                 <span id="exResultDisplay" style="font-size: 16px; font-weight: 800; color: var(--grn);">0 USDT</span>
               </div>
             </div>
-
             <button class="btn btn-primary btn-block" id="exSubmitBtn" style="height: 48px; font-size: 15px;">Обменять</button>
           </div>
         </div>
-
       </section>
 
       <!-- CREATE -->
       <section class="screen" id="screen-create">
         <h2 style="margin-bottom: 12px; font-size: 18px; font-weight: 800;">Создать объявление</h2>
-        
         <div class="glass-card" style="padding: 16px;">
           <div class="field">
             <label>Тип сделки</label>
@@ -238,7 +232,6 @@
               <button type="button" class="seg-btn sell" data-val="buy">Я покупаю <span style="font-size:16px; margin-left:4px; color:#fbbf24;">⭐</span></button>
             </div>
           </div>
-
           <div class="field">
             <label>Тип лица</label>
             <div class="segmented" id="f-face">
@@ -246,7 +239,6 @@
               <button type="button" class="seg-btn" data-val="third">3-е лицо</button>
             </div>
           </div>
-
           <div class="field">
             <label>Актив</label>
             <div class="icon-scroll" id="f-asset-select" style="margin-bottom: 0;">
@@ -255,7 +247,6 @@
               <div class="icon-chip" data-val="TON"><div class="coin-icon ton">T</div> TON</div>
             </div>
           </div>
-
           <div class="field">
             <label>Способы оплаты</label>
             <div class="icon-scroll" id="f-payments" style="margin-bottom: 0;">
@@ -265,7 +256,6 @@
               <div class="pay-chip" data-val="Альфа-Банк">🔴 Альфа</div>
             </div>
           </div>
-
           <div class="field">
             <label>Время на оплату</label>
             <div class="icon-scroll" id="f-time" style="margin-bottom: 0;">
@@ -275,7 +265,6 @@
               <div class="pay-chip" data-val="60">1 час</div>
             </div>
           </div>
-
           <div class="grid-2-col">
             <div class="field" style="margin-bottom: 8px;"><label>Цена за 1 USDT (₽)</label><input class="input" type="number" id="f-price" placeholder="90" style="height: 48px;"></div>
             <div class="field" style="margin-bottom: 8px;"><label>Общий объем (USDT)</label><input class="input" type="number" id="f-amount" placeholder="500" style="height: 48px;"></div>
@@ -284,9 +273,7 @@
             <div class="field" style="margin-bottom: 8px;"><label>Мин. лимит (₽)</label><input class="input" type="number" id="f-min" placeholder="3000" style="height: 48px;"></div>
             <div class="field" style="margin-bottom: 8px;"><label>Макс. лимит (₽)</label><input class="input" type="number" id="f-max" placeholder="45000" style="height: 48px;"></div>
           </div>
-          
           <div class="field" style="margin-bottom: 12px;"><label>Условия</label><textarea class="input" id="f-terms" placeholder="ПРИНИМАЮ ТОЛЬКО СБП..." style="min-height: 60px; font-size: 14px !important;"></textarea></div>
-
           <div class="error-msg" id="createError" style="font-size: 13px;"></div>
           <button class="btn btn-primary btn-block" id="createBtn" style="margin-top: 4px; height: 48px; font-size: 15px;">Опубликовать</button>
         </div>
@@ -295,20 +282,16 @@
       <!-- SPREAD CALCULATOR -->
       <section class="screen" id="screen-spread">
         <h2 style="margin-bottom: 12px; font-size: 18px; font-weight: 800;">Калькулятор спреда</h2>
-        
         <div class="glass-card" style="padding: 16px;">
           <p style="font-size: 14px; color: var(--dim); margin-bottom: 16px;">Введите цены покупки и продажи, чтобы рассчитать чистую прибыль.</p>
-
           <div class="field" style="margin-bottom: 12px;">
             <label>Цена покупки (₽)</label>
             <input class="input" type="number" id="calc-buy-price" placeholder="Например: 85.00" style="height: 55px; font-size: 20px; font-weight: 800;">
           </div>
-
           <div class="field" style="margin-bottom: 12px;">
             <label>Цена продажи (₽)</label>
             <input class="input" type="number" id="calc-sell-price" placeholder="Например: 90.00" style="height: 55px; font-size: 20px; font-weight: 800;">
           </div>
-
           <div class="grid-2-col" style="margin-bottom: 16px;">
             <div class="field" style="margin-bottom: 0;">
               <label>Объем (USDT)</label>
@@ -322,7 +305,6 @@
               </div>
             </div>
           </div>
-
           <div class="inner-card" style="padding: 16px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); margin-bottom: 16px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
               <span style="font-size: 14px; color: var(--dim); font-weight: 600;">Разница (Спред):</span>
@@ -341,45 +323,33 @@
         </div>
       </section>
 
-      <!-- ORDER DETAIL -->
       <section class="screen" id="screen-order"><div id="orderDetailContent"></div></section>
       <section class="screen" id="screen-wallet"></section>
 
-      <!-- PROFILE -->
       <section class="screen" id="screen-profile">
         <h2 style="margin-bottom: 12px; font-size: 18px; font-weight: 800;">Профиль</h2>
         <div id="profileContent">Загрузка...</div>
       </section>
 
-      <!-- RULES -->
       <section class="screen" id="screen-rules">
         <h2 style="margin-bottom: 12px; font-size: 18px; font-weight: 800;">Правила платформы</h2>
         <div class="glass-card" style="padding: 16px; line-height: 1.5; font-size: 14px;">
           <h3 style="color: var(--primary); margin-bottom: 8px;">1. Общие положения</h3>
           <p style="margin-bottom: 12px; color: var(--txt);">VEXO — это P2P-платформа для безопасного обмена криптовалюты. Администрация не является стороной сделки, а лишь предоставляет техническую площадку.</p>
-          
           <h3 style="color: var(--primary); margin-bottom: 8px;">2. Обязанности продавца</h3>
           <p style="margin-bottom: 12px; color: var(--txt);">Продавец обязан иметь актив на балансе. После подтверждения заявки покупателем, продавец должен подтвердить получение фиата в течение 15 минут после отметки "Оплачено".</p>
-          
           <h3 style="color: var(--primary); margin-bottom: 8px;">3. Обязанности покупателя</h3>
           <p style="margin-bottom: 12px; color: var(--txt);">Покупатель обязан перевести точную сумму по реквизитам и прикрепить чек. Перевод должен быть выполнен с того же банковского счета, который указан в профиле.</p>
-          
           <h3 style="color: var(--primary); margin-bottom: 8px;">4. Споры и мошенничество</h3>
           <p style="margin-bottom: 12px; color: var(--txt);">При возникновении спора Администрация вправе запросить видео/фото подтверждение. При выявлении мошенничества аккаунт блокируется, средства замораживаются.</p>
-          
-          <h3 style="color: var(--primary); margin-bottom: 8px;">5. Комиссия</h3>
-          <p style="margin-bottom: 12px; color: var(--txt);">Платформа взимает комиссию с продавца в размере 0.5% с каждой успешной сделки.</p>
         </div>
       </section>
 
-      <!-- ADMIN -->
       <section class="screen" id="screen-admin">
         <h2 style="margin-bottom: 12px; font-size: 18px; font-weight: 800; color:var(--red);">🛡 Админка</h2>
-        
         <div class="field" id="adminSearchContainer" style="margin-bottom: 12px;">
           <input type="text" class="input" id="adminUserSearch" placeholder="Поиск по ID или нику..." style="height: 44px; font-size: 14px !important;">
         </div>
-
         <div class="tabs" id="adminTabs" style="margin-bottom:16px;">
           <button class="tab active" data-val="users">Люди</button>
           <button class="tab" data-val="disputes">Споры</button>
@@ -393,11 +363,12 @@
       <button class="bn-btn active" data-screen="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Главная</button>
       <button class="bn-btn" data-screen="market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Маркет</button>
       <button class="bn-btn" data-screen="profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Профиль</button>
+      <button class="bn-btn" data-screen="admin" id="adminBnBtn" style="display:none; color:var(--red);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Админ</button>
     </nav>
   </div>
 </div>
 
-<!-- МОДАЛКА ПРОСМОТРА ЧЕКА -->
+<!-- МОДАЛКИ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ, ОНИ НЕ ВЛИЯЮТ НА ГЛАВНЫЙ ЭКРАН -->
 <div class="modal-overlay" id="receiptViewModal">
   <div class="modal glass-modal" style="padding: 10px; background: #000;">
     <button style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 20px; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; z-index: 10;" onclick="closeModal('receiptViewModal')">✕</button>
@@ -525,12 +496,10 @@
     <div class="field" style="margin-bottom: 12px;"><label>Аватар (URL)</label><input class="input" type="url" id="settingsAvatarUrl" placeholder="https://..." style="height: 44px;"></div>
     <div class="field" style="margin-bottom: 12px;"><label>Имя</label><input class="input" type="text" id="settingsName" maxlength="50" style="height: 44px;"></div>
     <div class="field" style="margin-bottom: 12px;"><label>Email</label><input class="input" type="email" id="settingsEmail" style="height: 44px;"></div>
-    
     <div style="border-top: 1px solid var(--glass-border); margin: 12px 0; padding-top: 12px;">
       <h4 style="font-size: 14px; font-weight: 800; margin-bottom: 8px; color: var(--dim);">Статусы</h4>
       <div id="statusProgressContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
     </div>
-
     <div style="border-top: 1px solid var(--glass-border); margin: 12px 0; padding-top: 12px;">
       <h4 style="font-size: 14px; font-weight: 800; margin-bottom: 8px; color: var(--dim);">Смена пароля</h4>
       <div class="field" style="margin-bottom: 8px;"><label>Текущий</label><input class="input" type="password" id="settingsCurrentPass" style="height: 44px;"></div>
@@ -561,9 +530,7 @@
         <button type="button" class="seg-btn" data-val="USDT" style="height: 40px; font-size: 14px;">USDT (₮)</button>
       </div>
     </div>
-    
     <div class="field" style="margin-bottom: 12px;"><label>Сумма</label><input type="number" class="input" id="walletActionAmount" placeholder="0" style="height: 44px; font-size: 16px;"></div>
-    
     <div class="field" id="walletBankGroup" style="margin-bottom: 12px;">
       <label>Выберите банк</label>
       <select id="walletBankSelect" class="input" style="height: 44px; font-size: 14px !important; background: var(--glass-bg); color: var(--txt);">
@@ -574,7 +541,6 @@
         <option value="Райффайзен">Райффайзен</option>
       </select>
     </div>
-
     <div id="usdtWithdrawFields" style="display: none;">
       <div class="field" style="margin-bottom: 12px;">
         <label>Сеть</label>
@@ -589,9 +555,7 @@
         <input type="text" class="input" id="walletAddress" placeholder="Введите адрес" style="height: 44px;">
       </div>
     </div>
-
     <div class="field" style="margin-bottom: 12px;"><label>Telegram</label><input type="text" class="input" id="walletActionTg" placeholder="@username" style="height: 44px;"></div>
-    
     <button class="btn btn-primary btn-block" id="walletActionSubmit" style="height: 48px; font-size: 15px;">Отправить</button>
     <button class="btn btn-ghost btn-block" onclick="closeModal('walletActionModal')" style="margin-top: 6px; height: 44px;">Отмена</button>
   </div>
@@ -693,7 +657,6 @@
       <div class="field" style="margin-bottom: 12px;"><label>Мин. лимит</label><input class="input" type="number" id="edit-min" style="height: 44px;"></div>
       <div class="field" style="margin-bottom: 12px;"><label>Макс. лимит</label><input class="input" type="number" id="edit-max" style="height: 44px;"></div>
     </div>
-    
     <div class="field" style="margin-bottom: 12px;">
       <label>Способы оплаты</label>
       <div class="icon-scroll" id="edit-payments" style="margin-bottom:0;">
@@ -703,7 +666,6 @@
         <div class="pay-chip" data-val="Альфа-Банк">🔴 Альфа</div>
       </div>
     </div>
-
     <div class="field" style="margin-bottom: 12px;"><label>Условия</label><textarea class="input" id="edit-terms" style="min-height: 60px; font-size: 14px !important;"></textarea></div>
     <div class="error-msg" id="editError" style="font-size: 12px;"></div>
     <button class="btn btn-primary btn-block" id="editSaveBtn" style="height: 44px;">Сохранить</button>

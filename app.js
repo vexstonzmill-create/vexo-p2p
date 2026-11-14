@@ -65,7 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
         try { tg.setBackgroundColor('#030712'); } catch(e) {}
 
         const initData = tg.initData;
-        
         if (API.token()) return; 
 
         try {
@@ -79,7 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             localStorage.setItem('vexo_token', data.token);
             localStorage.setItem('vexo_user', JSON.stringify(data.user));
-            
             updateAuthUI();
             screenCache.profile = false; screenCache.wallet = false;
             toast('Вход через Telegram выполнен!', 'success');
@@ -177,7 +175,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const spreadVal = sell - buy;
         const spreadPct = buy > 0 ? (spreadVal / buy) * 100 : 0;
-        const totalBuy = buy * amount;
         const totalSell = sell * amount;
         
         let feeAmount = feeVal;
@@ -200,23 +197,6 @@ document.addEventListener('DOMContentLoaded', () => {
       [buyInput, sellInput, amountInput, feeInput].forEach(input => input.addEventListener('input', calculate));
     }
 
-    (function initCarousel() {
-      if (window.bannerInited) return;
-      window.bannerInited = true;
-      const track = document.getElementById('bannerTrack');
-      const dots = document.querySelectorAll('.banner-dot');
-      const viewport = document.getElementById('bannerViewport');
-      if (!track || !dots.length) return;
-      let idx = 0, timer;
-      function go(i) { idx = (i + dots.length) % dots.length; track.style.transform = `translateX(-${idx * 100}%)`; dots.forEach((d, k) => d.classList.toggle('active', k === idx)); }
-      function auto() { clearInterval(timer); timer = setInterval(() => go(idx + 1), 4500); }
-      dots.forEach((d, i) => d.onclick = () => { go(i); auto(); });
-      let startX = 0;
-      viewport.addEventListener('touchstart', e => { startX = e.touches[0].clientX; clearInterval(timer); }, { passive: true });
-      viewport.addEventListener('touchend', e => { const endX = e.changedTouches[0].clientX; const diff = startX - endX; if (diff > 50) go(idx + 1); if (diff < -50) go(idx - 1); auto(); });
-      auto();
-    })();
-
     async function loadHomeRate() {
       try {
         const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=rub');
@@ -227,6 +207,25 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch(e) {
         document.getElementById('homeUsdtRate').textContent = '90.00 ₽'; 
       }
+    }
+
+    async function loadHomeBalance() {
+      const u = API.user();
+      const el = document.getElementById('homeBalance');
+      if (!el) return;
+      if (!u) { el.textContent = '0.00 ₽'; return; }
+      try {
+        const data = await API.req('GET', '/users/me');
+        localStorage.setItem('vexo_user', JSON.stringify(data.user));
+        let usdtRate = 90;
+        try {
+            const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=rub');
+            const rdata = await res.json();
+            if (rdata && rdata.tether && rdata.tether.rub) usdtRate = rdata.tether.rub;
+        } catch(e) {}
+        const total = data.user.balanceRub + (data.user.balanceUsdt * usdtRate);
+        el.textContent = fmtDec(total, 2) + ' ₽';
+      } catch(e) {}
     }
 
     let notifications = JSON.parse(localStorage.getItem('vexo_notifs')) || [];
@@ -310,16 +309,13 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.nav-btn, .bn-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll(`[data-screen="${name}"]`).forEach(b => b.classList.add('active'));
       
-      const backBtn = document.getElementById('backBtn');
-      if (backBtn) backBtn.classList.toggle('hidden', !['order', 'admin'].includes(name));
-      
       try {
         if (name === 'market') { 
           if (!screenCache.market) { loadMarket(); screenCache.market = true; }
           document.querySelector('.mode-btn[data-mode="p2p"]')?.click();
         }
         if (name === 'profile' && !screenCache.profile) { loadProfile(); screenCache.profile = true; }
-        if (name === 'home' && !screenCache.home) { loadHomeRate(); screenCache.home = true; }
+        if (name === 'home') { loadHomeRate(); loadHomeBalance(); }
         if (name === 'wallet') { loadWallet(); screenCache.wallet = true; }
         if (name === 'admin') { loadAdmin(); } 
         if (name === 'spread') { initSpreadCalculator(); }
@@ -338,9 +334,6 @@ document.addEventListener('DOMContentLoaded', () => {
         show(s);
       };
     });
-
-    const backBtn = document.getElementById('backBtn');
-    if (backBtn) backBtn.onclick = () => show(previousScreen);
 
     let currentTheme = localStorage.getItem('vexo_theme') || 'dark';
     function applyTheme(theme) {
@@ -427,6 +420,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const ab = document.getElementById('avatarBtn');
       const isStaff = u && ['admin', 'owner', 'deputy'].includes(u.role);
 
+      // ФИКС БАГА: Безопасная проверка существования элементов
+      const admNav = document.getElementById('adminNavBtn');
+      const admBn = document.getElementById('adminBnBtn');
+
       if (u) {
         if (lb) lb.classList.add('hidden');
         if (ab) {
@@ -442,17 +439,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         if (isStaff) {
-          document.getElementById('adminNavBtn').style.display = 'block';
-          document.getElementById('adminBnBtn').style.display = 'flex';
+          if (admNav) admNav.style.display = 'block';
+          if (admBn) admBn.style.display = 'flex';
         } else {
-          document.getElementById('adminNavBtn').style.display = 'none';
-          document.getElementById('adminBnBtn').style.display = 'none';
+          if (admNav) admNav.style.display = 'none';
+          if (admBn) admBn.style.display = 'none';
         }
       } else {
         if (lb) lb.classList.remove('hidden');
         if (ab) ab.classList.add('hidden');
-        document.getElementById('adminNavBtn').style.display = 'none';
-        document.getElementById('adminBnBtn').style.display = 'none';
+        if (admNav) admNav.style.display = 'none';
+        if (admBn) admBn.style.display = 'none';
       }
     }
 
@@ -1956,6 +1953,21 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!await confirmAsync('Изменение', `Отметить как "${status}"?`, 'Да')) return;
       try {
         await API.req('PATCH', '/admin/requests/' + reqId, { status });
+        toast('Обновлено', 'success'); 
+        loadAdmin(); screenCache.profile = false; screenCache.wallet = false;
+      } catch(e) { toast(e.message || 'Ошибка', 'error'); }
+    };
+
+    // СТАРТ
+    initSpreadCalculator();
+    updateAuthUI();
+    updateNotifUI();
+    try { loadHomeRate(); loadHomeBalance(); } catch(e) { console.error('Initial load error:', e); }
+
+  } catch (err) {
+    console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
+  }
+});uests/' + reqId, { status });
         toast('Обновлено', 'success'); 
         loadAdmin(); screenCache.profile = false; screenCache.wallet = false;
       } catch(e) { toast(e.message || 'Ошибка', 'error'); }
