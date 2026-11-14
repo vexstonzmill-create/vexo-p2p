@@ -61,8 +61,8 @@ document.addEventListener('DOMContentLoaded', () => {
         try { tg.expand(); } catch(e) {}
         try { if (tg.requestFullscreen) tg.requestFullscreen(); } catch(e) { console.log('FS err', e); }
         try { if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch(e) {}
-        try { tg.setHeaderColor('#030712'); } catch(e) {}
-        try { tg.setBackgroundColor('#030712'); } catch(e) {}
+        try { tg.setHeaderColor('#141414'); } catch(e) {}
+        try { tg.setBackgroundColor('#141414'); } catch(e) {}
 
         const initData = tg.initData;
         if (API.token()) return; 
@@ -197,35 +197,35 @@ document.addEventListener('DOMContentLoaded', () => {
       [buyInput, sellInput, amountInput, feeInput].forEach(input => input.addEventListener('input', calculate));
     }
 
+    (function initCarousel() {
+      if (window.bannerInited) return;
+      window.bannerInited = true;
+      const track = document.getElementById('bannerTrack');
+      const dots = document.querySelectorAll('.banner-dot');
+      const viewport = document.getElementById('bannerViewport');
+      if (!track || !dots.length) return;
+      let idx = 0, timer;
+      function go(i) { idx = (i + dots.length) % dots.length; track.style.transform = `translateX(-${idx * 100}%)`; dots.forEach((d, k) => d.classList.toggle('active', k === idx)); }
+      function auto() { clearInterval(timer); timer = setInterval(() => go(idx + 1), 4500); }
+      dots.forEach((d, i) => d.onclick = () => { go(i); auto(); });
+      let startX = 0;
+      viewport.addEventListener('touchstart', e => { startX = e.touches[0].clientX; clearInterval(timer); }, { passive: true });
+      viewport.addEventListener('touchend', e => { const endX = e.changedTouches[0].clientX; const diff = startX - endX; if (diff > 50) go(idx + 1); if (diff < -50) go(idx - 1); auto(); });
+      auto();
+    })();
+
     async function loadHomeRate() {
       try {
         const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=rub');
         const data = await res.json();
         if (data && data.tether && data.tether.rub) {
-          document.getElementById('homeUsdtRate').textContent = fmtDec(data.tether.rub, 2) + ' ₽';
+          const el = document.getElementById('homeUsdtRate');
+          if (el) el.textContent = fmtDec(data.tether.rub, 2) + ' ₽';
         }
       } catch(e) {
-        document.getElementById('homeUsdtRate').textContent = '90.00 ₽'; 
+        const el = document.getElementById('homeUsdtRate');
+        if (el) el.textContent = '90.00 ₽'; 
       }
-    }
-
-    async function loadHomeBalance() {
-      const u = API.user();
-      const el = document.getElementById('homeBalance');
-      if (!el) return;
-      if (!u) { el.textContent = '0.00 ₽'; return; }
-      try {
-        const data = await API.req('GET', '/users/me');
-        localStorage.setItem('vexo_user', JSON.stringify(data.user));
-        let usdtRate = 90;
-        try {
-            const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=rub');
-            const rdata = await res.json();
-            if (rdata && rdata.tether && rdata.tether.rub) usdtRate = rdata.tether.rub;
-        } catch(e) {}
-        const total = data.user.balanceRub + (data.user.balanceUsdt * usdtRate);
-        el.textContent = fmtDec(total, 2) + ' ₽';
-      } catch(e) {}
     }
 
     let notifications = JSON.parse(localStorage.getItem('vexo_notifs')) || [];
@@ -315,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
           document.querySelector('.mode-btn[data-mode="p2p"]')?.click();
         }
         if (name === 'profile' && !screenCache.profile) { loadProfile(); screenCache.profile = true; }
-        if (name === 'home') { loadHomeRate(); loadHomeBalance(); }
+        if (name === 'home') { loadHomeRate(); }
         if (name === 'wallet') { loadWallet(); screenCache.wallet = true; }
         if (name === 'admin') { loadAdmin(); } 
         if (name === 'spread') { initSpreadCalculator(); }
@@ -1961,7 +1961,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initSpreadCalculator();
     updateAuthUI();
     updateNotifUI();
-    try { loadHomeRate(); loadHomeBalance(); } catch(e) { console.error('Initial load error:', e); }
+    try { loadHomeRate(); } catch(e) { console.error('Initial load error:', e); }
 
   } catch (err) {
     console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
