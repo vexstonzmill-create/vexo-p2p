@@ -19,6 +19,7 @@
   <div class="blob blob-1"></div>
   <div class="blob blob-2"></div>
   <div class="blob blob-3"></div>
+  <div class="blob blob-4"></div>
 </div>
 
 <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
@@ -28,9 +29,7 @@
     <div class="logo"><div class="logo-mark">V</div><span class="logo-text">vexo</span></div>
     <button class="nav-btn active" data-screen="home">Главная</button>
     <button class="nav-btn" data-screen="market">Маркет</button>
-    <button class="nav-btn" data-screen="create">Создать объявление</button>
     <button class="nav-btn" data-screen="spread">Калькулятор</button>
-    <button class="nav-btn" data-screen="orders">Мои ордера</button>
     <button class="nav-btn" data-screen="wallet">Кошелёк</button>
     <button class="nav-btn" data-screen="profile">Профиль</button>
     <button class="nav-btn" data-screen="rules">Правила</button>
@@ -40,21 +39,21 @@
   <div class="main">
     <header class="topbar glass-panel">
       <div style="display: flex; align-items: center; gap: 8px;">
-        <button class="btn btn-sm btn-ghost" id="menuBtn" style="padding: 4px; width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        <button class="btn btn-sm btn-ghost" id="menuBtn" style="padding: 4px; width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
         </button>
-        <div class="logo"><div class="logo-mark" style="width: 22px; height: 22px; font-size: 11px;">V</div><span class="logo-text" style="font-size: 16px;">vexo</span></div>
+        <div class="logo"><div class="logo-mark" style="width: 26px; height: 26px; font-size: 13px;">V</div><span class="logo-text" style="font-size: 18px;">vexo</span></div>
       </div>
       
       <div style="display: flex; align-items: center; gap: 6px;">
         <button class="btn btn-sm btn-ghost notification-btn" id="notifBtn" style="padding: 6px;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
           <span class="notif-dot hidden" id="notifDot"></span>
         </button>
-        <button class="btn btn-sm btn-ghost" id="themeBtn" style="padding: 6px; border-radius: 50%; width: 30px; height: 30px;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        <button class="btn btn-sm btn-ghost" id="themeBtn" style="padding: 6px; border-radius: 50%; width: 32px; height: 32px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
         </button>
-        <button class="btn btn-sm btn-primary" id="loginBtn" style="padding: 6px 12px; font-size: 12px;">Войти</button>
+        <button class="btn btn-sm btn-primary" id="loginBtn" style="padding: 8px 14px; font-size: 13px;">Войти</button>
         <button class="avatar-btn hidden" id="avatarBtn"></button>
       </div>
     </header>
@@ -74,7 +73,7 @@
                 <div class="banner-text-content">
                   <h2>Добро пожаловать в <br><span>vexo</span></h2>
                   <p>Самый быстрый и безопасный обмен криптовалюты на рубли.</p>
-                  <button class="btn btn-primary btn-sm" data-screen="market" style="width: fit-content;">Перейти в Маркет</button>
+                  <button class="btn btn-primary btn-sm" data-screen="market" style="width: fit-content; padding: 10px 20px; font-size: 13px;">Перейти в Маркет</button>
                 </div>
               </div>
               <div class="banner banner-tg">
@@ -84,7 +83,7 @@
                 <div class="banner-text-content">
                   <h2>Акции и розыгрыши</h2>
                   <p>Подписывайтесь на наш Telegram-канал!</p>
-                  <a href="https://t.me/vexoio_bot" target="_blank" class="btn btn-primary btn-sm" style="width: fit-content; text-decoration: none;">В Telegram</a>
+                  <a href="https://t.me/vexoio_bot" target="_blank" class="btn btn-primary btn-sm" style="width: fit-content; text-decoration: none; padding: 10px 20px; font-size: 13px;">В Telegram</a>
                 </div>
               </div>
             </div>
@@ -96,117 +95,144 @@
         </div>
 
         <div class="glass-card" style="margin-bottom: 16px;">
-          <h2 style="font-size: 14px; margin-bottom: 12px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 18px;">📈</span> Рыночный курс
+          <h2 style="font-size: 15px; margin-bottom: 12px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 20px;">📈</span> Рыночный курс
           </h2>
-          <div style="display: flex; justify-content: space-between; background: var(--inner-card); padding: 12px; border-radius: 12px; align-items: center;">
-             <div style="display: flex; align-items: center; gap: 8px;">
-                <div class="coin-icon usdt" style="width: 32px; height: 32px; font-size: 16px;">₮</div>
+          <div style="display: flex; justify-content: space-between; background: var(--inner-card); padding: 14px; border-radius: 12px; align-items: center;">
+             <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="coin-icon usdt" style="width: 36px; height: 36px; font-size: 18px;">₮</div>
                 <div>
-                   <div style="font-weight: 800; font-size: 14px;">USDT / RUB</div>
-                   <div style="font-size: 10px; color: var(--dim);">Tether TRC-20</div>
+                   <div style="font-weight: 800; font-size: 15px;">USDT / RUB</div>
+                   <div style="font-size: 11px; color: var(--dim);">Tether TRC-20</div>
                 </div>
              </div>
              <div style="text-align: right;">
-                <div id="homeUsdtRate" style="font-weight: 900; font-size: 18px; color: var(--grn);">-- ₽</div>
+                <div id="homeUsdtRate" style="font-weight: 900; font-size: 20px; color: var(--grn);">-- ₽</div>
              </div>
           </div>
         </div>
 
         <div class="glass-card" style="margin-bottom: 20px;">
-          <h2 style="font-size: 14px; margin-bottom: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 18px;">🚀</span> Как это работает?
+          <h2 style="font-size: 15px; margin-bottom: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 20px;">🚀</span> Как это работает?
           </h2>
           <div class="steps-wrapper">
             <div class="step-item">
-              <div class="step-icon" style="background: var(--btn-bg); color: #fff; box-shadow: var(--btn-glow);">1</div>
-              <div class="step-text">Выберите подходящее объявление в <b>Маркете</b></div>
+              <div class="step-icon" style="background: var(--btn-bg); color: #fff; box-shadow: var(--btn-glow); width: 32px; height: 32px; font-size: 15px;">1</div>
+              <div class="step-text" style="font-size: 14px;">Выберите подходящее объявление в <b>Маркете</b></div>
             </div>
             <div class="step-line"></div>
             <div class="step-item">
-              <div class="step-icon" style="background: var(--btn-bg); color: #fff; box-shadow: var(--btn-glow);">2</div>
-              <div class="step-text">Переведите рубли продавцу по реквизитам</div>
+              <div class="step-icon" style="background: var(--btn-bg); color: #fff; box-shadow: var(--btn-glow); width: 32px; height: 32px; font-size: 15px;">2</div>
+              <div class="step-text" style="font-size: 14px;">Переведите рубли продавцу по реквизитам</div>
             </div>
             <div class="step-line"></div>
             <div class="step-item">
-              <div class="step-icon" style="background: var(--grn); color: #fff; box-shadow: 0 4px 12px rgba(16,185,129,0.4);">3</div>
-              <div class="step-text">Получите USDT на свой кошелек</div>
+              <div class="step-icon" style="background: var(--grn); color: #fff; box-shadow: 0 4px 12px rgba(16,185,129,0.4); width: 32px; height: 32px; font-size: 15px;">3</div>
+              <div class="step-text" style="font-size: 14px;">Получите USDT на свой кошелек</div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- MARKET -->
+      <!-- MARKET (С ВКЛАДКАМИ) -->
       <section class="screen" id="screen-market">
-        <div class="market-mode-switch" id="marketModeSwitch">
-          <button class="mode-btn active" data-mode="p2p">P2P Маркет</button>
-          <button class="mode-btn" data-mode="fast">⚡ Быстрый Обмен</button>
+        
+        <div class="market-main-tabs">
+          <button class="mm-tab active" data-mtab="p2p">Маркет</button>
+          <button class="mm-tab" data-mtab="ads">Мои объявления</button>
+          <button class="mm-tab" data-mtab="orders">Ордера</button>
         </div>
 
-        <div id="p2p-market-content">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <h2 style="font-size: 16px; font-weight: 800;">Объявления</h2>
-            <button class="btn btn-ghost btn-sm" id="openFilterBtn" style="border: 1px solid var(--glass-border); padding: 4px 10px; border-radius: 10px; display: flex; gap: 4px; font-size: 12px; height: 30px;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-              Фильтры
-            </button>
+        <!-- Вкладка 1: Маркет -->
+        <div class="market-tab-content active" id="mtab-p2p">
+          <div class="market-mode-switch" id="marketModeSwitch">
+            <button class="mode-btn active" data-mode="p2p">P2P</button>
+            <button class="mode-btn" data-mode="fast">⚡ Быстрый</button>
           </div>
 
-          <div class="trade-tabs" id="marketSideTabs">
-            <button class="trade-tab active" data-side="buy">Купить</button>
-            <button class="trade-tab" data-side="sell">Продать</button>
-          </div>
-
-          <div class="icon-scroll" id="filterAsset" style="margin-bottom: 8px;">
-            <div class="icon-chip active" data-val="">Все активы</div>
-            <div class="icon-chip" data-val="USDT"><div class="coin-icon usdt">₮</div> USDT</div>
-            <div class="icon-chip" data-val="BTC"><div class="coin-icon btc">₿</div> BTC</div>
-            <div class="icon-chip" data-val="TON"><div class="coin-icon ton">T</div> TON</div>
-          </div>
-
-          <div id="adsList">Загрузка...</div>
-        </div>
-
-        <div id="fast-exchange-content" style="display: none;">
-          <div class="glass-card" style="padding: 16px;">
-            <h2 style="font-size: 18px; font-weight: 800; margin-bottom: 12px;">Быстрый обмен</h2>
-            
-            <div class="trade-tabs" style="margin-bottom: 16px;">
-              <button class="trade-tab active" id="exTabBuy">Купить USDT</button>
-              <button class="trade-tab" id="exTabSell">Продать USDT</button>
+          <div id="p2p-market-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <h2 style="font-size: 18px; font-weight: 800;">Объявления</h2>
+              <button class="btn btn-ghost btn-sm" id="openFilterBtn" style="border: 1px solid var(--glass-border); padding: 6px 12px; border-radius: 10px; display: flex; gap: 6px; font-size: 13px; height: 34px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                Фильтры
+              </button>
             </div>
 
-            <div class="field">
-              <label id="exInputLabel">Сумма в RUB</label>
-              <input type="number" id="exAmount" class="input" style="font-size: 20px; font-weight: 800; height: 50px;" placeholder="0">
+            <div class="trade-tabs" id="marketSideTabs">
+              <button class="trade-tab active" data-side="buy">Купить</button>
+              <button class="trade-tab" data-side="sell">Продать</button>
             </div>
 
-            <div class="inner-card" style="margin-bottom: 16px; padding: 10px;">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                <span style="font-size: 12px; color: var(--dim);">Курс:</span>
-                <span id="exRateDisplay" style="font-size: 12px; font-weight: 800;">-- ₽</span>
+            <div class="icon-scroll" id="filterAsset" style="margin-bottom: 8px;">
+              <div class="icon-chip active" data-val="">Все активы</div>
+              <div class="icon-chip" data-val="USDT"><div class="coin-icon usdt">₮</div> USDT</div>
+              <div class="icon-chip" data-val="BTC"><div class="coin-icon btc">₿</div> BTC</div>
+              <div class="icon-chip" data-val="TON"><div class="coin-icon ton">T</div> TON</div>
+            </div>
+
+            <div id="adsList">Загрузка...</div>
+          </div>
+
+          <div id="fast-exchange-content" style="display: none;">
+            <div class="glass-card" style="padding: 16px;">
+              <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 12px;">Быстрый обмен</h2>
+              
+              <div class="trade-tabs" style="margin-bottom: 16px;">
+                <button class="trade-tab active" id="exTabBuy">Купить USDT</button>
+                <button class="trade-tab" id="exTabSell">Продать USDT</button>
               </div>
-              <div style="display: flex; justify-content: space-between;">
-                <span style="font-size: 12px; color: var(--dim);">Вы получите:</span>
-                <span id="exResultDisplay" style="font-size: 14px; font-weight: 800; color: var(--grn);">0 USDT</span>
-              </div>
-            </div>
 
-            <button class="btn btn-primary btn-block" id="exSubmitBtn" style="height: 44px; font-size: 14px;">Обменять</button>
+              <div class="field">
+                <label id="exInputLabel">Сумма в RUB</label>
+                <input type="number" id="exAmount" class="input" style="font-size: 22px; font-weight: 800; height: 55px;" placeholder="0">
+              </div>
+
+              <div class="inner-card" style="margin-bottom: 16px; padding: 12px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                  <span style="font-size: 14px; color: var(--dim);">Курс:</span>
+                  <span id="exRateDisplay" style="font-size: 14px; font-weight: 800;">-- ₽</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="font-size: 14px; color: var(--dim);">Вы получите:</span>
+                  <span id="exResultDisplay" style="font-size: 16px; font-weight: 800; color: var(--grn);">0 USDT</span>
+                </div>
+              </div>
+
+              <button class="btn btn-primary btn-block" id="exSubmitBtn" style="height: 48px; font-size: 15px;">Обменять</button>
+            </div>
           </div>
         </div>
+
+        <!-- Вкладка 2: Мои объявления -->
+        <div class="market-tab-content" id="mtab-ads">
+          <button class="btn btn-primary btn-block" style="margin-bottom: 16px; height: 48px;" onclick="show('create')">+ Создать объявление</button>
+          <div id="myAdsList">Загрузка...</div>
+        </div>
+
+        <!-- Вкладка 3: Ордера -->
+        <div class="market-tab-content" id="mtab-orders">
+          <div class="tabs" id="ordersFilter" style="margin-bottom: 12px;">
+            <button class="tab active" data-val="active">Активные</button>
+            <button class="tab" data-val="completed">Завершённые</button>
+            <button class="tab" data-val="cancelled">Отменённые</button>
+          </div>
+          <div id="ordersList">Загрузка...</div>
+        </div>
+
       </section>
 
       <!-- CREATE -->
       <section class="screen" id="screen-create">
-        <h2 style="margin-bottom: 12px; font-size: 16px; font-weight: 800;">Создать объявление</h2>
+        <h2 style="margin-bottom: 12px; font-size: 18px; font-weight: 800;">Создать объявление</h2>
         
-        <div class="glass-card" style="padding: 14px;">
+        <div class="glass-card" style="padding: 16px;">
           <div class="field">
             <label>Тип сделки</label>
             <div class="segmented" id="f-side">
               <button type="button" class="seg-btn buy active" data-val="sell">Я продаю</button>
-              <button type="button" class="seg-btn sell" data-val="buy">Я покупаю <span style="font-size:14px; margin-left:4px; color:#fbbf24;">⭐</span></button>
+              <button type="button" class="seg-btn sell" data-val="buy">Я покупаю <span style="font-size:16px; margin-left:4px; color:#fbbf24;">⭐</span></button>
             </div>
           </div>
 
@@ -227,13 +253,26 @@
             </div>
           </div>
 
+          <!-- ОБНОВЛЕННЫЙ БЛОК СПОСОБОВ ОПЛАТЫ -->
           <div class="field">
             <label>Способы оплаты</label>
             <div class="icon-scroll" id="f-payments" style="margin-bottom: 0;">
-              <div class="pay-chip" data-val="СБП">🏦 СБП</div>
-              <div class="pay-chip" data-val="Тинькофф">🟡 Тинькофф</div>
-              <div class="pay-chip" data-val="Сбербанк">🟢 Сбер</div>
-              <div class="pay-chip" data-val="Альфа-Банк">🔴 Альфа</div>
+              <div class="pay-chip" data-val="СБП">
+                <svg viewBox="0 0 24 24" fill="none" width="20" height="20" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" fill="#0055BB"/><path d="M0 0h12v12H0z" fill="#FF0033"/><path d="M12 12h12v12H12z" fill="#00CC00"/><path d="M12 0h12v12H12z" fill="#FFCC00"/><path d="M0 12h12v12H0z" fill="#0055BB"/><path d="M6 8h12v2H6zM6 14h12v2H6z" fill="#fff"/></svg>
+                СБП
+              </div>
+              <div class="pay-chip" data-val="Тинькофф">
+                <svg viewBox="0 0 24 24" fill="none" width="20" height="20" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" rx="4" fill="#FFDD2D"/><path d="M12 5l6 3v4c0 3.5-2.5 6.5-6 7-3.5-.5-6-3.5-6-7V8l6-3z" fill="#000"/></svg>
+                Тинькофф
+              </div>
+              <div class="pay-chip" data-val="Сбербанк">
+                <svg viewBox="0 0 24 24" fill="none" width="20" height="20" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" rx="4" fill="#21A038"/><path d="M7 12l3 3 7-7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Сбер
+              </div>
+              <div class="pay-chip" data-val="Альфа-Банк">
+                <svg viewBox="0 0 24 24" fill="none" width="20" height="20" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" rx="4" fill="#EF3124"/><path d="M12 6l5 12h-3l-1-3H8l-1 3H4L12 6zm-2 6h3l-1.5-4L10 12z" fill="#fff"/></svg>
+                Альфа
+              </div>
             </div>
           </div>
 
@@ -248,94 +287,84 @@
           </div>
 
           <div class="grid-2-col">
-            <div class="field" style="margin-bottom: 8px;"><label>Цена за 1 USDT (₽)</label><input class="input" type="number" id="f-price" placeholder="90" style="height: 44px;"></div>
-            <div class="field" style="margin-bottom: 8px;"><label>Общий объем (USDT)</label><input class="input" type="number" id="f-amount" placeholder="500" style="height: 44px;"></div>
+            <div class="field" style="margin-bottom: 8px;"><label>Цена за 1 USDT (₽)</label><input class="input" type="number" id="f-price" placeholder="90" style="height: 48px;"></div>
+            <div class="field" style="margin-bottom: 8px;"><label>Общий объем (USDT)</label><input class="input" type="number" id="f-amount" placeholder="500" style="height: 48px;"></div>
           </div>
           <div class="grid-2-col">
-            <div class="field" style="margin-bottom: 8px;"><label>Мин. лимит (₽)</label><input class="input" type="number" id="f-min" placeholder="3000" style="height: 44px;"></div>
-            <div class="field" style="margin-bottom: 8px;"><label>Макс. лимит (₽)</label><input class="input" type="number" id="f-max" placeholder="45000" style="height: 44px;"></div>
+            <div class="field" style="margin-bottom: 8px;"><label>Мин. лимит (₽)</label><input class="input" type="number" id="f-min" placeholder="3000" style="height: 48px;"></div>
+            <div class="field" style="margin-bottom: 8px;"><label>Макс. лимит (₽)</label><input class="input" type="number" id="f-max" placeholder="45000" style="height: 48px;"></div>
           </div>
           
-          <div class="field" style="margin-bottom: 12px;"><label>Условия</label><textarea class="input" id="f-terms" placeholder="ПРИНИМАЮ ТОЛЬКО СБП..." style="min-height: 50px; font-size: 12px !important;"></textarea></div>
+          <div class="field" style="margin-bottom: 12px;"><label>Условия</label><textarea class="input" id="f-terms" placeholder="ПРИНИМАЮ ТОЛЬКО СБП..." style="min-height: 60px; font-size: 14px !important;"></textarea></div>
 
-          <div class="error-msg" id="createError" style="font-size: 11px;"></div>
-          <button class="btn btn-primary btn-block" id="createBtn" style="margin-top: 4px; height: 44px;">Опубликовать</button>
+          <div class="error-msg" id="createError" style="font-size: 13px;"></div>
+          <button class="btn btn-primary btn-block" id="createBtn" style="margin-top: 4px; height: 48px; font-size: 15px;">Опубликовать</button>
         </div>
       </section>
 
       <!-- SPREAD CALCULATOR -->
       <section class="screen" id="screen-spread">
-        <h2 style="margin-bottom: 12px; font-size: 16px; font-weight: 800;">Калькулятор спреда</h2>
+        <h2 style="margin-bottom: 12px; font-size: 18px; font-weight: 800;">Калькулятор спреда</h2>
         
         <div class="glass-card" style="padding: 16px;">
-          <p style="font-size: 12px; color: var(--dim); margin-bottom: 16px;">Введите цены покупки и продажи, чтобы рассчитать чистую прибыль.</p>
+          <p style="font-size: 14px; color: var(--dim); margin-bottom: 16px;">Введите цены покупки и продажи, чтобы рассчитать чистую прибыль.</p>
 
           <div class="field" style="margin-bottom: 12px;">
             <label>Цена покупки (₽)</label>
-            <input class="input" type="number" id="calc-buy-price" placeholder="Например: 85.00" style="height: 50px; font-size: 18px; font-weight: 800;">
+            <input class="input" type="number" id="calc-buy-price" placeholder="Например: 85.00" style="height: 55px; font-size: 20px; font-weight: 800;">
           </div>
 
           <div class="field" style="margin-bottom: 12px;">
             <label>Цена продажи (₽)</label>
-            <input class="input" type="number" id="calc-sell-price" placeholder="Например: 90.00" style="height: 50px; font-size: 18px; font-weight: 800;">
+            <input class="input" type="number" id="calc-sell-price" placeholder="Например: 90.00" style="height: 55px; font-size: 20px; font-weight: 800;">
           </div>
 
           <div class="grid-2-col" style="margin-bottom: 16px;">
             <div class="field" style="margin-bottom: 0;">
               <label>Объем (USDT)</label>
-              <input class="input" type="number" id="calc-amount" placeholder="1000" style="height: 44px;">
+              <input class="input" type="number" id="calc-amount" placeholder="1000" style="height: 48px;">
             </div>
             <div class="field" style="margin-bottom: 0;">
               <label>Комиссия</label>
               <div style="display: flex; gap: 4px;">
-                <input class="input" type="number" id="calc-fee" placeholder="0" style="height: 44px;">
-                <button class="btn btn-ghost" id="calc-fee-type" data-type="rub" style="width: 50px; height: 44px; padding: 0; font-size: 12px; border: 1px solid var(--glass-border); flex-shrink: 0;">₽</button>
+                <input class="input" type="number" id="calc-fee" placeholder="0" style="height: 48px;">
+                <button class="btn btn-ghost" id="calc-fee-type" data-type="rub" style="width: 50px; height: 48px; padding: 0; font-size: 14px; border: 1px solid var(--glass-border); flex-shrink: 0;">₽</button>
               </div>
             </div>
           </div>
 
           <div class="inner-card" style="padding: 16px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); margin-bottom: 16px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-              <span style="font-size: 13px; color: var(--dim); font-weight: 600;">Разница (Спред):</span>
-              <strong id="calc-spread-val" style="font-size: 14px; color: var(--txt);">0.00 ₽</strong>
+              <span style="font-size: 14px; color: var(--dim); font-weight: 600;">Разница (Спред):</span>
+              <strong id="calc-spread-val" style="font-size: 15px; color: var(--txt);">0.00 ₽</strong>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-              <span style="font-size: 13px; color: var(--dim); font-weight: 600;">Спред в %:</span>
-              <strong id="calc-spread-pct" style="font-size: 14px; color: var(--txt);">0.00 %</strong>
+              <span style="font-size: 14px; color: var(--dim); font-weight: 600;">Спред в %:</span>
+              <strong id="calc-spread-pct" style="font-size: 15px; color: var(--txt);">0.00 %</strong>
             </div>
             <div style="height: 1px; background: var(--glass-border); margin: 12px 0;"></div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 14px; color: var(--txt); font-weight: 800;">Чистая прибыль:</span>
-              <strong id="calc-profit" style="font-size: 20px; color: var(--grn);">0.00 ₽</strong>
+              <span style="font-size: 15px; color: var(--txt); font-weight: 800;">Чистая прибыль:</span>
+              <strong id="calc-profit" style="font-size: 22px; color: var(--grn);">0.00 ₽</strong>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- ORDERS -->
-      <section class="screen" id="screen-orders">
-        <h2 style="margin-bottom: 12px; font-size: 16px; font-weight: 800;">Мои ордера</h2>
-        <div class="tabs" id="ordersFilter">
-          <button class="tab active" data-val="active">Активные</button>
-          <button class="tab" data-val="completed">Завершённые</button>
-          <button class="tab" data-val="cancelled">Отменённые</button>
-        </div>
-        <div id="ordersList">Загрузка...</div>
-      </section>
-
+      <!-- ORDER DETAIL -->
       <section class="screen" id="screen-order"><div id="orderDetailContent"></div></section>
       <section class="screen" id="screen-wallet"></section>
 
       <!-- PROFILE -->
       <section class="screen" id="screen-profile">
-        <h2 style="margin-bottom: 12px; font-size: 16px; font-weight: 800;">Профиль</h2>
+        <h2 style="margin-bottom: 12px; font-size: 18px; font-weight: 800;">Профиль</h2>
         <div id="profileContent">Загрузка...</div>
       </section>
 
       <!-- RULES -->
       <section class="screen" id="screen-rules">
-        <h2 style="margin-bottom: 12px; font-size: 16px; font-weight: 800;">Правила платформы</h2>
-        <div class="glass-card" style="padding: 16px; line-height: 1.5; font-size: 13px;">
+        <h2 style="margin-bottom: 12px; font-size: 18px; font-weight: 800;">Правила платформы</h2>
+        <div class="glass-card" style="padding: 16px; line-height: 1.5; font-size: 14px;">
           <h3 style="color: var(--primary); margin-bottom: 8px;">1. Общие положения</h3>
           <p style="margin-bottom: 12px; color: var(--txt);">VEXO — это P2P-платформа для безопасного обмена криптовалюты. Администрация не является стороной сделки, а лишь предоставляет техническую площадку.</p>
           
@@ -355,10 +384,10 @@
 
       <!-- ADMIN -->
       <section class="screen" id="screen-admin">
-        <h2 style="margin-bottom: 12px; font-size: 16px; font-weight: 800; color:var(--red);">🛡 Админка</h2>
+        <h2 style="margin-bottom: 12px; font-size: 18px; font-weight: 800; color:var(--red);">🛡 Админка</h2>
         
         <div class="field" id="adminSearchContainer" style="margin-bottom: 12px;">
-          <input type="text" class="input" id="adminUserSearch" placeholder="Поиск по ID или нику..." style="height: 40px; font-size: 12px !important;">
+          <input type="text" class="input" id="adminUserSearch" placeholder="Поиск по ID или нику..." style="height: 44px; font-size: 14px !important;">
         </div>
 
         <div class="tabs" id="adminTabs" style="margin-bottom:16px;">
@@ -392,10 +421,10 @@
 <div class="modal-overlay" id="adminUserModal">
   <div class="modal glass-modal" style="width: 100%; max-width: 400px;">
     <div class="modal-header" style="padding: 0; margin-bottom: 16px;">
-      <h3 style="font-size: 16px; font-weight: 800;">Управление юзером</h3>
+      <h3 style="font-size: 18px; font-weight: 800;">Управление юзером</h3>
       <button class="btn btn-ghost btn-sm" style="padding: 4px 8px; border-radius: 8px;" onclick="closeModal('adminUserModal')">✕</button>
     </div>
-    <div id="adminUserInfo" style="background: rgba(0,0,0,0.1); padding: 12px; border-radius: 12px; margin-bottom: 12px; font-size: 12px;"></div>
+    <div id="adminUserInfo" style="background: rgba(0,0,0,0.1); padding: 12px; border-radius: 12px; margin-bottom: 12px; font-size: 14px;"></div>
     <div class="field" style="margin-bottom: 12px;">
       <label>Статусы</label>
       <div class="grid-2-col" id="adminUserToggles">
@@ -405,13 +434,13 @@
       </div>
     </div>
     <div style="border-top: 1px solid var(--glass-border); margin: 12px 0; padding-top: 12px;">
-      <label style="font-size: 12px; font-weight: 800; color: var(--dim); margin-bottom: 8px; display: block;">Изменить баланс</label>
+      <label style="font-size: 14px; font-weight: 800; color: var(--dim); margin-bottom: 8px; display: block;">Изменить баланс</label>
       <div class="grid-2-col" style="margin-bottom: 8px;">
-        <select id="admBalanceCurrency" class="input" style="height: 40px; font-size: 12px !important;">
+        <select id="admBalanceCurrency" class="input" style="height: 44px; font-size: 14px !important;">
           <option value="rub">RUB (₽)</option>
           <option value="usdt">USDT (₮)</option>
         </select>
-        <input type="number" id="admBalanceAmount" class="input" placeholder="Сумма" style="height: 40px; font-size: 12px !important;">
+        <input type="number" id="admBalanceAmount" class="input" placeholder="Сумма" style="height: 44px; font-size: 14px !important;">
       </div>
       <div class="grid-2-col">
         <button class="btn btn-primary btn-sm" style="background: var(--grn);" onclick="adminChangeBalance('add')">+</button>
@@ -422,14 +451,15 @@
   </div>
 </div>
 
+<!-- ФИЛЬТРЫ (С ИКОНКАМИ) -->
 <div class="modal-overlay" id="filterModal">
   <div class="modal glass-modal">
-    <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 12px;">Фильтры</h3>
+    <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 12px;">Фильтры</h3>
     <div class="field">
       <label>Сумма сделки (₽)</label>
       <div class="filter-inputs">
-        <input type="number" class="input" id="filterMinAmount" placeholder="От" style="height: 44px;">
-        <input type="number" class="input" id="filterMaxAmount" placeholder="До" style="height: 44px;">
+        <input type="number" class="input" id="filterMinAmount" placeholder="От" style="height: 48px;">
+        <input type="number" class="input" id="filterMaxAmount" placeholder="До" style="height: 48px;">
       </div>
     </div>
     <div class="field">
@@ -452,103 +482,109 @@
       <label>Способ оплаты</label>
       <div class="icon-scroll" id="filterPayment" style="margin-bottom:0;">
         <div class="icon-chip active" data-val="">Все</div>
-        <div class="icon-chip" data-val="СБП">🏦 СБП</div>
-        <div class="icon-chip" data-val="Тинькофф">🟡 Тинькофф</div>
-        <div class="icon-chip" data-val="Сбербанк">🟢 Сбер</div>
+        <div class="icon-chip" data-val="СБП" style="display:inline-flex; align-items:center; gap:4px;">
+          <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" fill="#0055BB"/><path d="M0 0h12v12H0z" fill="#FF0033"/><path d="M12 12h12v12H12z" fill="#00CC00"/><path d="M12 0h12v12H12z" fill="#FFCC00"/><path d="M0 12h12v12H0z" fill="#0055BB"/><path d="M6 8h12v2H6zM6 14h12v2H6z" fill="#fff"/></svg> СБП
+        </div>
+        <div class="icon-chip" data-val="Тинькофф" style="display:inline-flex; align-items:center; gap:4px;">
+          <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" rx="4" fill="#FFDD2D"/><path d="M12 5l6 3v4c0 3.5-2.5 6.5-6 7-3.5-.5-6-3.5-6-7V8l6-3z" fill="#000"/></svg> Тинькофф
+        </div>
+        <div class="icon-chip" data-val="Сбербанк" style="display:inline-flex; align-items:center; gap:4px;">
+          <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" rx="4" fill="#21A038"/><path d="M7 12l3 3 7-7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg> Сбер
+        </div>
       </div>
     </div>
-    <button class="btn btn-primary btn-block" id="applyFiltersBtn" style="margin-top: 10px; height: 44px;">Применить</button>
-    <button class="btn btn-ghost btn-block" onclick="closeModal('filterModal')" style="margin-top: 6px; height: 40px;">Сбросить</button>
+    <button class="btn btn-primary btn-block" id="applyFiltersBtn" style="margin-top: 10px; height: 48px;">Применить</button>
+    <button class="btn btn-ghost btn-block" onclick="closeModal('filterModal')" style="margin-top: 6px; height: 44px;">Сбросить</button>
   </div>
 </div>
 
 <div class="modal-overlay" id="notificationsModal">
   <div class="modal glass-modal" style="max-width: 350px;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-      <h3 style="font-size: 15px; font-weight: 800;">Уведомления</h3>
-      <button class="btn btn-ghost btn-sm" onclick="clearNotifications()" style="font-size: 11px; color: var(--dim); height: 28px;">Очистить</button>
+      <h3 style="font-size: 16px; font-weight: 800;">Уведомления</h3>
+      <button class="btn btn-ghost btn-sm" onclick="clearNotifications()" style="font-size: 12px; color: var(--dim); height: 28px;">Очистить</button>
     </div>
     <div id="notificationsList" style="display: flex; flex-direction: column; gap: 8px;">
       <div class="empty-state" style="padding: 20px 0;">Нет новых уведомлений</div>
     </div>
-    <button class="btn btn-ghost btn-block" style="margin-top: 12px; height: 40px;" onclick="closeModal('notificationsModal')">Закрыть</button>
+    <button class="btn btn-ghost btn-block" style="margin-top: 12px; height: 44px;" onclick="closeModal('notificationsModal')">Закрыть</button>
   </div>
 </div>
 
 <div class="modal-overlay" id="authModal">
   <div class="modal glass-modal">
     <div style="display: flex; border-bottom: 1px solid var(--glass-border); margin-bottom: 12px;">
-      <button class="tab active" id="tabLogin" style="flex: 1; padding: 8px; font-weight: 700; font-size: 13px;">Вход</button>
-      <button class="tab" id="tabRegister" style="flex: 1; padding: 8px; font-weight: 700; font-size: 13px;">Регистрация</button>
+      <button class="tab active" id="tabLogin" style="flex: 1; padding: 10px; font-weight: 700; font-size: 15px;">Вход</button>
+      <button class="tab" id="tabRegister" style="flex: 1; padding: 10px; font-weight: 700; font-size: 15px;">Регистрация</button>
     </div>
     <form id="authForm">
       <div class="field" style="margin-bottom: 12px;">
         <label id="loginLabel">Логин или Email</label>
-        <input class="input" type="text" id="authLogin" required style="height: 44px;">
+        <input class="input" type="text" id="authLogin" required style="height: 48px; font-size: 15px;">
       </div>
       <div class="field hidden" id="emailField" style="margin-bottom: 12px;">
         <label>Email</label>
-        <input class="input" type="email" id="authEmail" style="height: 44px;">
+        <input class="input" type="email" id="authEmail" style="height: 48px; font-size: 15px;">
       </div>
       <div class="field" style="margin-bottom: 12px;">
         <label>Пароль</label>
-        <input class="input" type="password" id="authPass" required style="height: 44px;">
+        <input class="input" type="password" id="authPass" required style="height: 48px; font-size: 15px;">
       </div>
-      <div class="error-msg" id="authError" style="font-size: 11px;"></div>
-      <button type="submit" class="btn btn-primary btn-block" id="authSubmit" style="height: 44px;">Войти</button>
-      <button type="button" class="btn btn-ghost btn-block" onclick="closeModal('authModal')" style="margin-top: 6px; height: 40px;">Отмена</button>
+      <div class="error-msg" id="authError" style="font-size: 13px;"></div>
+      <button type="submit" class="btn btn-primary btn-block" id="authSubmit" style="height: 48px; font-size: 15px;">Войти</button>
+      <button type="button" class="btn btn-ghost btn-block" onclick="closeModal('authModal')" style="margin-top: 6px; height: 44px;">Отмена</button>
     </form>
   </div>
 </div>
 
 <div class="modal-overlay" id="settingsModal">
   <div class="modal glass-modal" style="padding: 18px;">
-    <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 12px;">Настройки</h3>
-    <div class="field" style="margin-bottom: 12px;"><label>Аватар (URL)</label><input class="input" type="url" id="settingsAvatarUrl" placeholder="https://..." style="height: 40px;"></div>
-    <div class="field" style="margin-bottom: 12px;"><label>Имя</label><input class="input" type="text" id="settingsName" maxlength="50" style="height: 40px;"></div>
-    <div class="field" style="margin-bottom: 12px;"><label>Email</label><input class="input" type="email" id="settingsEmail" style="height: 40px;"></div>
+    <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 12px;">Настройки</h3>
+    <div class="field" style="margin-bottom: 12px;"><label>Аватар (URL)</label><input class="input" type="url" id="settingsAvatarUrl" placeholder="https://..." style="height: 44px;"></div>
+    <div class="field" style="margin-bottom: 12px;"><label>Имя</label><input class="input" type="text" id="settingsName" maxlength="50" style="height: 44px;"></div>
+    <div class="field" style="margin-bottom: 12px;"><label>Email</label><input class="input" type="email" id="settingsEmail" style="height: 44px;"></div>
     
     <div style="border-top: 1px solid var(--glass-border); margin: 12px 0; padding-top: 12px;">
-      <h4 style="font-size: 12px; font-weight: 800; margin-bottom: 8px; color: var(--dim);">Статусы</h4>
+      <h4 style="font-size: 14px; font-weight: 800; margin-bottom: 8px; color: var(--dim);">Статусы</h4>
       <div id="statusProgressContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
     </div>
 
     <div style="border-top: 1px solid var(--glass-border); margin: 12px 0; padding-top: 12px;">
-      <h4 style="font-size: 12px; font-weight: 800; margin-bottom: 8px; color: var(--dim);">Смена пароля</h4>
-      <div class="field" style="margin-bottom: 8px;"><label>Текущий</label><input class="input" type="password" id="settingsCurrentPass" style="height: 40px;"></div>
-      <div class="field" style="margin-bottom: 8px;"><label>Новый</label><input class="input" type="password" id="settingsNewPass" style="height: 40px;"></div>
+      <h4 style="font-size: 14px; font-weight: 800; margin-bottom: 8px; color: var(--dim);">Смена пароля</h4>
+      <div class="field" style="margin-bottom: 8px;"><label>Текущий</label><input class="input" type="password" id="settingsCurrentPass" style="height: 44px;"></div>
+      <div class="field" style="margin-bottom: 8px;"><label>Новый</label><input class="input" type="password" id="settingsNewPass" style="height: 44px;"></div>
     </div>
-    <div class="error-msg" id="settingsError" style="font-size: 11px;"></div>
+    <div class="error-msg" id="settingsError" style="font-size: 13px;"></div>
     <div class="settings-actions" style="gap: 8px; margin-top: 8px;">
-      <button class="btn btn-ghost" onclick="closeModal('settingsModal')" style="height: 44px;">Отмена</button>
-      <button id="settingsSaveBtn" class="btn btn-primary" style="height: 44px;">Сохранить</button>
+      <button class="btn btn-ghost" onclick="closeModal('settingsModal')" style="height: 48px;">Отмена</button>
+      <button id="settingsSaveBtn" class="btn btn-primary" style="height: 48px;">Сохранить</button>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay" id="publicProfileModal">
   <div class="modal glass-modal" style="padding: 18px;">
-    <button style="position: absolute; top: 12px; right: 12px; background: none; border: none; color: var(--dim); font-size: 20px; cursor: pointer;" onclick="closeModal('publicProfileModal')">×</button>
+    <button style="position: absolute; top: 12px; right: 12px; background: none; border: none; color: var(--dim); font-size: 24px; cursor: pointer;" onclick="closeModal('publicProfileModal')">×</button>
     <div id="publicProfileContent">Загрузка...</div>
   </div>
 </div>
 
 <div class="modal-overlay" id="walletActionModal">
   <div class="modal glass-modal" style="padding: 18px;">
-    <h3 id="walletActionTitle" style="font-size: 16px; font-weight: 800; margin-bottom: 12px;">Пополнение</h3>
+    <h3 id="walletActionTitle" style="font-size: 18px; font-weight: 800; margin-bottom: 12px;">Пополнение</h3>
     <div class="field" style="margin-bottom: 12px;">
       <label>Валюта</label>
       <div class="segmented" id="walletAssetSelect">
-        <button type="button" class="seg-btn active" data-val="RUB" style="height: 36px; font-size: 12px;">RUB (₽)</button>
-        <button type="button" class="seg-btn" data-val="USDT" style="height: 36px; font-size: 12px;">USDT (₮)</button>
+        <button type="button" class="seg-btn active" data-val="RUB" style="height: 40px; font-size: 14px;">RUB (₽)</button>
+        <button type="button" class="seg-btn" data-val="USDT" style="height: 40px; font-size: 14px;">USDT (₮)</button>
       </div>
     </div>
     
-    <div class="field" style="margin-bottom: 12px;"><label>Сумма</label><input type="number" class="input" id="walletActionAmount" placeholder="0" style="height: 40px;"></div>
+    <div class="field" style="margin-bottom: 12px;"><label>Сумма</label><input type="number" class="input" id="walletActionAmount" placeholder="0" style="height: 44px; font-size: 16px;"></div>
     
     <div class="field" id="walletBankGroup" style="margin-bottom: 12px;">
       <label>Выберите банк</label>
-      <select id="walletBankSelect" class="input" style="height: 40px; font-size: 12px !important; background: var(--glass-bg); color: var(--txt);">
+      <select id="walletBankSelect" class="input" style="height: 44px; font-size: 14px !important; background: var(--glass-bg); color: var(--txt);">
         <option value="Сбербанк">Сбербанк</option>
         <option value="Тинькофф">Тинькофф</option>
         <option value="Альфа-Банк">Альфа-Банк</option>
@@ -560,7 +596,7 @@
     <div id="usdtWithdrawFields" style="display: none;">
       <div class="field" style="margin-bottom: 12px;">
         <label>Сеть</label>
-        <select id="walletNetwork" class="input" style="height: 40px; font-size: 12px !important; background: var(--glass-bg); color: var(--txt);">
+        <select id="walletNetwork" class="input" style="height: 44px; font-size: 14px !important; background: var(--glass-bg); color: var(--txt);">
           <option value="TRC-20">TRC-20 (Tron)</option>
           <option value="ERC-20">ERC-20 (Ethereum)</option>
           <option value="BEP-20">BEP-20 (BSC)</option>
@@ -568,65 +604,65 @@
       </div>
       <div class="field" style="margin-bottom: 12px;">
         <label>Адрес кошелька</label>
-        <input type="text" class="input" id="walletAddress" placeholder="Введите адрес" style="height: 40px;">
+        <input type="text" class="input" id="walletAddress" placeholder="Введите адрес" style="height: 44px;">
       </div>
     </div>
 
-    <div class="field" style="margin-bottom: 12px;"><label>Telegram</label><input type="text" class="input" id="walletActionTg" placeholder="@username" style="height: 40px;"></div>
+    <div class="field" style="margin-bottom: 12px;"><label>Telegram</label><input type="text" class="input" id="walletActionTg" placeholder="@username" style="height: 44px;"></div>
     
-    <button class="btn btn-primary btn-block" id="walletActionSubmit" style="height: 44px;">Отправить</button>
-    <button class="btn btn-ghost btn-block" onclick="closeModal('walletActionModal')" style="margin-top: 6px; height: 40px;">Отмена</button>
+    <button class="btn btn-primary btn-block" id="walletActionSubmit" style="height: 48px; font-size: 15px;">Отправить</button>
+    <button class="btn btn-ghost btn-block" onclick="closeModal('walletActionModal')" style="margin-top: 6px; height: 44px;">Отмена</button>
   </div>
 </div>
 
 <div class="modal-overlay" id="orderModal">
   <div class="modal glass-modal" style="padding: 16px; gap: 12px;">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-      <button class="btn btn-ghost" style="padding: 0; width: 28px; height: 28px; border-radius: 50%;" onclick="closeModal('orderModal')">←</button>
-      <h3 id="orderTitle" style="font-size: 14px; font-weight: 800; text-align: center; flex: 1;">Покупка USDT</h3>
-      <div style="width: 28px;"></div>
+      <button class="btn btn-ghost" style="padding: 0; width: 32px; height: 32px; border-radius: 50%;" onclick="closeModal('orderModal')">←</button>
+      <h3 id="orderTitle" style="font-size: 16px; font-weight: 800; text-align: center; flex: 1;">Покупка USDT</h3>
+      <div style="width: 32px;"></div>
     </div>
     <div style="display: flex; justify-content: space-between; align-items: center;">
-      <div style="font-size: 11px; color: var(--dim);">Цена <span id="orderRate" style="color: var(--grn); font-size: 14px; font-weight: 800; margin-left: 4px;">0 ₽</span></div>
+      <div style="font-size: 13px; color: var(--dim);">Цена <span id="orderRate" style="color: var(--grn); font-size: 16px; font-weight: 800; margin-left: 4px;">0 ₽</span></div>
       <div style="display: flex; gap: 4px;">
-         <span id="priceTimer" style="font-size: 10px; background: var(--glass-bg); padding: 2px 6px; border-radius: 4px; color: var(--txt); font-weight: 700;">60s</span>
-         <span style="font-size: 9px; background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3); padding: 2px 6px; border-radius: 4px; color: var(--grn);">🛡 Защита</span>
+         <span id="priceTimer" style="font-size: 12px; background: var(--glass-bg); padding: 4px 8px; border-radius: 6px; color: var(--txt); font-weight: 700;">60s</span>
+         <span style="font-size: 11px; background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3); padding: 4px 8px; border-radius: 6px; color: var(--grn);">🛡 Защита</span>
       </div>
     </div>
     <div class="glass-card" style="padding: 12px; border-radius: 12px;">
       <div style="display: flex; align-items: center; margin-bottom: 4px;">
-        <input class="input" type="number" id="orderAmount" value="" style="font-size: 20px; font-weight: 800; width: 100%; color: var(--txt); background: transparent !important; border: none !important; outline: none; height: 40px; padding: 0 !important;" placeholder="0">
-        <span style="font-size: 12px; font-weight: 700; color: var(--dim); margin-left: 4px;">RUB</span>
-        <button id="btnOrderMax" style="background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); color: var(--yellow); font-weight: 700; font-size: 10px; padding: 4px 8px; border-radius: 6px; margin-left: 4px; white-space: nowrap;">Макс.</button>
+        <input class="input" type="number" id="orderAmount" value="" style="font-size: 24px; font-weight: 800; width: 100%; color: var(--txt); background: transparent !important; border: none !important; outline: none; height: 48px; padding: 0 !important;" placeholder="0">
+        <span style="font-size: 14px; font-weight: 700; color: var(--dim); margin-left: 4px;">RUB</span>
+        <button id="btnOrderMax" style="background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); color: var(--yellow); font-weight: 700; font-size: 12px; padding: 6px 10px; border-radius: 8px; margin-left: 4px; white-space: nowrap;">Макс.</button>
       </div>
-      <div class="hint" id="orderLimit" style="font-size: 10px; color: var(--dim); margin-bottom: 8px;">Лимит: 0 - 0 ₽</div>
+      <div class="hint" id="orderLimit" style="font-size: 12px; color: var(--dim); margin-bottom: 8px;">Лимит: 0 - 0 ₽</div>
       <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--glass-border); padding-top: 8px;">
-        <span style="font-size: 11px; color: var(--dim);" id="orderResultLabel">Вы получите</span>
-        <strong id="orderResult" style="font-size: 13px;">0 USDT</strong>
+        <span style="font-size: 13px; color: var(--dim);" id="orderResultLabel">Вы получите</span>
+        <strong id="orderResult" style="font-size: 15px;">0 USDT</strong>
       </div>
     </div>
     <div class="field" style="margin-bottom: 0;">
       <div class="icon-scroll" id="orderPayments"></div>
     </div>
-    <div id="orderAdOwnerProfile" class="inner-card" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 10px;">
-      <div class="avatar" id="orderAvatar" style="width: 28px; height: 28px; font-size: 12px;">?</div>
+    <div id="orderAdOwnerProfile" class="inner-card" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px; border-radius: 12px;">
+      <div class="avatar" id="orderAvatar" style="width: 32px; height: 32px; font-size: 14px;">?</div>
       <div>
-        <div style="font-weight: 800; font-size: 12px;" id="orderUsername">-</div>
-        <div style="font-size: 10px; color: var(--dim);" id="orderUserMeta">-</div>
+        <div style="font-weight: 800; font-size: 14px;" id="orderUsername">-</div>
+        <div style="font-size: 12px; color: var(--dim);" id="orderUserMeta">-</div>
       </div>
     </div>
     <div id="orderAvailable" style="display:none;"></div>
-    <div class="inner-card" style="border: 1px dashed var(--glass-border); max-height: 60px; overflow-y: auto; padding: 8px; border-radius: 10px;">
-      <div style="font-size: 10px; font-weight: 800; color: var(--dim); text-transform: uppercase; margin-bottom: 2px;">Условия</div>
-      <div id="orderTerms" style="font-size: 11px; color: var(--txt); line-height: 1.3;"></div>
+    <div class="inner-card" style="border: 1px dashed var(--glass-border); max-height: 80px; overflow-y: auto; padding: 10px; border-radius: 12px;">
+      <div style="font-size: 11px; font-weight: 800; color: var(--dim); text-transform: uppercase; margin-bottom: 4px;">Условия</div>
+      <div id="orderTerms" style="font-size: 13px; color: var(--txt); line-height: 1.3;"></div>
     </div>
-    <div class="error-msg" id="orderError" style="font-size: 10px;"></div>
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+    <div class="error-msg" id="orderError" style="font-size: 12px;"></div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
       <div>
-        <div style="font-size: 14px; font-weight: 800;" id="orderTotalBottom">0 RUB</div>
-        <div style="font-size: 10px; color: var(--dim);">Итого</div>
+        <div style="font-size: 16px; font-weight: 800;" id="orderTotalBottom">0 RUB</div>
+        <div style="font-size: 12px; color: var(--dim);">Итого</div>
       </div>
-      <button class="btn btn-primary" id="orderSubmit" style="padding: 10px 24px; height: 40px;">Купить</button>
+      <button class="btn btn-primary" id="orderSubmit" style="padding: 12px 28px; height: 48px; font-size: 15px;">Купить</button>
     </div>
   </div>
 </div>
@@ -634,66 +670,62 @@
 <div class="modal-overlay" id="chatModal">
   <div class="modal glass-modal" style="padding: 0; gap: 0; height: 80vh; max-width: 400px;">
     <div style="padding: 12px; border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; gap: 8px;">
-      <div class="avatar" id="chatAvatar" style="width: 32px; height: 32px; font-size: 12px;">?</div>
+      <div class="avatar" id="chatAvatar" style="width: 36px; height: 36px; font-size: 14px;">?</div>
       <div style="flex: 1;">
-        <div style="font-size: 13px; font-weight: 800;" id="chatTitle">Чат</div>
-        <div style="font-size: 10px; color: var(--dim);" id="chatSub">Собеседник</div>
+        <div style="font-size: 15px; font-weight: 800;" id="chatTitle">Чат</div>
+        <div style="font-size: 12px; color: var(--dim);" id="chatSub">Собеседник</div>
       </div>
-      <button style="background: none; border: none; color: var(--dim); font-size: 20px; cursor: pointer;" onclick="closeChatModal()">×</button>
+      <button style="background: none; border: none; color: var(--dim); font-size: 24px; cursor: pointer;" onclick="closeChatModal()">×</button>
     </div>
     <div class="chat-body" id="chatBody"></div>
     <div class="chat-input-row" style="padding: 10px;">
       <input type="file" id="chatFileInput" style="display:none;" accept="image/*,video/*,application/pdf">
-      <button id="chatAttachBtn" style="background: transparent; border: none; font-size: 20px; color: var(--dim); cursor: pointer; padding: 0 8px;">📎</button>
-      <input type="text" id="chatInput" placeholder="Сообщение..." maxlength="500" style="height: 40px;">
-      <button id="chatSend" style="width: 40px; height: 40px; font-size: 16px;">➤</button>
+      <button id="chatAttachBtn" style="background: transparent; border: none; font-size: 22px; color: var(--dim); cursor: pointer; padding: 0 8px;">📎</button>
+      <input type="text" id="chatInput" placeholder="Сообщение..." maxlength="500" style="height: 44px; font-size: 14px;">
+      <button id="chatSend" style="width: 44px; height: 44px; font-size: 18px;">➤</button>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay" id="reviewModal">
   <div class="modal glass-modal" style="padding: 18px;">
-    <h3 style="font-size: 16px; font-weight: 800;">Оставить отзыв</h3>
-    <div class="rating-stars" id="ratingStars" style="display: flex; gap: 6px; font-size: 24px; cursor: pointer; justify-content: center; margin: 12px 0;">
+    <h3 style="font-size: 18px; font-weight: 800;">Оставить отзыв</h3>
+    <div class="rating-stars" id="ratingStars" style="display: flex; gap: 6px; font-size: 28px; cursor: pointer; justify-content: center; margin: 12px 0;">
       <span class="rating-star" data-r="1">★</span><span class="rating-star" data-r="2">★</span><span class="rating-star" data-r="3">★</span><span class="rating-star" data-r="4">★</span><span class="rating-star" data-r="5">★</span>
     </div>
-    <textarea class="input" id="reviewComment" placeholder="Комментарий" style="min-height: 60px; font-size: 12px !important;"></textarea>
-    <div class="error-msg" id="reviewError" style="font-size: 10px;"></div>
-    <button class="btn btn-primary btn-block" id="reviewSubmitBtn" style="height: 40px;">Отправить</button>
-    <button class="btn btn-ghost btn-block" onclick="closeModal('reviewModal')" style="margin-top: 6px; height: 40px;">Отмена</button>
+    <textarea class="input" id="reviewComment" placeholder="Комментарий" style="min-height: 80px; font-size: 14px !important;"></textarea>
+    <div class="error-msg" id="reviewError" style="font-size: 12px;"></div>
+    <button class="btn btn-primary btn-block" id="reviewSubmitBtn" style="height: 44px;">Отправить</button>
+    <button class="btn btn-ghost btn-block" onclick="closeModal('reviewModal')" style="margin-top: 6px; height: 44px;">Отмена</button>
   </div>
 </div>
 
 <div class="modal-overlay" id="editAdModal">
   <div class="modal glass-modal" style="padding: 18px;">
-    <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 12px;">Редактировать</h3>
+    <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 12px;">Редактировать</h3>
     <div class="grid-2-col">
-      <div class="field" style="margin-bottom: 12px;"><label>Цена (₽)</label><input class="input" type="number" id="edit-price" style="height: 40px;"></div>
-      <div class="field" style="margin-bottom: 12px;"><label>Объем (USDT)</label><input class="input" type="number" id="edit-amount" style="height: 40px;"></div>
+      <div class="field" style="margin-bottom: 12px;"><label>Цена (₽)</label><input class="input" type="number" id="edit-price" style="height: 44px;"></div>
+      <div class="field" style="margin-bottom: 12px;"><label>Объем (USDT)</label><input class="input" type="number" id="edit-amount" style="height: 44px;"></div>
     </div>
     <div class="grid-2-col">
-      <div class="field" style="margin-bottom: 12px;"><label>Мин. лимит</label><input class="input" type="number" id="edit-min" style="height: 40px;"></div>
-      <div class="field" style="margin-bottom: 12px;"><label>Макс. лимит</label><input class="input" type="number" id="edit-max" style="height: 40px;"></div>
+      <div class="field" style="margin-bottom: 12px;"><label>Мин. лимит</label><input class="input" type="number" id="edit-min" style="height: 44px;"></div>
+      <div class="field" style="margin-bottom: 12px;"><label>Макс. лимит</label><input class="input" type="number" id="edit-max" style="height: 44px;"></div>
     </div>
     
     <div class="field" style="margin-bottom: 12px;">
       <label>Способы оплаты</label>
       <div class="icon-scroll" id="edit-payments" style="margin-bottom:0;">
-        <div class="pay-chip" data-val="СБП">🏦 СБП</div>
-        <div class="pay-chip" data-val="Тинькофф">🟡 Тинькофф</div>
-        <div class="pay-chip" data-val="Сбербанк">🟢 Сбер</div>
-        <div class="pay-chip" data-val="Альфа-Банк">🔴 Альфа</div>
+        <!-- Заполняется через JS -->
       </div>
     </div>
 
-    <div class="field" style="margin-bottom: 12px;"><label>Условия</label><textarea class="input" id="edit-terms" style="min-height: 50px; font-size: 12px !important;"></textarea></div>
-    <div class="error-msg" id="editError" style="font-size: 10px;"></div>
-    <button class="btn btn-primary btn-block" id="editSaveBtn" style="height: 40px;">Сохранить</button>
-    <button class="btn btn-ghost btn-block" onclick="closeModal('editAdModal')" style="margin-top: 6px; height: 40px;">Отмена</button>
+    <div class="field" style="margin-bottom: 12px;"><label>Условия</label><textarea class="input" id="edit-terms" style="min-height: 60px; font-size: 14px !important;"></textarea></div>
+    <div class="error-msg" id="editError" style="font-size: 12px;"></div>
+    <button class="btn btn-primary btn-block" id="editSaveBtn" style="height: 44px;">Сохранить</button>
+    <button class="btn btn-ghost btn-block" onclick="closeModal('editAdModal')" style="margin-top: 6px; height: 44px;">Отмена</button>
   </div>
 </div>
 
 <script src="app.js"></script>
 </body>
-</html>ody>
 </html>
