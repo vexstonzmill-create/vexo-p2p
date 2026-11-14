@@ -368,15 +368,16 @@
   </div>
 </div>
 
-<!-- МОДАЛКИ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ, ОНИ НЕ ВЛИЯЮТ НА ГЛАВНЫЙ ЭКРАН -->
+<!-- МОДАЛКИ (ТАКИЕ ЖЕ, КАК В ТВОЕМ ФАЙЛЕ, ОНИ НЕ ВЛИЯЮТ НА ГЛАВНЫЙ ЭКРАН) -->
+<div class="toast-container" id="toastContainer"></div>
+<div class="modal-overlay" id="dialogOverlay"><div class="modal glass-modal" id="dialogContent"></div></div>
+
 <div class="modal-overlay" id="receiptViewModal">
   <div class="modal glass-modal" style="padding: 10px; background: #000;">
     <button style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 20px; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; z-index: 10;" onclick="closeModal('receiptViewModal')">✕</button>
     <div id="receiptViewContent" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 12px;"></div>
   </div>
 </div>
-
-<div class="modal-overlay" id="dialogOverlay"><div class="modal glass-modal" id="dialogContent"></div></div>
 
 <div class="modal-overlay" id="adminUserModal">
   <div class="modal glass-modal" style="width: 100%; max-width: 400px;">
@@ -659,12 +660,7 @@
     </div>
     <div class="field" style="margin-bottom: 12px;">
       <label>Способы оплаты</label>
-      <div class="icon-scroll" id="edit-payments" style="margin-bottom:0;">
-        <div class="pay-chip" data-val="СБП">🏦 СБП</div>
-        <div class="pay-chip" data-val="Тинькофф">🟡 Тинькофф</div>
-        <div class="pay-chip" data-val="Сбербанк">🟢 Сбер</div>
-        <div class="pay-chip" data-val="Альфа-Банк">🔴 Альфа</div>
-      </div>
+      <div class="icon-scroll" id="edit-payments" style="margin-bottom:0;"></div>
     </div>
     <div class="field" style="margin-bottom: 12px;"><label>Условия</label><textarea class="input" id="edit-terms" style="min-height: 60px; font-size: 14px !important;"></textarea></div>
     <div class="error-msg" id="editError" style="font-size: 12px;"></div>

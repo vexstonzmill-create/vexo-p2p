@@ -420,7 +420,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const ab = document.getElementById('avatarBtn');
       const isStaff = u && ['admin', 'owner', 'deputy'].includes(u.role);
 
-      // ФИКС БАГА: Безопасная проверка существования элементов
       const admNav = document.getElementById('adminNavBtn');
       const admBn = document.getElementById('adminBnBtn');
 
@@ -1963,71 +1962,6 @@ document.addEventListener('DOMContentLoaded', () => {
     updateAuthUI();
     updateNotifUI();
     try { loadHomeRate(); loadHomeBalance(); } catch(e) { console.error('Initial load error:', e); }
-
-  } catch (err) {
-    console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
-  }
-});uests/' + reqId, { status });
-        toast('Обновлено', 'success'); 
-        loadAdmin(); screenCache.profile = false; screenCache.wallet = false;
-      } catch(e) { toast(e.message || 'Ошибка', 'error'); }
-    };
-
-    // СТАРТ
-    initSpreadCalculator();
-    updateAuthUI();
-    updateNotifUI();
-    try { loadHomeRate(); } catch(e) { console.error('Initial loadHomeRate:', e); }
-
-  } catch (err) {
-    console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
-  }
-});u.user[field === 'is_pro' ? 'isPro' : field === 'is_merchant' ? 'isMerchant' : 'isMaker'];
-      
-      try {
-        await API.req('PATCH', '/admin/users/' + currentAdminUserId + '/status', payload);
-        toast('Статус обновлен', 'success');
-        openAdminUserModal(currentAdminUserId); 
-      } catch(e) { toast('Ошибка', 'error'); }
-    };
-
-    window.adminChangeBalance = async function(action) {
-      if (!currentAdminUserId) return;
-      const currency = document.getElementById('admBalanceCurrency').value;
-      const amount = parseFloat(document.getElementById('admBalanceAmount').value);
-      if (!amount || amount <= 0) return toast('Введите сумму', 'error');
-      
-      try {
-        await API.req('POST', '/admin/users/' + currentAdminUserId + '/balance', { currency, amount, action });
-        toast('Баланс изменен', 'success');
-        document.getElementById('admBalanceAmount').value = '';
-        openAdminUserModal(currentAdminUserId); 
-      } catch(e) { toast(e.message || 'Ошибка', 'error'); }
-    };
-
-    document.querySelectorAll('#adminTabs .tab').forEach(c => {
-      c.onclick = () => {
-        document.querySelectorAll('#adminTabs .tab').forEach(x => x.classList.remove('active'));
-        c.classList.add('active');
-        adminTab = c.dataset.val;
-        loadAdmin();
-      };
-    });
-
-    window.updateRequestStatus = async function(reqId, status) {
-      if (!await confirmAsync('Изменение', `Отметить как "${status}"?`, 'Да')) return;
-      try {
-        await API.req('PATCH', '/admin/requests/' + reqId, { status });
-        toast('Обновлено', 'success'); 
-        loadAdmin(); screenCache.profile = false; screenCache.wallet = false;
-      } catch(e) { toast(e.message || 'Ошибка', 'error'); }
-    };
-
-    // СТАРТ
-    initSpreadCalculator();
-    updateAuthUI();
-    updateNotifUI();
-    try { loadHomeRate(); } catch(e) { console.error('Initial loadHomeRate:', e); }
 
   } catch (err) {
     console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
