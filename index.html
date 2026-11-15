@@ -9,66 +9,80 @@
   <link rel="stylesheet" href="style.css">
   <style>
     /* ФИКС КНОПКИ НАСТРОЕК */
-    .profile-header-card {
-      position: relative;
-    }
+    .profile-header-card { position: relative; }
     .profile-settings-btn {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      border-radius: 50%;
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      cursor: pointer;
-      z-index: 10;
-      color: var(--txt);
+      position: absolute; top: 16px; right: 16px;
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      border-radius: 50%; width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; cursor: pointer; z-index: 10; color: var(--txt);
       transition: 0.2s;
     }
     .profile-settings-btn:hover { background: var(--card-border); }
 
     /* СТИЛИ ДЛЯ ЧЕКА */
     .receipt-wrapper {
-      background: #ffffff;
-      color: #000000;
-      border-radius: 20px;
-      padding: 24px;
-      position: relative;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      font-family: 'Inter', sans-serif;
-      margin: 0 4px;
+      background: #ffffff; color: #000000; border-radius: 20px; padding: 24px;
+      position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      font-family: 'Inter', sans-serif; margin: 0 4px;
     }
     .receipt-dashed {
-      border-top: 2px dashed #e5e7eb;
-      margin: 24px 0;
-      position: relative;
+      border-top: 2px dashed #e5e7eb; margin: 24px 0; position: relative;
     }
-    .receipt-dashed::before,
-    .receipt-dashed::after {
-      content: '';
-      position: absolute;
-      width: 24px;
-      height: 24px;
-      background: var(--bg);
-      border-radius: 50%;
-      top: -13px;
+    .receipt-dashed::before, .receipt-dashed::after {
+      content: ''; position: absolute; width: 24px; height: 24px;
+      background: var(--bg); border-radius: 50%; top: -13px;
     }
     .receipt-dashed::before { left: -36px; }
     .receipt-dashed::after { right: -36px; }
     .receipt-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 14px;
-      font-size: 14px;
-      font-weight: 600;
+      display: flex; justify-content: space-between; margin-bottom: 14px;
+      font-size: 14px; font-weight: 600;
     }
     .receipt-label { color: #6b7280; }
     .receipt-value { color: #000; text-align: right; font-weight: 800; text-transform: uppercase; }
+
+    /* СТИЛИ ДЛЯ БАННЕРА-КАРУСЕЛИ */
+    .banner-carousel {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      gap: 12px;
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE/Edge */
+      margin-bottom: 8px;
+      padding-bottom: 4px;
+      scroll-behavior: smooth;
+    }
+    .banner-carousel::-webkit-scrollbar { display: none; }
+    .banner-slide {
+      flex: 0 0 100%;
+      scroll-snap-align: center;
+      border-radius: 24px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      min-height: 180px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+    .banner-dots {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+    .banner-dots .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      transition: 0.3s;
+    }
+    .banner-dots .dot.active {
+      width: 16px; border-radius: 3px; background: var(--primary);
+    }
   </style>
 </head>
 <body data-theme="dark">
@@ -194,24 +208,38 @@
           <div id="homeUsdtRate" style="font-size: 18px; font-weight: 900; color: var(--grn);">-- ₽</div>
         </div>
 
-        <!-- БАННЕР -->
-        <div style="background: linear-gradient(135deg, #0c4a6e 0%, #064e3b 100%); border-radius: 24px; padding: 24px; position: relative; overflow: hidden; margin-bottom: 20px; min-height: 200px; display: flex; flex-direction: column; justify-content: space-between;">
-          <div style="position: relative; z-index: 2;">
-            <h2 style="font-size: 26px; font-weight: 900; color: #fff; margin-bottom: 8px; line-height: 1.2;">Акции и<br>розыгрыши</h2>
-            <p style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 20px; font-weight: 500;">Подписывайтесь на наш<br>Telegram-канал!</p>
-            <a href="https://t.me/your_channel" target="_blank" class="btn" style="background: #fff; color: #000; padding: 10px 20px; border-radius: 12px; font-weight: 800; font-size: 14px; display: inline-block; text-decoration: none;">В Telegram</a>
+        <!-- КАРУСЕЛЬ БАННЕРОВ -->
+        <div class="banner-carousel" id="homeBannerCarousel">
+          <!-- Слайд 1: О сайте -->
+          <div class="banner-slide" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);">
+            <div style="position: relative; z-index: 2;">
+              <h2 style="font-size: 24px; font-weight: 900; color: #fff; margin-bottom: 8px; line-height: 1.2;">Добро пожаловать в VEXO</h2>
+              <p style="font-size: 14px; color: rgba(255,255,255,0.85); margin-bottom: 16px; font-weight: 500;">Самый быстрый и безопасный обмен криптовалюты на рубли.</p>
+              <button class="btn" onclick="show('market')" style="background: #fff; color: #000; padding: 10px 20px; border-radius: 12px; font-weight: 800; font-size: 14px;">Перейти в Маркет</button>
+            </div>
+            <div style="position: absolute; right: -20px; bottom: -20px; width: 140px; height: 140px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 1;">
+              <span style="font-size: 60px; color: rgba(255,255,255,0.2);">V</span>
+            </div>
           </div>
-          <div style="position: absolute; right: -20px; bottom: -10px; width: 160px; height: 160px; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 1;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2" style="width: 80px; height: 80px; transform: rotate(-15deg);"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <!-- Слайд 2: Telegram -->
+          <div class="banner-slide" style="background: linear-gradient(135deg, #0c4a6e 0%, #064e3b 100%);">
+            <div style="position: relative; z-index: 2;">
+              <h2 style="font-size: 24px; font-weight: 900; color: #fff; margin-bottom: 8px; line-height: 1.2;">Акции и<br>розыгрыши</h2>
+              <p style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 16px; font-weight: 500;">Подписывайтесь на наш<br>Telegram-канал!</p>
+              <a href="https://t.me/your_channel" target="_blank" class="btn" style="background: #fff; color: #000; padding: 10px 20px; border-radius: 12px; font-weight: 800; font-size: 14px; display: inline-block; text-decoration: none;">В Telegram</a>
+            </div>
+            <div style="position: absolute; right: -20px; bottom: -10px; width: 160px; height: 160px; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 1;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2" style="width: 80px; height: 80px; transform: rotate(-15deg);"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
           </div>
-          <div style="display: flex; gap: 6px; justify-content: center; margin-top: 16px; z-index: 2;">
-            <div style="width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.3);"></div>
-            <div style="width: 16px; height: 6px; border-radius: 3px; background: #fff;"></div>
-          </div>
+        </div>
+        <div class="banner-dots">
+          <span class="dot active"></span>
+          <span class="dot"></span>
         </div>
 
         <!-- ЦЕПОЧКА ДЕЙСТВИЙ -->
-        <div class="glass-card" style="padding: 20px; border-radius: 20px;">
+        <div class="glass-card" style="padding: 20px; border-radius: 20px; margin-top: 10px;">
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
             <span style="font-size: 18px;">🚀</span>
             <span style="font-size: 15px; font-weight: 800; color: var(--txt);">Как это работает?</span>
@@ -263,7 +291,7 @@
           </div>
         </div>
 
-        <!-- БЫСТРЫЙ ОБМЕН (спрятан по умолчанию) -->
+        <!-- БЫСТРЫЙ ОБМЕН -->
         <div id="fast-exchange-content" style="display: none; padding: 16px;">
           <div class="glass-card" style="padding: 20px; border-radius: 20px;">
             <div style="display:flex; gap:8px; margin-bottom:20px;">
@@ -330,7 +358,7 @@
       </div>
     </div>
 
-    <!-- ЭКРАН КОШЕЛЕК (Динамический) -->
+    <!-- ЭКРАН КОШЕЛЕК -->
     <div id="screen-wallet" class="screen" style="padding:16px;"></div>
 
     <!-- ЭКРАН СОЗДАТЬ -->
@@ -654,148 +682,6 @@
 </div>
 
 <div id="toastContainer" style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:9999;width:90%;max-width:400px;"></div>
-
-<script src="app.js"></script>
-</body>
-</html>" id="walletActionAmount" placeholder="0" style="height: 44px; font-size: 16px;"></div>
-    <div class="field" id="walletBankGroup" style="margin-bottom: 12px;">
-      <label>Реквизиты / Банк</label>
-      <select id="walletBankSelect" class="input" style="height: 44px; font-size: 14px !important; background: var(--bg); color: var(--txt);">
-        <option value="Сбербанк">Сбербанк</option>
-        <option value="Тинькофф">Тинькофф</option>
-        <option value="Альфа-Банк">Альфа-Банк</option>
-        <option value="ВТБ">ВТБ</option>
-        <option value="Райффайзен">Райффайзен</option>
-      </select>
-    </div>
-    <div id="usdtWithdrawFields" style="display: none;">
-      <div class="field" style="margin-bottom: 12px;">
-        <label>Сеть</label>
-        <select id="walletNetwork" class="input" style="height: 44px; font-size: 14px !important; background: var(--bg); color: var(--txt);">
-          <option value="TRC-20">TRC-20 (Tron)</option>
-          <option value="ERC-20">ERC-20 (Ethereum)</option>
-          <option value="BEP-20">BEP-20 (BSC)</option>
-        </select>
-      </div>
-      <div class="field" style="margin-bottom: 12px;">
-        <label>Адрес кошелька</label>
-        <input type="text" class="input" id="walletAddress" placeholder="Введите адрес" style="height: 44px;">
-      </div>
-    </div>
-    <div class="field" style="margin-bottom: 12px;"><label>Telegram</label><input type="text" class="input" id="walletActionTg" placeholder="@username" style="height: 44px;"></div>
-    <div class="field" style="margin-bottom: 12px;"><label>Комментарий к платежу</label><input type="text" class="input" id="walletActionComment" placeholder="Необязательно" style="height: 44px;"></div>
-    
-    <button class="btn btn-primary btn-block" id="walletActionSubmit" style="height: 48px; font-size: 15px;">Отправить</button>
-    <button class="btn btn-ghost btn-block" onclick="closeModal('walletActionModal')" style="margin-top: 6px; height: 44px;">Отмена</button>
-  </div>
-</div>
-
-<div class="modal-overlay" id="orderModal">
-  <div class="modal glass-modal" style="padding: 16px; gap: 12px;">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <button class="btn btn-ghost" style="padding: 0; width: 32px; height: 32px; border-radius: 50%;" onclick="closeModal('orderModal')">←</button>
-      <h3 id="orderTitle" style="font-size: 16px; font-weight: 800; text-align: center; flex: 1;">Покупка USDT</h3>
-      <div style="width: 32px;"></div>
-    </div>
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <div style="font-size: 13px; color: var(--dim);">Цена <span id="orderRate" style="color: var(--grn); font-size: 16px; font-weight: 800; margin-left: 4px;">0 ₽</span></div>
-      <div style="display: flex; gap: 4px;">
-         <span id="priceTimer" style="font-size: 12px; background: var(--btn-bg); padding: 4px 8px; border-radius: 6px; color: var(--txt); font-weight: 700;">60s</span>
-         <span style="font-size: 11px; background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3); padding: 4px 8px; border-radius: 6px; color: var(--grn);">🛡 Защита</span>
-      </div>
-    </div>
-    <div class="glass-card" style="padding: 12px; border-radius: 12px;">
-      <div style="display: flex; align-items: center; margin-bottom: 4px;">
-        <input class="input" type="number" id="orderAmount" value="" style="font-size: 24px; font-weight: 800; width: 100%; color: var(--txt); background: transparent !important; border: none !important; outline: none; height: 48px; padding: 0 !important;" placeholder="0">
-        <span style="font-size: 14px; font-weight: 700; color: var(--dim); margin-left: 4px;">RUB</span>
-        <button id="btnOrderMax" style="background: var(--btn-bg); border: 1px solid var(--card-border); color: var(--yellow); font-weight: 700; font-size: 12px; padding: 6px 10px; border-radius: 8px; margin-left: 4px; white-space: nowrap;">Макс.</button>
-      </div>
-      <div class="hint" id="orderLimit" style="font-size: 12px; color: var(--dim); margin-bottom: 8px;">Лимит: 0 - 0 ₽</div>
-      <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--card-border); padding-top: 8px;">
-        <span style="font-size: 13px; color: var(--dim);" id="orderResultLabel">Вы получите</span>
-        <strong id="orderResult" style="font-size: 15px;">0 USDT</strong>
-      </div>
-    </div>
-    <div class="field" style="margin-bottom: 0;">
-      <div class="icon-scroll" id="orderPayments"></div>
-    </div>
-    <div id="orderAdOwnerProfile" class="inner-card" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px; border-radius: 12px;">
-      <div class="avatar" id="orderAvatar" style="width: 32px; height: 32px; font-size: 14px;">?</div>
-      <div>
-        <div style="font-weight: 800; font-size: 14px;" id="orderUsername">-</div>
-        <div style="font-size: 12px; color: var(--dim);" id="orderUserMeta">-</div>
-      </div>
-    </div>
-    <div id="orderAvailable" style="display:none;"></div>
-    <div class="inner-card" style="border: 1px dashed var(--card-border); max-height: 80px; overflow-y: auto; padding: 10px; border-radius: 12px;">
-      <div style="font-size: 11px; font-weight: 800; color: var(--dim); text-transform: uppercase; margin-bottom: 4px;">Условия</div>
-      <div id="orderTerms" style="font-size: 13px; color: var(--txt); line-height: 1.3;"></div>
-    </div>
-    <div class="error-msg" id="orderError" style="font-size: 12px;"></div>
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-      <div>
-        <div style="font-size: 16px; font-weight: 800;" id="orderTotalBottom">0 RUB</div>
-        <div style="font-size: 12px; color: var(--dim);">Итого</div>
-      </div>
-      <button class="btn btn-primary" id="orderSubmit" style="padding: 12px 28px; height: 48px; font-size: 15px;">Купить</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="chatModal">
-  <div class="modal glass-modal" style="padding: 0; gap: 0; height: 80vh; max-width: 400px;">
-    <div style="padding: 12px; border-bottom: 1px solid var(--card-border); display: flex; align-items: center; gap: 8px;">
-      <div class="avatar" id="chatAvatar" style="width: 36px; height: 36px; font-size: 14px;">?</div>
-      <div style="flex: 1;">
-        <div style="font-size: 15px; font-weight: 800;" id="chatTitle">Чат</div>
-        <div style="font-size: 12px; color: var(--dim);" id="chatSub">Собеседник</div>
-      </div>
-      <button style="background: none; border: none; color: var(--dim); font-size: 24px; cursor: pointer;" onclick="closeChatModal()">×</button>
-    </div>
-    <div class="chat-body" id="chatBody"></div>
-    <div class="chat-input-row" style="padding: 10px;">
-      <input type="file" id="chatFileInput" style="display:none;" accept="image/*,video/*,application/pdf">
-      <button id="chatAttachBtn" style="background: transparent; border: none; font-size: 22px; color: var(--dim); cursor: pointer; padding: 0 8px;">📎</button>
-      <input type="text" id="chatInput" placeholder="Сообщение..." maxlength="500" style="height: 44px; font-size: 14px;">
-      <button id="chatSend" style="width: 44px; height: 44px; font-size: 18px;">➤</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="reviewModal">
-  <div class="modal glass-modal" style="padding: 18px;">
-    <h3 style="font-size: 18px; font-weight: 800;">Оставить отзыв</h3>
-    <div class="rating-stars" id="ratingStars" style="display: flex; gap: 6px; font-size: 28px; cursor: pointer; justify-content: center; margin: 12px 0;">
-      <span class="rating-star" data-r="1">★</span><span class="rating-star" data-r="2">★</span><span class="rating-star" data-r="3">★</span><span class="rating-star" data-r="4">★</span><span class="rating-star" data-r="5">★</span>
-    </div>
-    <textarea class="input" id="reviewComment" placeholder="Комментарий" style="min-height: 80px; font-size: 14px !important;"></textarea>
-    <div class="error-msg" id="reviewError" style="font-size: 12px;"></div>
-    <button class="btn btn-primary btn-block" id="reviewSubmitBtn" style="height: 44px;">Отправить</button>
-    <button class="btn btn-ghost btn-block" onclick="closeModal('reviewModal')" style="margin-top: 6px; height: 44px;">Отмена</button>
-  </div>
-</div>
-
-<div class="modal-overlay" id="editAdModal">
-  <div class="modal glass-modal" style="padding: 18px;">
-    <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 12px;">Редактировать</h3>
-    <div class="grid-2-col">
-      <div class="field" style="margin-bottom: 12px;"><label>Цена (₽)</label><input class="input" type="number" id="edit-price" style="height: 44px;"></div>
-      <div class="field" style="margin-bottom: 12px;"><label>Объем (USDT)</label><input class="input" type="number" id="edit-amount" style="height: 44px;"></div>
-    </div>
-    <div class="grid-2-col">
-      <div class="field" style="margin-bottom: 12px;"><label>Мин. лимит</label><input class="input" type="number" id="edit-min" style="height: 44px;"></div>
-      <div class="field" style="margin-bottom: 12px;"><label>Макс. лимит</label><input class="input" type="number" id="edit-max" style="height: 44px;"></div>
-    </div>
-    <div class="field" style="margin-bottom: 12px;">
-      <label>Способы оплаты</label>
-      <div class="icon-scroll" id="edit-payments" style="margin-bottom:0;"></div>
-    </div>
-    <div class="field" style="margin-bottom: 12px;"><label>Условия</label><textarea class="input" id="edit-terms" style="min-height: 60px; font-size: 14px !important;"></textarea></div>
-    <div class="error-msg" id="editError" style="font-size: 12px;"></div>
-    <button class="btn btn-primary btn-block" id="editSaveBtn" style="height: 44px;">Сохранить</button>
-    <button class="btn btn-ghost btn-block" onclick="closeModal('editAdModal')" style="margin-top: 6px; height: 44px;">Отмена</button>
-  </div>
-</div>
 
 <script src="app.js"></script>
 </body>
