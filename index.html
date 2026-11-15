@@ -44,45 +44,35 @@
 
     /* СТИЛИ ДЛЯ БАННЕРА-КАРУСЕЛИ */
     .banner-carousel {
-      display: flex;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      gap: 12px;
-      scrollbar-width: none; /* Firefox */
-      -ms-overflow-style: none; /* IE/Edge */
-      margin-bottom: 8px;
-      padding-bottom: 4px;
-      scroll-behavior: smooth;
+      display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+      gap: 12px; scrollbar-width: none; -ms-overflow-style: none;
+      margin-bottom: 8px; padding-bottom: 4px; scroll-behavior: smooth;
     }
     .banner-carousel::-webkit-scrollbar { display: none; }
     .banner-slide {
-      flex: 0 0 100%;
-      scroll-snap-align: center;
-      border-radius: 24px;
-      padding: 24px;
-      position: relative;
-      overflow: hidden;
-      min-height: 180px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      box-sizing: border-box;
+      flex: 0 0 100%; scroll-snap-align: center; border-radius: 24px;
+      padding: 24px; position: relative; overflow: hidden; min-height: 180px;
+      display: flex; flex-direction: column; justify-content: center; box-sizing: border-box;
     }
-    .banner-dots {
-      display: flex;
-      justify-content: center;
-      gap: 6px;
-      margin-bottom: 20px;
+    .banner-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 20px; }
+    .banner-dots .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.2); transition: 0.3s; }
+    .banner-dots .dot.active { width: 16px; border-radius: 3px; background: var(--primary); }
+
+    /* УВЕДОМЛЕНИЯ */
+    .notif-item { padding: 12px 0; border-bottom: 1px solid var(--glass-border); }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-date { font-size: 11px; color: var(--dim); font-weight: 700; margin-bottom: 4px; }
+    .notif-text { font-size: 14px; font-weight: 600; color: var(--txt); }
+
+    /* КАЛЬКУЛЯТОР */
+    .calc-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 16px; }
+    .calc-row .field { flex: 1; margin-bottom: 0; }
+    .calc-btn {
+      height: 46px; width: 65px; padding: 0; display: flex; align-items: center; justify-content: center;
+      background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px;
+      font-weight: 800; font-size: 13px; color: var(--txt); cursor: pointer; transition: 0.2s;
     }
-    .banner-dots .dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.2);
-      transition: 0.3s;
-    }
-    .banner-dots .dot.active {
-      width: 16px; border-radius: 3px; background: var(--primary);
-    }
+    .calc-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
   </style>
 </head>
 <body data-theme="dark">
@@ -97,32 +87,17 @@
 <div class="app">
   <aside class="sidebar">
     <div class="logo"><div class="logo-mark">V</div><span class="logo-text">vexo</span></div>
-    <button class="nav-btn active" data-screen="home">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg> Главная
-    </button>
-    <button class="nav-btn" data-screen="market">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Маркет
-    </button>
-    <button class="nav-btn" data-screen="spread">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg> Калькулятор
-    </button>
-    <button class="nav-btn" data-screen="wallet">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> Кошелёк
-    </button>
-    <button class="nav-btn" data-screen="create">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Создать
-    </button>
-    <button class="nav-btn" id="adminNavBtn" data-screen="admin" style="display:none;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Админка
-    </button>
+    <button class="nav-btn active" data-screen="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg> Главная</button>
+    <button class="nav-btn" data-screen="market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Маркет</button>
+    <button class="nav-btn" data-screen="spread"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg> Калькулятор</button>
+    <button class="nav-btn" data-screen="wallet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> Кошелёк</button>
+    <button class="nav-btn" data-screen="create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Создать</button>
+    <button class="nav-btn" id="adminNavBtn" data-screen="admin" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Админка</button>
   </aside>
 
   <main class="main">
-    <!-- ТОПБАР -->
     <header class="topbar">
-      <button class="icon-btn" id="menuBtn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-      </button>
+      <button class="icon-btn" id="menuBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
       <div class="topbar-title">
         <div style="font-size:12px;color:var(--dim);font-weight:600;" id="greetingText">Готовы к работе!</div>
         <div style="font-size:18px;font-weight:800;" id="topbarName">vexo</div>
@@ -132,9 +107,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
           <div id="notifDot" class="notif-dot hidden"></div>
         </button>
-        <button class="icon-btn" id="themeBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        </button>
+        <button class="icon-btn" id="themeBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></button>
         <button class="btn btn-primary" id="loginBtn" style="padding:6px 12px;font-size:13px;border-radius:8px;">Войти</button>
         <button class="avatar-btn hidden" id="avatarBtn"></button>
       </div>
@@ -143,13 +116,11 @@
     <!-- ЭКРАН ГЛАВНАЯ -->
     <div id="screen-home" class="screen active">
       <div style="padding: 16px;">
-        <!-- Поиск -->
         <div style="position: relative; margin-bottom: 20px;">
           <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input type="text" placeholder="Поиск по разделам..." style="width: 100%; height: 44px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding-left: 40px; color: var(--txt); font-size: 14px; outline: none; font-family: inherit;">
         </div>
 
-        <!-- Баланс и Профиль -->
         <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-bottom: 16px;">
           <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 20px; padding: 20px; position: relative; display: flex; flex-direction: column; justify-content: space-between;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -184,7 +155,6 @@
           </div>
         </div>
 
-        <!-- P2P Обмен -->
         <div class="glass-card" style="border-radius: 20px; padding: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <div style="display: flex; align-items: center; gap: 12px;">
             <div style="width: 44px; height: 44px; border-radius: 50%; background: #26A17B; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 22px;">₮</div>
@@ -196,7 +166,6 @@
           <button class="btn btn-primary" onclick="show('market')" style="padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; height: 36px;">Перейти</button>
         </div>
 
-        <!-- Рыночный курс -->
         <div class="glass-card" style="border-radius: 20px; padding: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
           <div style="display: flex; align-items: center; gap: 12px;">
             <div style="width: 44px; height: 44px; border-radius: 50%; background: #26A17B; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 22px;">₮</div>
@@ -208,9 +177,7 @@
           <div id="homeUsdtRate" style="font-size: 18px; font-weight: 900; color: var(--grn);">-- ₽</div>
         </div>
 
-        <!-- КАРУСЕЛЬ БАННЕРОВ -->
         <div class="banner-carousel" id="homeBannerCarousel">
-          <!-- Слайд 1: О сайте -->
           <div class="banner-slide" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);">
             <div style="position: relative; z-index: 2;">
               <h2 style="font-size: 24px; font-weight: 900; color: #fff; margin-bottom: 8px; line-height: 1.2;">Добро пожаловать в VEXO</h2>
@@ -221,7 +188,6 @@
               <span style="font-size: 60px; color: rgba(255,255,255,0.2);">V</span>
             </div>
           </div>
-          <!-- Слайд 2: Telegram -->
           <div class="banner-slide" style="background: linear-gradient(135deg, #0c4a6e 0%, #064e3b 100%);">
             <div style="position: relative; z-index: 2;">
               <h2 style="font-size: 24px; font-weight: 900; color: #fff; margin-bottom: 8px; line-height: 1.2;">Акции и<br>розыгрыши</h2>
@@ -238,26 +204,21 @@
           <span class="dot"></span>
         </div>
 
-        <!-- ЦЕПОЧКА ДЕЙСТВИЙ -->
         <div class="glass-card" style="padding: 20px; border-radius: 20px; margin-top: 10px;">
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
             <span style="font-size: 18px;">🚀</span>
             <span style="font-size: 15px; font-weight: 800; color: var(--txt);">Как это работает?</span>
           </div>
-          
           <div style="position: relative; padding-left: 16px;">
             <div style="position: absolute; left: 30px; top: 20px; bottom: 20px; width: 2px; background: rgba(255,255,255,0.1); z-index: 0;"></div>
-            
             <div style="display: flex; gap: 16px; margin-bottom: 24px; position: relative; z-index: 1;">
               <div style="width: 32px; height: 32px; border-radius: 50%; background: #3b82f6; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; flex-shrink: 0;">1</div>
               <div style="font-size: 14px; font-weight: 700; color: var(--txt); line-height: 1.4; padding-top: 4px;">Выберите подходящее объявление в Маркете</div>
             </div>
-            
             <div style="display: flex; gap: 16px; margin-bottom: 24px; position: relative; z-index: 1;">
               <div style="width: 32px; height: 32px; border-radius: 50%; background: #3b82f6; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; flex-shrink: 0;">2</div>
               <div style="font-size: 14px; font-weight: 700; color: var(--txt); line-height: 1.4; padding-top: 4px;">Переведите рубли продавцу по реквизитам</div>
             </div>
-            
             <div style="display: flex; gap: 16px; position: relative; z-index: 1;">
               <div style="width: 32px; height: 32px; border-radius: 50%; background: #22c55e; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; flex-shrink: 0;">3</div>
               <div style="font-size: 14px; font-weight: 700; color: var(--txt); line-height: 1.4; padding-top: 4px;">Получите USDT на свой кошелек</div>
@@ -267,72 +228,85 @@
       </div>
     </div>
 
-    <!-- ЭКРАН МАРКЕТ -->
-    <div id="screen-market" class="screen">
-      <div style="padding: 16px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-          <h2 style="font-size: 20px; font-weight: 900;">Маркет</h2>
-          <div id="marketModeSwitch" style="display:flex; background:var(--glass-bg); border-radius:12px; padding:4px;">
-            <button class="mode-btn active" data-mode="p2p" style="padding:6px 16px; border-radius:8px; font-size:13px; font-weight:700; border:none; background:var(--primary); color:#fff; cursor:pointer;">P2P</button>
-            <button class="mode-btn" data-mode="fast" style="padding:6px 16px; border-radius:8px; font-size:13px; font-weight:700; border:none; background:transparent; color:var(--dim); cursor:pointer;">⚡ Быстрый</button>
-          </div>
+    <!-- ЭКРАН МАРКЕТ (По макету) -->
+    <div id="screen-market" class="screen" style="padding: 16px;">
+      
+      <!-- Главные табы -->
+      <div class="segmented" style="margin-bottom: 16px;" id="marketTopTabs">
+        <button class="seg-btn active" data-mtab="p2p">Маркет</button>
+        <button class="seg-btn" data-mtab="ads">Мои объявления</button>
+        <button class="seg-btn" data-mtab="orders">Ордера</button>
+      </div>
+
+      <div id="marketMainTabs">
+        <!-- P2P / Быстрый -->
+        <div class="segmented" style="margin-bottom: 16px;" id="marketModeSwitch">
+          <button class="seg-btn active" data-mode="p2p">P2P</button>
+          <button class="seg-btn" data-mode="fast">⚡ Быстрый</button>
         </div>
 
-        <div id="marketMainTabs">
-          <div class="tabs" style="margin-bottom: 12px; overflow-x:auto;" id="marketSideTabs">
-            <button class="tab active" data-side="buy">Купить</button>
-            <button class="tab" data-side="sell">Продать</button>
-          </div>
-
-          <div class="tabs" style="margin-bottom: 16px; overflow-x:auto;" id="marketTopTabs">
-            <button class="tab active" data-mtab="p2p">Объявления</button>
-            <button class="tab" data-mtab="ads">Мои</button>
-            <button class="tab" data-mtab="orders">Ордера</button>
-          </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+           <h3 style="font-size:18px; font-weight:900;">Объявления</h3>
+           <button class="btn btn-ghost btn-sm" id="openFilterBtn" style="border:1px solid var(--glass-border); height:36px; border-radius:10px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:4px;"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg> Фильтры
+           </button>
         </div>
 
-        <!-- БЫСТРЫЙ ОБМЕН -->
-        <div id="fast-exchange-content" style="display: none; padding: 16px;">
-          <div class="glass-card" style="padding: 20px; border-radius: 20px;">
-            <div style="display:flex; gap:8px; margin-bottom:20px;">
-              <button class="btn btn-primary btn-sm" id="exTabBuy" style="flex:1; background:var(--grn); border:none; height:44px; font-size:14px; border-radius:12px;">Купить</button>
-              <button class="btn btn-ghost btn-sm" id="exTabSell" style="flex:1; border:1px solid var(--glass-border); height:44px; font-size:14px; border-radius:12px;">Продать</button>
+        <!-- Купить/Продать -->
+        <div class="segmented" style="margin-bottom: 12px;" id="marketSideTabs">
+          <button class="seg-btn active" data-side="buy">Купить</button>
+          <button class="seg-btn" data-side="sell">Продать</button>
+        </div>
+
+        <!-- Фильтры активов (возвращенные монеты) -->
+        <div style="display:flex; gap:8px; margin-bottom:16px; overflow-x:auto;" id="filterAsset">
+           <div class="icon-chip active" data-val="">Все активы</div>
+           <div class="icon-chip" data-val="USDT">
+             <svg viewBox="0 0 24 24" fill="none" width="16" height="16" style="margin-right:2px;"><circle cx="12" cy="12" r="12" fill="#26A17B"/><path d="M12 5v14M8 9h8M8 15h8" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg> USDT
+           </div>
+           <div class="icon-chip" data-val="BTC">
+             <svg viewBox="0 0 24 24" fill="none" width="16" height="16" style="margin-right:2px;"><circle cx="12" cy="12" r="12" fill="#F7931A"/><path d="M15 11c0-2-1.5-2.5-3-2.5v-2h-1.5v2H9v2.5h1.5v3H9v2.5h1.5v2H12v-2h1.5c1.5 0 3-.5 3-2.5 0-1.5-1-2-2-2.2 1-.2 1.5-.8 1.5-1.8zM10.5 10h2c.8 0 1.5.2 1.5 1s-.7 1-1.5 1h-2v-2zm0 3h2c.8 0 1.5.2 1.5 1s-.7 1-1.5 1h-2v-2z" fill="#fff"/></svg> BTC
+           </div>
+        </div>
+      </div>
+
+      <!-- БЫСТРЫЙ ОБМЕН -->
+      <div id="fast-exchange-content" style="display: none; padding-top: 16px;">
+        <div class="glass-card" style="padding: 20px; border-radius: 20px;">
+          <div style="display:flex; gap:8px; margin-bottom:20px;">
+            <button class="btn btn-primary btn-sm" id="exTabBuy" style="flex:1; background:var(--grn); border:none; height:44px; font-size:14px; border-radius:12px;">Купить</button>
+            <button class="btn btn-ghost btn-sm" id="exTabSell" style="flex:1; border:1px solid var(--glass-border); height:44px; font-size:14px; border-radius:12px;">Продать</button>
+          </div>
+          <div id="exInputLabel" style="font-size:14px; color:var(--dim); font-weight:700; margin-bottom:8px;">Сумма в RUB</div>
+          <input type="number" id="exAmount" class="input" placeholder="0.00" style="font-size:24px; height:60px; font-weight:800; margin-bottom:16px; background:var(--glass-bg); border:1px solid var(--glass-border); width:100%; border-radius:12px; padding:0 16px; color:var(--txt);">
+          <div style="background:var(--glass-bg); padding:14px; border-radius:12px; margin-bottom:20px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+              <span style="font-size:13px; color:var(--dim);">Курс обмена:</span>
+              <span id="exRateDisplay" style="font-size:13px; font-weight:700; color:var(--txt);">1 USDT = 90.00 ₽</span>
             </div>
-            
-            <div id="exInputLabel" style="font-size:14px; color:var(--dim); font-weight:700; margin-bottom:8px;">Сумма в RUB</div>
-            <input type="number" id="exAmount" class="input" placeholder="0.00" style="font-size:24px; height:60px; font-weight:800; margin-bottom:16px; background:var(--glass-bg); border:1px solid var(--glass-border); width:100%; border-radius:12px; padding:0 16px; color:var(--txt);">
-            
-            <div style="background:var(--glass-bg); padding:14px; border-radius:12px; margin-bottom:20px;">
-              <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                <span style="font-size:13px; color:var(--dim);">Курс обмена:</span>
-                <span id="exRateDisplay" style="font-size:13px; font-weight:700; color:var(--txt);">1 USDT = 90.00 ₽</span>
-              </div>
-              <div style="display:flex; justify-content:space-between;">
-                <span style="font-size:13px; color:var(--dim);">К получению:</span>
-                <span id="exResultDisplay" style="font-size:16px; font-weight:800; color:var(--txt);">0.00 USDT</span>
-              </div>
+            <div style="display:flex; justify-content:space-between;">
+              <span style="font-size:13px; color:var(--dim);">К получению:</span>
+              <span id="exResultDisplay" style="font-size:16px; font-weight:800; color:var(--txt);">0.00 USDT</span>
             </div>
-            
-            <button class="btn btn-primary btn-block" id="exSubmitBtn" style="background:var(--grn); border:none; height:50px; font-size:15px; border-radius:14px;">Купить USDT</button>
           </div>
+          <button class="btn btn-primary btn-block" id="exSubmitBtn" style="background:var(--grn); border:none; height:50px; font-size:15px; border-radius:14px;">Купить USDT</button>
         </div>
+      </div>
 
-        <div class="market-tab-content active" id="mtab-p2p">
-          <div id="adsList"><div class="empty-state">Загрузка...</div></div>
+      <div class="market-tab-content active" id="mtab-p2p">
+        <div id="adsList"><div class="empty-state">Загрузка...</div></div>
+      </div>
+      
+      <div class="market-tab-content" id="mtab-ads" style="display:none;">
+        <div id="myAdsList"><div class="empty-state">Загрузка...</div></div>
+      </div>
+      
+      <div class="market-tab-content" id="mtab-orders" style="display:none;">
+        <div class="segmented" id="ordersFilter" style="margin-bottom: 16px;">
+          <button class="seg-btn active" data-val="active">Активные</button>
+          <button class="seg-btn" data-val="completed">Завершенные</button>
         </div>
-        
-        <div class="market-tab-content" id="mtab-ads" style="display:none;">
-          <div id="myAdsList"><div class="empty-state">Загрузка...</div></div>
-        </div>
-        
-        <div class="market-tab-content" id="mtab-orders" style="display:none;">
-          <div class="tabs" id="ordersFilter" style="margin-bottom: 12px;">
-            <button class="tab active" data-val="active">Активные</button>
-            <button class="tab" data-val="completed">Завершенные</button>
-          </div>
-          <div id="ordersList"><div class="empty-state">Загрузка...</div></div>
-        </div>
-
+        <div id="ordersList"><div class="empty-state">Загрузка...</div></div>
       </div>
     </div>
 
@@ -342,14 +316,19 @@
       <div class="glass-card" style="padding: 20px;">
         <div class="field"><label>Цена покупки (₽)</label><input type="number" id="calc-buy-price" class="input" placeholder="90.00"></div>
         <div class="field"><label>Цена продажи (₽)</label><input type="number" id="calc-sell-price" class="input" placeholder="92.00"></div>
-        <div class="field" style="display:flex;gap:8px;">
-          <div style="flex:1"><label>Объём</label><input type="number" id="calc-amount" class="input" placeholder="1000"></div>
-          <button class="btn btn-ghost" id="calc-volume-type" style="margin-top:22px;height:42px;width:60px;">USDT</button>
+        
+        <!-- Ровный ряд для объёма -->
+        <div class="calc-row">
+          <div class="field"><label>Объём</label><input type="number" id="calc-amount" class="input" placeholder="1000"></div>
+          <button class="calc-btn active" id="calc-volume-type">USDT</button>
         </div>
-        <div class="field" style="display:flex;gap:8px;">
-          <div style="flex:1"><label>Комиссия</label><input type="number" id="calc-fee" class="input" placeholder="0"></div>
-          <button class="btn btn-ghost" id="calc-fee-type" style="margin-top:22px;height:42px;width:60px;">₽</button>
+        
+        <!-- Ровный ряд для комиссии -->
+        <div class="calc-row">
+          <div class="field"><label>Комиссия</label><input type="number" id="calc-fee" class="input" placeholder="0"></div>
+          <button class="calc-btn active" id="calc-fee-type">₽</button>
         </div>
+        
         <div style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--glass-border);">
           <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span style="color:var(--dim);">Спред:</span> <strong id="calc-spread-val" style="color:var(--txt);">0.00 ₽</strong></div>
           <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span style="color:var(--dim);">Спред (%):</span> <strong id="calc-spread-pct" style="color:var(--txt);">0.00 %</strong></div>
@@ -375,7 +354,12 @@
         <div class="field">
           <label>Актив</label>
           <div class="icon-chips" id="f-asset-select">
-            <div class="icon-chip active" data-val="USDT"><span style="width:24px;height:24px;border-radius:50%;background:#26A17B;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:900;">₮</span></div>
+            <div class="icon-chip active" data-val="USDT">
+               <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="margin-right:4px;"><circle cx="12" cy="12" r="12" fill="#26A17B"/><path d="M12 5v14M8 9h8M8 15h8" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg> USDT
+            </div>
+            <div class="icon-chip" data-val="BTC">
+               <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="margin-right:4px;"><circle cx="12" cy="12" r="12" fill="#F7931A"/><path d="M15 11c0-2-1.5-2.5-3-2.5v-2h-1.5v2H9v2.5h1.5v3H9v2.5h1.5v2H12v-2h1.5c1.5 0 3-.5 3-2.5 0-1.5-1-2-2-2.2 1-.2 1.5-.8 1.5-1.8zM10.5 10h2c.8 0 1.5.2 1.5 1s-.7 1-1.5 1h-2v-2zm0 3h2c.8 0 1.5.2 1.5 1s-.7 1-1.5 1h-2v-2z" fill="#fff"/></svg> BTC
+            </div>
           </div>
           <div style="font-size:12px;color:var(--dim);margin-top:4px;">Выбран: <span id="f-asset-label">USDT</span></div>
         </div>
@@ -387,7 +371,7 @@
           </div>
         </div>
         <div class="field"><label>Курс (₽)</label><input type="number" id="f-price" class="input" placeholder="90.00"></div>
-        <div class="field"><label>Объем (USDT)</label><input type="number" id="f-amount" class="input" placeholder="1000"></div>
+        <div class="field"><label>Объем</label><input type="number" id="f-amount" class="input" placeholder="1000"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <div class="field"><label>Мин. лимит (₽)</label><input type="number" id="f-min" class="input" placeholder="1000"></div>
           <div class="field"><label>Макс. лимит (₽)</label><input type="number" id="f-max" class="input" placeholder="50000"></div>
@@ -425,11 +409,11 @@
     <div id="screen-admin" class="screen" style="padding:16px;">
       <h2 style="font-size: 20px; font-weight: 900; margin-bottom: 16px;">Админка</h2>
       <input type="text" id="adminUserSearch" class="input" placeholder="Поиск по ID или логину..." style="margin-bottom:16px;">
-      <div class="tabs" id="adminTabs" style="margin-bottom: 16px; overflow-x:auto;">
-        <button class="tab active" data-val="users">Юзеры</button>
-        <button class="tab" data-val="disputes">Споры</button>
-        <button class="tab" data-val="requests">Заявки</button>
-        <button class="tab" data-val="stats">Статистика</button>
+      <div class="segmented" id="adminTabs" style="margin-bottom: 16px;">
+        <button class="seg-btn active" data-val="users">Юзеры</button>
+        <button class="seg-btn" data-val="disputes">Споры</button>
+        <button class="seg-btn" data-val="requests">Заявки</button>
+        <button class="seg-btn" data-val="stats">Статы</button>
       </div>
       <div id="adminContent"><div class="empty-state">Загрузка...</div></div>
     </div>
@@ -445,22 +429,10 @@
 
 <!-- НИЖНЯЯ НАВИГАЦИЯ -->
 <nav class="bottom-nav">
-  <button class="bn-btn active" data-screen="home">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-    <span>Главная</span>
-  </button>
-  <button class="bn-btn" data-screen="market">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-    <span>Маркет</span>
-  </button>
-  <button class="bn-btn" data-screen="profile">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    <span>Профиль</span>
-  </button>
-  <button class="bn-btn" id="adminBnBtn" data-screen="admin" style="display:none;">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-    <span style="color:var(--red)">Админ</span>
-  </button>
+  <button class="bn-btn active" data-screen="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><span>Главная</span></button>
+  <button class="bn-btn" data-screen="market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Маркет</span></button>
+  <button class="bn-btn" data-screen="profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Профиль</span></button>
+  <button class="bn-btn" id="adminBnBtn" data-screen="admin" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span style="color:var(--red)">Админ</span></button>
 </nav>
 
 <!-- МОДАЛКА АВТОРИЗАЦИИ -->
@@ -468,9 +440,9 @@
   <div class="modal-content">
     <button class="modal-close" onclick="closeModal('authModal')">✕</button>
     <h2 style="font-size:22px;font-weight:900;margin-bottom:16px;text-align:center;">Вход в VEXO</h2>
-    <div class="tabs" style="margin-bottom:16px;">
-      <button class="tab active" id="tabLogin">Вход</button>
-      <button class="tab" id="tabRegister">Регистрация</button>
+    <div class="segmented" style="margin-bottom:16px;">
+      <button class="seg-btn active" id="tabLogin">Вход</button>
+      <button class="seg-btn" id="tabRegister">Регистрация</button>
     </div>
     <form id="authForm">
       <div class="field"><label id="loginLabel">Логин или Email</label><input type="text" id="authLogin" class="input" required></div>
@@ -617,7 +589,7 @@
   <div class="modal-content">
     <button class="modal-close" onclick="closeModal('filterModal')">✕</button>
     <h2 style="font-size:20px;font-weight:900;margin-bottom:16px;">Фильтры</h2>
-    <div class="field"><label>Актив</label><div style="display:flex;gap:6px;" id="filterAsset"><div class="icon-chip active" data-val="USDT">USDT</div></div></div>
+    <div class="field"><label>Актив</label><div style="display:flex;gap:6px;" id="filterAssetModal"><div class="icon-chip active" data-val="">Все</div><div class="icon-chip" data-val="USDT">USDT</div></div></div>
     <div class="field"><label>Лицо</label><div style="display:flex;gap:6px;" id="filterFace"><div class="icon-chip active" data-val="first">1-е</div><div class="icon-chip" data-val="third">3-е</div></div></div>
     <div class="field"><label>Сортировка</label><div style="display:flex;gap:6px;" id="filterPriceSort"><div class="icon-chip active" data-val="asc">Дешевле</div><div class="icon-chip" data-val="desc">Дороже</div></div></div>
     <button class="btn btn-primary btn-block" id="applyFiltersBtn" style="margin-top:16px;">Применить</button>
