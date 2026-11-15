@@ -152,11 +152,11 @@ body.tg-fullscreen .sidebar { top: 70px !important; height: calc(100dvh - 70px) 
 
 .bento-card {
   border-radius: 24px;
-  padding: 20px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 140px;
+  min-height: 120px;
   cursor: pointer;
   transition: transform 0.2s;
 }
@@ -180,15 +180,15 @@ body.tg-fullscreen .sidebar { top: 70px !important; height: calc(100dvh - 70px) 
 }
 
 .card-icon {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(255,255,255,0.1);
 }
-.card-icon svg { width: 24px; height: 24px; }
+.card-icon svg { width: 22px; height: 22px; }
 
 .circle-btn {
   width: 32px;
@@ -202,9 +202,9 @@ body.tg-fullscreen .sidebar { top: 70px !important; height: calc(100dvh - 70px) 
 .circle-btn svg { width: 16px; height: 16px; }
 .dark-card .circle-btn { background: var(--btn-bg); }
 
-.card-content { margin-top: 16px; }
-.card-label { font-size: 13px; font-weight: 500; opacity: 0.8; display: block; margin-bottom: 4px; }
-.card-value { font-size: 26px; font-weight: 900; letter-spacing: -0.5px; }
+.card-content { margin-top: 10px; }
+.card-label { font-size: 12px; font-weight: 500; opacity: 0.8; display: block; margin-bottom: 4px; }
+.card-value { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; }
 
 /* ВКЛАДКИ МАРКЕТА */
 .market-mode-switch { display: flex; gap: 8px; margin-bottom: 20px; background: var(--card-bg); padding: 4px; border-radius: 16px; border: 1px solid var(--card-border); }
@@ -361,102 +361,33 @@ select.input { cursor: pointer; }
 .profile-header-card { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding: 18px; position: relative; }
 .profile-info-left { display: flex; align-items: center; gap: 14px; padding-right: 40px; }
 .profile-name-row { font-size: 17px; font-weight: 800; color: var(--txt); display: flex; align-items: center; gap: 6px; }
-.profile-settings-btn { position: absolute; top: 16px; right: 16px; background: var(--btn-bg); border: 1px solid var(--card-border); color: var(--txt); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; }
+.profile-settings-btn { position: absolute; top: 16px; right: 16px; background: var(--btn-bg); border: 1px solid var(--card-border); color: var(--txt); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; z-index: 10; }
 
 .notif-item { background: var(--card-bg); border-radius: 14px; padding: 12px; border: 1px solid var(--card-border); }
 .notif-date { font-size: 11px; color: var(--dim); font-weight: 600; margin-bottom: 4px; }
 .notif-text { font-size: 13px; color: var(--txt); font-weight: 600; }
 
-/* СТИЛЬ КВИТАНЦИИ ДЛЯ ЗАЯВОК */
-.request-card {
-  background: #ffffff;
-  color: #000000;
-  border-radius: 20px;
-  padding: 20px;
-  margin-bottom: 20px;
-  position: relative;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  overflow: hidden;
-}
-body[data-theme="dark"] .request-card {
-  background: #ffffff;
-  color: #000000;
-}
-
-.req-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 16px;
-  font-weight: 800;
-  margin-bottom: 20px;
-}
-.req-status-icon {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-}
+/* СТИЛЬ КВИТАНЦИИ (МОДАЛКА) */
+.request-card { background: #ffffff; color: #000000; border-radius: 20px; padding: 20px; position: relative; overflow: hidden; }
+body[data-theme="dark"] .request-card { background: #ffffff; color: #000000; }
+.req-status { display: inline-flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 800; margin-bottom: 20px; }
+.req-status-icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; }
 .req-status.processing .req-status-icon { background: #f59e0b; }
 .req-status.success .req-status-icon { background: #10b981; }
 .req-status.rejected .req-status-icon { background: #ef4444; }
-
-.req-amount-block {
-  margin-bottom: 15px;
-}
-.req-label {
-  font-size: 12px;
-  text-transform: uppercase;
-  color: #71717a;
-  font-weight: 700;
-  margin-bottom: 4px;
-  letter-spacing: 0.5px;
-}
-.req-value {
-  font-size: 32px;
-  font-weight: 900;
-  line-height: 1;
-}
-.req-value span {
-  font-size: 16px;
-  color: #71717a;
-  font-weight: 600;
-}
-
-.ticket-divider {
-  position: relative;
-  height: 2px;
-  border-top: 2px dashed #e4e4e7;
-  margin: 25px 0;
-}
-.ticket-divider::before,
-.ticket-divider::after {
-  content: '';
-  position: absolute;
-  top: -12px;
-  width: 24px;
-  height: 24px;
-  background: var(--bg); 
-  border-radius: 50%;
-}
-body[data-theme="light"] .ticket-divider::before,
-body[data-theme="light"] .ticket-divider::after {
-  background: #f4f4f5; 
-}
+.req-amount-block { margin-bottom: 15px; }
+.req-label { font-size: 12px; text-transform: uppercase; color: #71717a; font-weight: 700; margin-bottom: 4px; letter-spacing: 0.5px; }
+.req-value { font-size: 32px; font-weight: 900; line-height: 1; }
+.req-value span { font-size: 16px; color: #71717a; font-weight: 600; }
+.ticket-divider { position: relative; height: 2px; border-top: 2px dashed #e4e4e7; margin: 25px 0; }
+.ticket-divider::before, .ticket-divider::after { content: ''; position: absolute; top: -12px; width: 24px; height: 24px; background: var(--bg); border-radius: 50%; }
+body[data-theme="light"] .ticket-divider::before, body[data-theme="light"] .ticket-divider::after { background: #f4f4f5; }
 .ticket-divider::before { left: -32px; }
 .ticket-divider::after { right: -32px; }
-
-.req-details {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.req-detail-row {
-  display: flex;
-  justify-content: space-between;
+.req-details { display: flex; flex-direction: column; gap: 12px; }
+.req-detail-row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+.req-detail-row .label { color: #71717a; font-weight: 600; }
+.req-detail-row .value { font-weight: 800; text-align: right; }n;
   align-items: center;
   font-size: 14px;
 }

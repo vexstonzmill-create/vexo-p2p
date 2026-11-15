@@ -603,11 +603,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const amount = document.getElementById('walletActionAmount')?.value;
       const tg = document.getElementById('walletActionTg')?.value.trim();
       const currency = document.querySelector('#walletAssetSelect .seg-btn.active').dataset.val;
+      const comment = document.getElementById('walletActionComment')?.value.trim();
       
       if (!amount || Number(amount) <= 0) return toast('Введите сумму', 'error');
       if (!tg) return toast('Введите Telegram', 'error');
 
-      let payload = { type: walletActionType === 'deposit' ? `deposit_${currency.toLowerCase()}` : `withdraw_${currency.toLowerCase()}`, amount: Number(amount), currency, tg_username: tg, user_id: u.id };
+      let payload = { type: walletActionType === 'deposit' ? `deposit_${currency.toLowerCase()}` : `withdraw_${currency.toLowerCase()}`, amount: Number(amount), currency, tg_username: tg, user_id: u.id, comment };
 
       if (currency === 'RUB') {
         const bank = document.getElementById('walletBankSelect').value;
@@ -805,7 +806,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const faceLabel = ad.faceType === 'first' ? '1-е лицо' : '3-е лицо';
       window._ads = window._ads || {}; window._ads[ad.id] = ad;
       
-      const pays = (ad.paymentMethods || []).map(p => `<span class="pay-tag" style="background:rgba(255,255,255,0.1); border:1px solid var(--glass-border); padding:4px 8px; border-radius:6px; font-size:11px; font-weight:600; color:var(--txt); display:inline-flex; align-items:center; gap:4px;">${getPayIcon(p)} ${p}</span>`).join('');
+      const pays = (ad.paymentMethods || []).map(p => `<span class="pay-tag" style="background:rgba(255,255,255,0.1); border:1px solid var(--card-border); padding:4px 8px; border-radius:6px; font-size:11px; font-weight:600; color:var(--txt); display:inline-flex; align-items:center; gap:4px;">${getPayIcon(p)} ${p}</span>`).join('');
       
       let avatarHtml = `<div class="avatar">${ad.displayName[0].toUpperCase()}</div>`;
       if (ad.avatarUrl) avatarHtml = `<div class="avatar"><img src="${ad.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${ad.displayName[0].toUpperCase()}'"></div>`;
@@ -1026,7 +1027,8 @@ document.addEventListener('DOMContentLoaded', () => {
                const freshData = await API.req('GET', '/orders/' + orderId);
                if (freshData.order.status !== order.status) {
                    renderOrderPage(freshData.order, freshData.history, freshData.terms);
-                   toast('Статус обновлен', 'info');
+                   toast(`Статус обновлен: ${freshData.order.statusLabel}`, 'info');
+                   addNotification(`Статус ордера #${freshData.order.publicId} изменился на: ${freshData.order.statusLabel}`, 'info');
                }
            } catch(e) {}
         }, 5000);
@@ -1215,7 +1217,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
           await API.req('POST', `/orders/${orderId}/${action}`, body); 
           toast('Статус обновлён', 'success'); 
-          addNotification(`Статус ордера #${orderId} обновлен`, 'info');
+          
+          const msgMap = {
+             accept: 'Заявка принята',
+             decline: 'Заявка отклонена',
+             paid: 'Оплата отправлена',
+             confirm: 'Сделка завершена',
+             cancel: 'Заявка отменена',
+             dispute: 'Спор открыт'
+          };
+          
+          addNotification(`Ордер #${order.publicId}: ${msgMap[action] || 'Действие'}`, 'info');
           screenCache.orders = false; screenCache.wallet = false;
           openOrderPage(orderId); 
         }
@@ -1517,80 +1529,101 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const { items } = await API.req('GET', '/requests/my');
         
-        const statusConfig = {
-          pending: { l: 'Обработка', class: 'processing', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>' },
-          approved: { l: 'Выплачено', class: 'success', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"></polyline></svg>' },
-          completed: { l: 'Выплачено', class: 'success', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"></polyline></svg>' },
-          rejected: { l: 'Отказ', class: 'rejected', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>' },
-          cancelled: { l: 'Отказ', class: 'rejected', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>' }
+        const statusMap = {
+          pending: { l: 'Обработка', c: 'var(--yellow)' },
+          approved: { l: 'Выплачено', c: 'var(--grn)' },
+          rejected: { l: 'Отказ', c: 'var(--red)' },
+          cancelled: { l: 'Отменено', c: 'var(--dim)' },
+          completed: { l: 'Выполнено', c: 'var(--grn)' }
         };
 
-        list.innerHTML = items.length ? items.map((r) => {
-          const st = statusConfig[r.status] || statusConfig.pending;
-          const details = r.details || {};
-          
-          let fromLabel = 'Сумма заявки';
-          let toLabel = 'К зачислению';
-          
-          if (r.type.includes('withdraw')) fromLabel = 'Вы отдаёте';
-          else if (r.type.includes('deposit')) fromLabel = 'Вы отправляете';
-          else if (r.type === 'exchange') fromLabel = details.exchange_type === 'buy' ? 'Вы отдаёте' : 'Вы отдаёте';
+        list.innerHTML = items.length ? items.map(r => {
+          const st = statusMap[r.status] || { l: r.status, c: 'var(--txt)' };
+          let typeLabel = r.type;
+          if (r.type === 'exchange') typeLabel = r.details?.exchange_type === 'buy' ? 'Покупка USDT' : 'Продажа USDT';
+          if (r.type === 'deposit_rub') typeLabel = 'Пополнение RUB';
+          if (r.type === 'withdraw_rub') typeLabel = 'Вывод RUB';
+          if (r.type === 'deposit_usdt') typeLabel = 'Пополнение USDT';
+          if (r.type === 'withdraw_usdt') typeLabel = 'Вывод USDT';
 
-          const currencySymbol = r.currency === 'RUB' ? '₽' : 'USDT';
-          let typeLabel = r.type.toUpperCase().replace('_', ' ');
-          if (r.type === 'exchange') typeLabel = 'ОБМЕН';
-          
-          return `
-            <div class="request-card">
-              <div class="req-status ${st.class}">
-                <div class="req-status-icon">${st.icon}</div>
-                ${st.l}
-              </div>
-              
-              <div class="req-amount-block">
-                <div class="req-label">${fromLabel}</div>
-                <div class="req-value">${fmtDec(r.amount, 2)} <span>${currencySymbol}</span></div>
-              </div>
-              
-              <div class="req-amount-block">
-                <div class="req-label">${toLabel}</div>
-                <div class="req-value" style="color: #71717a; font-size: 24px;">~ ${fmtDec(details.rate ? (r.amount * details.rate) : r.amount, 2)} <span>${r.currency === 'RUB' ? 'USDT' : '₽'}</span></div>
-              </div>
+          // Сохраняем данные в data-атрибут для модалки
+          const reqData = encodeURIComponent(JSON.stringify(r));
 
-              <div class="ticket-divider"></div>
-
-              <div class="req-details">
-                <div class="req-detail-row">
-                  <span class="label">заявка</span>
-                  <span class="value">#${r.id + 1000}</span>
-                </div>
-                <div class="req-detail-row">
-                  <span class="label">тип</span>
-                  <span class="value">${typeLabel}</span>
-                </div>
-                ${details.rate ? `<div class="req-detail-row"><span class="label">курс</span><span class="value">${fmtDec(details.rate, 2)} ₽ / USDT</span></div>` : ''}
-                ${details.network ? `<div class="req-detail-row"><span class="label">сеть</span><span class="value">${details.network}</span></div>` : ''}
-                ${details.requisites ? `<div class="req-detail-row"><span class="label">оплата</span><span class="value">${details.requisites}</span></div>` : ''}
-                ${details.tg_username ? `<div class="req-detail-row"><span class="label">оператор</span><span class="value">${details.tg_username}</span></div>` : ''}
-                <div class="req-detail-row">
-                  <span class="label">дата</span>
-                  <span class="value">${new Date(r.created_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit' })}</span>
-                </div>
-              </div>
-              
-              <div style="font-size: 13px; color: #71717a; margin-top: 16px; font-weight: 500;">
-                ${st.class === 'success' ? 'Ускоренная обработка и выплата' : st.class === 'processing' ? 'Заявка обрабатывается оператором...' : 'Средства не были списаны'}
-              </div>
+          return `<div class="glass-card" style="margin-bottom:12px; border-left:4px solid ${st.c}; padding:16px; cursor:pointer;" onclick="openRequestDetails('${reqData}')">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <strong style="font-size:15px; color:var(--txt);">#${r.id + 1000} <span style="font-size:12px;color:var(--dim);font-weight:500;">${typeLabel}</span></strong>
+              <span style="color:${st.c}; font-size:12px; font-weight:800; text-transform:uppercase;">${st.l}</span>
             </div>
-            
-            <div class="req-actions">
-              ${st.class === 'success' ? `<button class="btn" onclick="toast('Скоро здесь появится отзыв!', 'info')">Оставить отзыв</button>` : ''}
-              <button class="btn btn-outline" onclick="window.open('https://t.me/vexoio_bot', '_blank')">Написать в поддержку</button>
+            <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+              <div style="font-size:14px; color:var(--txt); font-weight:700;">${fmtDec(r.amount, 2)} ${r.currency}</div>
+              <div style="font-size:11px; color:var(--dim);">${new Date(r.created_at).toLocaleDateString('ru-RU')}</div>
             </div>
-          `;
+          </div>`;
         }).join('') : '<div class="empty-state">Нет заявок</div>';
       } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     }
+
+    window.openRequestDetails = function(encodedData) {
+      const r = JSON.parse(decodeURIComponent(encodedData));
+      const details = r.details || {};
+      const m = document.getElementById('requestDetailModal');
+      const c = document.getElementById('requestDetailContent');
+      
+      const statusMap = {
+        pending: { l: 'Обработка', c: 'var(--yellow)', bg: 'rgba(245,158,11,0.1)' },
+        approved: { l: 'Выплачено', c: 'var(--grn)', bg: 'rgba(16,185,129,0.1)' },
+        rejected: { l: 'Отказ', c: 'var(--red)', bg: 'rgba(239,68,68,0.1)' },
+        cancelled: { l: 'Отменено', c: 'var(--dim)', bg: 'rgba(156,163,175,0.1)' },
+        completed: { l: 'Выполнено', c: 'var(--grn)', bg: 'rgba(16,185,129,0.1)' }
+      };
+      const st = statusMap[r.status] || statusMap.pending;
+
+      let typeLabel = r.type.toUpperCase().replace('_', ' ');
+      if (r.type === 'exchange') typeLabel = 'ОБМЕН';
+
+      c.innerHTML = `
+        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+               <div style="width:24px; height:24px; border-radius:50%; background:${st.bg}; color:${st.c}; display:flex; align-items:center; justify-content:center; font-size:14px;">●</div>
+               <span style="font-size:16px; font-weight:800; color:${st.c};">${st.l}</span>
+            </div>
+            <span style="font-size:13px; font-weight:700; color:var(--dim);">#${r.id + 1000}</span>
+          </div>
+
+          <div style="margin-bottom: 16px;">
+            <div style="font-size:12px; color:var(--dim); text-transform:uppercase; font-weight:700;">Сумма</div>
+            <div style="font-size:28px; font-weight:900; color:var(--txt);">${fmtDec(r.amount, 2)} <span style="font-size:16px; color:var(--dim);">${r.currency}</span></div>
+          </div>
+
+          <div style="height:1px; border-top:1px dashed var(--card-border); margin: 16px 0;"></div>
+
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; justify-content:space-between; font-size:14px;">
+              <span style="color:var(--dim);">Тип</span>
+              <span style="color:var(--txt); font-weight:700;">${typeLabel}</span>
+            </div>
+            ${details.network ? `<div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--dim);">Сеть</span><span style="color:var(--txt); font-weight:700;">${details.network}</span></div>` : ''}
+            ${details.requisites ? `<div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--dim);">Реквизиты</span><span style="color:var(--txt); font-weight:700;">${details.requisites}</span></div>` : ''}
+            ${details.tg_username ? `<div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--dim);">Telegram</span><span style="color:var(--txt); font-weight:700;">${details.tg_username}</span></div>` : ''}
+            ${r.admin_comment ? `<div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--dim);">Комментарий</span><span style="color:var(--txt); font-weight:700; text-align:right;">${r.admin_comment}</span></div>` : ''}
+            ${r.processed_by ? `<div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--dim);">Оператор</span><span style="color:var(--txt); font-weight:700;">@${r.processed_by}</span></div>` : ''}
+            <div style="display:flex; justify-content:space-between; font-size:14px;">
+              <span style="color:var(--dim);">Дата</span>
+              <span style="color:var(--txt); font-weight:700;">${new Date(r.created_at).toLocaleString('ru-RU')}</span>
+            </div>
+          </div>
+
+          <div style="font-size:12px; color:var(--dim); margin-top:16px; font-weight:500;">
+            ${st.l === 'Выплачено' ? 'Ускоренная обработка и выплата' : st.l === 'Обработка' ? 'Заявка обрабатывается оператором...' : 'Средства не были списаны'}
+          </div>
+        </div>
+        <div style="margin-top: 16px;">
+           <button class="btn btn-ghost btn-block" onclick="closeModal('requestDetailModal')">Закрыть</button>
+        </div>
+      `;
+      m.classList.add('active');
+    };
 
     window.openSettings = async function() {
       const u = API.user(); if (!u) return;
@@ -1612,7 +1645,7 @@ document.addEventListener('DOMContentLoaded', () => {
           progressHtml += `<div style="font-size:14px; color:var(--txt); font-weight:700; display:flex; align-items:center; gap:8px;"><span class="badge-maker" style="width:24px;height:24px;">${ICONS.maker}</span> Мейкер активен</div>`;
         } else {
           progressHtml += `
-            <div style="background:var(--glass-bg); padding:12px; border-radius:12px; border:1px solid var(--glass-border);">
+            <div style="background:var(--glass-bg); padding:12px; border-radius:12px; border:1px solid var(--card-border);">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                 <div style="font-size:13px; font-weight:800; color:var(--gold);">Статус Мейкера</div>
                 <button class="btn btn-primary btn-sm" onclick="applyStatus('maker')" style="padding:4px 8px; font-size:12px; height:28px;">Подать</button>
@@ -1627,7 +1660,7 @@ document.addEventListener('DOMContentLoaded', () => {
           progressHtml += `<div style="font-size:14px; color:var(--txt); font-weight:700; display:flex; align-items:center; gap:8px;"><span class="badge-merchant" style="width:24px;height:24px;">${ICONS.merchant}</span> Мерчант активен</div>`;
         } else {
           progressHtml += `
-            <div style="background:var(--glass-bg); padding:12px; border-radius:12px; border:1px solid var(--glass-border);">
+            <div style="background:var(--glass-bg); padding:12px; border-radius:12px; border:1px solid var(--card-border);">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                 <div style="font-size:13px; font-weight:800; color:var(--blue);">Статус Мерчанта</div>
                 <button class="btn btn-primary btn-sm" onclick="applyStatus('merchant')" style="padding:4px 8px; font-size:12px; height:28px;">Подать</button>
@@ -1804,7 +1837,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const order = await API.req('POST', '/orders', { ad_id: currentAd.id, amount_rub: rub, payment_method: selectedPay });
         closeModal('orderModal'); 
         toast('Заявка создана!', 'success'); 
-        addNotification(`Новая заявка #${order.publicId}`, 'success');
+        addNotification(`Создана новая заявка #${order.publicId}`, 'success');
         screenCache.orders = false; screenCache.market = false;
         openOrderPage(order.id);
       } catch (err) { if (errEl) errEl.textContent = err.message; }
@@ -1829,6 +1862,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       try {
         if (adminTab === 'users') {
+          searchInput.style.display = 'block';
           content.innerHTML = 'Загрузка...';
           const { items } = await API.req('GET', '/admin/users');
           allAdminUsers = items;
@@ -1934,16 +1968,68 @@ document.addEventListener('DOMContentLoaded', () => {
               ${details.tg_username ? `<div style="font-size:12px; color:var(--dim); margin-bottom:8px;">TG: <span style="color:var(--txt); font-weight:600;">${details.tg_username}</span></div>` : ''}
               
               ${!isFinal ? `
+                <div class="field" style="margin-bottom: 8px;">
+                   <input type="text" class="input" id="adminComment-${req.id}" placeholder="Комментарий для юзера" style="height: 36px; font-size: 12px;" value="${req.admin_comment || ''}">
+                </div>
                 <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top:8px;">
                   <button class="btn btn-primary btn-sm" style="background:var(--grn); padding:6px; font-size:12px; border-radius:8px; height:32px;" onclick="updateRequestStatus(${req.id}, 'approved')">✓</button>
                   <button class="btn btn-ghost btn-sm" style="color:var(--red); border:1px solid var(--red); padding:6px; font-size:12px; border-radius:8px; height:32px;" onclick="updateRequestStatus(${req.id}, 'rejected')">✕</button>
                   <button class="btn btn-ghost btn-sm" style="color:var(--dim); border:1px solid var(--glass-border); padding:6px; font-size:12px; border-radius:8px; height:32px;" onclick="updateRequestStatus(${req.id}, 'cancelled')">-</button>
                 </div>
-              ` : ''}
+              ` : `<div style="font-size:12px; color:var(--dim); margin-top:8px;">Обработал: @${req.processed_by || 'admin'}</div>`}
             </div>
           `}).join('');
         }
+        else if (adminTab === 'stats') {
+          searchInput.style.display = 'none';
+          content.innerHTML = `
+            <div class="tabs" id="statsFilter" style="margin-bottom: 16px;">
+              <button class="tab active" data-val="day">День</button>
+              <button class="tab" data-val="week">Неделя</button>
+              <button class="tab" data-val="month">Месяц</button>
+              <button class="tab" data-val="all">Все</button>
+            </div>
+            <div id="statsResult" class="glass-card" style="padding: 20px;">
+               <div class="empty-state">Загрузка...</div>
+            </div>
+          `;
+
+          document.querySelectorAll('#statsFilter .tab').forEach(t => {
+             t.onclick = () => {
+                document.querySelectorAll('#statsFilter .tab').forEach(x => x.classList.remove('active'));
+                t.classList.add('active');
+                fetchStats(t.dataset.val);
+             }
+          });
+
+          fetchStats('day');
+        }
       } catch(e) { content.innerHTML = '<div class="empty-state">Ошибка</div>'; }
+    }
+
+    async function fetchStats(period) {
+      const resEl = document.getElementById('statsResult');
+      if (!resEl) return;
+      resEl.innerHTML = 'Загрузка...';
+      try {
+         const { count, total, avg } = await API.req('GET', '/admin/stats?period=' + period);
+         resEl.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+               <div style="font-size:14px; font-weight:700; color:var(--dim);">Кол-во выводов:</div>
+               <div style="font-size:24px; font-weight:900; color:var(--txt);">${count}</div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+               <div style="font-size:14px; font-weight:700; color:var(--dim);">Общая сумма:</div>
+               <div style="font-size:20px; font-weight:900; color:var(--grn);">${fmt(total)}</div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+               <div style="font-size:14px; font-weight:700; color:var(--dim);">Среднее в день:</div>
+               <div style="font-size:20px; font-weight:900; color:var(--blue);">${fmtDec(avg, 2)}</div>
+            </div>
+         `;
+      } catch(e) {
+         resEl.innerHTML = '<div class="empty-state">Ошибка</div>';
+      }
     }
 
     window.openAdminUserModal = async function(userId) {
@@ -2043,14 +2129,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     window.updateRequestStatus = async function(reqId, status) {
+      const commentVal = document.getElementById(`adminComment-${reqId}`)?.value || '';
       if (!await confirmAsync('Изменение', `Отметить как "${status}"?`, 'Да')) return;
       try {
-        await API.req('PATCH', '/admin/requests/' + reqId, { status });
+        await API.req('PATCH', '/admin/requests/' + reqId, { status, admin_comment: commentVal });
         toast('Обновлено', 'success'); 
         loadAdmin(); screenCache.profile = false; screenCache.wallet = false;
       } catch(e) { toast(e.message || 'Ошибка', 'error'); }
     };
 
+    // СТАРТ
     initSpreadCalculator();
     updateAuthUI();
     loadHomeDashboard();
