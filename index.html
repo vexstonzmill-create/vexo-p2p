@@ -69,10 +69,16 @@
     .calc-row .field { flex: 1; margin-bottom: 0; }
     .calc-btn {
       height: 46px; width: 65px; padding: 0; display: flex; align-items: center; justify-content: center;
-      background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px;
+      background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 99px;
       font-weight: 800; font-size: 13px; color: var(--txt); cursor: pointer; transition: 0.2s;
     }
     .calc-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+    /* КРУГЛЫЕ КНОПКИ */
+    .btn, .segmented, .seg-btn, .icon-chip, .pay-chip, .tab, .tabs {
+      border-radius: 99px !important;
+    }
+    .input { border-radius: 14px !important; }
   </style>
 </head>
 <body data-theme="dark">
@@ -108,7 +114,7 @@
           <div id="notifDot" class="notif-dot hidden"></div>
         </button>
         <button class="icon-btn" id="themeBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></button>
-        <button class="btn btn-primary" id="loginBtn" style="padding:6px 12px;font-size:13px;border-radius:8px;">Войти</button>
+        <button class="btn btn-primary" id="loginBtn" style="padding:6px 12px;font-size:13px;">Войти</button>
         <button class="avatar-btn hidden" id="avatarBtn"></button>
       </div>
     </header>
@@ -157,18 +163,22 @@
 
         <div class="glass-card" style="border-radius: 20px; padding: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 44px; height: 44px; border-radius: 50%; background: #26A17B; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 22px;">₮</div>
+            <div style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <svg viewBox="0 0 32 32" width="44" height="44"><circle cx="16" cy="16" r="16" fill="#26A17B"/><path d="M17.9 13.1v-2h5v-3H9.1v3h5v2c-4.1.2-7.1 1-7.1 2s3 1.8 7.1 2v7.2h3.8v-7.2c4.1-.2 7.1-1 7.1-2s-3-1.8-7.1-2zm0 3.4v-.1c-.1 0-.7.1-1.9.1-1 0-1.7 0-2-.1v.1c-3.3-.1-5.7-.7-5.7-1.4 0-.7 2.4-1.3 5.7-1.4v2.3c.3 0 1 .1 2 .1 1.2 0 1.7 0 1.9-.1v-2.3c3.3.1 5.7.7 5.7 1.4 0 .7-2.4 1.3-5.7 1.4z" fill="#fff"/></svg>
+            </div>
             <div>
               <div style="font-size: 15px; font-weight: 800; color: var(--txt);">P2P Обмен</div>
               <div style="font-size: 12px; color: var(--dim); font-weight: 500;">Купить или продать USDT</div>
             </div>
           </div>
-          <button class="btn btn-primary" onclick="show('market')" style="padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; height: 36px;">Перейти</button>
+          <button class="btn btn-primary" onclick="show('market')" style="padding: 8px 16px; font-size: 13px; font-weight: 700; height: 36px;">Перейти</button>
         </div>
 
         <div class="glass-card" style="border-radius: 20px; padding: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
           <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 44px; height: 44px; border-radius: 50%; background: #26A17B; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 22px;">₮</div>
+            <div style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <svg viewBox="0 0 32 32" width="44" height="44"><circle cx="16" cy="16" r="16" fill="#26A17B"/><path d="M17.9 13.1v-2h5v-3H9.1v3h5v2c-4.1.2-7.1 1-7.1 2s3 1.8 7.1 2v7.2h3.8v-7.2c4.1-.2 7.1-1 7.1-2s-3-1.8-7.1-2zm0 3.4v-.1c-.1 0-.7.1-1.9.1-1 0-1.7 0-2-.1v.1c-3.3-.1-5.7-.7-5.7-1.4 0-.7 2.4-1.3 5.7-1.4v2.3c.3 0 1 .1 2 .1 1.2 0 1.7 0 1.9-.1v-2.3c3.3.1 5.7.7 5.7 1.4 0 .7-2.4 1.3-5.7 1.4z" fill="#fff"/></svg>
+            </div>
             <div>
               <div style="font-size: 15px; font-weight: 800; color: var(--txt);">USDT / RUB</div>
               <div style="font-size: 12px; color: var(--dim); font-weight: 500;">Рыночный курс</div>
@@ -182,7 +192,7 @@
             <div style="position: relative; z-index: 2;">
               <h2 style="font-size: 24px; font-weight: 900; color: #fff; margin-bottom: 8px; line-height: 1.2;">Добро пожаловать в VEXO</h2>
               <p style="font-size: 14px; color: rgba(255,255,255,0.85); margin-bottom: 16px; font-weight: 500;">Самый быстрый и безопасный обмен криптовалюты на рубли.</p>
-              <button class="btn" onclick="show('market')" style="background: #fff; color: #000; padding: 10px 20px; border-radius: 12px; font-weight: 800; font-size: 14px;">Перейти в Маркет</button>
+              <button class="btn" onclick="show('market')" style="background: #fff; color: #000; padding: 10px 20px; font-weight: 800; font-size: 14px;">Перейти в Маркет</button>
             </div>
             <div style="position: absolute; right: -20px; bottom: -20px; width: 140px; height: 140px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 1;">
               <span style="font-size: 60px; color: rgba(255,255,255,0.2);">V</span>
@@ -192,7 +202,7 @@
             <div style="position: relative; z-index: 2;">
               <h2 style="font-size: 24px; font-weight: 900; color: #fff; margin-bottom: 8px; line-height: 1.2;">Акции и<br>розыгрыши</h2>
               <p style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 16px; font-weight: 500;">Подписывайтесь на наш<br>Telegram-канал!</p>
-              <a href="https://t.me/your_channel" target="_blank" class="btn" style="background: #fff; color: #000; padding: 10px 20px; border-radius: 12px; font-weight: 800; font-size: 14px; display: inline-block; text-decoration: none;">В Telegram</a>
+              <a href="https://t.me/your_channel" target="_blank" class="btn" style="background: #fff; color: #000; padding: 10px 20px; font-weight: 800; font-size: 14px; display: inline-block; text-decoration: none;">В Telegram</a>
             </div>
             <div style="position: absolute; right: -20px; bottom: -10px; width: 160px; height: 160px; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 1;">
               <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2" style="width: 80px; height: 80px; transform: rotate(-15deg);"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -228,58 +238,84 @@
       </div>
     </div>
 
-    <!-- ЭКРАН МАРКЕТ (По макету) -->
+    <!-- ЭКРАН МАРКЕТ -->
     <div id="screen-market" class="screen" style="padding: 16px;">
       
-      <!-- Главные табы -->
-      <div class="segmented" style="margin-bottom: 16px;" id="marketTopTabs">
-        <button class="seg-btn active" data-mtab="p2p">Маркет</button>
-        <button class="seg-btn" data-mtab="ads">Мои объявления</button>
-        <button class="seg-btn" data-mtab="orders">Ордера</button>
+      <!-- 1. СНАЧАЛА P2P / БЫСТРЫЙ -->
+      <div class="segmented" style="margin-bottom: 16px;" id="marketModeSwitch">
+        <button class="seg-btn active" data-mode="p2p">P2P</button>
+        <button class="seg-btn" data-mode="fast">⚡ Быстрый</button>
       </div>
 
-      <div id="marketMainTabs">
-        <!-- P2P / Быстрый -->
-        <div class="segmented" style="margin-bottom: 16px;" id="marketModeSwitch">
-          <button class="seg-btn active" data-mode="p2p">P2P</button>
-          <button class="seg-btn" data-mode="fast">⚡ Быстрый</button>
+      <!-- ОБЕРТКА ДЛЯ ВСЕГО P2P -->
+      <div id="p2p-wrapper">
+        <!-- 2. ТАБЫ ВНУТРИ P2P -->
+        <div class="segmented" style="margin-bottom: 16px;" id="marketTopTabs">
+          <button class="seg-btn active" data-mtab="p2p">Маркет</button>
+          <button class="seg-btn" data-mtab="ads">Мои объявления</button>
+          <button class="seg-btn" data-mtab="orders">Ордера</button>
         </div>
 
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-           <h3 style="font-size:18px; font-weight:900;">Объявления</h3>
-           <button class="btn btn-ghost btn-sm" id="openFilterBtn" style="border:1px solid var(--glass-border); height:36px; border-radius:10px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:4px;"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg> Фильтры
-           </button>
+        <div id="marketMainTabs">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+             <h3 style="font-size:18px; font-weight:900;">Объявления</h3>
+             <button class="btn btn-ghost btn-sm" id="openFilterBtn" style="border:1px solid var(--glass-border); height:36px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:4px;"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg> Фильтры
+             </button>
+          </div>
+
+          <!-- Купить/Продать -->
+          <div class="segmented" style="margin-bottom: 12px;" id="marketSideTabs">
+            <button class="seg-btn active" data-side="buy">Купить</button>
+            <button class="seg-btn" data-side="sell">Продать</button>
+          </div>
+
+          <!-- Фильтры активов (монеты) -->
+          <div style="display:flex; gap:8px; margin-bottom:16px; overflow-x:auto; padding-bottom: 4px;" id="filterAsset">
+             <div class="icon-chip active" data-val="">Все активы</div>
+             
+             <div class="icon-chip" data-val="USDT" style="display:flex; align-items:center; gap:6px;">
+               <svg viewBox="0 0 32 32" width="18" height="18"><circle cx="16" cy="16" r="16" fill="#26A17B"/><path d="M17.9 13.1v-2h5v-3H9.1v3h5v2c-4.1.2-7.1 1-7.1 2s3 1.8 7.1 2v7.2h3.8v-7.2c4.1-.2 7.1-1 7.1-2s-3-1.8-7.1-2zm0 3.4v-.1c-.1 0-.7.1-1.9.1-1 0-1.7 0-2-.1v.1c-3.3-.1-5.7-.7-5.7-1.4 0-.7 2.4-1.3 5.7-1.4v2.3c.3 0 1 .1 2 .1 1.2 0 1.7 0 1.9-.1v-2.3c3.3.1 5.7.7 5.7 1.4 0 .7-2.4 1.3-5.7 1.4z" fill="#fff"/></svg> USDT
+             </div>
+             
+             <div class="icon-chip" data-val="BTC" style="display:flex; align-items:center; gap:6px;">
+               <svg viewBox="0 0 32 32" width="18" height="18"><circle cx="16" cy="16" r="16" fill="#F7931A"/><path d="M21.6 15.3c.6-.5.9-1.2.9-2.1 0-2-1.5-2.9-3.9-2.9V7.5h-1.8v2.8h-2.3V7.5h-1.8v2.8h-2.3V7.5h-1.8v2.8H8v3h1.5v6H8v3h3.5v2.8h1.8v-2.8h2.3v2.8h1.8v-2.8h2.3v2.8h1.8v-2.8c2.5 0 4.1-.9 4.1-3 0-1.5-.8-2.4-2-2.8zm-6.3-3.9h2.3c1 0 1.6.4 1.6 1.3 0 1-.7 1.3-1.6 1.3h-2.3v-2.6zm2.8 8.8h-2.8v-2.9h2.8c1.2 0 1.9.5 1.9 1.4 0 1-.7 1.5-1.9 1.5z" fill="#fff"/></svg> BTC
+             </div>
+
+             <div class="icon-chip" data-val="TON" style="display:flex; align-items:center; gap:6px;">
+               <svg viewBox="0 0 32 32" width="18" height="18"><circle cx="16" cy="16" r="16" fill="#0098EA"/><path d="M21.8 10.5h-11.6c-.7 0-1.1.6-.8 1.1l6.4 10.6c.3.5 1 .5 1.3 0l6.4-10.6c.3-.5-.1-1.1-.8-1.1zm-6.9 10.2l-1.8-4h3.6l-1.8 4z" fill="#fff"/></svg> TON
+             </div>
+          </div>
         </div>
 
-        <!-- Купить/Продать -->
-        <div class="segmented" style="margin-bottom: 12px;" id="marketSideTabs">
-          <button class="seg-btn active" data-side="buy">Купить</button>
-          <button class="seg-btn" data-side="sell">Продать</button>
+        <!-- СПИСКИ -->
+        <div class="market-tab-content active" id="mtab-p2p">
+          <div id="adsList"><div class="empty-state">Загрузка...</div></div>
         </div>
-
-        <!-- Фильтры активов (возвращенные монеты) -->
-        <div style="display:flex; gap:8px; margin-bottom:16px; overflow-x:auto;" id="filterAsset">
-           <div class="icon-chip active" data-val="">Все активы</div>
-           <div class="icon-chip" data-val="USDT">
-             <svg viewBox="0 0 24 24" fill="none" width="16" height="16" style="margin-right:2px;"><circle cx="12" cy="12" r="12" fill="#26A17B"/><path d="M12 5v14M8 9h8M8 15h8" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg> USDT
-           </div>
-           <div class="icon-chip" data-val="BTC">
-             <svg viewBox="0 0 24 24" fill="none" width="16" height="16" style="margin-right:2px;"><circle cx="12" cy="12" r="12" fill="#F7931A"/><path d="M15 11c0-2-1.5-2.5-3-2.5v-2h-1.5v2H9v2.5h1.5v3H9v2.5h1.5v2H12v-2h1.5c1.5 0 3-.5 3-2.5 0-1.5-1-2-2-2.2 1-.2 1.5-.8 1.5-1.8zM10.5 10h2c.8 0 1.5.2 1.5 1s-.7 1-1.5 1h-2v-2zm0 3h2c.8 0 1.5.2 1.5 1s-.7 1-1.5 1h-2v-2z" fill="#fff"/></svg> BTC
-           </div>
+        
+        <div class="market-tab-content" id="mtab-ads" style="display:none;">
+          <div id="myAdsList"><div class="empty-state">Загрузка...</div></div>
         </div>
-      </div>
+        
+        <div class="market-tab-content" id="mtab-orders" style="display:none;">
+          <div class="segmented" id="ordersFilter" style="margin-bottom: 16px;">
+            <button class="seg-btn active" data-val="active">Активные</button>
+            <button class="seg-btn" data-val="completed">Завершенные</button>
+          </div>
+          <div id="ordersList"><div class="empty-state">Загрузка...</div></div>
+        </div>
+      </div> <!-- Конец p2p-wrapper -->
 
       <!-- БЫСТРЫЙ ОБМЕН -->
-      <div id="fast-exchange-content" style="display: none; padding-top: 16px;">
+      <div id="fast-exchange-content" style="display: none;">
         <div class="glass-card" style="padding: 20px; border-radius: 20px;">
           <div style="display:flex; gap:8px; margin-bottom:20px;">
-            <button class="btn btn-primary btn-sm" id="exTabBuy" style="flex:1; background:var(--grn); border:none; height:44px; font-size:14px; border-radius:12px;">Купить</button>
-            <button class="btn btn-ghost btn-sm" id="exTabSell" style="flex:1; border:1px solid var(--glass-border); height:44px; font-size:14px; border-radius:12px;">Продать</button>
+            <button class="btn btn-primary btn-sm" id="exTabBuy" style="flex:1; background:var(--grn); border:none; height:44px; font-size:14px;">Купить</button>
+            <button class="btn btn-ghost btn-sm" id="exTabSell" style="flex:1; border:1px solid var(--glass-border); height:44px; font-size:14px;">Продать</button>
           </div>
           <div id="exInputLabel" style="font-size:14px; color:var(--dim); font-weight:700; margin-bottom:8px;">Сумма в RUB</div>
-          <input type="number" id="exAmount" class="input" placeholder="0.00" style="font-size:24px; height:60px; font-weight:800; margin-bottom:16px; background:var(--glass-bg); border:1px solid var(--glass-border); width:100%; border-radius:12px; padding:0 16px; color:var(--txt);">
-          <div style="background:var(--glass-bg); padding:14px; border-radius:12px; margin-bottom:20px;">
+          <input type="number" id="exAmount" class="input" placeholder="0.00" style="font-size:24px; height:60px; font-weight:800; margin-bottom:16px;">
+          <div style="background:var(--glass-bg); padding:14px; border-radius:16px; margin-bottom:20px;">
             <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
               <span style="font-size:13px; color:var(--dim);">Курс обмена:</span>
               <span id="exRateDisplay" style="font-size:13px; font-weight:700; color:var(--txt);">1 USDT = 90.00 ₽</span>
@@ -289,25 +325,10 @@
               <span id="exResultDisplay" style="font-size:16px; font-weight:800; color:var(--txt);">0.00 USDT</span>
             </div>
           </div>
-          <button class="btn btn-primary btn-block" id="exSubmitBtn" style="background:var(--grn); border:none; height:50px; font-size:15px; border-radius:14px;">Купить USDT</button>
+          <button class="btn btn-primary btn-block" id="exSubmitBtn" style="background:var(--grn); border:none; height:50px; font-size:15px;">Купить USDT</button>
         </div>
       </div>
 
-      <div class="market-tab-content active" id="mtab-p2p">
-        <div id="adsList"><div class="empty-state">Загрузка...</div></div>
-      </div>
-      
-      <div class="market-tab-content" id="mtab-ads" style="display:none;">
-        <div id="myAdsList"><div class="empty-state">Загрузка...</div></div>
-      </div>
-      
-      <div class="market-tab-content" id="mtab-orders" style="display:none;">
-        <div class="segmented" id="ordersFilter" style="margin-bottom: 16px;">
-          <button class="seg-btn active" data-val="active">Активные</button>
-          <button class="seg-btn" data-val="completed">Завершенные</button>
-        </div>
-        <div id="ordersList"><div class="empty-state">Загрузка...</div></div>
-      </div>
     </div>
 
     <!-- ЭКРАН КАЛЬКУЛЯТОР -->
@@ -317,13 +338,11 @@
         <div class="field"><label>Цена покупки (₽)</label><input type="number" id="calc-buy-price" class="input" placeholder="90.00"></div>
         <div class="field"><label>Цена продажи (₽)</label><input type="number" id="calc-sell-price" class="input" placeholder="92.00"></div>
         
-        <!-- Ровный ряд для объёма -->
         <div class="calc-row">
           <div class="field"><label>Объём</label><input type="number" id="calc-amount" class="input" placeholder="1000"></div>
           <button class="calc-btn active" id="calc-volume-type">USDT</button>
         </div>
         
-        <!-- Ровный ряд для комиссии -->
         <div class="calc-row">
           <div class="field"><label>Комиссия</label><input type="number" id="calc-fee" class="input" placeholder="0"></div>
           <button class="calc-btn active" id="calc-fee-type">₽</button>
@@ -353,12 +372,15 @@
         </div>
         <div class="field">
           <label>Актив</label>
-          <div class="icon-chips" id="f-asset-select">
-            <div class="icon-chip active" data-val="USDT">
-               <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="margin-right:4px;"><circle cx="12" cy="12" r="12" fill="#26A17B"/><path d="M12 5v14M8 9h8M8 15h8" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg> USDT
+          <div class="icon-chips" id="f-asset-select" style="display:flex; gap:8px;">
+            <div class="icon-chip active" data-val="USDT" style="display:flex; align-items:center; gap:6px;">
+               <svg viewBox="0 0 32 32" width="18" height="18"><circle cx="16" cy="16" r="16" fill="#26A17B"/><path d="M17.9 13.1v-2h5v-3H9.1v3h5v2c-4.1.2-7.1 1-7.1 2s3 1.8 7.1 2v7.2h3.8v-7.2c4.1-.2 7.1-1 7.1-2s-3-1.8-7.1-2zm0 3.4v-.1c-.1 0-.7.1-1.9.1-1 0-1.7 0-2-.1v.1c-3.3-.1-5.7-.7-5.7-1.4 0-.7 2.4-1.3 5.7-1.4v2.3c.3 0 1 .1 2 .1 1.2 0 1.7 0 1.9-.1v-2.3c3.3.1 5.7.7 5.7 1.4 0 .7-2.4 1.3-5.7 1.4z" fill="#fff"/></svg> USDT
             </div>
-            <div class="icon-chip" data-val="BTC">
-               <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="margin-right:4px;"><circle cx="12" cy="12" r="12" fill="#F7931A"/><path d="M15 11c0-2-1.5-2.5-3-2.5v-2h-1.5v2H9v2.5h1.5v3H9v2.5h1.5v2H12v-2h1.5c1.5 0 3-.5 3-2.5 0-1.5-1-2-2-2.2 1-.2 1.5-.8 1.5-1.8zM10.5 10h2c.8 0 1.5.2 1.5 1s-.7 1-1.5 1h-2v-2zm0 3h2c.8 0 1.5.2 1.5 1s-.7 1-1.5 1h-2v-2z" fill="#fff"/></svg> BTC
+            <div class="icon-chip" data-val="BTC" style="display:flex; align-items:center; gap:6px;">
+               <svg viewBox="0 0 32 32" width="18" height="18"><circle cx="16" cy="16" r="16" fill="#F7931A"/><path d="M21.6 15.3c.6-.5.9-1.2.9-2.1 0-2-1.5-2.9-3.9-2.9V7.5h-1.8v2.8h-2.3V7.5h-1.8v2.8h-2.3V7.5h-1.8v2.8H8v3h1.5v6H8v3h3.5v2.8h1.8v-2.8h2.3v2.8h1.8v-2.8h2.3v2.8h1.8v-2.8c2.5 0 4.1-.9 4.1-3 0-1.5-.8-2.4-2-2.8zm-6.3-3.9h2.3c1 0 1.6.4 1.6 1.3 0 1-.7 1.3-1.6 1.3h-2.3v-2.6zm2.8 8.8h-2.8v-2.9h2.8c1.2 0 1.9.5 1.9 1.4 0 1-.7 1.5-1.9 1.5z" fill="#fff"/></svg> BTC
+            </div>
+            <div class="icon-chip" data-val="TON" style="display:flex; align-items:center; gap:6px;">
+               <svg viewBox="0 0 32 32" width="18" height="18"><circle cx="16" cy="16" r="16" fill="#0098EA"/><path d="M21.8 10.5h-11.6c-.7 0-1.1.6-.8 1.1l6.4 10.6c.3.5 1 .5 1.3 0l6.4-10.6c.3-.5-.1-1.1-.8-1.1zm-6.9 10.2l-1.8-4h3.6l-1.8 4z" fill="#fff"/></svg> TON
             </div>
           </div>
           <div style="font-size:12px;color:var(--dim);margin-top:4px;">Выбран: <span id="f-asset-label">USDT</span></div>
@@ -542,7 +564,7 @@
 <div class="modal-overlay" id="notificationsModal">
   <div class="modal-content">
     <button class="modal-close" onclick="closeModal('notificationsModal')">✕</button>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-right:40px;">
       <h2 style="font-size:20px;font-weight:900;">Уведомления</h2>
       <button class="btn btn-ghost btn-sm" onclick="clearNotifications()">Очистить</button>
     </div>
@@ -655,6 +677,16 @@
 
 <div id="toastContainer" style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:9999;width:90%;max-width:400px;"></div>
 
+<!-- Принудительное скрытие лоадера, если app.js не загрузится -->
+<script>
+  setTimeout(function() {
+    var l = document.getElementById('loader');
+    if (l) {
+      l.classList.add('hidden-loader');
+      l.style.display = 'none';
+    }
+  }, 1500);
+</script>
 <script src="app.js"></script>
 </body>
 </html>
