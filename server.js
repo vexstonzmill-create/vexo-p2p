@@ -57,7 +57,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// --- TELEGRAM HELPERS ---
 async function sendTG(tgId, text, buttons = null) {
   if (!BOT_TOKEN || !tgId) return;
   try {
@@ -101,7 +100,6 @@ function validateTelegramWebAppData(telegramInitData) {
   return calculatedHash === hash;
 }
 
-// --- WEBHOOK ---
 app.post('/api/telegram/webhook', async (req, res) => {
     try {
         if (req.body.message) {
@@ -224,7 +222,6 @@ app.post('/api/telegram/webhook', async (req, res) => {
     }
 });
 
-// --- AUTH & USERS ---
 async function auth(req, res, next) {
   const h = req.headers.authorization || '';
   const token = h.startsWith('Bearer ') ? h.slice(7) : null;
@@ -767,7 +764,6 @@ app.get('/api/reviews/user/:userId', async (req, res) => {
   res.json({ items: result.rows.map(r => ({ id: r.id, rating: r.rating, comment: r.comment, author: r.display_name, createdAt: r.created_at })) });
 });
 
-// --- ADMIN ROUTES ---
 app.get('/api/admin/users', auth, async (req, res) => {
   if (!['admin', 'owner', 'deputy'].includes(req.user.role)) return res.status(403).json({ error: 'forbidden' });
   try {
@@ -863,6 +859,9 @@ app.use(express.static(path.join(__dirname)));
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
   res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.listen(PORT, () => console.log('VEXO P2P running on port ' + PORT));, 'index.html'));
 });
 
 app.listen(PORT, () => console.log('VEXO P2P running on port ' + PORT));

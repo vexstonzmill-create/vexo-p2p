@@ -15,11 +15,6 @@
   <div class="loader-text">Загрузка VEXO...</div>
 </div>
 
-<div class="bg-blobs">
-  <div class="blob blob-1"></div>
-  <div class="blob blob-2"></div>
-</div>
-
 <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
 
 <div class="app">
@@ -53,73 +48,88 @@
   </aside>
 
   <div class="main">
-    <header class="topbar glass-panel">
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <button class="btn btn-sm btn-ghost" id="menuBtn" style="padding: 4px; width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+    <header class="topbar">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <button class="menu-btn" id="menuBtn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
         </button>
-        <div class="logo"><div class="logo-mark" style="width: 26px; height: 26px; font-size: 13px;">V</div><span class="logo-text" style="font-size: 18px;">vexo</span></div>
+        <div class="user-greeting">
+          <span class="greeting-text" id="greetingText">Готовы к работе!</span>
+          <span class="user-name" id="topbarName">Гость</span>
+        </div>
       </div>
       
-      <div style="display: flex; align-items: center; gap: 6px;">
-        <button class="btn btn-sm btn-ghost notification-btn" id="notifBtn" style="padding: 6px;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <button class="icon-btn" id="notifBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
           <span class="notif-dot hidden" id="notifDot"></span>
         </button>
-        <button class="btn btn-sm btn-ghost" id="themeBtn" style="padding: 6px; border-radius: 50%; width: 32px; height: 32px;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        <button class="icon-btn" id="themeBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
         </button>
-        <button class="btn btn-sm btn-primary" id="loginBtn" style="padding: 8px 14px; font-size: 13px;">Войти</button>
-        <button class="avatar-btn hidden" id="avatarBtn"></button>
+        <button class="btn btn-primary btn-sm" id="loginBtn" style="padding: 8px 14px; font-size: 13px; border-radius: 12px;">Войти</button>
+        <button class="avatar-btn hidden" id="avatarBtn" onclick="show('profile')"></button>
       </div>
     </header>
 
     <main class="content">
-      <!-- HOME (СТАРАЯ СТРУКТУРА) -->
+      
+      <!-- HOME -->
       <section class="screen active" id="screen-home">
-        <div class="banner-carousel">
-          <div class="banner-viewport" id="bannerViewport">
-            <div class="banner-track" id="bannerTrack">
-              <div class="banner banner-platform">
-                <div class="banner-decor">
-                  <div class="coin-icon usdt float-1">₮</div>
-                  <div class="coin-icon btc float-2">₿</div>
-                  <div class="coin-icon ton float-3">T</div>
-                </div>
-                <div class="banner-text-content">
-                  <h2>Добро пожаловать в <br><span>vexo</span></h2>
-                  <p>Самый быстрый и безопасный обмен криптовалюты на рубли.</p>
-                  <button class="btn btn-primary btn-sm" data-screen="market" style="width: fit-content; padding: 10px 20px; font-size: 13px;">Перейти в Маркет</button>
-                </div>
+        
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <span>Поиск по объявлениям...</span>
+        </div>
+
+        <div class="bento-grid">
+          
+          <!-- Синяя карточка: Баланс -->
+          <div class="bento-card blue-card" onclick="show('wallet')">
+            <div class="card-header">
+              <div class="card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/></svg>
               </div>
-              <div class="banner banner-tg">
-                <div class="banner-tg-logo">
-                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .24z"/></svg>
-                </div>
-                <div class="banner-text-content">
-                  <h2>Акции и розыгрыши</h2>
-                  <p>Подписывайтесь на наш Telegram-канал!</p>
-                  <a href="https://t.me/vexoio_bot" target="_blank" class="btn btn-primary btn-sm" style="width: fit-content; text-decoration: none; padding: 10px 20px; font-size: 13px;">В Telegram</a>
-                </div>
+              <div class="circle-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+              </div>
+            </div>
+            <div class="card-content">
+              <span class="card-label">Общий баланс</span>
+              <h2 class="card-value" id="homeBalanceValue">0.00 ₽</h2>
+            </div>
+          </div>
+
+          <!-- Черная карточка: Профиль -->
+          <div class="bento-card dark-card" onclick="show('profile')">
+            <div class="card-header">
+              <div class="card-icon" style="padding: 0; overflow: hidden;">
+                <img id="homeAvatar" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                <span id="homeAvatarLetter" style="font-weight: 800; font-size: 20px;">?</span>
+              </div>
+              <div class="circle-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+              </div>
+            </div>
+            <div class="card-content">
+              <span class="card-label" id="homeUserName">Пользователь</span>
+              <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                <h2 class="card-value" id="homeDealsCount" style="font-size: 20px;">0 сделок</h2>
+                <h2 class="card-value" style="font-size: 16px; color: var(--yellow);">★ <span id="homeRating">—</span></h2>
               </div>
             </div>
           </div>
-          <div class="banner-dots">
-            <button class="banner-dot active" data-slide="0"></button>
-            <button class="banner-dot" data-slide="1"></button>
-          </div>
+
         </div>
 
-        <div class="glass-card" style="margin-bottom: 16px;">
-          <h2 style="font-size: 15px; margin-bottom: 12px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 20px;">📈</span> Рыночный курс
-          </h2>
-          <div style="display: flex; justify-content: space-between; background: var(--inner-card); padding: 14px; border-radius: 12px; align-items: center;">
+        <!-- Курс рынка -->
+        <div class="glass-card" style="margin-top: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
              <div style="display: flex; align-items: center; gap: 10px;">
                 <div class="coin-icon usdt" style="width: 36px; height: 36px; font-size: 18px;">₮</div>
                 <div>
                    <div style="font-weight: 800; font-size: 15px;">USDT / RUB</div>
-                   <div style="font-size: 11px; color: var(--dim);">Tether TRC-20</div>
+                   <div style="font-size: 11px; color: var(--dim);">Рыночный курс</div>
                 </div>
              </div>
              <div style="text-align: right;">
@@ -128,30 +138,9 @@
           </div>
         </div>
 
-        <div class="glass-card" style="margin-bottom: 20px;">
-          <h2 style="font-size: 15px; margin-bottom: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 20px;">🚀</span> Как это работает?
-          </h2>
-          <div class="steps-wrapper">
-            <div class="step-item">
-              <div class="step-icon" style="background: var(--btn-bg); color: var(--txt); box-shadow: var(--btn-shadow); width: 32px; height: 32px; font-size: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800;">1</div>
-              <div class="step-text" style="font-size: 14px; font-weight: 600; color: var(--txt);">Выберите подходящее объявление в <b>Маркете</b></div>
-            </div>
-            <div class="step-line" style="width: 2px; height: 20px; background: var(--glass-border); margin-left: 15px; margin-top: 4px; margin-bottom: 4px;"></div>
-            <div class="step-item">
-              <div class="step-icon" style="background: var(--btn-bg); color: var(--txt); box-shadow: var(--btn-shadow); width: 32px; height: 32px; font-size: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800;">2</div>
-              <div class="step-text" style="font-size: 14px; font-weight: 600; color: var(--txt);">Переведите рубли продавцу по реквизитам</div>
-            </div>
-            <div class="step-line" style="width: 2px; height: 20px; background: var(--glass-border); margin-left: 15px; margin-top: 4px; margin-bottom: 4px;"></div>
-            <div class="step-item">
-              <div class="step-icon" style="background: var(--grn); color: #fff; box-shadow: 0 4px 12px rgba(16,185,129,0.4); width: 32px; height: 32px; font-size: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800;">3</div>
-              <div class="step-text" style="font-size: 14px; font-weight: 600; color: var(--txt);">Получите USDT на свой кошелек</div>
-            </div>
-          </div>
-        </div>
       </section>
 
-      <!-- MARKET (СТАРАЯ СТРУКТУРА) -->
+      <!-- MARKET -->
       <section class="screen" id="screen-market">
         <div class="market-mode-switch" id="marketModeSwitch">
           <button class="mode-btn active" data-mode="p2p">P2P</button>
@@ -168,7 +157,7 @@
           <div id="p2p-market-content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
               <h2 style="font-size: 18px; font-weight: 800;">Объявления</h2>
-              <button class="btn btn-ghost btn-sm" id="openFilterBtn" style="border: 1px solid var(--glass-border); padding: 6px 12px; border-radius: 10px; display: flex; gap: 6px; font-size: 13px; height: 34px;">
+              <button class="btn btn-ghost btn-sm" id="openFilterBtn" style="border: 1px solid var(--card-border); padding: 6px 12px; border-radius: 10px; display: flex; gap: 6px; font-size: 13px; height: 34px;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
                 Фильтры
               </button>
@@ -230,7 +219,7 @@
         </div>
       </section>
 
-      <!-- CREATE (БЕЗ ИЗМЕНЕНИЙ) -->
+      <!-- CREATE -->
       <section class="screen" id="screen-create">
         <h2 style="margin-bottom: 12px; font-size: 18px; font-weight: 800;">Создать объявление</h2>
         <div class="glass-card" style="padding: 16px;">
@@ -259,10 +248,22 @@
           <div class="field">
             <label>Способы оплаты</label>
             <div class="icon-scroll" id="f-payments" style="margin-bottom: 0;">
-              <div class="pay-chip" data-val="СБП">🏦 СБП</div>
-              <div class="pay-chip" data-val="Тинькофф">🟡 Тинькофф</div>
-              <div class="pay-chip" data-val="Сбербанк">🟢 Сбер</div>
-              <div class="pay-chip" data-val="Альфа-Банк">🔴 Альфа</div>
+              <div class="pay-chip" data-val="СБП">
+                <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" fill="#0055BB"/><path d="M0 0h12v12H0z" fill="#FF0033"/><path d="M12 12h12v12H12z" fill="#00CC00"/><path d="M12 0h12v12H12z" fill="#FFCC00"/><path d="M0 12h12v12H0z" fill="#0055BB"/><path d="M6 8h12v2H6zM6 14h12v2H6z" fill="#fff"/></svg>
+                СБП
+              </div>
+              <div class="pay-chip" data-val="Тинькофф">
+                <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" rx="4" fill="#FFDD2D"/><path d="M12 5l6 3v4c0 3.5-2.5 6.5-6 7-3.5-.5-6-3.5-6-7V8l6-3z" fill="#000"/></svg>
+                Тинькофф
+              </div>
+              <div class="pay-chip" data-val="Сбербанк">
+                <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" rx="4" fill="#21A038"/><path d="M7 12l3 3 7-7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Сбер
+              </div>
+              <div class="pay-chip" data-val="Альфа-Банк">
+                <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" rx="4" fill="#EF3124"/><path d="M12 6l5 12h-3l-1-3H8l-1 3H4L12 6zm-2 6h3l-1.5-4L10 12z" fill="#fff"/></svg>
+                Альфа
+              </div>
             </div>
           </div>
           <div class="field">
@@ -288,7 +289,7 @@
         </div>
       </section>
 
-      <!-- SPREAD (БЕЗ ИЗМЕНЕНИЙ) -->
+      <!-- SPREAD CALCULATOR -->
       <section class="screen" id="screen-spread">
         <h2 style="margin-bottom: 12px; font-size: 18px; font-weight: 800;">Калькулятор спреда</h2>
         <div class="glass-card" style="padding: 16px;">
@@ -303,14 +304,17 @@
           </div>
           <div class="grid-2-col" style="margin-bottom: 16px;">
             <div class="field" style="margin-bottom: 0;">
-              <label>Объем (USDT)</label>
-              <input class="input" type="number" id="calc-amount" placeholder="1000" style="height: 48px;">
+              <label>Объем</label>
+              <div style="display: flex; gap: 4px;">
+                <input class="input" type="number" id="calc-amount" placeholder="1000" style="height: 48px;">
+                <button class="btn btn-ghost" id="calc-volume-type" data-type="usdt" style="width: 65px; height: 48px; padding: 0; font-size: 14px; border: 1px solid var(--card-border); flex-shrink: 0;">USDT</button>
+              </div>
             </div>
             <div class="field" style="margin-bottom: 0;">
               <label>Комиссия</label>
               <div style="display: flex; gap: 4px;">
                 <input class="input" type="number" id="calc-fee" placeholder="0" style="height: 48px;">
-                <button class="btn btn-ghost" id="calc-fee-type" data-type="rub" style="width: 50px; height: 48px; padding: 0; font-size: 14px; border: 1px solid var(--glass-border); flex-shrink: 0;">₽</button>
+                <button class="btn btn-ghost" id="calc-fee-type" data-type="rub" style="width: 50px; height: 48px; padding: 0; font-size: 14px; border: 1px solid var(--card-border); flex-shrink: 0;">₽</button>
               </div>
             </div>
           </div>
@@ -323,7 +327,7 @@
               <span style="font-size: 14px; color: var(--dim); font-weight: 600;">Спред в %:</span>
               <strong id="calc-spread-pct" style="font-size: 15px; color: var(--txt);">0.00 %</strong>
             </div>
-            <div style="height: 1px; background: var(--glass-border); margin: 12px 0;"></div>
+            <div style="height: 1px; background: var(--card-border); margin: 12px 0;"></div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <span style="font-size: 15px; color: var(--txt); font-weight: 800;">Чистая прибыль:</span>
               <strong id="calc-profit" style="font-size: 22px; color: var(--grn);">0.00 ₽</strong>
@@ -349,8 +353,6 @@
           <p style="margin-bottom: 12px; color: var(--txt);">Продавец обязан иметь актив на балансе. После подтверждения заявки покупателем, продавец должен подтвердить получение фиата в течение 15 минут после отметки "Оплачено".</p>
           <h3 style="color: var(--primary); margin-bottom: 8px;">3. Обязанности покупателя</h3>
           <p style="margin-bottom: 12px; color: var(--txt);">Покупатель обязан перевести точную сумму по реквизитам и прикрепить чек. Перевод должен быть выполнен с того же банковского счета, который указан в профиле.</p>
-          <h3 style="color: var(--primary); margin-bottom: 8px;">4. Споры и мошенничество</h3>
-          <p style="margin-bottom: 12px; color: var(--txt);">При возникновении спора Администрация вправе запросить видео/фото подтверждение. При выявлении мошенничества аккаунт блокируется, средства замораживаются.</p>
         </div>
       </section>
 
@@ -368,16 +370,28 @@
       </section>
     </main>
 
-    <nav class="bottom-nav glass-panel">
-      <button class="bn-btn active" data-screen="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Главная</button>
-      <button class="bn-btn" data-screen="market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Маркет</button>
-      <button class="bn-btn" data-screen="profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Профиль</button>
-      <button class="bn-btn" data-screen="admin" id="adminBnBtn" style="display:none; color:var(--red);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Админ</button>
+    <!-- ПЛАВАЮЩАЯ НАВИГАЦИЯ (КАК НА СКРИНЕ) -->
+    <nav class="bottom-nav">
+      <button class="bn-btn active" data-screen="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+        <span>Главная</span>
+      </button>
+      <button class="bn-btn" data-screen="market">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span>Маркет</span>
+      </button>
+      <button class="bn-btn" data-screen="profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Профиль</span>
+      </button>
+      <button class="bn-btn" data-screen="admin" id="adminBnBtn" style="display:none; color:var(--red);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>Админ</span>
+      </button>
     </nav>
   </div>
 </div>
 
-<!-- МОДАЛКИ (КАК В ТВОЕМ ФАЙЛЕ) -->
 <div class="toast-container" id="toastContainer"></div>
 <div class="modal-overlay" id="dialogOverlay"><div class="modal glass-modal" id="dialogContent"></div></div>
 
@@ -403,7 +417,7 @@
         <button class="btn btn-ghost btn-sm" id="admToggleMaker" onclick="toggleAdminUserStatus('is_maker')">MAKER</button>
       </div>
     </div>
-    <div style="border-top: 1px solid var(--glass-border); margin: 12px 0; padding-top: 12px;">
+    <div style="border-top: 1px solid var(--card-border); margin: 12px 0; padding-top: 12px;">
       <label style="font-size: 14px; font-weight: 800; color: var(--dim); margin-bottom: 8px; display: block;">Изменить баланс</label>
       <div class="grid-2-col" style="margin-bottom: 8px;">
         <select id="admBalanceCurrency" class="input" style="height: 44px; font-size: 14px !important;">
@@ -451,9 +465,12 @@
       <label>Способ оплаты</label>
       <div class="icon-scroll" id="filterPayment" style="margin-bottom:0;">
         <div class="icon-chip active" data-val="">Все</div>
-        <div class="icon-chip" data-val="СБП">🏦 СБП</div>
-        <div class="icon-chip" data-val="Тинькофф">🟡 Тинькофф</div>
-        <div class="icon-chip" data-val="Сбербанк">🟢 Сбер</div>
+        <div class="icon-chip" data-val="СБП" style="display:inline-flex; align-items:center; gap:4px;">
+          <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" fill="#0055BB"/><path d="M0 0h12v12H0z" fill="#FF0033"/><path d="M12 12h12v12H12z" fill="#00CC00"/><path d="M12 0h12v12H12z" fill="#FFCC00"/><path d="M0 12h12v12H0z" fill="#0055BB"/><path d="M6 8h12v2H6zM6 14h12v2H6z" fill="#fff"/></svg> СБП
+        </div>
+        <div class="icon-chip" data-val="Тинькофф" style="display:inline-flex; align-items:center; gap:4px;">
+          <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" rx="4" fill="#FFDD2D"/><path d="M12 5l6 3v4c0 3.5-2.5 6.5-6 7-3.5-.5-6-3.5-6-7V8l6-3z" fill="#000"/></svg> Тинькофф
+        </div>
       </div>
     </div>
     <button class="btn btn-primary btn-block" id="applyFiltersBtn" style="margin-top: 10px; height: 48px;">Применить</button>
@@ -476,7 +493,7 @@
 
 <div class="modal-overlay" id="authModal">
   <div class="modal glass-modal">
-    <div style="display: flex; border-bottom: 1px solid var(--glass-border); margin-bottom: 12px;">
+    <div style="display: flex; border-bottom: 1px solid var(--card-border); margin-bottom: 12px;">
       <button class="tab active" id="tabLogin" style="flex: 1; padding: 10px; font-weight: 700; font-size: 15px;">Вход</button>
       <button class="tab" id="tabRegister" style="flex: 1; padding: 10px; font-weight: 700; font-size: 15px;">Регистрация</button>
     </div>
@@ -506,11 +523,11 @@
     <div class="field" style="margin-bottom: 12px;"><label>Аватар (URL)</label><input class="input" type="url" id="settingsAvatarUrl" placeholder="https://..." style="height: 44px;"></div>
     <div class="field" style="margin-bottom: 12px;"><label>Имя</label><input class="input" type="text" id="settingsName" maxlength="50" style="height: 44px;"></div>
     <div class="field" style="margin-bottom: 12px;"><label>Email</label><input class="input" type="email" id="settingsEmail" style="height: 44px;"></div>
-    <div style="border-top: 1px solid var(--glass-border); margin: 12px 0; padding-top: 12px;">
+    <div style="border-top: 1px solid var(--card-border); margin: 12px 0; padding-top: 12px;">
       <h4 style="font-size: 14px; font-weight: 800; margin-bottom: 8px; color: var(--dim);">Статусы</h4>
       <div id="statusProgressContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
     </div>
-    <div style="border-top: 1px solid var(--glass-border); margin: 12px 0; padding-top: 12px;">
+    <div style="border-top: 1px solid var(--card-border); margin: 12px 0; padding-top: 12px;">
       <h4 style="font-size: 14px; font-weight: 800; margin-bottom: 8px; color: var(--dim);">Смена пароля</h4>
       <div class="field" style="margin-bottom: 8px;"><label>Текущий</label><input class="input" type="password" id="settingsCurrentPass" style="height: 44px;"></div>
       <div class="field" style="margin-bottom: 8px;"><label>Новый</label><input class="input" type="password" id="settingsNewPass" style="height: 44px;"></div>
@@ -543,7 +560,7 @@
     <div class="field" style="margin-bottom: 12px;"><label>Сумма</label><input type="number" class="input" id="walletActionAmount" placeholder="0" style="height: 44px; font-size: 16px;"></div>
     <div class="field" id="walletBankGroup" style="margin-bottom: 12px;">
       <label>Выберите банк</label>
-      <select id="walletBankSelect" class="input" style="height: 44px; font-size: 14px !important; background: var(--glass-bg); color: var(--txt);">
+      <select id="walletBankSelect" class="input" style="height: 44px; font-size: 14px !important; background: var(--bg); color: var(--txt);">
         <option value="Сбербанк">Сбербанк</option>
         <option value="Тинькофф">Тинькофф</option>
         <option value="Альфа-Банк">Альфа-Банк</option>
@@ -554,7 +571,7 @@
     <div id="usdtWithdrawFields" style="display: none;">
       <div class="field" style="margin-bottom: 12px;">
         <label>Сеть</label>
-        <select id="walletNetwork" class="input" style="height: 44px; font-size: 14px !important; background: var(--glass-bg); color: var(--txt);">
+        <select id="walletNetwork" class="input" style="height: 44px; font-size: 14px !important; background: var(--bg); color: var(--txt);">
           <option value="TRC-20">TRC-20 (Tron)</option>
           <option value="ERC-20">ERC-20 (Ethereum)</option>
           <option value="BEP-20">BEP-20 (BSC)</option>
@@ -581,7 +598,7 @@
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <div style="font-size: 13px; color: var(--dim);">Цена <span id="orderRate" style="color: var(--grn); font-size: 16px; font-weight: 800; margin-left: 4px;">0 ₽</span></div>
       <div style="display: flex; gap: 4px;">
-         <span id="priceTimer" style="font-size: 12px; background: var(--glass-bg); padding: 4px 8px; border-radius: 6px; color: var(--txt); font-weight: 700;">60s</span>
+         <span id="priceTimer" style="font-size: 12px; background: var(--btn-bg); padding: 4px 8px; border-radius: 6px; color: var(--txt); font-weight: 700;">60s</span>
          <span style="font-size: 11px; background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3); padding: 4px 8px; border-radius: 6px; color: var(--grn);">🛡 Защита</span>
       </div>
     </div>
@@ -589,10 +606,10 @@
       <div style="display: flex; align-items: center; margin-bottom: 4px;">
         <input class="input" type="number" id="orderAmount" value="" style="font-size: 24px; font-weight: 800; width: 100%; color: var(--txt); background: transparent !important; border: none !important; outline: none; height: 48px; padding: 0 !important;" placeholder="0">
         <span style="font-size: 14px; font-weight: 700; color: var(--dim); margin-left: 4px;">RUB</span>
-        <button id="btnOrderMax" style="background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); color: var(--yellow); font-weight: 700; font-size: 12px; padding: 6px 10px; border-radius: 8px; margin-left: 4px; white-space: nowrap;">Макс.</button>
+        <button id="btnOrderMax" style="background: var(--btn-bg); border: 1px solid var(--card-border); color: var(--yellow); font-weight: 700; font-size: 12px; padding: 6px 10px; border-radius: 8px; margin-left: 4px; white-space: nowrap;">Макс.</button>
       </div>
       <div class="hint" id="orderLimit" style="font-size: 12px; color: var(--dim); margin-bottom: 8px;">Лимит: 0 - 0 ₽</div>
-      <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--glass-border); padding-top: 8px;">
+      <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--card-border); padding-top: 8px;">
         <span style="font-size: 13px; color: var(--dim);" id="orderResultLabel">Вы получите</span>
         <strong id="orderResult" style="font-size: 15px;">0 USDT</strong>
       </div>
@@ -608,7 +625,7 @@
       </div>
     </div>
     <div id="orderAvailable" style="display:none;"></div>
-    <div class="inner-card" style="border: 1px dashed var(--glass-border); max-height: 80px; overflow-y: auto; padding: 10px; border-radius: 12px;">
+    <div class="inner-card" style="border: 1px dashed var(--card-border); max-height: 80px; overflow-y: auto; padding: 10px; border-radius: 12px;">
       <div style="font-size: 11px; font-weight: 800; color: var(--dim); text-transform: uppercase; margin-bottom: 4px;">Условия</div>
       <div id="orderTerms" style="font-size: 13px; color: var(--txt); line-height: 1.3;"></div>
     </div>
@@ -625,7 +642,7 @@
 
 <div class="modal-overlay" id="chatModal">
   <div class="modal glass-modal" style="padding: 0; gap: 0; height: 80vh; max-width: 400px;">
-    <div style="padding: 12px; border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; gap: 8px;">
+    <div style="padding: 12px; border-bottom: 1px solid var(--card-border); display: flex; align-items: center; gap: 8px;">
       <div class="avatar" id="chatAvatar" style="width: 36px; height: 36px; font-size: 14px;">?</div>
       <div style="flex: 1;">
         <div style="font-size: 15px; font-weight: 800;" id="chatTitle">Чат</div>
@@ -667,6 +684,20 @@
       <div class="field" style="margin-bottom: 12px;"><label>Мин. лимит</label><input class="input" type="number" id="edit-min" style="height: 44px;"></div>
       <div class="field" style="margin-bottom: 12px;"><label>Макс. лимит</label><input class="input" type="number" id="edit-max" style="height: 44px;"></div>
     </div>
+    <div class="field" style="margin-bottom: 12px;">
+      <label>Способы оплаты</label>
+      <div class="icon-scroll" id="edit-payments" style="margin-bottom:0;"></div>
+    </div>
+    <div class="field" style="margin-bottom: 12px;"><label>Условия</label><textarea class="input" id="edit-terms" style="min-height: 60px; font-size: 14px !important;"></textarea></div>
+    <div class="error-msg" id="editError" style="font-size: 12px;"></div>
+    <button class="btn btn-primary btn-block" id="editSaveBtn" style="height: 44px;">Сохранить</button>
+    <button class="btn btn-ghost btn-block" onclick="closeModal('editAdModal')" style="margin-top: 6px; height: 44px;">Отмена</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>   </div>
     <div class="field" style="margin-bottom: 12px;">
       <label>Способы оплаты</label>
       <div class="icon-scroll" id="edit-payments" style="margin-bottom:0;"></div>

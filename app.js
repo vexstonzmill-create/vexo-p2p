@@ -61,8 +61,8 @@ document.addEventListener('DOMContentLoaded', () => {
         try { tg.expand(); } catch(e) {}
         try { if (tg.requestFullscreen) tg.requestFullscreen(); } catch(e) { console.log('FS err', e); }
         try { if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch(e) {}
-        try { tg.setHeaderColor('#141414'); } catch(e) {}
-        try { tg.setBackgroundColor('#141414'); } catch(e) {}
+        try { tg.setHeaderColor('#09090b'); } catch(e) {}
+        try { tg.setBackgroundColor('#09090b'); } catch(e) {}
 
         const initData = tg.initData;
         if (API.token()) return; 
@@ -79,6 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('vexo_token', data.token);
             localStorage.setItem('vexo_user', JSON.stringify(data.user));
             updateAuthUI();
+            loadHomeDashboard();
             screenCache.profile = false; screenCache.wallet = false;
             toast('Вход через Telegram выполнен!', 'success');
           }
@@ -149,7 +150,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     document.getElementById('menuBtn')?.addEventListener('click', () => toggleSidebar(true));
 
+    let volumeType = 'usdt';
     let feeType = 'rub';
+    
     function initSpreadCalculator() {
       if (window._spreadInited) return;
       const buyInput = document.getElementById('calc-buy-price');
@@ -157,8 +160,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const amountInput = document.getElementById('calc-amount');
       const feeInput = document.getElementById('calc-fee');
       const feeBtn = document.getElementById('calc-fee-type');
+      const volBtn = document.getElementById('calc-volume-type');
       if (!buyInput) return;
       window._spreadInited = true;
+
+      volBtn.onclick = () => {
+        volumeType = volumeType === 'usdt' ? 'rub' : 'usdt';
+        volBtn.textContent = volumeType === 'usdt' ? 'USDT' : '₽';
+        volBtn.classList.toggle('btn-primary', volumeType === 'rub');
+        calculate();
+      };
 
       feeBtn.onclick = () => {
         feeType = feeType === 'rub' ? 'pct' : 'rub';
@@ -170,19 +181,21 @@ document.addEventListener('DOMContentLoaded', () => {
       const calculate = () => {
         const buy = parseFloat(buyInput.value) || 0;
         const sell = parseFloat(sellInput.value) || 0;
-        const amount = parseFloat(amountInput.value) || 0;
+        const amountVal = parseFloat(amountInput.value) || 0;
         const feeVal = parseFloat(feeInput.value) || 0;
+        
+        const amountUSDT = volumeType === 'rub' ? (buy > 0 ? amountVal / buy : 0) : amountVal;
         
         const spreadVal = sell - buy;
         const spreadPct = buy > 0 ? (spreadVal / buy) * 100 : 0;
-        const totalSell = sell * amount;
+        const totalSell = sell * amountUSDT;
         
         let feeAmount = feeVal;
         if (feeType === 'pct') {
             feeAmount = totalSell * (feeVal / 100);
         }
         
-        const profit = (spreadVal * amount) - feeAmount;
+        const profit = (spreadVal * amountUSDT) - feeAmount;
 
         document.getElementById('calc-spread-val').textContent = fmtDec(spreadVal, 2) + ' ₽';
         document.getElementById('calc-spread-pct').textContent = fmtDec(spreadPct, 2) + ' %';
@@ -197,23 +210,6 @@ document.addEventListener('DOMContentLoaded', () => {
       [buyInput, sellInput, amountInput, feeInput].forEach(input => input.addEventListener('input', calculate));
     }
 
-    (function initCarousel() {
-      if (window.bannerInited) return;
-      window.bannerInited = true;
-      const track = document.getElementById('bannerTrack');
-      const dots = document.querySelectorAll('.banner-dot');
-      const viewport = document.getElementById('bannerViewport');
-      if (!track || !dots.length) return;
-      let idx = 0, timer;
-      function go(i) { idx = (i + dots.length) % dots.length; track.style.transform = `translateX(-${idx * 100}%)`; dots.forEach((d, k) => d.classList.toggle('active', k === idx)); }
-      function auto() { clearInterval(timer); timer = setInterval(() => go(idx + 1), 4500); }
-      dots.forEach((d, i) => d.onclick = () => { go(i); auto(); });
-      let startX = 0;
-      viewport.addEventListener('touchstart', e => { startX = e.touches[0].clientX; clearInterval(timer); }, { passive: true });
-      viewport.addEventListener('touchend', e => { const endX = e.changedTouches[0].clientX; const diff = startX - endX; if (diff > 50) go(idx + 1); if (diff < -50) go(idx - 1); auto(); });
-      auto();
-    })();
-
     async function loadHomeRate() {
       try {
         const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=rub');
@@ -226,6 +222,56 @@ document.addEventListener('DOMContentLoaded', () => {
         const el = document.getElementById('homeUsdtRate');
         if (el) el.textContent = '90.00 ₽'; 
       }
+    }
+
+    async function loadHomeDashboard() {
+      const u = API.user();
+      if (!u) {
+        document.getElementById('topbarName').textContent = 'Гость';
+        document.getElementById('greetingText').textContent = 'Добро пожаловать!';
+        document.getElementById('homeBalanceValue').textContent = '0.00 ₽';
+        document.getElementById('homeUserName').textContent = 'Авторизуйтесь';
+        document.getElementById('homeDealsCount').textContent = '0 сделок';
+        document.getElementById('homeRating').textContent = '—';
+        document.getElementById('homeAvatarLetter').textContent = '?';
+        document.getElementById('homeAvatar').style.display = 'none';
+        return;
+      }
+      
+      try {
+        const { user, stats } = await API.req('GET', '/users/me');
+        localStorage.setItem('vexo_user', JSON.stringify(user));
+        
+        document.getElementById('topbarName').textContent = user.displayName || user.username;
+        document.getElementById('greetingText').textContent = 'Готовы к работе!';
+        
+        let usdtRate = 90;
+        try {
+          const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=rub');
+          const rdata = await res.json();
+          if (rdata && rdata.tether && rdata.tether.rub) usdtRate = rdata.tether.rub;
+        } catch(e) {}
+        
+        const totalBal = user.balanceRub + (user.balanceUsdt * usdtRate);
+        document.getElementById('homeBalanceValue').textContent = fmtDec(totalBal, 2) + ' ₽';
+        
+        document.getElementById('homeUserName').textContent = user.displayName || user.username;
+        document.getElementById('homeDealsCount').textContent = stats.dealsTotal + ' сделок';
+        document.getElementById('homeRating').textContent = stats.ratingAvg || '0';
+        
+        const avImg = document.getElementById('homeAvatar');
+        const avLet = document.getElementById('homeAvatarLetter');
+        if (user.avatarUrl) {
+          avImg.src = user.avatarUrl;
+          avImg.style.display = 'block';
+          avLet.style.display = 'none';
+        } else {
+          avImg.style.display = 'none';
+          avLet.style.display = 'block';
+          avLet.textContent = (user.displayName || user.username || '?')[0].toUpperCase();
+        }
+
+      } catch(e) { console.error('Dashboard load error', e); }
     }
 
     let notifications = JSON.parse(localStorage.getItem('vexo_notifs')) || [];
@@ -315,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
           document.querySelector('.mode-btn[data-mode="p2p"]')?.click();
         }
         if (name === 'profile' && !screenCache.profile) { loadProfile(); screenCache.profile = true; }
-        if (name === 'home') { loadHomeRate(); }
+        if (name === 'home') { loadHomeRate(); loadHomeDashboard(); }
         if (name === 'wallet') { loadWallet(); screenCache.wallet = true; }
         if (name === 'admin') { loadAdmin(); } 
         if (name === 'spread') { initSpreadCalculator(); }
@@ -403,6 +449,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('vexo_user', JSON.stringify(data.user));
         closeModal('authModal');
         updateAuthUI();
+        loadHomeDashboard();
         toast(authMode === 'login' ? 'Добро пожаловать!' : 'Аккаунт создан!', 'success');
         screenCache.profile = false; 
         show('market');
@@ -424,10 +471,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const admBn = document.getElementById('adminBnBtn');
 
       if (u) {
-        if (lb) lb.classList.add('hidden');
+        if (lb) lb.style.display = 'none'; 
         if (ab) {
           ab.classList.remove('hidden');
-          ab.style.background = 'var(--btn-bg)'; ab.style.color = 'var(--btn-txt)'; ab.style.width = '32px'; ab.style.height = '32px';
+          ab.style.background = 'var(--primary)'; ab.style.color = '#fff'; ab.style.width = '32px'; ab.style.height = '32px';
           ab.style.borderRadius = '50%'; ab.style.display = 'flex'; ab.style.alignItems = 'center'; ab.style.justifyContent = 'center';
           ab.style.fontWeight = '800'; ab.style.fontSize = '14px';
           if (u.avatarUrl) {
@@ -445,7 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (admBn) admBn.style.display = 'none';
         }
       } else {
-        if (lb) lb.classList.remove('hidden');
+        if (lb) lb.style.display = 'inline-flex'; 
         if (ab) ab.classList.add('hidden');
         if (admNav) admNav.style.display = 'none';
         if (admBn) admBn.style.display = 'none';
@@ -474,17 +521,19 @@ document.addEventListener('DOMContentLoaded', () => {
           const totalBalanceRub = freshUser.balanceRub + estimatedRub; 
 
           screen.innerHTML = `
-            <h2 style="margin-bottom: 6px; font-size: 18px;">Кошелёк</h2>
+            <h2 style="margin-bottom: 6px; font-size: 22px; font-weight: 800;">Кошелёк</h2>
             <p style="color: var(--dim); font-size: 13px; margin-bottom: 16px;">Балансы и история</p>
-            <div class="wallet-hero">
-              <div class="lbl">Общий баланс</div>
-              <div class="amount">${fmtDec(totalBalanceRub, 2)} <span>₽</span></div>
-              <div class="wallet-actions">
-                <button class="btn btn-primary btn-sm" id="btnDeposit" style="flex:1;">Пополнить</button>
-                <button class="btn btn-ghost btn-sm" id="btnWithdraw" style="flex:1;">Вывести</button>
+            
+            <div class="glass-card" style="padding: 24px; text-align: center; margin-bottom: 24px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border: none; color: #fff;">
+              <div style="font-size: 13px; opacity: 0.8; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Общий баланс</div>
+              <div style="font-size: 38px; font-weight: 900; margin-bottom: 20px;">${fmtDec(totalBalanceRub, 2)} <span>₽</span></div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-sm" id="btnDeposit" style="flex:1; background: rgba(255,255,255,0.2); border: none; color: #fff; backdrop-filter: blur(10px);">Пополнить</button>
+                <button class="btn btn-sm" id="btnWithdraw" style="flex:1; background: rgba(255,255,255,0.2); border: none; color: #fff; backdrop-filter: blur(10px);">Вывести</button>
               </div>
             </div>
-            <h3 style="margin-top: 16px; font-size: 15px; margin-bottom: 12px;">Активы</h3>
+
+            <h3 style="margin-top: 16px; font-size: 16px; margin-bottom: 12px; font-weight: 800;">Активы</h3>
             <div class="wallet-list">
               <div class="wallet-item">
                 <div class="coin-icon rub">₽</div>
@@ -689,14 +738,14 @@ document.addEventListener('DOMContentLoaded', () => {
           let rate = 0, result = 0;
 
           if (exMode === 'buy') {
-              rate = basePrice * 1.03; 
+              rate = basePrice * 1.05; 
               result = amount / rate; 
               document.getElementById('exInputLabel').textContent = 'Сумма в RUB';
               document.getElementById('exResultDisplay').textContent = `${fmtDec(result, 4)} USDT`;
               document.getElementById('exSubmitBtn').style.background = 'var(--grn)';
               document.getElementById('exSubmitBtn').textContent = 'Купить USDT';
           } else {
-              rate = basePrice * 0.97; 
+              rate = basePrice * 0.95; 
               result = amount * rate; 
               document.getElementById('exInputLabel').textContent = 'Сумма в USDT';
               document.getElementById('exResultDisplay').textContent = `${fmtDec(result, 2)} RUB`;
@@ -733,7 +782,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const btn = document.getElementById('exSubmitBtn');
           btn.disabled = true; btn.textContent = '...';
           try {
-              const finalRate = exMode === 'buy' ? basePrice * 1.03 : basePrice * 0.97;
+              const finalRate = exMode === 'buy' ? basePrice * 1.05 : basePrice * 0.95;
               await API.req('POST', '/exchange', { type: exMode, amount: amount, rate: finalRate });
               toast('Заявка создана!', 'success');
               document.getElementById('exAmount').value = '';
@@ -1467,33 +1516,78 @@ document.addEventListener('DOMContentLoaded', () => {
       const list = document.getElementById('myRequestsList'); if (!list) return;
       try {
         const { items } = await API.req('GET', '/requests/my');
-        const statusMap = {
-          pending: { l: 'В обработке', c: 'var(--yellow)' },
-          approved: { l: 'Одобрено', c: 'var(--grn)' },
-          rejected: { l: 'Отклонено', c: 'var(--red)' },
-          cancelled: { l: 'Отменено', c: 'var(--dim)' },
-          completed: { l: 'Выполнено', c: 'var(--grn)' }
+        
+        const statusConfig = {
+          pending: { l: 'Обработка', class: 'processing', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>' },
+          approved: { l: 'Выплачено', class: 'success', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"></polyline></svg>' },
+          completed: { l: 'Выплачено', class: 'success', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"></polyline></svg>' },
+          rejected: { l: 'Отказ', class: 'rejected', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>' },
+          cancelled: { l: 'Отказ', class: 'rejected', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>' }
         };
 
-        list.innerHTML = items.length ? items.map(r => {
-          const st = statusMap[r.status] || { l: r.status, c: 'var(--txt)' };
-          let typeLabel = r.type;
-          if (r.type === 'exchange') typeLabel = r.details?.exchange_type === 'buy' ? 'Покупка USDT' : 'Продажа USDT';
-          if (r.type === 'deposit_rub') typeLabel = 'Пополнение RUB';
-          if (r.type === 'withdraw_rub') typeLabel = 'Вывод RUB';
-          if (r.type === 'deposit_usdt') typeLabel = 'Пополнение USDT';
-          if (r.type === 'withdraw_usdt') typeLabel = 'Вывод USDT';
-          if (r.type === 'maker_req') typeLabel = 'Заявка Мейкера';
-          if (r.type === 'merchant_req') typeLabel = 'Заявка Мерчанта';
+        list.innerHTML = items.length ? items.map((r) => {
+          const st = statusConfig[r.status] || statusConfig.pending;
+          const details = r.details || {};
+          
+          let fromLabel = 'Сумма заявки';
+          let toLabel = 'К зачислению';
+          
+          if (r.type.includes('withdraw')) fromLabel = 'Вы отдаёте';
+          else if (r.type.includes('deposit')) fromLabel = 'Вы отправляете';
+          else if (r.type === 'exchange') fromLabel = details.exchange_type === 'buy' ? 'Вы отдаёте' : 'Вы отдаёте';
 
-          return `<div class="glass-card" style="margin-bottom:12px; border-left:4px solid ${st.c}; padding:16px;">
-            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-              <strong style="font-size:15px; color:var(--txt);">${typeLabel} (ID: ${r.user_id})</strong>
-              <span style="color:${st.c}; font-size:12px; font-weight:800; text-transform:uppercase;">${st.l}</span>
+          const currencySymbol = r.currency === 'RUB' ? '₽' : 'USDT';
+          let typeLabel = r.type.toUpperCase().replace('_', ' ');
+          if (r.type === 'exchange') typeLabel = 'ОБМЕН';
+          
+          return `
+            <div class="request-card">
+              <div class="req-status ${st.class}">
+                <div class="req-status-icon">${st.icon}</div>
+                ${st.l}
+              </div>
+              
+              <div class="req-amount-block">
+                <div class="req-label">${fromLabel}</div>
+                <div class="req-value">${fmtDec(r.amount, 2)} <span>${currencySymbol}</span></div>
+              </div>
+              
+              <div class="req-amount-block">
+                <div class="req-label">${toLabel}</div>
+                <div class="req-value" style="color: #71717a; font-size: 24px;">~ ${fmtDec(details.rate ? (r.amount * details.rate) : r.amount, 2)} <span>${r.currency === 'RUB' ? 'USDT' : '₽'}</span></div>
+              </div>
+
+              <div class="ticket-divider"></div>
+
+              <div class="req-details">
+                <div class="req-detail-row">
+                  <span class="label">заявка</span>
+                  <span class="value">#${r.id + 1000}</span>
+                </div>
+                <div class="req-detail-row">
+                  <span class="label">тип</span>
+                  <span class="value">${typeLabel}</span>
+                </div>
+                ${details.rate ? `<div class="req-detail-row"><span class="label">курс</span><span class="value">${fmtDec(details.rate, 2)} ₽ / USDT</span></div>` : ''}
+                ${details.network ? `<div class="req-detail-row"><span class="label">сеть</span><span class="value">${details.network}</span></div>` : ''}
+                ${details.requisites ? `<div class="req-detail-row"><span class="label">оплата</span><span class="value">${details.requisites}</span></div>` : ''}
+                ${details.tg_username ? `<div class="req-detail-row"><span class="label">оператор</span><span class="value">${details.tg_username}</span></div>` : ''}
+                <div class="req-detail-row">
+                  <span class="label">дата</span>
+                  <span class="value">${new Date(r.created_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit' })}</span>
+                </div>
+              </div>
+              
+              <div style="font-size: 13px; color: #71717a; margin-top: 16px; font-weight: 500;">
+                ${st.class === 'success' ? 'Ускоренная обработка и выплата' : st.class === 'processing' ? 'Заявка обрабатывается оператором...' : 'Средства не были списаны'}
+              </div>
             </div>
-            ${r.amount ? `<div style="font-size:13px; color:var(--dim);">Сумма: <strong style="color:var(--txt);">${fmtDec(r.amount, 2)} ${r.currency}</strong></div>` : ''}
-            <div style="font-size:12px; color:var(--dim); margin-top:6px;">${new Date(r.created_at).toLocaleString('ru-RU')}</div>
-          </div>`;
+            
+            <div class="req-actions">
+              ${st.class === 'success' ? `<button class="btn" onclick="toast('Скоро здесь появится отзыв!', 'info')">Оставить отзыв</button>` : ''}
+              <button class="btn btn-outline" onclick="window.open('https://t.me/vexoio_bot', '_blank')">Написать в поддержку</button>
+            </div>
+          `;
         }).join('') : '<div class="empty-state">Нет заявок</div>';
       } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     }
@@ -1957,9 +2051,9 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch(e) { toast(e.message || 'Ошибка', 'error'); }
     };
 
-    // СТАРТ
     initSpreadCalculator();
     updateAuthUI();
+    loadHomeDashboard();
     updateNotifUI();
     try { loadHomeRate(); } catch(e) { console.error('Initial load error:', e); }
 
