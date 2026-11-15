@@ -101,10 +101,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const fmt = (n) => new Intl.NumberFormat('ru-RU').format(n || 0);
     const fmtDec = (n, d = 2) => new Intl.NumberFormat('ru-RU', { minimumFractionDigits: d, maximumFractionDigits: d }).format(n || 0);
 
+    // Обновленные красивые значки
     const ICONS = {
-      pro: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
-      merchant: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>`,
-      maker: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`
+      pro: `<svg viewBox="0 0 24 24" fill="none" stroke="#FFD60A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`,
+      merchant: `<svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>`,
+      maker: `<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`
     };
 
     function toast(msg, type = 'info') {
@@ -227,14 +228,15 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadHomeDashboard() {
       const u = API.user();
       if (!u) {
-        document.getElementById('topbarName').textContent = 'Гость';
-        document.getElementById('greetingText').textContent = 'Добро пожаловать!';
-        document.getElementById('homeBalanceValue').textContent = '0.00 ₽';
-        document.getElementById('homeUserName').textContent = 'Авторизуйтесь';
-        document.getElementById('homeDealsCount').textContent = '0 сделок';
-        document.getElementById('homeRating').textContent = '—';
-        document.getElementById('homeAvatarLetter').textContent = '?';
-        document.getElementById('homeAvatar').style.display = 'none';
+        const nameEl = document.getElementById('topbarName');
+        if (nameEl) nameEl.textContent = 'Гость';
+        const greetEl = document.getElementById('greetingText');
+        if (greetEl) greetEl.textContent = 'Добро пожаловать!';
+        
+        const els = ['homeBalanceValue', 'homeUserName', 'homeDealsCount', 'homeRating', 'homeAvatarLetter'];
+        els.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = id === 'homeBalanceValue' ? '0.00 ₽' : '—'; });
+        const avatarEl = document.getElementById('homeAvatar');
+        if (avatarEl) avatarEl.style.display = 'none';
         return;
       }
       
@@ -242,8 +244,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const { user, stats } = await API.req('GET', '/users/me');
         localStorage.setItem('vexo_user', JSON.stringify(user));
         
-        document.getElementById('topbarName').textContent = user.displayName || user.username;
-        document.getElementById('greetingText').textContent = 'Готовы к работе!';
+        const nameEl = document.getElementById('topbarName');
+        if (nameEl) nameEl.textContent = user.displayName || user.username;
+        const greetEl = document.getElementById('greetingText');
+        if (greetEl) greetEl.textContent = 'Готовы к работе!';
         
         let usdtRate = 90;
         try {
@@ -253,22 +257,29 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch(e) {}
         
         const totalBal = user.balanceRub + (user.balanceUsdt * usdtRate);
-        document.getElementById('homeBalanceValue').textContent = fmtDec(totalBal, 2) + ' ₽';
+        const balEl = document.getElementById('homeBalanceValue');
+        if (balEl) balEl.textContent = fmtDec(totalBal, 2) + ' ₽';
         
-        document.getElementById('homeUserName').textContent = user.displayName || user.username;
-        document.getElementById('homeDealsCount').textContent = stats.dealsTotal + ' сделок';
-        document.getElementById('homeRating').textContent = stats.ratingAvg || '0';
+        const userEl = document.getElementById('homeUserName');
+        if (userEl) userEl.textContent = user.displayName || user.username;
+
+        const dealsEl = document.getElementById('homeDealsCount');
+        if (dealsEl) dealsEl.textContent = stats.dealsTotal + ' сделок';
+        const ratingEl = document.getElementById('homeRating');
+        if (ratingEl) ratingEl.textContent = stats.ratingAvg || '0';
         
         const avImg = document.getElementById('homeAvatar');
         const avLet = document.getElementById('homeAvatarLetter');
-        if (user.avatarUrl) {
-          avImg.src = user.avatarUrl;
-          avImg.style.display = 'block';
-          avLet.style.display = 'none';
-        } else {
-          avImg.style.display = 'none';
-          avLet.style.display = 'block';
-          avLet.textContent = (user.displayName || user.username || '?')[0].toUpperCase();
+        if (avImg && avLet) {
+          if (user.avatarUrl) {
+            avImg.innerHTML = `<img src="${user.avatarUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+            avImg.style.display = 'block';
+            avLet.style.display = 'none';
+          } else {
+            avImg.style.display = 'none';
+            avLet.style.display = 'flex';
+            avLet.textContent = (user.displayName || user.username || '?')[0].toUpperCase();
+          }
         }
 
       } catch(e) { console.error('Dashboard load error', e); }
@@ -401,7 +412,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const target = tab.dataset.mtab;
         document.querySelectorAll('.market-tab-content').forEach(c => c.classList.remove('active'));
-        document.getElementById('mtab-' + target).classList.add('active');
+        const targetContent = document.getElementById('mtab-' + target);
+        if (targetContent) targetContent.classList.add('active');
 
         if (target === 'ads') loadMyAds();
         if (target === 'orders') loadOrders('active');
@@ -698,7 +710,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const tabContents = document.querySelectorAll('.market-tab-content');
 
         if (btn.dataset.mode === 'p2p') {
-          mainTabs.style.display = 'flex';
+          if (mainTabs) mainTabs.style.display = 'flex';
           tabContents.forEach(c => c.classList.remove('active'));
           
           const activeTab = document.querySelector('.mm-tab.active');
@@ -707,11 +719,11 @@ document.addEventListener('DOMContentLoaded', () => {
           } else {
             document.getElementById('mtab-p2p').classList.add('active');
           }
-          fastContent.style.display = 'none';
+          if (fastContent) fastContent.style.display = 'none';
         } else {
-          mainTabs.style.display = 'none';
+          if (mainTabs) mainTabs.style.display = 'none';
           tabContents.forEach(c => c.classList.remove('active'));
-          fastContent.style.display = 'block';
+          if (fastContent) fastContent.style.display = 'block';
           initFastExchange();
         }
       };
@@ -735,65 +747,80 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const updateExchangeUI = () => {
           const input = document.getElementById('exAmount');
+          if (!input) return;
           const amount = parseFloat(input.value) || 0;
           let rate = 0, result = 0;
 
           if (exMode === 'buy') {
               rate = basePrice * 1.05; 
               result = amount / rate; 
-              document.getElementById('exInputLabel').textContent = 'Сумма в RUB';
-              document.getElementById('exResultDisplay').textContent = `${fmtDec(result, 4)} USDT`;
-              document.getElementById('exSubmitBtn').style.background = 'var(--grn)';
-              document.getElementById('exSubmitBtn').textContent = 'Купить USDT';
+              const lbl = document.getElementById('exInputLabel'); if(lbl) lbl.textContent = 'Сумма в RUB';
+              const resEl = document.getElementById('exResultDisplay'); if(resEl) resEl.textContent = `${fmtDec(result, 4)} USDT`;
+              const btn = document.getElementById('exSubmitBtn'); if(btn) { btn.style.background = 'var(--grn)'; btn.textContent = 'Купить USDT'; }
           } else {
               rate = basePrice * 0.95; 
               result = amount * rate; 
-              document.getElementById('exInputLabel').textContent = 'Сумма в USDT';
-              document.getElementById('exResultDisplay').textContent = `${fmtDec(result, 2)} RUB`;
-              document.getElementById('exSubmitBtn').style.background = 'var(--red)';
-              document.getElementById('exSubmitBtn').textContent = 'Продать USDT';
+              const lbl = document.getElementById('exInputLabel'); if(lbl) lbl.textContent = 'Сумма в USDT';
+              const resEl = document.getElementById('exResultDisplay'); if(resEl) resEl.textContent = `${fmtDec(result, 2)} RUB`;
+              const btn = document.getElementById('exSubmitBtn'); if(btn) { btn.style.background = 'var(--red)'; btn.textContent = 'Продать USDT'; }
           }
-          document.getElementById('exRateDisplay').textContent = `1 USDT = ${fmtDec(rate, 2)} ₽`;
+          const rateEl = document.getElementById('exRateDisplay'); if(rateEl) rateEl.textContent = `1 USDT = ${fmtDec(rate, 2)} ₽`;
       };
 
-      document.getElementById('exTabBuy').onclick = () => {
+      const btnBuy = document.getElementById('exTabBuy');
+      const btnSell = document.getElementById('exTabSell');
+      const input = document.getElementById('exAmount');
+
+      if (btnBuy) btnBuy.onclick = () => {
           exMode = 'buy';
-          document.getElementById('exTabBuy').classList.add('active');
-          document.getElementById('exTabSell').classList.remove('active');
-          document.getElementById('exAmount').value = '';
+          btnBuy.classList.add('btn-primary');
+          btnBuy.style.background = 'var(--grn)';
+          btnBuy.style.border = 'none';
+          if (btnSell) {
+            btnSell.classList.remove('btn-primary');
+            btnSell.style.background = 'transparent';
+            btnSell.style.border = '1px solid var(--glass-border)';
+          }
+          if (input) input.value = '';
           updateExchangeUI();
       };
 
-      document.getElementById('exTabSell').onclick = () => {
+      if (btnSell) btnSell.onclick = () => {
           exMode = 'sell';
-          document.getElementById('exTabSell').classList.add('active');
-          document.getElementById('exTabBuy').classList.remove('active');
-          document.getElementById('exAmount').value = '';
+          btnSell.classList.add('btn-primary');
+          btnSell.style.background = 'var(--red)';
+          btnSell.style.border = 'none';
+          if (btnBuy) {
+            btnBuy.classList.remove('btn-primary');
+            btnBuy.style.background = 'transparent';
+            btnBuy.style.border = '1px solid var(--glass-border)';
+          }
+          if (input) input.value = '';
           updateExchangeUI();
       };
 
-      document.getElementById('exAmount').oninput = updateExchangeUI;
+      if (input) input.oninput = updateExchangeUI;
 
-      document.getElementById('exSubmitBtn').onclick = async () => {
+      const submitBtn = document.getElementById('exSubmitBtn');
+      if (submitBtn) submitBtn.onclick = async () => {
           if (!isPriceLoaded) return toast('Загрузка курса...', 'info');
-          const amount = parseFloat(document.getElementById('exAmount').value);
+          const amount = parseFloat(input.value);
           if (!amount || amount <= 0) return toast('Введите сумму', 'error');
           if (!API.user()) { document.getElementById('authModal').classList.add('active'); return; }
           
-          const btn = document.getElementById('exSubmitBtn');
-          btn.disabled = true; btn.textContent = '...';
+          submitBtn.disabled = true; submitBtn.textContent = '...';
           try {
               const finalRate = exMode === 'buy' ? basePrice * 1.05 : basePrice * 0.95;
               await API.req('POST', '/exchange', { type: exMode, amount: amount, rate: finalRate });
-              toast('Заявка создана!', 'success');
-              document.getElementById('exAmount').value = '';
+              toast('Заявка на обмен создана!', 'success');
+              input.value = '';
               updateExchangeUI();
               screenCache.wallet = false;
               screenCache.profile = false;
           } catch(e) {
               toast(e.message || 'Ошибка', 'error');
           } finally {
-              btn.disabled = false;
+              submitBtn.disabled = false;
               updateExchangeUI();
           }
       };
@@ -1546,7 +1573,6 @@ document.addEventListener('DOMContentLoaded', () => {
           if (r.type === 'deposit_usdt') typeLabel = 'Пополнение USDT';
           if (r.type === 'withdraw_usdt') typeLabel = 'Вывод USDT';
 
-          // Сохраняем данные в data-атрибут для модалки
           const reqData = encodeURIComponent(JSON.stringify(r));
 
           return `<div class="glass-card" style="margin-bottom:12px; border-left:4px solid ${st.c}; padding:16px; cursor:pointer;" onclick="openRequestDetails('${reqData}')">
@@ -1570,11 +1596,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const c = document.getElementById('requestDetailContent');
       
       const statusMap = {
-        pending: { l: 'Обработка', c: 'var(--yellow)', bg: 'rgba(245,158,11,0.1)' },
-        approved: { l: 'Выплачено', c: 'var(--grn)', bg: 'rgba(16,185,129,0.1)' },
-        rejected: { l: 'Отказ', c: 'var(--red)', bg: 'rgba(239,68,68,0.1)' },
-        cancelled: { l: 'Отменено', c: 'var(--dim)', bg: 'rgba(156,163,175,0.1)' },
-        completed: { l: 'Выполнено', c: 'var(--grn)', bg: 'rgba(16,185,129,0.1)' }
+        pending: { l: 'Обработка', c: '#f59e0b' },
+        approved: { l: 'Выплачено', c: '#10b981' },
+        rejected: { l: 'Отказ', c: '#ef4444' },
+        cancelled: { l: 'Отменено', c: '#9ca3af' },
+        completed: { l: 'Выполнено', c: '#10b981' }
       };
       const st = statusMap[r.status] || statusMap.pending;
 
@@ -1582,44 +1608,50 @@ document.addEventListener('DOMContentLoaded', () => {
       if (r.type === 'exchange') typeLabel = 'ОБМЕН';
 
       c.innerHTML = `
-        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-            <div style="display:flex; align-items:center; gap:8px;">
-               <div style="width:24px; height:24px; border-radius:50%; background:${st.bg}; color:${st.c}; display:flex; align-items:center; justify-content:center; font-size:14px;">●</div>
-               <span style="font-size:16px; font-weight:800; color:${st.c};">${st.l}</span>
-            </div>
-            <span style="font-size:13px; font-weight:700; color:var(--dim);">#${r.id + 1000}</span>
+        <div class="receipt-wrapper">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <div style="font-size:14px; font-weight:800; color:${st.c}; background:${st.c}15; padding:4px 10px; border-radius:8px;">${st.l}</div>
+            <div style="font-size:13px; font-weight:800; color:#6b7280;">#${r.id + 1000}</div>
           </div>
 
-          <div style="margin-bottom: 16px;">
-            <div style="font-size:12px; color:var(--dim); text-transform:uppercase; font-weight:700;">Сумма</div>
-            <div style="font-size:28px; font-weight:900; color:var(--txt);">${fmtDec(r.amount, 2)} <span style="font-size:16px; color:var(--dim);">${r.currency}</span></div>
+          <div style="margin-bottom: 4px;">
+            <div style="font-size:12px; color:#6b7280; text-transform:uppercase; font-weight:700;">Вы отдаёте</div>
+            <div style="font-size:28px; font-weight:900; color:#000; line-height:1.1;">${fmtDec(r.amount, 2)} <span style="font-size:16px; color:#6b7280;">${r.currency}</span></div>
           </div>
 
-          <div style="height:1px; border-top:1px dashed var(--card-border); margin: 16px 0;"></div>
-
-          <div style="display:flex; flex-direction:column; gap:10px;">
-            <div style="display:flex; justify-content:space-between; font-size:14px;">
-              <span style="color:var(--dim);">Тип</span>
-              <span style="color:var(--txt); font-weight:700;">${typeLabel}</span>
-            </div>
-            ${details.network ? `<div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--dim);">Сеть</span><span style="color:var(--txt); font-weight:700;">${details.network}</span></div>` : ''}
-            ${details.requisites ? `<div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--dim);">Реквизиты</span><span style="color:var(--txt); font-weight:700;">${details.requisites}</span></div>` : ''}
-            ${details.tg_username ? `<div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--dim);">Telegram</span><span style="color:var(--txt); font-weight:700;">${details.tg_username}</span></div>` : ''}
-            ${r.admin_comment ? `<div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--dim);">Комментарий</span><span style="color:var(--txt); font-weight:700; text-align:right;">${r.admin_comment}</span></div>` : ''}
-            ${r.processed_by ? `<div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--dim);">Оператор</span><span style="color:var(--txt); font-weight:700;">@${r.processed_by}</span></div>` : ''}
-            <div style="display:flex; justify-content:space-between; font-size:14px;">
-              <span style="color:var(--dim);">Дата</span>
-              <span style="color:var(--txt); font-weight:700;">${new Date(r.created_at).toLocaleString('ru-RU')}</span>
-            </div>
+          <div style="margin-bottom: 20px; margin-top: 12px;">
+            <div style="font-size:12px; color:#6b7280; text-transform:uppercase; font-weight:700;">К зачислению</div>
+            <div style="font-size:20px; font-weight:800; color:#6b7280;">~ ${fmtDec(r.amount, 2)} ₽</div>
           </div>
 
-          <div style="font-size:12px; color:var(--dim); margin-top:16px; font-weight:500;">
-            ${st.l === 'Выплачено' ? 'Ускоренная обработка и выплата' : st.l === 'Обработка' ? 'Заявка обрабатывается оператором...' : 'Средства не были списаны'}
+          <div class="receipt-dashed"></div>
+
+          <div class="receipt-row">
+            <span class="receipt-label">заявка</span>
+            <span class="receipt-value">#${r.id + 1000}</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-label">тип</span>
+            <span class="receipt-value">${typeLabel}</span>
+          </div>
+          ${details.network ? `<div class="receipt-row"><span class="receipt-label">сеть</span><span class="receipt-value">${details.network}</span></div>` : ''}
+          ${details.requisites ? `<div class="receipt-row"><span class="receipt-label">оплата</span><span class="receipt-value">${details.requisites}</span></div>` : ''}
+          ${details.tg_username ? `<div class="receipt-row"><span class="receipt-label">telegram</span><span class="receipt-value">${details.tg_username}</span></div>` : ''}
+          <div class="receipt-row">
+            <span class="receipt-label">оператор</span>
+            <span class="receipt-value">${r.processed_by || 'Ожидание'}</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-label">дата</span>
+            <span class="receipt-value">${new Date(r.created_at).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}</span>
+          </div>
+
+          <div style="font-size:12px; color:#6b7280; margin-top:20px; font-weight:600; text-align:center;">
+            ${st.l === 'Выплачено' ? 'Средства успешно зачислены на ваш баланс.' : st.l === 'Обработка' ? 'Заявка обрабатывается оператором...' : 'Средства не были списаны'}
           </div>
         </div>
         <div style="margin-top: 16px;">
-           <button class="btn btn-ghost btn-block" onclick="closeModal('requestDetailModal')">Закрыть</button>
+           <button class="btn btn-ghost btn-block" style="height:48px; border-radius:12px;" onclick="closeModal('requestDetailModal')">Закрыть</button>
         </div>
       `;
       m.classList.add('active');
