@@ -55,7 +55,6 @@ body {
 
 a { text-decoration: none; color: var(--primary); }
 
-/* Кастомный скроллбар */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
@@ -92,7 +91,7 @@ a { text-decoration: none; color: var(--primary); }
 .app {
   display: flex;
   min-height: 100vh;
-  padding-bottom: 80px; /* Место под нижнее меню */
+  padding-bottom: 80px;
 }
 
 .main {
@@ -170,7 +169,7 @@ body[data-theme="light"] .topbar { background: rgba(244, 244, 245, 0.8); }
 .avatar-btn.hidden { display: none; }
 
 /* =========================================
-   БОКОВОЕ МЕНЮ (Sidebar)
+   БОКОВОЕ МЕНЮ
    ========================================= */
 .sidebar {
   width: 260px;
@@ -227,7 +226,7 @@ body[data-theme="light"] .topbar { background: rgba(244, 244, 245, 0.8); }
 .nav-btn.active { background: var(--glass-bg); color: var(--primary); }
 
 /* =========================================
-   НИЖНЕЕ МЕНЮ (Bottom Nav)
+   НИЖНЕЕ МЕНЮ
    ========================================= */
 .bottom-nav {
   position: fixed;
@@ -311,17 +310,20 @@ body[data-theme="light"] .bottom-nav { background: rgba(255, 255, 255, 0.85); }
   text-transform: uppercase;
 }
 
-/* Табы (Купить/Продать) */
+/* Табы */
 .tabs {
   display: flex;
   background: var(--glass-bg);
   padding: 4px;
   border-radius: 12px;
   gap: 4px;
+  overflow-x: auto;
+  white-space: nowrap;
 }
+.tabs::-webkit-scrollbar { display: none; }
 .tab {
   flex: 1;
-  padding: 8px;
+  padding: 8px 12px;
   text-align: center;
   font-size: 13px; font-weight: 700;
   color: var(--dim);
@@ -330,6 +332,7 @@ body[data-theme="light"] .bottom-nav { background: rgba(255, 255, 255, 0.85); }
   border-radius: 8px;
   cursor: pointer;
   transition: 0.2s;
+  white-space: nowrap;
 }
 .tab.active { background: var(--primary); color: #fff; }
 
@@ -355,7 +358,7 @@ body[data-theme="light"] .bottom-nav { background: rgba(255, 255, 255, 0.85); }
 
 /* Чипсы */
 .icon-chip, .pay-chip {
-  padding: 6px 12px;
+  padding: 8px 12px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: 8px;
@@ -434,6 +437,38 @@ body[data-theme="light"] .bottom-nav { background: rgba(255, 255, 255, 0.85); }
 }
 .profile-info-left { display: flex; align-items: center; gap: 16px; flex: 1;}
 .profile-name-row { font-size: 20px; font-weight: 900; display: flex; align-items: center; flex-wrap: wrap; gap: 4px;}
+
+/* =========================================
+   КОШЕЛЁК (Фикс монет и ровных кнопок)
+   ========================================= */
+.wallet-list { display: flex; flex-direction: column; gap: 12px; }
+.wallet-item {
+  display: flex; align-items: center; padding: 16px; background: var(--card-bg); 
+  border: 1px solid var(--card-border); border-radius: 16px;
+}
+.coin-icon {
+  width: 44px; height: 44px; border-radius: 50%; 
+  display: flex; align-items: center; justify-content: center; 
+  font-weight: 900; font-size: 20px; margin-right: 12px; flex-shrink: 0;
+}
+.coin-icon.rub { background: #3b82f6; color: #fff; }
+.coin-icon.usdt { background: #26A17B; color: #fff; }
+.w-info { display: flex; flex-direction: column; }
+.w-name { font-size: 15px; font-weight: 700; color: var(--txt); }
+.w-sub { font-size: 12px; color: var(--dim); }
+.w-bal { margin-left: auto; font-weight: 800; font-size: 16px; text-align: right; color: var(--txt); }
+
+/* =========================================
+   АДМИНКА (Фикс ровных кнопок)
+   ========================================= */
+.admin-user-card {
+  display: flex; justify-content: space-between; align-items: center; 
+  background: var(--glass-bg); padding: 12px 16px; border-radius: 12px; 
+  margin-bottom: 8px; border: 1px solid var(--glass-border);
+}
+.admin-user-info { display: flex; flex-direction: column; gap: 4px; }
+.admin-user-name { font-size: 14px; font-weight: 700; color: var(--txt); }
+.admin-user-meta { font-size: 12px; color: var(--dim); }
 
 /* =========================================
    МОДАЛЬНЫЕ ОКНА
@@ -533,7 +568,6 @@ body[data-theme="light"] .bottom-nav { background: rgba(255, 255, 255, 0.85); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Пустые состояния */
 .empty-state {
   text-align: center;
   padding: 32px 16px;
