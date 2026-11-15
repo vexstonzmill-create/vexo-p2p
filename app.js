@@ -39,15 +39,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.add('tg-fullscreen');
         document.body.style.paddingTop = '60px';
         try { tg.ready(); tg.expand(); if (tg.requestFullscreen) tg.requestFullscreen(); if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); tg.setHeaderColor('#09090b'); tg.setBackgroundColor('#09090b'); } catch(e) {}
-        const initData = tg.initData;
-        if (API.token()) return; 
+        const initData = tg.initData; if (API.token()) return; 
         try {
           const res = await fetch('/api/auth/telegram', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ initData }) });
-          if (res.ok) {
-            const data = await res.json();
-            localStorage.setItem('vexo_token', data.token); localStorage.setItem('vexo_user', JSON.stringify(data.user));
-            updateAuthUI(); loadHomeDashboard(); screenCache.profile = false; screenCache.wallet = false; toast('Вход через Telegram выполнен!', 'success');
-          }
+          if (res.ok) { const data = await res.json(); localStorage.setItem('vexo_token', data.token); localStorage.setItem('vexo_user', JSON.stringify(data.user)); updateAuthUI(); loadHomeDashboard(); screenCache.profile = false; screenCache.wallet = false; toast('Вход через Telegram выполнен!', 'success'); }
         } catch(e) { console.error('TG Auth Error:', e); }
       }
     }
@@ -239,14 +234,12 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadMarket() {
       const filters = {}; const activeTab = document.querySelector('#marketSideTabs .seg-btn.active');
       if (activeTab && activeTab.dataset.side) filters.side = activeTab.dataset.side === 'buy' ? 'sell' : 'buy';
-      
       const assetChip = document.querySelector('#filterAsset .icon-chip.active'); if (assetChip && assetChip.dataset.val) filters.asset = assetChip.dataset.val;
       const faceChip = document.querySelector('#filterFace .icon-chip.active'); if (faceChip && faceChip.dataset.val) filters.face_type = faceChip.dataset.val;
       const payChip = document.querySelector('#filterPayment .icon-chip.active'); if (payChip && payChip.dataset.val) filters.payment = payChip.dataset.val;
       const priceSort = document.querySelector('#filterPriceSort .icon-chip.active'); if (priceSort && priceSort.dataset.val) filters.price_sort = priceSort.dataset.val;
       const fMin = document.getElementById('filterMinAmount')?.value; const fMax = document.getElementById('filterMaxAmount')?.value;
       if (fMin) filters.min_amount = fMin; if (fMax) filters.max_amount = fMax;
-
       const list = document.getElementById('adsList'); if (!list) return; list.innerHTML = '<div class="empty-state">Загрузка...</div>';
       try { const { items } = await API.req('GET', '/ads?' + new URLSearchParams(filters)); list.innerHTML = items.length ? items.map(renderAd).join('') : '<div class="empty-state">Объявлений не найдено</div>'; bindAdButtons(); } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
     }
@@ -271,10 +264,26 @@ document.addEventListener('DOMContentLoaded', () => {
     async function initFastExchange() {
       if (fastExchangeInited) return; fastExchangeInited = true;
       try { const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=rub'); const d = await r.json(); if (d?.tether?.rub) basePrice = d.tether.rub; } catch(e) { basePrice = 92.50; } isPriceLoaded = true;
+      
+      // ИСПРАВЛЕНИЕ КУРСА: Бай 1.01, Селл = Бай - 0.5%
+      const buyRate = basePrice * 1.01; 
+      const sellRate = buyRate * 0.995; 
+
       const updateExchangeUI = () => {
         const i = document.getElementById('exAmount'); if (!i) return; const a = parseFloat(i.value) || 0; let rate = 0, res = 0;
-        if (exMode === 'buy') { rate = basePrice * 1.05; res = a / rate; document.getElementById('exInputLabel').textContent = 'Сумма в RUB'; document.getElementById('exResultDisplay').textContent = `${fmtDec(res, 4)} USDT`; const b = document.getElementById('exSubmitBtn'); b.style.background = 'var(--grn)'; b.textContent = 'Купить USDT'; }
-        else { rate = basePrice * 0.95; res = a * rate; document.getElementById('exInputLabel').textContent = 'Сумма в USDT'; document.getElementById('exResultDisplay').textContent = `${fmtDec(res, 2)} RUB`; const b = document.getElementById('exSubmitBtn'); b.style.background = 'var(--red)'; b.textContent = 'Продать USDT'; }
+        if (exMode === 'buy') { 
+          rate = buyRate; 
+          res = a / rate; 
+          document.getElementById('exInputLabel').textContent = 'Сумма в RUB'; 
+          document.getElementById('exResultDisplay').textContent = `${fmtDec(res, 4)} USDT`; 
+          const b = document.getElementById('exSubmitBtn'); b.style.background = 'var(--grn)'; b.textContent = 'Купить USDT'; 
+        } else { 
+          rate = sellRate; 
+          res = a * rate; 
+          document.getElementById('exInputLabel').textContent = 'Сумма в USDT'; 
+          document.getElementById('exResultDisplay').textContent = `${fmtDec(res, 2)} RUB`; 
+          const b = document.getElementById('exSubmitBtn'); b.style.background = 'var(--red)'; b.textContent = 'Продать USDT'; 
+        }
         document.getElementById('exRateDisplay').textContent = `1 USDT = ${fmtDec(rate, 2)} ₽`;
       };
       const btnB = document.getElementById('exTabBuy'), btnS = document.getElementById('exTabSell'), inp = document.getElementById('exAmount');
@@ -285,7 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (subBtn) subBtn.onclick = async () => {
         if (!isPriceLoaded) return toast('Загрузка курса...', 'info'); const a = parseFloat(inp.value); if (!a || a <= 0) return toast('Введите сумму', 'error'); if (!API.user()) { document.getElementById('authModal').classList.add('active'); return; }
         subBtn.disabled = true; subBtn.textContent = '...';
-        try { const fRate = exMode === 'buy' ? basePrice * 1.05 : basePrice * 0.95; await API.req('POST', '/exchange', { type: exMode, amount: a, rate: fRate }); toast('Заявка создана!', 'success'); inp.value = ''; updateExchangeUI(); screenCache.wallet = false; screenCache.profile = false; } catch(e) { toast(e.message || 'Ошибка', 'error'); } finally { subBtn.disabled = false; updateExchangeUI(); }
+        try { const fRate = exMode === 'buy' ? buyRate : sellRate; await API.req('POST', '/exchange', { type: exMode, amount: a, rate: fRate }); toast('Заявка создана!', 'success'); inp.value = ''; updateExchangeUI(); screenCache.wallet = false; screenCache.profile = false; } catch(e) { toast(e.message || 'Ошибка', 'error'); } finally { subBtn.disabled = false; updateExchangeUI(); }
       };
       updateExchangeUI();
     }
@@ -504,7 +513,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="receipt-wrapper">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;"><div style="font-size:14px; font-weight:800; color:${st.c}; background:${st.c}15; padding:4px 10px; border-radius:8px;">${st.l}</div><div style="font-size:13px; font-weight:800; color:#6b7280;">#${r.id + 1000}</div></div>
           <div style="margin-bottom: 4px;"><div style="font-size:12px; color:#6b7280; text-transform:uppercase; font-weight:700;">Вы отдаёте</div><div style="font-size:28px; font-weight:900; color:#000; line-height:1.1;">${fmtDec(r.amount, 2)} <span style="font-size:16px; color:#6b7280;">${r.currency}</span></div></div>
-          <div style="margin-bottom: 20px; margin-top: 12px;"><div style="font-size:12px; color:#6b7280; text-transform:uppercase; font-weight:700;">К зачислению</div><div style="font-size:20px; font-weight:800; color:#6b7280;">~ ${fmtDec(r.amount, 2)} ₽</div></div>
+          <div style="margin-bottom: 20px; margin-top: 12px;"><div style="font-size:12px; color:#6b7280; text-transform:uppercase; font-weight:700;">Сумма заявки</div><div style="font-size:20px; font-weight:800; color:#6b7280;">${fmtDec(r.amount, 2)} ${r.currency}</div></div>
           <div class="receipt-dashed"></div>
           <div class="receipt-row"><span class="receipt-label">заявка</span><span class="receipt-value">#${r.id + 1000}</span></div>
           <div class="receipt-row"><span class="receipt-label">тип</span><span class="receipt-value">${tL}</span></div>
@@ -647,101 +656,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initSpreadCalculator(); updateAuthUI(); loadHomeDashboard(); updateNotifUI(); try { loadHomeRate(); } catch(e) { console.error('Initial load error:', e); }
   } catch (err) { console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err); }
-}); = 'Загрузка...';
-          const { items } = await API.req('GET', '/admin/orders');
-          if (!items.length) { content.innerHTML = '<div class="empty-state">Нет споров</div>'; return; }
-          content.innerHTML = items.map(o => `<div class="ad-card" style="cursor:pointer; border-left:4px solid ${o.status === 'dispute' ? 'var(--gold)' : 'var(--blue)'}; padding:14px; margin-bottom:12px;" onclick="openAdminOrder(${o.id})"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><strong style="font-family:Inter,monospace;font-size:15px;">#${o.publicId}</strong><span style="color:var(--txt);font-size:12px;font-weight:800">${o.statusLabel}</span></div><div class="ad-body"><div><div style="font-size:12px;color:var(--dim);">Сумма</div><div style="font-size:15px;font-weight:800;">${fmtDec(o.amountRub, 2)} ₽</div></div><div><div style="font-size:12px;color:var(--dim);">Актив</div><div style="font-size:15px;font-weight:800;">${fmtDec(o.amountAsset, 2)} ${o.asset}</div></div></div></div>`).join('');
-        }
-        else if (adminTab === 'requests') {
-          searchInput.style.display = 'none'; content.innerHTML = 'Загрузка...';
-          const { items } = await API.req('GET', '/admin/requests');
-          if (!items.length) { content.innerHTML = '<div class="empty-state">Нет заявок</div>'; return; }
-          content.innerHTML = items.map(req => {
-            const statusMap = { pending: { l: 'В ожидании', c: 'var(--yellow)' }, approved: { l: 'Одобрено', c: 'var(--grn)' }, rejected: { l: 'Отклонено', c: 'var(--red)' }, cancelled: { l: 'Отменено', c: 'var(--dim)' }, completed: { l: 'Выполнено', c: 'var(--grn)' } };
-            const st = statusMap[req.status] || { l: req.status, c: 'var(--txt)' };
-            const isFinal = ['rejected', 'cancelled', 'completed'].includes(req.status);
-            let typeLabel = req.type;
-            if (req.type === 'maker_req') typeLabel = 'Мейкер'; if (req.type === 'merchant_req') typeLabel = 'Мерчант'; if (req.type === 'exchange') typeLabel = 'Обмен'; if (req.type === 'deposit_rub') typeLabel = 'Деп RUB'; if (req.type === 'withdraw_rub') typeLabel = 'Выв RUB'; if (req.type === 'deposit_usdt') typeLabel = 'Деп USDT'; if (req.type === 'withdraw_usdt') typeLabel = 'Выв USDT';
-            const details = req.details || {};
-            return `<div class="glass-card" style="padding:14px; margin-bottom:12px; border-left:4px solid ${st.c};"><div style="display:flex; justify-content:space-between; margin-bottom:6px;"><strong style="font-size:15px; color:var(--txt);">${typeLabel} (ID: ${req.user_id})</strong><span style="font-size:12px; font-weight:800; color:${st.c}; text-transform:uppercase;">${st.l}</span></div><div style="font-size:13px; color:var(--dim); margin-bottom:6px;">@${req.username}</div>${req.amount ? `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;"><div style="font-size:12px; color:var(--dim);">Сумма:</div><div style="font-size:15px; font-weight:800; color:var(--txt);">${fmtDec(req.amount, 2)} ${req.currency}</div></div>` : ''}${details.requisites ? `<div style="font-size:12px; color:var(--dim); margin-bottom:4px;">Рек: <span style="color:var(--txt); font-weight:600;">${details.requisites}</span></div>` : ''}${details.network ? `<div style="font-size:12px; color:var(--dim); margin-bottom:4px;">Сеть: <span style="color:var(--txt); font-weight:600;">${details.network}</span></div>` : ''}${details.tg_username ? `<div style="font-size:12px; color:var(--dim); margin-bottom:8px;">TG: <span style="color:var(--txt); font-weight:600;">${details.tg_username}</span></div>` : ''}${!isFinal ? `<div class="field" style="margin-bottom: 8px;"><input type="text" class="input" id="adminComment-${req.id}" placeholder="Комментарий для юзера" style="height: 36px; font-size: 12px;" value="${req.admin_comment || ''}"></div><div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top:8px;"><button class="btn btn-primary btn-sm" style="background:var(--grn); padding:6px; font-size:12px; border-radius:8px; height:32px;" onclick="updateRequestStatus(${req.id}, 'approved')">✓</button><button class="btn btn-ghost btn-sm" style="color:var(--red); border:1px solid var(--red); padding:6px; font-size:12px; border-radius:8px; height:32px;" onclick="updateRequestStatus(${req.id}, 'rejected')">✕</button><button class="btn btn-ghost btn-sm" style="color:var(--dim); border:1px solid var(--glass-border); padding:6px; font-size:12px; border-radius:8px; height:32px;" onclick="updateRequestStatus(${req.id}, 'cancelled')">-</button></div>` : `<div style="font-size:12px; color:var(--dim); margin-top:8px;">Обработал: @${req.processed_by || 'admin'}</div>`}</div>`;
-          }).join('');
-        }
-        else if (adminTab === 'stats') {
-          searchInput.style.display = 'none';
-          content.innerHTML = `<div class="segmented" id="statsFilter" style="margin-bottom: 16px;"><button class="seg-btn active" data-val="day">День</button><button class="seg-btn" data-val="week">Неделя</button><button class="seg-btn" data-val="month">Месяц</button><button class="seg-btn" data-val="all">Все</button></div><div id="statsResult" class="glass-card" style="padding: 20px;"><div class="empty-state">Загрузка...</div></div>`;
-          document.querySelectorAll('#statsFilter .seg-btn').forEach(t => { t.onclick = () => { document.querySelectorAll('#statsFilter .seg-btn').forEach(x => x.classList.remove('active')); t.classList.add('active'); fetchStats(t.dataset.val); } });
-          fetchStats('day');
-        }
-      } catch(e) { content.innerHTML = '<div class="empty-state">Ошибка</div>'; }
-    }
-
-    async function fetchStats(period) {
-      const resEl = document.getElementById('statsResult'); if (!resEl) return; resEl.innerHTML = 'Загрузка...';
-      try {
-         const { count, total, avg } = await API.req('GET', '/admin/stats?period=' + period);
-         resEl.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;"><div style="font-size:14px; font-weight:700; color:var(--dim);">Кол-во выводов:</div><div style="font-size:24px; font-weight:900; color:var(--txt);">${count}</div></div><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;"><div style="font-size:14px; font-weight:700; color:var(--dim);">Общая сумма:</div><div style="font-size:20px; font-weight:900; color:var(--grn);">${fmt(total)}</div></div><div style="display:flex; justify-content:space-between; align-items:center;"><div style="font-size:14px; font-weight:700; color:var(--dim);">Среднее в день:</div><div style="font-size:20px; font-weight:900; color:var(--blue);">${fmtDec(avg, 2)}</div></div>`;
-      } catch(e) { resEl.innerHTML = '<div class="empty-state">Ошибка</div>'; }
-    }
-
-    window.openAdminUserModal = async function(userId) {
-      currentAdminUserId = userId; const m = document.getElementById('adminUserModal'); const info = document.getElementById('adminUserInfo');
-      if (!m || !info) return; info.innerHTML = 'Загрузка...'; m.classList.add('active');
-      try {
-        const { user } = await API.req('GET', '/users/' + userId);
-        let avatarHtml = `<div class="avatar" style="width:36px;height:36px;font-size:16px;">${user.displayName[0].toUpperCase()}</div>`;
-        if (user.avatarUrl) avatarHtml = `<div class="avatar" style="width:36px;height:36px;"><img src="${user.avatarUrl}"></div>`;
-        info.innerHTML = `<div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">${avatarHtml}<div><h3 style="font-size:16px; font-weight:800; margin:0;">${user.displayName} (ID: ${user.id})</h3><div style="font-size:12px; color:var(--dim);">@${user.username}</div></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;"><div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:10px;"><div style="font-size:11px; color:var(--dim);">RUB</div><div style="font-size:14px; font-weight:800; color:var(--txt);">${fmtDec(user.balanceRub, 2)} ₽</div></div><div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:10px;"><div style="font-size:11px; color:var(--dim);">USDT</div><div style="font-size:14px; font-weight:800; color:var(--txt);">${fmtDec(user.balanceUsdt, 2)} ₮</div></div></div>`;
-        const updBtn = (id, isActive) => {
-          const btn = document.getElementById(id); if (!btn) return;
-          if (isActive) { btn.classList.add('btn-primary'); btn.classList.remove('btn-ghost'); btn.style.background = 'var(--grn)'; btn.style.color = '#fff'; }
-          else { btn.classList.remove('btn-primary'); btn.classList.add('btn-ghost'); btn.style.background = ''; btn.style.color = ''; }
-        };
-        updBtn('admTogglePro', user.isPro); updBtn('admToggleMerchant', user.isMerchant); updBtn('admToggleMaker', user.isMaker);
-      } catch (e) { info.innerHTML = 'Ошибка'; }
-    };
-
-    window.toggleAdminUserStatus = async function(field) {
-      if (!currentAdminUserId) return;
-      const u = await API.req('GET', '/users/' + currentAdminUserId);
-      const payload = {}; payload[field] = !u.user[field === 'is_pro' ? 'isPro' : field === 'is_merchant' ? 'isMerchant' : 'isMaker'];
-      try { await API.req('PATCH', '/admin/users/' + currentAdminUserId + '/status', payload); toast('Статус обновлен', 'success'); openAdminUserModal(currentAdminUserId); } catch(e) { toast('Ошибка', 'error'); }
-    };
-
-    window.adminChangeBalance = async function(action) {
-      if (!currentAdminUserId) return;
-      const currency = document.getElementById('admBalanceCurrency').value;
-      const amount = parseFloat(document.getElementById('admBalanceAmount').value);
-      if (!amount || amount <= 0) return toast('Введите сумму', 'error');
-      try { await API.req('POST', '/admin/users/' + currentAdminUserId + '/balance', { currency, amount, action }); toast('Баланс изменен', 'success'); document.getElementById('admBalanceAmount').value = ''; openAdminUserModal(currentAdminUserId); } catch(e) { toast(e.message || 'Ошибка', 'error'); }
-    };
-
-    document.querySelectorAll('#adminTabs .seg-btn').forEach(c => {
-      c.onclick = () => { document.querySelectorAll('#adminTabs .seg-btn').forEach(x => x.classList.remove('active')); c.classList.add('active'); adminTab = c.dataset.val; loadAdmin(); };
-    });
-
-    window.updateRequestStatus = async function(reqId, status) {
-      const commentVal = document.getElementById(`adminComment-${reqId}`)?.value || '';
-      if (!await confirmAsync('Изменение', `Отметить как "${status}"?`, 'Да')) return;
-      try { await API.req('PATCH', '/admin/requests/' + reqId, { status, admin_comment: commentVal }); toast('Обновлено', 'success'); loadAdmin(); screenCache.profile = false; screenCache.wallet = false; } catch(e) { toast(e.message || 'Ошибка', 'error'); }
-    };
-
-    // КАРУСЕЛЬ
-    const bannerCarousel = document.getElementById('homeBannerCarousel');
-    if (bannerCarousel) {
-      bannerCarousel.addEventListener('scroll', () => {
-        const scrollLeft = bannerCarousel.scrollLeft;
-        const width = bannerCarousel.offsetWidth;
-        const dots = document.querySelectorAll('.banner-dots .dot');
-        if (!dots.length || width === 0) return;
-        const index = Math.round(scrollLeft / width);
-        dots.forEach((d, i) => d.classList.toggle('active', i === index));
-      });
-    }
-
-    // СТАРТ
-    initSpreadCalculator(); updateAuthUI(); loadHomeDashboard(); updateNotifUI(); try { loadHomeRate(); } catch(e) { console.error('Initial load error:', e); }
-
-  } catch (err) {
-    console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
-  }
 });
