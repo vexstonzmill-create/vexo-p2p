@@ -21,12 +21,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 800);
 
     const PAY_ICONS = {
-      'СБП': `<svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" fill="#0055BB"/><path d="M0 0h12v12H0z" fill="#FF0033"/><path d="M12 12h12v12H12z" fill="#00CC00"/><path d="M12 0h12v12H12z" fill="#FFCC00"/><path d="M0 12h12v12H0z" fill="#0055BB"/><path d="M6 8h12v2H6zM6 14h12v2H6z" fill="#fff"/></svg>`,
-      'Тинькофф': `<svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" rx="4" fill="#FFDD2D"/><path d="M12 5l6 3v4c0 3.5-2.5 6.5-6 7-3.5-.5-6-3.5-6-7V8l6-3z" fill="#000"/></svg>`,
-      'Сбербанк': `<svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" rx="4" fill="#21A038"/><path d="M7 12l3 3 7-7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-      'Альфа-Банк': `<svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" rx="4" fill="#EF3124"/><path d="M12 6l5 12h-3l-1-3H8l-1 3H4L12 6zm-2 6h3l-1.5-4L10 12z" fill="#fff"/></svg>`
+      'СБП': `<svg viewBox="0 0 24 24" fill="none" width="20" height="20" style="flex-shrink:0; border-radius: 50%; overflow: hidden;"><rect width="24" height="24" fill="#0055BB"/><path d="M0 0h12v12H0z" fill="#FF0033"/><path d="M12 12h12v12H12z" fill="#00CC00"/><path d="M12 0h12v12H12z" fill="#FFCC00"/><path d="M0 12h12v12H0z" fill="#0055BB"/><path d="M6 8h12v2H6zM6 14h12v2H6z" fill="#fff"/></svg>`,
+      'Тинькофф': `<svg viewBox="0 0 24 24" fill="none" width="20" height="20" style="flex-shrink:0; border-radius: 50%; overflow: hidden;"><rect width="24" height="24" fill="#FFDD2D"/><path d="M12 5.5l5.5 2.75v3.85c0 3.19-2.29 5.94-5.5 6.4-3.21-.46-5.5-3.21-5.5-6.4V8.25L12 5.5z" fill="#333333"/></svg>`,
+      'Сбербанк': `<svg viewBox="0 0 24 24" fill="none" width="20" height="20" style="flex-shrink:0; border-radius: 50%; overflow: hidden;"><rect width="24" height="24" fill="#21A038"/><path d="M7 12l3 3 7-7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      'Альфа-Банк': `<svg viewBox="0 0 24 24" fill="none" width="20" height="20" style="flex-shrink:0; border-radius: 50%; overflow: hidden;"><rect width="24" height="24" fill="#EF3124"/><path d="M12 6l5 12h-3l-1-3H8l-1 3H4L12 6zm-2 6h3l-1.5-4L10 12z" fill="#fff"/></svg>`,
+      'USDT': `<svg viewBox="0 0 24 24" fill="none" width="20" height="20" style="flex-shrink:0; border-radius: 50%; overflow: hidden;"><circle cx="12" cy="12" r="12" fill="#26A17B"/><path d="M12 5.5c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5 6.5-2.91 6.5-6.5-2.91-6.5-6.5-6.5zm1.5 10.5h-3v-1.5h3V16zm0-3h-3v-1.5h3V13zm0-3h-3V8.5h3V10zm-3 0h-1.5V8.5h1.5V10zm4.5 0h-1.5V8.5h1.5V10z" fill="#fff"/></svg>`,
+      'BTC': `<svg viewBox="0 0 24 24" fill="none" width="20" height="20" style="flex-shrink:0; border-radius: 50%; overflow: hidden;"><circle cx="12" cy="12" r="12" fill="#F7931A"/><path d="M15.5 10.5c.2-1.4-.8-2.1-2.3-2.6l.5-1.9-1.2-.3-.5 1.9c-.3-.1-.6-.2-.9-.2l.5-1.9-1.2-.3-.5 1.9-1.7-.4-.3 1.2s.9.2.9.2c.5.1.6.5.6.7l-.5 2.2c.1 0 .2.1.3.1-.1 0-.2-.1-.3-.1l-.8 3c0 .2-.2.4-.5.3 0 0-.9-.2-.9-.2l-.5 1.2 1.7.4-.5 1.9 1.2.3.5-1.9c.3.1.6.2.9.2l-.5 1.9 1.2.3.5-1.9c2 .4 3.5.2 4.1-1.6.5-1.4 0-2.2-1-2.8.8-.2 1.4-.7 1.6-1.8zm-2.7 3.7c-.4 1.4-2.8.6-3.6.4l.6-2.4c.8.2 3.4.6 3 2zm.4-4c-.3 1.3-2.3.6-3 .4l.6-2.2c.7.2 2.8.5 2.4 1.8z" fill="#fff"/></svg>`,
+      'TON': `<svg viewBox="0 0 24 24" fill="none" width="20" height="20" style="flex-shrink:0; border-radius: 50%; overflow: hidden;"><circle cx="12" cy="12" r="12" fill="#0098EA"/><path d="M17.5 7.5H6.5c-1.9 0-3.1 2-2.1 3.7l7 11.8c.4.7 1.4.7 1.8 0l7-11.8c1-1.7-.2-3.7-2.1-3.7z" fill="#fff" opacity="0.2"/><path d="M16.2 8H7.8c-1.6 0-2.7 1.7-1.8 3.1l7 11.8c.4.7 1.4.7 1.8 0l7-11.8c.9-1.4-.2-3.1-1.8-3.1z" fill="#fff"/><path d="M11 10.5l-3 5 3 1.5v-6.5zm2 0v6.5l3-1.5-3-5z" fill="#0098EA"/></svg>`
     };
-    const getPayIcon = (name) => PAY_ICONS[name] || '';
+    const getPayIcon = (name) => {
+      if (name.includes('USDT')) return PAY_ICONS['USDT'];
+      if (name.includes('BTC')) return PAY_ICONS['BTC'];
+      if (name.includes('TON')) return PAY_ICONS['TON'];
+      if (name.includes('СБП')) return PAY_ICONS['СБП'];
+      if (name.includes('Тинькофф')) return PAY_ICONS['Тинькофф'];
+      if (name.includes('Сбер')) return PAY_ICONS['Сбербанк'];
+      if (name.includes('Альфа')) return PAY_ICONS['Альфа-Банк'];
+      return '';
+    };
 
     const API = {
       token: () => localStorage.getItem('vexo_token'),
@@ -121,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => { el.style.opacity = '0'; el.style.transition = '.3s'; setTimeout(() => el.remove(), 300); }, 3000);
       } catch(e) { console.error(e); }
     }
+    window.toast = toast;
 
     function confirmAsync(title, message, okText = 'OK') {
       return new Promise(resolve => {
@@ -149,6 +162,34 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
     document.getElementById('menuBtn')?.addEventListener('click', () => toggleSidebar(true));
+
+    // --- ЛОГИКА КАРУСЕЛИ БАННЕРОВ ---
+    function initBannerCarousel() {
+      const viewport = document.getElementById('bannerViewport');
+      const dots = document.querySelectorAll('.banner-dot');
+      const banners = document.querySelectorAll('.banner');
+      if (!viewport || !dots.length || !banners.length) return;
+
+      viewport.addEventListener('scroll', () => {
+        const scrollLeft = viewport.scrollLeft;
+        const bannerWidth = banners[0].offsetWidth + 12;
+        const index = Math.round(scrollLeft / bannerWidth);
+        
+        dots.forEach((dot, i) => {
+          dot.classList.toggle('active', i === index);
+        });
+      });
+
+      dots.forEach((dot, index) => {
+        dot.addEventListener('click', () => {
+          const bannerWidth = banners[0].offsetWidth + 12;
+          viewport.scrollTo({
+            left: index * bannerWidth,
+            behavior: 'smooth'
+          });
+        });
+      });
+    }
 
     let volumeType = 'usdt';
     let feeType = 'rub';
@@ -361,7 +402,7 @@ document.addEventListener('DOMContentLoaded', () => {
           document.querySelector('.mode-btn[data-mode="p2p"]')?.click();
         }
         if (name === 'profile' && !screenCache.profile) { loadProfile(); screenCache.profile = true; }
-        if (name === 'home') { loadHomeRate(); loadHomeDashboard(); }
+        if (name === 'home') { loadHomeRate(); loadHomeDashboard(); initBannerCarousel(); }
         if (name === 'wallet') { loadWallet(); screenCache.wallet = true; }
         if (name === 'admin') { loadAdmin(); } 
         if (name === 'spread') { initSpreadCalculator(); }
@@ -1568,57 +1609,112 @@ document.addEventListener('DOMContentLoaded', () => {
       const m = document.getElementById('requestDetailModal');
       const c = document.getElementById('requestDetailContent');
       
+      const reqId = r.id + 1000;
+      
       const statusMap = {
-        pending: { l: 'Обработка', c: 'var(--yellow)', bg: 'rgba(245,158,11,0.1)' },
-        approved: { l: 'Выплачено', c: 'var(--grn)', bg: 'rgba(16,185,129,0.1)' },
-        rejected: { l: 'Отказ', c: 'var(--red)', bg: 'rgba(239,68,68,0.1)' },
-        cancelled: { l: 'Отменено', c: 'var(--dim)', bg: 'rgba(156,163,175,0.1)' },
-        completed: { l: 'Выполнено', c: 'var(--grn)', bg: 'rgba(16,185,129,0.1)' }
+        pending: { l: 'Обработка', class: 'processing', icon: '⏱' },
+        approved: { l: 'Выплачено', class: 'success', icon: '✓' },
+        completed: { l: 'Выполнено', class: 'success', icon: '✓' },
+        rejected: { l: 'Отказ', class: 'rejected', icon: '✕' },
+        cancelled: { l: 'Отменено', class: 'rejected', icon: '✕' }
       };
       const st = statusMap[r.status] || statusMap.pending;
 
-      let typeLabel = r.type.toUpperCase().replace('_', ' ');
-      if (r.type === 'exchange') typeLabel = 'ОБМЕН';
+      let fromAmount = fmtDec(r.amount, 2);
+      let fromCurr = r.currency;
+      let toAmount = '—';
+      let toCurr = '';
+      
+      let rateVal = details.rate || 90; 
+
+      if (r.type === 'withdraw_usdt') {
+          toAmount = fmtDec(r.amount * rateVal, 0);
+          toCurr = '₽';
+      } else if (r.type === 'deposit_rub') {
+          toAmount = fmtDec(r.amount / rateVal, 2);
+          toCurr = 'USDT';
+      } else if (r.type === 'exchange') {
+          if (details.exchange_type === 'buy') {
+              fromAmount = fmtDec(r.amount, 0);
+              fromCurr = '₽';
+              toAmount = fmtDec(r.amount / rateVal, 2);
+              toCurr = 'USDT';
+          } else {
+              fromAmount = fmtDec(r.amount, 2);
+              fromCurr = 'USDT';
+              toAmount = fmtDec(r.amount * rateVal, 0);
+              toCurr = '₽';
+          }
+      } else if (r.type === 'deposit_usdt') {
+          toAmount = fmtDec(r.amount * rateVal, 0);
+          toCurr = '₽';
+      } else if (r.type === 'withdraw_rub') {
+          toAmount = fmtDec(r.amount / rateVal, 2);
+          toCurr = 'USDT';
+      }
+
+      const rateStr = `${fmtDec(rateVal, 2)} ₽ / USDT`;
 
       c.innerHTML = `
-        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-            <div style="display:flex; align-items:center; gap:8px;">
-               <div style="width:24px; height:24px; border-radius:50%; background:${st.bg}; color:${st.c}; display:flex; align-items:center; justify-content:center; font-size:14px;">●</div>
-               <span style="font-size:16px; font-weight:800; color:${st.c};">${st.l}</span>
-            </div>
-            <span style="font-size:13px; font-weight:700; color:var(--dim);">#${r.id + 1000}</span>
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px; padding: 0 4px;">
+          <button class="btn btn-ghost" style="width:44px; height:44px; border-radius:50%; padding:0; flex-shrink:0; border: none !important; background: transparent !important;" onclick="closeModal('requestDetailModal')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          </button>
+          <h2 style="font-size:22px; font-weight:800; color:var(--txt); margin:0; letter-spacing: -0.5px;">Заявка #${reqId}</h2>
+        </div>
+
+        <div class="request-card">
+          <div class="req-status ${st.class}">
+            <div class="req-status-icon">${st.icon}</div>
+            ${st.l}
           </div>
 
-          <div style="margin-bottom: 16px;">
-            <div style="font-size:12px; color:var(--dim); text-transform:uppercase; font-weight:700;">Сумма</div>
-            <div style="font-size:28px; font-weight:900; color:var(--txt);">${fmtDec(r.amount, 2)} <span style="font-size:16px; color:var(--dim);">${r.currency}</span></div>
+          <div class="req-amount-block">
+            <div class="req-label">ВЫ ОТДАЁТЕ</div>
+            <div class="req-value">${fromAmount} <span>${fromCurr}</span></div>
           </div>
 
-          <div style="height:1px; border-top:1px dashed var(--card-border); margin: 16px 0;"></div>
+          <div class="ticket-divider"></div>
 
-          <div style="display:flex; flex-direction:column; gap:10px;">
-            <div style="display:flex; justify-content:space-between; font-size:14px;">
-              <span style="color:var(--dim);">Тип</span>
-              <span style="color:var(--txt); font-weight:700;">${typeLabel}</span>
+          <div class="req-amount-block">
+            <div class="req-label">ВЫ ПОЛУЧИТЕ</div>
+            <div class="req-value">${toAmount} <span>${toCurr}</span></div>
+          </div>
+
+          <div class="req-details" style="margin-top: 28px;">
+            <div class="req-detail-row">
+              <span class="label">заявка</span>
+              <span class="value">#${reqId}</span>
             </div>
-            ${details.network ? `<div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--dim);">Сеть</span><span style="color:var(--txt); font-weight:700;">${details.network}</span></div>` : ''}
-            ${details.requisites ? `<div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--dim);">Реквизиты</span><span style="color:var(--txt); font-weight:700;">${details.requisites}</span></div>` : ''}
-            ${details.tg_username ? `<div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--dim);">Telegram</span><span style="color:var(--txt); font-weight:700;">${details.tg_username}</span></div>` : ''}
-            ${r.admin_comment ? `<div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--dim);">Комментарий</span><span style="color:var(--txt); font-weight:700; text-align:right;">${r.admin_comment}</span></div>` : ''}
-            ${r.processed_by ? `<div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--dim);">Оператор</span><span style="color:var(--txt); font-weight:700;">@${r.processed_by}</span></div>` : ''}
-            <div style="display:flex; justify-content:space-between; font-size:14px;">
-              <span style="color:var(--dim);">Дата</span>
-              <span style="color:var(--txt); font-weight:700;">${new Date(r.created_at).toLocaleString('ru-RU')}</span>
+            <div class="req-detail-row">
+              <span class="label">курс</span>
+              <span class="value">${rateStr}</span>
+            </div>
+            ${details.network ? `
+            <div class="req-detail-row">
+              <span class="label">оплата</span>
+              <span class="value">сеть ${details.network}</span>
+            </div>` : ''}
+            ${details.requisites ? `
+            <div class="req-detail-row">
+              <span class="label">перевод</span>
+              <span class="value">${details.requisites}</span>
+            </div>` : ''}
+            <div class="req-detail-row">
+              <span class="label">оператор</span>
+              <span class="value">${r.processed_by ? '@' + r.processed_by : '—'}</span>
             </div>
           </div>
 
-          <div style="font-size:12px; color:var(--dim); margin-top:16px; font-weight:500;">
-            ${st.l === 'Выплачено' ? 'Ускоренная обработка и выплата' : st.l === 'Обработка' ? 'Заявка обрабатывается оператором...' : 'Средства не были списаны'}
+          <div style="margin-top:24px; padding-top:16px; border-top:1px solid #e4e4e7; font-size:14px; font-weight:600; color:#000;">
+            ${st.class === 'success' ? 'Ускоренная обработка и выплата' : 'Ожидайте подтверждения операции'}
           </div>
         </div>
-        <div style="margin-top: 16px;">
-           <button class="btn btn-ghost btn-block" onclick="closeModal('requestDetailModal')">Закрыть</button>
+
+        <div style="margin-top:20px; display:flex; flex-direction:column; gap:12px;">
+          <button class="receipt-action-btn white" onclick="toast('Функция отзывов в разработке', 'info')">Оставить отзыв</button>
+          <button class="receipt-action-btn black" onclick="toast('Поддержка в разработке', 'info')">Написать в поддержку</button>
+          <button class="btn btn-ghost" style="margin-top:8px; height:50px; font-size:15px; border:none !important; color:var(--dim);" onclick="closeModal('requestDetailModal')">Готово</button>
         </div>
       `;
       m.classList.add('active');
@@ -2139,6 +2235,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // СТАРТ
     initSpreadCalculator();
+    initBannerCarousel();
     updateAuthUI();
     loadHomeDashboard();
     updateNotifUI();
