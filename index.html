@@ -68,17 +68,13 @@
 
     <main class="content">
       
-      <!-- HOME -->
       <section class="screen active" id="screen-home">
-        
         <div class="search-bar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           <span>Поиск по разделам...</span>
         </div>
 
-        <!-- Bento Grid: Баланс + Профиль -->
         <div class="bento-grid">
-          <!-- Синяя карточка: Баланс -->
           <div class="bento-card blue-card" onclick="show('wallet')">
             <div class="card-header">
               <div class="card-icon">
@@ -94,7 +90,6 @@
             </div>
           </div>
 
-          <!-- Черная карточка: Профиль -->
           <div class="bento-card dark-card" onclick="show('profile')">
             <div class="card-header">
               <div class="card-icon" style="padding: 0; overflow: hidden;">
@@ -115,10 +110,9 @@
           </div>
         </div>
 
-        <!-- P2P Блок -->
         <div class="glass-card" style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="show('market')">
           <div style="display: flex; align-items: center; gap: 12px;">
-             <div class="coin-icon usdt" style="width: 40px; height: 40px; font-size: 20px;">₮</div>
+             <div style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 13px; flex-shrink: 0; letter-spacing: -0.5px; box-shadow: 0 4px 12px rgba(59,130,246,0.3);">P2P</div>
              <div>
                 <div style="font-weight: 800; font-size: 15px;">P2P Обмен</div>
                 <div style="font-size: 12px; color: var(--dim);">Купить или продать USDT</div>
@@ -127,7 +121,6 @@
           <button class="btn btn-primary btn-sm" style="border-radius: 12px; padding: 8px 16px;">Перейти</button>
         </div>
 
-        <!-- Курс рынка -->
         <div class="glass-card" style="margin-top: 16px;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
              <div style="display: flex; align-items: center; gap: 10px;">
@@ -143,7 +136,6 @@
           </div>
         </div>
 
-        <!-- Баннеры -->
         <div class="banner-carousel" style="margin-top: 24px;">
           <div class="banner-viewport" id="bannerViewport">
             <div class="banner-track" id="bannerTrack">
@@ -177,7 +169,6 @@
           </div>
         </div>
 
-        <!-- Как это работает (Цепочка) -->
         <div class="glass-card" style="margin-bottom: 20px; margin-top: 16px;">
           <h2 style="font-size: 15px; margin-bottom: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 20px;">🚀</span> Как это работает?
@@ -201,7 +192,6 @@
         </div>
       </section>
 
-      <!-- MARKET -->
       <section class="screen" id="screen-market">
         <div class="market-mode-switch" id="marketModeSwitch">
           <button class="mode-btn active" data-mode="p2p">P2P</button>
@@ -214,7 +204,6 @@
           <button class="mm-tab" data-mtab="orders">Ордера</button>
         </div>
 
-        <!-- Вкладка 1: Маркет -->
         <div class="market-tab-content active" id="mtab-p2p">
           <div id="p2p-market-content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -240,7 +229,6 @@
             <div id="adsList">Загрузка...</div>
           </div>
 
-          <!-- Быстрый обмен -->
           <div id="fast-exchange-content" style="display: none;">
             <div class="glass-card" style="padding: 16px;">
               <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 12px;">Быстрый обмен</h2>
@@ -282,7 +270,6 @@
         </div>
       </section>
 
-      <!-- CREATE -->
       <section class="screen" id="screen-create">
         <h2 style="margin-bottom: 12px; font-size: 18px; font-weight: 800;">Создать объявление</h2>
         <div class="glass-card" style="padding: 16px;">
@@ -308,27 +295,37 @@
               <div class="icon-chip" data-val="TON"><div class="coin-icon ton">T</div> TON</div>
             </div>
           </div>
+
           <div class="field">
             <label>Способы оплаты</label>
             <div class="icon-scroll" id="f-payments" style="margin-bottom: 0;">
               <div class="pay-chip" data-val="СБП">
-                <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" fill="#0055BB"/><path d="M0 0h12v12H0z" fill="#FF0033"/><path d="M12 12h12v12H12z" fill="#00CC00"/><path d="M12 0h12v12H12z" fill="#FFCC00"/><path d="M0 12h12v12H0z" fill="#0055BB"/><path d="M6 8h12v2H6zM6 14h12v2H6z" fill="#fff"/></svg>
+                <svg viewBox="0 0 24 24" width="18" height="18" style="flex-shrink:0; border-radius:50%; overflow:hidden;"><rect width="12" height="12" fill="#5B57A7"/><rect x="12" width="12" height="12" fill="#EE2D2A"/><rect y="12" width="12" height="12" fill="#1C9F6E"/><rect x="12" y="12" width="12" height="12" fill="#FFB800"/></svg>
                 СБП
               </div>
               <div class="pay-chip" data-val="Тинькофф">
-                <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" rx="4" fill="#FFDD2D"/><path d="M12 5l6 3v4c0 3.5-2.5 6.5-6 7-3.5-.5-6-3.5-6-7V8l6-3z" fill="#000"/></svg>
+                <svg viewBox="0 0 24 24" width="18" height="18" style="flex-shrink:0; border-radius:50%; overflow:hidden;"><rect width="24" height="24" fill="#FFDD2D"/><text x="12" y="17.5" text-anchor="middle" font-size="14" font-weight="900" fill="#000" font-family="Arial, sans-serif">Т</text></svg>
                 Тинькофф
               </div>
               <div class="pay-chip" data-val="Сбербанк">
-                <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" rx="4" fill="#21A038"/><path d="M7 12l3 3 7-7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <svg viewBox="0 0 24 24" width="18" height="18" style="flex-shrink:0; border-radius:50%; overflow:hidden;"><rect width="24" height="24" fill="#21A038"/><text x="12" y="17.5" text-anchor="middle" font-size="13" font-weight="900" fill="#fff" font-family="Arial, sans-serif">С</text></svg>
                 Сбер
               </div>
               <div class="pay-chip" data-val="Альфа-Банк">
-                <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" rx="4" fill="#EF3124"/><path d="M12 6l5 12h-3l-1-3H8l-1 3H4L12 6zm-2 6h3l-1.5-4L10 12z" fill="#fff"/></svg>
+                <svg viewBox="0 0 24 24" width="18" height="18" style="flex-shrink:0; border-radius:50%; overflow:hidden;"><rect width="24" height="24" fill="#EF3124"/><text x="12" y="17.5" text-anchor="middle" font-size="13" font-weight="900" fill="#fff" font-family="Arial, sans-serif">А</text></svg>
                 Альфа
+              </div>
+              <div class="pay-chip" data-val="ВТБ">
+                <svg viewBox="0 0 24 24" width="18" height="18" style="flex-shrink:0; border-radius:50%; overflow:hidden;"><rect width="24" height="24" fill="#0A2896"/><text x="12" y="17" text-anchor="middle" font-size="8" font-weight="900" fill="#fff" font-family="Arial, sans-serif">ВТБ</text></svg>
+                ВТБ
+              </div>
+              <div class="pay-chip" data-val="Райффайзен">
+                <svg viewBox="0 0 24 24" width="18" height="18" style="flex-shrink:0; border-radius:50%; overflow:hidden;"><rect width="24" height="24" fill="#FEE600"/><text x="12" y="17.5" text-anchor="middle" font-size="13" font-weight="900" fill="#000" font-family="Arial, sans-serif">R</text></svg>
+                Райффайзен
               </div>
             </div>
           </div>
+
           <div class="field">
             <label>Время на оплату</label>
             <div class="icon-scroll" id="f-time" style="margin-bottom: 0;">
@@ -338,10 +335,18 @@
               <div class="pay-chip" data-val="60">1 час</div>
             </div>
           </div>
-          <div class="grid-2-col">
-            <div class="field" style="margin-bottom: 8px;"><label>Цена за 1 USDT (₽)</label><input class="input" type="number" id="f-price" placeholder="90" style="height: 48px;"></div>
-            <div class="field" style="margin-bottom: 8px;"><label>Общий объем (USDT)</label><input class="input" type="number" id="f-amount" placeholder="500" style="height: 48px;"></div>
+
+          <div class="grid-2-col" style="align-items: end;">
+            <div class="field" style="margin-bottom: 8px;">
+              <label>Цена (₽)</label>
+              <input class="input" type="number" id="f-price" placeholder="90" style="height: 48px;">
+            </div>
+            <div class="field" style="margin-bottom: 8px;">
+              <label>Объём (USDT)</label>
+              <input class="input" type="number" id="f-amount" placeholder="500" style="height: 48px;">
+            </div>
           </div>
+
           <div class="grid-2-col">
             <div class="field" style="margin-bottom: 8px;"><label>Мин. лимит (₽)</label><input class="input" type="number" id="f-min" placeholder="3000" style="height: 48px;"></div>
             <div class="field" style="margin-bottom: 8px;"><label>Макс. лимит (₽)</label><input class="input" type="number" id="f-max" placeholder="45000" style="height: 48px;"></div>
@@ -352,7 +357,6 @@
         </div>
       </section>
 
-      <!-- SPREAD -->
       <section class="screen" id="screen-spread">
         <h2 style="margin-bottom: 12px; font-size: 18px; font-weight: 800;">Калькулятор спреда</h2>
         <div class="glass-card" style="padding: 16px;">
@@ -434,7 +438,6 @@
       </section>
     </main>
 
-    <!-- ПЛАВАЮЩАЯ НАВИГАЦИЯ -->
     <nav class="bottom-nav">
       <button class="bn-btn active" data-screen="home">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
@@ -530,10 +533,22 @@
       <div class="icon-scroll" id="filterPayment" style="margin-bottom:0;">
         <div class="icon-chip active" data-val="">Все</div>
         <div class="icon-chip" data-val="СБП" style="display:inline-flex; align-items:center; gap:4px;">
-          <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" fill="#0055BB"/><path d="M0 0h12v12H0z" fill="#FF0033"/><path d="M12 12h12v12H12z" fill="#00CC00"/><path d="M12 0h12v12H12z" fill="#FFCC00"/><path d="M0 12h12v12H0z" fill="#0055BB"/><path d="M6 8h12v2H6zM6 14h12v2H6z" fill="#fff"/></svg> СБП
+          <svg viewBox="0 0 24 24" width="18" height="18" style="flex-shrink:0; border-radius:50%; overflow:hidden;"><rect width="12" height="12" fill="#5B57A7"/><rect x="12" width="12" height="12" fill="#EE2D2A"/><rect y="12" width="12" height="12" fill="#1C9F6E"/><rect x="12" y="12" width="12" height="12" fill="#FFB800"/></svg> СБП
         </div>
         <div class="icon-chip" data-val="Тинькофф" style="display:inline-flex; align-items:center; gap:4px;">
-          <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="flex-shrink:0; border-radius:4px; overflow:hidden;"><rect width="24" height="24" rx="4" fill="#FFDD2D"/><path d="M12 5l6 3v4c0 3.5-2.5 6.5-6 7-3.5-.5-6-3.5-6-7V8l6-3z" fill="#000"/></svg> Тинькофф
+          <svg viewBox="0 0 24 24" width="18" height="18" style="flex-shrink:0; border-radius:50%; overflow:hidden;"><rect width="24" height="24" fill="#FFDD2D"/><text x="12" y="17.5" text-anchor="middle" font-size="14" font-weight="900" fill="#000" font-family="Arial, sans-serif">Т</text></svg> Тинькофф
+        </div>
+        <div class="icon-chip" data-val="Сбербанк" style="display:inline-flex; align-items:center; gap:4px;">
+          <svg viewBox="0 0 24 24" width="18" height="18" style="flex-shrink:0; border-radius:50%; overflow:hidden;"><rect width="24" height="24" fill="#21A038"/><text x="12" y="17.5" text-anchor="middle" font-size="13" font-weight="900" fill="#fff" font-family="Arial, sans-serif">С</text></svg> Сбер
+        </div>
+        <div class="icon-chip" data-val="Альфа-Банк" style="display:inline-flex; align-items:center; gap:4px;">
+          <svg viewBox="0 0 24 24" width="18" height="18" style="flex-shrink:0; border-radius:50%; overflow:hidden;"><rect width="24" height="24" fill="#EF3124"/><text x="12" y="17.5" text-anchor="middle" font-size="13" font-weight="900" fill="#fff" font-family="Arial, sans-serif">А</text></svg> Альфа
+        </div>
+        <div class="icon-chip" data-val="ВТБ" style="display:inline-flex; align-items:center; gap:4px;">
+          <svg viewBox="0 0 24 24" width="18" height="18" style="flex-shrink:0; border-radius:50%; overflow:hidden;"><rect width="24" height="24" fill="#0A2896"/><text x="12" y="17" text-anchor="middle" font-size="8" font-weight="900" fill="#fff" font-family="Arial, sans-serif">ВТБ</text></svg> ВТБ
+        </div>
+        <div class="icon-chip" data-val="Райффайзен" style="display:inline-flex; align-items:center; gap:4px;">
+          <svg viewBox="0 0 24 24" width="18" height="18" style="flex-shrink:0; border-radius:50%; overflow:hidden;"><rect width="24" height="24" fill="#FEE600"/><text x="12" y="17.5" text-anchor="middle" font-size="13" font-weight="900" fill="#000" font-family="Arial, sans-serif">R</text></svg> Райффайзен
         </div>
       </div>
     </div>
@@ -655,7 +670,7 @@
 </div>
 
 <div class="modal-overlay" id="requestDetailModal">
-  <div class="modal glass-modal" style="padding: 18px;">
+  <div class="modal glass-modal" style="padding: 16px;">
     <div id="requestDetailContent"></div>
   </div>
 </div>
