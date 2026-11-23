@@ -1,14 +1,21 @@
 {
-  "name": "vxo-knowledge-base",
+  "name": "vexo-backend",
   "version": "1.0.0",
+  "description": "Vexo P2P Backend",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "axios": "^1.6.8",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
-    "express": "^4.19.2",
-    "pg": "^8.11.5"
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.3",
+    "ws": "^8.14.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
