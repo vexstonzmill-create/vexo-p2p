@@ -1,5 +1,5 @@
-document.addEventListener('contextmenu', e => { 
-  if (!['INPUT', 'TEXTAREA'].includes(e.target.tagName)) e.preventDefault(); 
+document.addEventListener('contextmenu', e => {
+  if (!['INPUT', 'TEXTAREA'].includes(e.target.tagName)) e.preventDefault();
 });
 
 window.addEventListener('error', (e) => {
@@ -18,9 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
         loader.classList.add('hidden-loader');
         loader.style.display = 'none';
       }
-      
+
       document.querySelectorAll('.modal-overlay').forEach(overlay => {
-        if(['dialogOverlay', 'receiptViewModal', 'orderModal', 'chatModal', 'requestDetailModal', 'assignRequisiteModal'].includes(overlay.id)) return;
+        if (['dialogOverlay', 'receiptViewModal', 'orderModal', 'chatModal', 'requestDetailModal', 'assignRequisiteModal'].includes(overlay.id)) return;
         const modal = overlay.querySelector('.modal');
         if (modal && !modal.querySelector('.global-back-btn')) {
           const btn = document.createElement('button');
@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
       'BTC': `<svg viewBox="0 0 24 24" width="20" height="20" style="flex-shrink:0; border-radius:50%; overflow:hidden; display:block;"><circle cx="12" cy="12" r="12" fill="#F7931A"/><text x="12" y="17.5" text-anchor="middle" font-size="14" font-weight="900" fill="#fff" font-family="Arial, Helvetica, sans-serif">₿</text></svg>`,
       'TON': `<svg viewBox="0 0 24 24" width="20" height="20" style="flex-shrink:0; border-radius:50%; overflow:hidden; display:block;"><circle cx="12" cy="12" r="12" fill="#0098EA"/><text x="12" y="17.5" text-anchor="middle" font-size="14" font-weight="900" fill="#fff" font-family="Arial, Helvetica, sans-serif">T</text></svg>`
     };
-    
+
     const getPayIcon = (name) => {
       if (!name) return '';
       if (name.includes('USDT')) return PAY_ICONS['USDT'];
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try { tg.setBackgroundColor('#09090b'); } catch(e) {}
 
         const initData = tg.initData;
-        if (API.token()) return; 
+        if (API.token()) return;
 
         try {
           const res = await fetch('/api/auth/telegram', {
@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ initData })
           });
-          
+
           if (res.ok) {
             const data = await res.json();
             localStorage.setItem('vexo_token', data.token);
@@ -181,6 +181,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const dots = document.querySelectorAll('.banner-dot');
       const banners = document.querySelectorAll('.banner');
       if (!viewport || !dots.length || !banners.length) return;
+      if (viewport.dataset.bound) return;
+      viewport.dataset.bound = '1';
       viewport.addEventListener('scroll', () => {
         const scrollLeft = viewport.scrollLeft;
         const bannerWidth = banners[0].offsetWidth + 12;
@@ -205,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       } catch(e) {
         const el = document.getElementById('homeUsdtRate');
-        if (el) el.textContent = '90.00 ₽'; 
+        if (el) el.textContent = '90.00 ₽';
       }
     }
 
@@ -222,27 +224,27 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('homeAvatar').style.display = 'none';
         return;
       }
-      
+
       try {
         const { user, stats } = await API.req('GET', '/users/me');
         localStorage.setItem('vexo_user', JSON.stringify(user));
-        
+
         document.getElementById('topbarName').textContent = user.displayName || user.username;
         document.getElementById('greetingText').textContent = 'Готовы к работе!';
-        
+
         let usdtRate = 90;
         try {
           const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=rub');
           const rdata = await res.json();
           if (rdata && rdata.tether && rdata.tether.rub) usdtRate = rdata.tether.rub;
         } catch(e) {}
-        
+
         const totalBal = user.balanceRub + (user.balanceUsdt * usdtRate);
         document.getElementById('homeBalanceValue').textContent = fmtDec(totalBal, 2) + ' ₽';
         document.getElementById('homeUserName').textContent = user.displayName || user.username;
         document.getElementById('homeDealsCount').textContent = stats.dealsTotal + ' сделок';
         document.getElementById('homeRating').textContent = stats.ratingAvg || '0';
-        
+
         const avImg = document.getElementById('homeAvatar');
         const avLet = document.getElementById('homeAvatarLetter');
         if (user.avatarUrl) {
@@ -269,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.setItem('vexo_notifs', JSON.stringify(notifications));
       updateNotifUI();
     }
-    
+
     window.clearNotifications = () => {
       notifications = [];
       localStorage.setItem('vexo_notifs', JSON.stringify([]));
@@ -306,7 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const sellBtn = document.querySelector('#f-side .seg-btn[data-val="sell"]');
       const buyBtn  = document.querySelector('#f-side .seg-btn[data-val="buy"]');
       if (!sellBtn || !buyBtn) return;
-      
+
       if (!sellBtn.dataset.origText) sellBtn.dataset.origText = sellBtn.textContent;
       if (!buyBtn.dataset.origText) buyBtn.dataset.origText = buyBtn.textContent;
 
@@ -369,16 +371,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (target) target.classList.add('active');
       document.querySelectorAll('.nav-btn, .bn-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll(`[data-screen="${name}"]`).forEach(b => b.classList.add('active'));
-      
+
       try {
-        if (name === 'market') { 
+        if (name === 'market') {
           if (!screenCache.market) { loadMarket(); screenCache.market = true; }
           document.querySelector('.mode-btn[data-mode="p2p"]')?.click();
         }
         if (name === 'profile' && !screenCache.profile) { loadProfile(); screenCache.profile = true; }
         if (name === 'home') { loadHomeRate(); loadHomeDashboard(); initBannerCarousel(); }
         if (name === 'wallet') { loadWallet(); screenCache.wallet = true; }
-        if (name === 'admin') { loadAdmin(); } 
+        if (name === 'admin') { loadAdmin(); }
         if (name === 'create') { initCreateScreen(); }
       } catch(e) { console.error('show error:', e); }
       window.scrollTo(0, 0);
@@ -454,7 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('vexo_user', JSON.stringify(data.user));
         closeModal('authModal'); updateAuthUI(); loadHomeDashboard();
         toast(authMode === 'login' ? 'Добро пожаловать!' : 'Аккаунт создан!', 'success');
-        screenCache.profile = false; 
+        screenCache.profile = false;
         show('market');
       } catch (err) {
         const map = { invalid_credentials: 'Неверный логин или пароль', user_exists: 'Никнейм занят', email_exists: 'Email занят', short_password: 'Пароль мин. 8 символов' };
@@ -473,7 +475,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const admBn = document.getElementById('adminBnBtn');
 
       if (u) {
-        if (lb) lb.style.display = 'none'; 
+        if (lb) lb.style.display = 'none';
         if (ab) {
           ab.classList.remove('hidden');
           ab.style.background = 'var(--primary)'; ab.style.color = '#fff'; ab.style.width = '32px'; ab.style.height = '32px';
@@ -490,7 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (admBn) admBn.style.display = 'none';
         }
       } else {
-        if (lb) lb.style.display = 'inline-flex'; 
+        if (lb) lb.style.display = 'inline-flex';
         if (ab) ab.classList.add('hidden');
         if (admNav) admNav.style.display = 'none';
         if (admBn) admBn.style.display = 'none';
@@ -515,7 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
           localStorage.setItem('vexo_user', JSON.stringify(data.user));
           const freshUser = data.user;
           const estimatedRub = freshUser.balanceUsdt * usdtRate;
-          const totalBalanceRub = freshUser.balanceRub + estimatedRub; 
+          const totalBalanceRub = freshUser.balanceRub + estimatedRub;
 
           screen.innerHTML = `
             <h2 style="margin-bottom: 6px; font-size: 22px; font-weight: 800;">Кошелёк</h2>
@@ -541,21 +543,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="w-bal" style="margin-left:auto; font-weight:800; font-size:16px;">${fmtDec(freshUser.balanceUsdt, 2)} <span style="font-size:12px;color:var(--dim);">≈ ${fmtDec(estimatedRub, 2)} ₽</span></div>
               </div>
             </div>`;
-            
-          document.getElementById('btnDeposit').onclick = () => { 
-            walletActionType = 'deposit'; 
-            document.getElementById('walletActionTitle').textContent = 'Пополнение'; 
+
+          document.getElementById('btnDeposit').onclick = () => {
+            walletActionType = 'deposit';
+            document.getElementById('walletActionTitle').textContent = 'Пополнение';
             document.querySelectorAll('#walletAssetSelect .seg-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('#walletAssetSelect .seg-btn[data-val="RUB"]').classList.add('active');
-            document.getElementById('walletActionModal').classList.add('active'); 
+            document.getElementById('walletActionModal').classList.add('active');
             toggleWalletFields();
           };
-          document.getElementById('btnWithdraw').onclick = () => { 
-            walletActionType = 'withdraw'; 
-            document.getElementById('walletActionTitle').textContent = 'Вывод'; 
+          document.getElementById('btnWithdraw').onclick = () => {
+            walletActionType = 'withdraw';
+            document.getElementById('walletActionTitle').textContent = 'Вывод';
             document.querySelectorAll('#walletAssetSelect .seg-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('#walletAssetSelect .seg-btn[data-val="RUB"]').classList.add('active');
-            document.getElementById('walletActionModal').classList.add('active'); 
+            document.getElementById('walletActionModal').classList.add('active');
             toggleWalletFields();
           };
         });
@@ -582,11 +584,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('walletActionSubmit')?.addEventListener('click', async () => {
       const u = API.user();
       if (!u) { closeModal('walletActionModal'); document.getElementById('authModal')?.classList.add('active'); return; }
-      
+
       const amount = document.getElementById('walletActionAmount')?.value;
       const tg = document.getElementById('walletActionTg')?.value.trim();
       const currency = document.querySelector('#walletAssetSelect .seg-btn.active').dataset.val;
-      
+
       if (!amount || Number(amount) <= 0) return toast('Введите сумму', 'error');
       if (!tg) return toast('Введите Telegram', 'error');
 
@@ -594,7 +596,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (currency === 'RUB') {
         const bank = document.getElementById('walletBankSelect').value;
-        payload.requisites = bank; 
+        payload.requisites = bank;
       } else {
         const network = document.getElementById('walletNetwork').value;
         const address = document.getElementById('walletAddress').value.trim();
@@ -602,13 +604,13 @@ document.addEventListener('DOMContentLoaded', () => {
         payload.requisites = address;
         payload.network = network;
       }
-      
+
       const btn = document.getElementById('walletActionSubmit'); btn.disabled = true; btn.textContent = '...';
       try {
-        await API.req('POST', '/requests/finance', payload); 
+        await API.req('POST', '/requests/finance', payload);
         toast('Заявка создана!', 'success');
         addNotification('Заявка на ' + (walletActionType === 'deposit' ? 'пополнение' : 'вывод') + ' создана', 'info');
-        closeModal('walletActionModal'); 
+        closeModal('walletActionModal');
       } catch(e) { toast(e.message || 'Ошибка', 'error'); }
       finally { btn.disabled = false; btn.textContent = 'Отправить'; }
     });
@@ -697,7 +699,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data && data.tether && data.tether.rub) basePrice = data.tether.rub;
       } catch(e) { basePrice = 92.50; }
       isPriceLoaded = true;
-      
+
       const updateExchangeUI = () => {
           const input = document.getElementById('exAmount');
           const amount = parseFloat(input.value) || 0;
@@ -706,13 +708,13 @@ document.addEventListener('DOMContentLoaded', () => {
           const sellRate = buyRate * 0.995;
 
           if (exMode === 'buy') {
-              rate = buyRate; result = amount / rate; 
+              rate = buyRate; result = amount / rate;
               document.getElementById('exInputLabel').textContent = 'Сумма в RUB';
               document.getElementById('exResultDisplay').textContent = `${fmtDec(result, 4)} USDT`;
               document.getElementById('exSubmitBtn').style.background = 'var(--grn)';
               document.getElementById('exSubmitBtn').textContent = 'Купить USDT';
           } else {
-              rate = sellRate; result = amount * rate; 
+              rate = sellRate; result = amount * rate;
               document.getElementById('exInputLabel').textContent = 'Сумма в USDT';
               document.getElementById('exResultDisplay').textContent = `${fmtDec(result, 2)} RUB`;
               document.getElementById('exSubmitBtn').style.background = 'var(--red)';
@@ -730,7 +732,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const amount = parseFloat(document.getElementById('exAmount').value);
           if (!amount || amount <= 0) return toast('Введите сумму', 'error');
           if (!API.user()) { document.getElementById('authModal').classList.add('active'); return; }
-          
+
           const btn = document.getElementById('exSubmitBtn'); btn.disabled = true; btn.textContent = '...';
           try {
               const buyRate = basePrice * 1.05;
@@ -743,457 +745,460 @@ document.addEventListener('DOMContentLoaded', () => {
       };
       updateExchangeUI();
     }
+
     function renderAd(ad) {
-  const isSell = ad.side === 'sell';
-  const faceLabel = ad.faceType === 'first' ? '1-е лицо' : '3-е лицо';
-  window._ads = window._ads || {}; window._ads[ad.id] = ad;
-  
-  const pays = (ad.paymentMethods || []).map(p => `<span class="pay-tag" style="background:rgba(255,255,255,0.1); border:1px solid var(--card-border); padding:4px 8px; border-radius:6px; font-size:11px; font-weight:600; color:var(--txt); display:inline-flex; align-items:center; gap:4px;">${getPayIcon(p)} ${p}</span>`).join('');
-  
-  let avatarHtml = `<div class="avatar">${ad.displayName[0].toUpperCase()}</div>`;
-  if (ad.avatarUrl) avatarHtml = `<div class="avatar"><img src="${ad.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${ad.displayName[0].toUpperCase()}'"></div>`;
-  
-  const merchantBadge = ad.isMerchant ? `<span class="badge-merchant" title="Merchant">${ICONS.merchant}</span>` : '';
-  const makerBadge = ad.isMaker ? `<span class="badge-maker" title="Maker">${ICONS.maker}</span>` : '';
-  const proBadge = ad.isPro ? `<span class="badge-pro" title="PRO">${ICONS.pro}</span>` : '';
+      const isSell = ad.side === 'sell';
+      const faceLabel = ad.faceType === 'first' ? '1-е лицо' : '3-е лицо';
+      window._ads = window._ads || {}; window._ads[ad.id] = ad;
 
-  return `<div class="ad-card">
-    <div class="ad-head" onclick="openPublicProfile(${ad.userId})">
-      ${avatarHtml}
-      <div class="ad-user">
-        <div class="ad-name">${ad.displayName} ${merchantBadge} ${makerBadge} ${proBadge} <span class="badge-face">${faceLabel}</span></div>
-        <div class="ad-meta"><span>★ ${ad.ratingAvg || '—'}</span> <span>${ad.dealsCompleted || 0} сделок</span></div>
-      </div>
-    </div>
-    <div class="ad-body">
-      <div class="ad-price-block">
-         <div class="ad-price">${fmtDec(ad.price, 2)} ₽</div>
-         <div class="ad-limits">Лимиты: ${fmt(ad.minRub)} - ${fmt(ad.maxRub)} RUB</div>
-         <div class="ad-amount">Доступно: ${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div>
-         ${pays ? `<div class="ad-pay-methods" style="justify-content:flex-start;margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;">${pays}</div>` : ''}
-      </div>
-      <div class="ad-action">
-         <button class="btn ${isSell ? 'btn-buy' : 'btn-sell'} btn-sm" data-ad-id="${ad.id}" style="min-width:80px;">${isSell ? 'Купить' : 'Продать'}</button>
-      </div>
-    </div>
-  </div>`;
-}
+      const pays = (ad.paymentMethods || []).map(p => `<span class="pay-tag" style="background:rgba(255,255,255,0.1); border:1px solid var(--card-border); padding:4px 8px; border-radius:6px; font-size:11px; font-weight:600; color:var(--txt); display:inline-flex; align-items:center; gap:4px;">${getPayIcon(p)} ${p}</span>`).join('');
 
-function bindAdButtons() {
-  document.querySelectorAll('[data-ad-id]').forEach(b => {
-    b.onclick = (e) => {
-      e.preventDefault(); e.stopPropagation();
-      if (!API.user()) { document.getElementById('authModal')?.classList.add('active'); return; }
-      openOrderModal(+b.dataset.adId);
-    };
-  });
-}
+      let avatarHtml = `<div class="avatar">${ad.displayName[0].toUpperCase()}</div>`;
+      if (ad.avatarUrl) avatarHtml = `<div class="avatar"><img src="${ad.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${ad.displayName[0].toUpperCase()}'"></div>`;
 
-window.openPublicProfile = async function(userId) {
-  const m = document.getElementById('publicProfileModal'); const c = document.getElementById('publicProfileContent');
-  if (!m || !c) return; c.innerHTML = '<div class="empty-state">Загрузка...</div>'; m.classList.add('active');
-  try {
-    const { user, stats, isFavorite } = await API.req('GET', '/users/' + userId);
-    
-    let bannerHtml = '';
-    if (user.bannerUrl) {
-        bannerHtml = `<div class="profile-banner" style="margin-bottom: 20px;">
-            ${user.bannerUrl.startsWith('data:video') ? `<video src="${user.bannerUrl}" autoplay loop muted playsinline></video>` : 
-              user.bannerUrl.includes('.pdf') ? `<iframe src="${user.bannerUrl}" style="pointer-events:none;"></iframe>` : 
-              `<img src="${user.bannerUrl}">`}
-        </div>`;
-    }
+      const merchantBadge = ad.isMerchant ? `<span class="badge-merchant" title="Merchant">${ICONS.merchant}</span>` : '';
+      const makerBadge = ad.isMaker ? `<span class="badge-maker" title="Maker">${ICONS.maker}</span>` : '';
+      const proBadge = ad.isPro ? `<span class="badge-pro" title="PRO">${ICONS.pro}</span>` : '';
 
-    let avatarHtml = `<div class="avatar lg" style="margin:0 auto 8px;">${user.displayName[0].toUpperCase()}</div>`;
-    if (user.avatarUrl) avatarHtml = `<div class="avatar lg" style="margin:0 auto 8px;"><img src="${user.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${user.displayName[0].toUpperCase()}'"></div>`;
-    
-    let favBtn = '';
-    if (API.user() && API.user().id !== user.id) favBtn = `<button class="btn-fav ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(${user.id}, this)" style="position:absolute;top:15px;right:15px;font-size:24px;background:none;border:none;z-index:10;">${isFavorite ? '❤️' : '🤍'}</button>`;
-    
-    const merchantBadge = user.isMerchant ? `<span class="badge-merchant" style="margin-left:4px; width:20px; height:20px;" title="Merchant">${ICONS.merchant}</span>` : '';
-    const makerBadge = user.isMaker ? `<span class="badge-maker" style="margin-left:4px; width:20px; height:20px;" title="Maker">${ICONS.maker}</span>` : '';
-    const proBadge = user.isPro ? `<span class="badge-pro" style="margin-left:4px; width:20px; height:20px;" title="PRO">${ICONS.pro}</span>` : '';
-
-    c.innerHTML = `
-      ${favBtn}
-      ${bannerHtml}
-      <div style="text-align:center; margin-bottom: 16px; margin-top:8px;">
-        ${avatarHtml}
-        <h2 style="font-size:20px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;justify-content:center;color:var(--txt);">${user.displayName} ${merchantBadge} ${makerBadge} ${proBadge}</h2>
-        <div style="font-size:13px;color:var(--dim);font-weight:600;">@${user.username}</div>
-      </div>
-      <div class="stats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <div class="glass-card" style="padding:12px;text-align:center;border-radius:12px;"><div style="font-size:12px;color:var(--dim);">Сделок</div><div style="font-size:16px;font-weight:800;color:var(--txt);">${stats.dealsTotal}</div></div>
-        <div class="glass-card" style="padding:12px;text-align:center;border-radius:12px;"><div style="font-size:12px;color:var(--dim);">Успешных</div><div style="font-size:16px;font-weight:800;color:var(--txt);">${stats.successRate !== null ? stats.successRate + '%' : '—'}</div></div>
-      </div>
-      <div id="publicReviewsList" style="margin-top:16px;">Загрузка отзывов...</div>`;
-    loadPublicReviews(user.id);
-  } catch(e) { c.innerHTML = '<div class="empty-state">Ошибка</div>'; }
-};
-
-window.toggleFavorite = async function(targetId, btnEl) {
-  if (!API.user()) { document.getElementById('authModal')?.classList.add('active'); return; }
-  try {
-    const res = await API.req('POST', '/users/' + targetId + '/favorite');
-    if (res.isFavorite) { btnEl.innerHTML = '❤️'; toast('В избранном', 'success'); }
-    else { btnEl.innerHTML = '🤍'; toast('Удалено', 'info'); }
-  } catch(e) { toast('Ошибка', 'error'); }
-};
-
-async function loadPublicReviews(userId) {
-  const list = document.getElementById('publicReviewsList'); if (!list) return;
-  try {
-    const data = await API.req('GET', '/reviews/user/' + userId);
-    const items = data.items || [];
-    list.innerHTML = `<div style="font-size:14px;font-weight:800;margin-bottom:8px;color:var(--txt);text-transform:uppercase;">Отзывы</div>` + 
-      (items.length ? items.map(r => `<div class="glass-card" style="padding:12px;margin-bottom:8px;border-radius:10px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><strong style="font-size:14px;color:var(--txt);">${r.author}</strong><span style="color:var(--txt);font-size:14px;">${'★'.repeat(r.rating)}</span></div><p style="font-size:13px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p></div>`).join('') : '<div class="empty-state" style="padding:10px;">Отзывов пока нет</div>');
-  } catch(e) { list.innerHTML = ''; }
-}
-
-document.querySelectorAll('#f-payments .pay-chip').forEach(c => { c.onclick = () => c.classList.toggle('active'); });
-document.querySelectorAll('#f-time .pay-chip').forEach(c => { c.onclick = () => { document.querySelectorAll('#f-time .pay-chip').forEach(x => x.classList.remove('active')); c.classList.add('active'); }; });
-document.querySelectorAll('#f-asset-select .icon-chip').forEach(c => {
-  c.onclick = () => {
-    document.querySelectorAll('#f-asset-select .icon-chip').forEach(x => x.classList.remove('active'));
-    c.classList.add('active');
-    const lbl = document.getElementById('f-asset-label');
-    if (lbl) lbl.textContent = c.dataset.val;
-  };
-});
-
-document.querySelectorAll('#f-side .seg-btn').forEach(b => {
-  b.onclick = () => {
-    if (b.disabled) return;
-    document.querySelectorAll('#f-side .seg-btn').forEach(x => x.classList.remove('active'));
-    b.classList.add('active');
-  };
-});
-
-document.querySelectorAll('#f-face .seg-btn').forEach(b => {
-  b.onclick = () => {
-    document.querySelectorAll('#f-face .seg-btn').forEach(x => x.classList.remove('active'));
-    b.classList.add('active');
-  };
-});
-
-document.getElementById('createBtn')?.addEventListener('click', async () => {
-  const errEl = document.getElementById('createError'); if (errEl) errEl.textContent = '';
-  const u = API.user();
-  if (!u) { if (errEl) errEl.textContent = 'Войдите в аккаунт'; setTimeout(() => document.getElementById('authModal')?.classList.add('active'), 500); return; }
-  
-  const payments = [...document.querySelectorAll('#f-payments .pay-chip.active')].map(c => c.dataset.val);
-  if (!payments.length) { if (errEl) errEl.textContent = 'Выберите способ оплаты'; return; }
-  
-  const price = document.getElementById('f-price')?.value;
-  const amount = document.getElementById('f-amount')?.value;
-  const min = document.getElementById('f-min')?.value;
-  const max = document.getElementById('f-max')?.value;
-  if (!price || !amount || !min || !max) { if (errEl) errEl.textContent = 'Заполните поля'; return; }
-  
-  const payment_time = document.querySelector('#f-time .pay-chip.active')?.dataset.val || 30;
-  const side = document.querySelector('#f-side .seg-btn.active')?.dataset.val;
-  const asset = document.querySelector('#f-asset-select .icon-chip.active')?.dataset.val;
-
-  if (side === 'buy') {
-     const isStaff = ['admin', 'owner', 'deputy'].includes(u.role);
-     if (!isStaff && !u.isMaker && !u.isMerchant) {
-         toast('Только мейкеры и мерчанты могут создавать объявления о покупке', 'error');
-         return;
-     }
-     if (u.balanceRub < Number(max)) {
-         toast(`Недостаточно RUB на балансе (Нужно: ${fmt(max)} ₽)`, 'error');
-         return;
-     }
-  } else if (side === 'sell') {
-     if (u.balanceUsdt < Number(amount)) {
-         toast(`Недостаточно ${asset} на балансе (Нужно: ${fmtDec(amount, 2)})`, 'error');
-         return;
-     }
-  }
-
-  const btn = document.getElementById('createBtn'); btn.disabled = true; btn.textContent = '...';
-  
-  try {
-    await API.req('POST', '/ads', {
-      side: side,
-      face_type: document.querySelector('#f-face .seg-btn.active')?.dataset.val,
-      asset: asset, price: price, amount_total: amount,
-      min_rub: min, max_rub: max,
-      payment_methods: payments, terms: document.getElementById('f-terms')?.value || '',
-      payment_time: Number(payment_time)
-    });
-    toast('Объявление опубликовано!', 'success');
-    addNotification('Вы создали новое объявление.', 'success');
-    screenCache.market = false; screenCache.home = false;
-    show('market');
-    setTimeout(() => document.querySelector('.mm-tab[data-mtab="ads"]')?.click(), 100);
-  } catch (err) {
-    const map = { max_exceeds_total: 'Макс. лимит больше объема', min_gt_max: 'Мин больше макс', bad_amounts: 'Проверьте числа' };
-    if (errEl) errEl.textContent = map[err.code] || err.message;
-  } finally { btn.disabled = false; btn.textContent = 'Опубликовать'; }
-});
-
-async function loadOrders(filter) {
-  const list = document.getElementById('ordersList'); if (!list) return;
-  if (!API.user()) { list.innerHTML = '<div class="empty-state">Войдите</div>'; return; }
-  try {
-    const { items } = await API.req('GET', '/orders/my?status=' + filter);
-    const sc = { pending: 'var(--yellow)', accepted: 'var(--blue)', paid: 'var(--grn)', completed: 'var(--grn)', cancelled: 'var(--red)', declined: 'var(--red)', dispute: 'var(--gold)' };
-    list.innerHTML = items.length ? items.map(o => `
-      <div class="ad-card" style="cursor:pointer;border-left:4px solid ${sc[o.status] || 'var(--dim)'}; padding:16px; margin-bottom:12px;" data-order-id="${o.id}">
-        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-          <strong style="font-family:Inter,monospace;font-size:15px;color:var(--txt);">#${o.publicId}</strong>
-          <span style="color:${sc[o.status] || 'var(--txt)'};font-size:12px;font-weight:800">${o.statusLabel}</span>
+      return `<div class="ad-card">
+        <div class="ad-head" onclick="openPublicProfile(${ad.userId})">
+          ${avatarHtml}
+          <div class="ad-user">
+            <div class="ad-name">${ad.displayName} ${merchantBadge} ${makerBadge} ${proBadge} <span class="badge-face">${faceLabel}</span></div>
+            <div class="ad-meta"><span>★ ${ad.ratingAvg || '—'}</span> <span>${ad.dealsCompleted || 0} сделок</span></div>
+          </div>
         </div>
         <div class="ad-body">
-          <div><div style="font-size:12px;color:var(--dim);">Сумма</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmtDec(o.amountRub, 2)} ₽</div></div>
-          <div><div style="font-size:12px;color:var(--dim);">Актив</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmtDec(o.amountAsset, 2)} ${o.asset}</div></div>
-        </div>
-        <div style="font-size:12px;color:var(--dim);display:flex;justify-content:space-between;font-weight:600;margin-top:12px;">
-          <span>${new Date(o.createdAt).toLocaleString('ru-RU')}</span>
-          <span>${o.buyer.displayName} ↔ ${o.seller.displayName}</span>
-        </div>
-      </div>`).join('') : '<div class="empty-state">Ордеров нет</div>';
-    list.querySelectorAll('[data-order-id]').forEach(el => { el.onclick = () => openOrderPage(+el.dataset.orderId); });
-  } catch(e) { list.innerHTML = '<div class="empty-state">Ошибка</div>'; }
-}
-
-document.querySelectorAll('#ordersFilter .tab').forEach(c => {
-  c.onclick = () => {
-    document.querySelectorAll('#ordersFilter .tab').forEach(x => x.classList.remove('active'));
-    c.classList.add('active');
-    loadOrders(c.dataset.val);
-  };
-});
-
-async function openOrderPage(orderId) {
-  if (!API.user()) { document.getElementById('authModal')?.classList.add('active'); return; }
-  previousScreen = 'market'; show('order');
-  const container = document.getElementById('orderDetailContent'); if (!container) return;
-  container.innerHTML = '<div class="empty-state">Загрузка...</div>';
-  try {
-    const { order, history, terms } = await API.req('GET', '/orders/' + orderId);
-    renderOrderPage(order, history, terms);
-
-    if (window.orderPollInterval) clearInterval(window.orderPollInterval);
-    window.orderPollInterval = setInterval(async () => {
-       try {
-           const freshData = await API.req('GET', '/orders/' + orderId);
-           if (freshData.order.status !== order.status) {
-               renderOrderPage(freshData.order, freshData.history, freshData.terms);
-               toast(`Статус обновлен: ${freshData.order.statusLabel}`, 'info');
-               addNotification(`Статус ордера #${freshData.order.publicId} изменился на: ${freshData.order.statusLabel}`, 'info');
-           }
-       } catch(e) {}
-    }, 5000);
-
-  } catch (e) { container.innerHTML = '<div class="empty-state">Ошибка</div>'; }
-}
-
-window.openAdminOrder = function(orderId) { previousScreen = 'admin'; openOrderPage(orderId); };
-
-window.viewReceipt = function(data) {
-    if (!data) return toast('Чек не прикреплен', 'error');
-    const content = document.getElementById('receiptViewContent');
-    content.innerHTML = `<img src="${data}" style="max-width:100%; max-height:80vh; border-radius:8px;">`;
-    document.getElementById('receiptViewModal').classList.add('active');
-};
-
-function renderOrderPage(order, history, terms) {
-  const u = API.user(), isBuyer = order.buyer_id === u.id, isSeller = order.seller_id === u.id, isAdmin = ['admin', 'owner', 'deputy'].includes(u.role);
-  const isAdCreator = u.id === order.adUserId;
-  
-  const sc = { pending: '#FFD60A', accepted: '#3b82f6', paid: '#22c55e', completed: '#22c55e', cancelled: '#ef4444', declined: '#ef4444', dispute: '#D4AF37' };
-  let progress = 20;
-  if (order.status === 'accepted') progress = 40;
-  if (order.status === 'paid') progress = 70;
-  if (order.status === 'completed') progress = 100;
-  if (order.status === 'cancelled' || order.status === 'dispute' || order.status === 'declined') progress = 0;
-
-  const counterparty = isBuyer ? order.seller : order.buyer;
-  const counterpartyRole = isBuyer ? 'Продавец' : 'Покупатель';
-
-  let actionsHtml = '';
-  
-  if (order.status === 'pending') {
-    if (isAdCreator) {
-      actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><button class="btn btn-primary btn-sm" onclick="doAction(${order.id},'accept')" style="background:var(--grn);color:#fff;border:none;height:44px;font-size:14px;">Принять</button><button class="btn btn-ghost btn-sm" style="color:var(--red);border:1px solid var(--red);height:44px;font-size:14px;" onclick="doAction(${order.id},'decline')">Отклонить</button></div>`;
-    } else {
-      actionsHtml = `<div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:14px;margin-bottom:10px;font-weight:600;">Ожидайте подтверждения</div>
-      <button class="btn btn-ghost btn-block btn-sm" style="color:var(--red);height:44px;font-size:14px;" onclick="doAction(${order.id},'cancel')">Отменить</button>`;
-    }
-  } 
-  else if (order.status === 'accepted') {
-    if (isBuyer) {
-      actionsHtml = `
-      <div style="background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:12px;padding:16px;text-align:center;margin-bottom:12px;">
-        <div style="font-size:13px;color:var(--dim);margin-bottom:8px;">Время на оплату:</div>
-        <div id="paymentTimerDisplay" style="font-size:24px;font-weight:900;color:var(--yellow);margin-bottom:12px;">--:--</div>
-        <input type="file" id="receiptFile" style="display:none;" accept="image/*,application/pdf">
-        <button class="btn btn-primary btn-sm" onclick="document.getElementById('receiptFile').click()" style="margin-bottom:8px;height:36px;font-size:13px;">Прикрепить чек</button>
-        <div id="fileName" style="font-size:12px;color:var(--grn);margin-bottom:12px;font-weight:600;"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-           <button class="btn btn-primary btn-sm" onclick="doAction(${order.id},'paid')" style="height:44px;font-size:14px;">Я оплатил</button>
-           <button class="btn btn-ghost btn-sm" style="color:var(--red);height:44px;font-size:14px;" onclick="doAction(${order.id},'cancel')">Отменить</button>
+          <div class="ad-price-block">
+             <div class="ad-price">${fmtDec(ad.price, 2)} ₽</div>
+             <div class="ad-limits">Лимиты: ${fmt(ad.minRub)} - ${fmt(ad.maxRub)} RUB</div>
+             <div class="ad-amount">Доступно: ${fmtDec(ad.amountLeft, 2)} ${ad.asset}</div>
+             ${pays ? `<div class="ad-pay-methods" style="justify-content:flex-start;margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;">${pays}</div>` : ''}
+          </div>
+          <div class="ad-action">
+             <button class="btn ${isSell ? 'btn-buy' : 'btn-sell'} btn-sm" data-ad-id="${ad.id}" style="min-width:80px;">${isSell ? 'Купить' : 'Продать'}</button>
+          </div>
         </div>
       </div>`;
-    } else {
-      actionsHtml = `<div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:14px;margin-bottom:10px;font-weight:600;">Ожидайте оплаты</div><button class="btn btn-ghost btn-block btn-sm" style="color:var(--gold);height:44px;font-size:14px;" onclick="doAction(${order.id},'dispute')">Спор</button>`;
     }
-  } 
-  else if (order.status === 'paid') {
-    if (isSeller) {
-      actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><button class="btn btn-primary btn-sm" onclick="doAction(${order.id},'confirm')" style="height:44px;font-size:14px;">Оплата получена</button><button class="btn btn-ghost btn-sm" style="color:var(--red);height:44px;font-size:14px;" onclick="doAction(${order.id},'dispute')">Спор</button></div>`;
-    } else {
-      actionsHtml = `<div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:14px;margin-bottom:10px;font-weight:600;">Ожидайте подтверждения</div><button class="btn btn-ghost btn-block btn-sm" style="color:var(--red);height:44px;font-size:14px;" onclick="doAction(${order.id},'dispute')">Спор</button>`;
+
+    function bindAdButtons() {
+      document.querySelectorAll('[data-ad-id]').forEach(b => {
+        b.onclick = (e) => {
+          e.preventDefault(); e.stopPropagation();
+          if (!API.user()) { document.getElementById('authModal')?.classList.add('active'); return; }
+          openOrderModal(+b.dataset.adId);
+        };
+      });
     }
-  } 
-  else if (order.status === 'completed') {
-    actionsHtml = `<div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:14px;text-align:center;color:var(--grn);font-size:15px;font-weight:800;margin-bottom:12px">✓ Сделка завершена</div><button class="btn btn-primary btn-block btn-sm" onclick="openReview(${order.id})" style="margin-bottom:16px;height:44px;font-size:14px;">Оставить отзыв</button>`;
-  } 
-  else if (order.status === 'cancelled' || order.status === 'declined') {
-    actionsHtml = `<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:14px;text-align:center;color:var(--red);font-size:15px;margin-bottom:16px;font-weight:800;">Заявка ${order.status === 'declined' ? 'отклонена' : 'отменена'}</div>`;
-  } 
-  else if (order.status === 'dispute') {
-    if (isAdmin) actionsHtml = `<div style="background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:14px;text-align:center;color:var(--gold);font-size:15px;margin-bottom:12px;font-weight:800;">Решите спор:</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px"><button class="btn btn-primary btn-sm" onclick="resolveDispute(${order.id}, 'completed')" style="height:44px;font-size:14px;">Завершить</button><button class="btn btn-ghost btn-sm" style="color:var(--red);height:44px;font-size:14px;" onclick="resolveDispute(${order.id}, 'cancelled')">Отменить</button></div>`;
-    else actionsHtml = `<div style="background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:14px;text-align:center;color:var(--gold);font-size:15px;margin-bottom:16px;font-weight:800;">Спор рассматривается</div>`;
-  }
 
-  let adminReceiptHtml = '';
-  if ((isAdmin || isSeller) && ['paid', 'dispute'].includes(order.status) && order.receipt_data) {
-    adminReceiptHtml = `
-    <div class="glass-card" style="padding:14px;margin-bottom:16px;border:1px dashed var(--primary);">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div>
-          <div style="font-size:12px;color:var(--dim);font-weight:700;margin-bottom:4px;">Чек об оплате</div>
-          <div style="font-size:14px;font-weight:800;color:var(--txt);">Прикреплен</div>
-        </div>
-        <button class="btn btn-primary btn-sm" onclick="viewReceipt('${order.receipt_data}')" style="height:32px;font-size:12px;">Посмотреть</button>
-      </div>
-    </div>`;
-  }
+    window.openPublicProfile = async function(userId) {
+      const m = document.getElementById('publicProfileModal'); const c = document.getElementById('publicProfileContent');
+      if (!m || !c) return; c.innerHTML = '<div class="empty-state">Загрузка...</div>'; m.classList.add('active');
+      try {
+        const { user, stats, isFavorite } = await API.req('GET', '/users/' + userId);
 
-  const timelineHtml = (history || []).map(h => `<div style="display:flex;gap:12px;padding:8px 0"><div style="width:12px;height:12px;border-radius:50%;background:var(--txt);flex-shrink:0;margin-top:4px"></div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--txt);">${h.note || h.status}</div><div style="font-size:12px;color:var(--dim);font-weight:600;">${new Date(h.at).toLocaleString('ru-RU')}</div></div></div>`).join('');
-  
-  const container = document.getElementById('orderDetailContent');
-  container.innerHTML = `
-    <div class="glass-card" style="padding: 20px; margin-bottom: 16px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-         <div style="font-size:13px;color:var(--dim);font-family:monospace;font-weight:700;">#${order.public_id}</div>
-         <div style="background:var(--glass-bg);color:${sc[order.status]};font-size:13px;font-weight:800;padding:4px 10px;border-radius:6px">${order.statusLabel}</div>
-      </div>
-      <h2 style="font-size:22px;font-weight:900;margin-bottom:6px;color:var(--txt)">${isBuyer ? 'Покупка ' : 'Продажа '}${order.asset}</h2>
-      <div style="font-size:32px;font-weight:900;color:var(--txt);font-variant-numeric:tabular-nums;">${fmtDec(order.amount_rub, 2)}<span style="font-size:16px;color:var(--dim);font-weight:600;margin-left:4px">₽</span></div>
-      <div style="width:100%;height:6px;background:var(--glass-border);border-radius:3px;margin-top:16px;overflow:hidden"><div style="height:100%;width:${progress}%;background:${sc[order.status]};transition:0.3s"></div></div>
-    </div>
-    
-    <div class="glass-card" style="padding:14px;margin-bottom:16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;" onclick="openPublicProfile(${counterparty.id})">
-      <div style="display:flex;align-items:center;gap:12px;">
-         <div class="avatar" style="width:40px;height:40px;font-size:14px;">${counterparty.avatarUrl ? `<img src="${counterparty.avatarUrl}">` : counterparty.displayName[0].toUpperCase()}</div>
-         <div>
-           <div style="font-size:12px;color:var(--dim);font-weight:600;">${counterpartyRole}</div>
-           <div style="font-size:15px;font-weight:800;color:var(--txt);">${counterparty.displayName}</div>
-         </div>
-      </div>
-      <button class="btn btn-ghost btn-sm" style="border:1px solid var(--glass-border);height:32px;font-size:12px;">Профиль</button>
-    </div>
+        const avatarSrc = user.avatarUrl
+          ? `<img src="${user.avatarUrl}" onerror="this.style.display='none'; this.parentNode.textContent='${(user.displayName||'?')[0].toUpperCase()}';">`
+          : (user.displayName || '?')[0].toUpperCase();
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-      <div class="glass-card" style="padding:14px;"><div style="font-size:12px;color:var(--dim);font-weight:700;margin-bottom:4px;">Количество</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmtDec(order.amount_asset, 2)} ${order.asset}</div></div>
-      <div class="glass-card" style="padding:14px;"><div style="font-size:12px;color:var(--dim);font-weight:700;margin-bottom:4px;">Курс</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmtDec(order.price, 2)} ₽</div></div>
-    </div>
-    
-    <div class="glass-card" style="padding:16px;margin-bottom:16px;">
-      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-         <div style="font-size: 12px; font-weight: 800; color: var(--dim); text-transform: uppercase;">Время на оплату</div>
-         <div style="font-size: 13px; font-weight: 800; color: var(--yellow);">${order.paymentTime} мин</div>
-      </div>
-      <div style="font-size: 12px; font-weight: 800; color: var(--dim); text-transform: uppercase; margin-bottom: 6px;">Условия</div>
-      <div style="font-size: 14px; color: var(--txt); line-height: 1.4; font-weight: 500;">${terms || 'Стандартные условия.'}</div>
-    </div>
-    
-    ${adminReceiptHtml}
-    ${actionsHtml}
-    
-    <button style="width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;padding:14px;margin-bottom:16px;color:var(--txt);font-size:14px; cursor:pointer;" onclick="openChatModal(${order.id})">
-      <div style="display:flex;align-items:center;gap:12px"><div class="avatar" style="width:32px;height:32px;font-size:16px">💬</div><div style="text-align:left;"><div style="font-weight:800; color:var(--txt);">Чат по сделке</div></div></div>
-    </button>
-    <div class="glass-card" style="padding:16px"><div style="font-size:13px;font-weight:800;margin-bottom:12px;color:var(--dim);text-transform:uppercase">История</div>${timelineHtml}</div>`;
+        const bannerInner = user.bannerUrl
+          ? (user.bannerUrl.startsWith('data:video')
+              ? `<video src="${user.bannerUrl}" autoplay loop muted playsinline></video>`
+              : user.bannerUrl.includes('.pdf')
+                ? `<iframe src="${user.bannerUrl}" style="pointer-events:none;"></iframe>`
+                : `<img src="${user.bannerUrl}">`)
+          : '';
 
-  if (order.status === 'accepted') {
-    const timerEl = document.getElementById('paymentTimerDisplay');
-    if (timerEl) {
-       const createdAt = new Date(order.createdAt).getTime();
-       const limitMs = order.paymentTime * 60000;
-       const expiresAt = createdAt + limitMs;
-       if (window.orderTimerInterval) clearInterval(window.orderTimerInterval);
-       window.orderTimerInterval = setInterval(() => {
-         const now = Date.now();
-         const diff = expiresAt - now;
-         if (diff <= 0) {
-           clearInterval(window.orderTimerInterval);
-           timerEl.textContent = '00:00';
-           timerEl.style.color = 'var(--red)';
-         } else {
-           const m = Math.floor(diff / 60000).toString().padStart(2, '0');
-           const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
-           timerEl.textContent = `${m}:${s}`;
-         }
-       }, 1000);
-    }
-  }
+        const favBtn = (API.user() && API.user().id !== user.id)
+          ? `<button class="profile-hero-fav" onclick="toggleFavorite(${user.id}, this)">${isFavorite ? '❤️' : '🤍'}</button>`
+          : '';
 
-  let tempReceiptData = null;
-  const fileInput = document.getElementById('receiptFile');
-  if (fileInput) {
-    fileInput.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        document.getElementById('fileName').textContent = `Загрузка...`;
-        try {
-            tempReceiptData = await fileToBase64(file);
-            document.getElementById('fileName').textContent = `✓ Чек прикреплен`;
-            toast('Чек прикреплен!', 'success');
-        } catch(err) { toast('Ошибка чтения файла', 'error'); }
-      }
+        const merchantBadge = user.isMerchant ? `<span class="badge-merchant" style="width:18px;height:18px;" title="Merchant">${ICONS.merchant}</span>` : '';
+        const makerBadge = user.isMaker ? `<span class="badge-maker" style="width:18px;height:18px;" title="Maker">${ICONS.maker}</span>` : '';
+        const proBadge = user.isPro ? `<span class="badge-pro" style="width:18px;height:18px;" title="PRO">${ICONS.pro}</span>` : '';
+
+        c.innerHTML = `
+          <div class="profile-hero">
+            <div class="profile-hero-banner">${bannerInner}</div>
+            <div class="profile-hero-avatar">${avatarSrc}</div>
+            ${favBtn}
+            <div class="profile-hero-info">
+              <div class="name">${user.displayName} ${merchantBadge} ${makerBadge} ${proBadge}</div>
+              <div class="username">@${user.username}</div>
+            </div>
+          </div>
+          <div class="stats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div class="glass-card" style="padding:12px;text-align:center;border-radius:12px;"><div style="font-size:12px;color:var(--dim);">Сделок</div><div style="font-size:16px;font-weight:800;color:var(--txt);">${stats.dealsTotal}</div></div>
+            <div class="glass-card" style="padding:12px;text-align:center;border-radius:12px;"><div style="font-size:12px;color:var(--dim);">Успешных</div><div style="font-size:16px;font-weight:800;color:var(--txt);">${stats.successRate !== null ? stats.successRate + '%' : '—'}</div></div>
+          </div>
+          <div id="publicReviewsList" style="margin-top:16px;">Загрузка отзывов...</div>`;
+        loadPublicReviews(user.id);
+      } catch(e) { c.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     };
-  }
 
-  window.doAction = async function(orderId, action) {
-    if (action === 'cancel' && !await confirmAsync('Отмена', 'Отменить заявку?', 'Да')) return;
-    if (action === 'confirm' && !await confirmAsync('Подтверждение', 'Подтвердить оплату?', 'Да')) return;
-    if (action === 'dispute' && !await confirmAsync('Спор', 'Вы уверены?', 'Да')) return;
-    if (action === 'decline' && !await confirmAsync('Отклонение', 'Отклонить заявку?', 'Да')) return;
-    
-    try { 
-      const body = {};
-      if (action === 'paid' && tempReceiptData) body.receipt_data = tempReceiptData;
+    window.toggleFavorite = async function(targetId, btnEl) {
+      if (!API.user()) { document.getElementById('authModal')?.classList.add('active'); return; }
+      try {
+        const res = await API.req('POST', '/users/' + targetId + '/favorite');
+        if (res.isFavorite) { btnEl.innerHTML = '❤️'; toast('В избранном', 'success'); }
+        else { btnEl.innerHTML = '🤍'; toast('Удалено', 'info'); }
+      } catch(e) { toast('Ошибка', 'error'); }
+    };
 
-      await API.req('POST', `/orders/${orderId}/${action}`, body); 
-      toast('Статус обновлён', 'success'); 
-      
-      const msgMap = {
-         accept: 'Заявка принята',
-         decline: 'Заявка отклонена',
-         paid: 'Оплата отправлена',
-         confirm: 'Сделка завершена',
-         cancel: 'Заявка отменена',
-         dispute: 'Спор открыт'
-      };
-      
-      addNotification(`Ордер #${order.publicId}: ${msgMap[action] || 'Действие'}`, 'info');
-      screenCache.orders = false; screenCache.wallet = false;
-      openOrderPage(orderId); 
+    async function loadPublicReviews(userId) {
+      const list = document.getElementById('publicReviewsList'); if (!list) return;
+      try {
+        const data = await API.req('GET', '/reviews/user/' + userId);
+        const items = data.items || [];
+        list.innerHTML = `<div style="font-size:14px;font-weight:800;margin-bottom:8px;color:var(--txt);text-transform:uppercase;">Отзывы</div>` +
+          (items.length ? items.map(r => `<div class="glass-card" style="padding:12px;margin-bottom:8px;border-radius:10px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><strong style="font-size:14px;color:var(--txt);">${r.author}</strong><span style="color:var(--txt);font-size:14px;">${'★'.repeat(r.rating)}</span></div><p style="font-size:13px;color:var(--dim);font-weight:500;">${r.comment || 'Без комментария'}</p></div>`).join('') : '<div class="empty-state" style="padding:10px;">Отзывов пока нет</div>');
+      } catch(e) { list.innerHTML = ''; }
     }
-    catch (e) { toast(e.message, 'error'); }
-  };
-}
 
-window.resolveDispute = async function(orderId, resolution) {
-  if (!await confirmAsync('Решение спора', 'Вы уверены?', 'Да')) return;
-  try { await API.req('POST', `/orders/${orderId}/resolve`, { resolution }); toast('Спор решен', 'success'); openOrderPage(orderId); }
-  catch (e) { toast(e.message, 'error'); }
-};
+    document.querySelectorAll('#f-payments .pay-chip').forEach(c => { c.onclick = () => c.classList.toggle('active'); });
+    document.querySelectorAll('#f-time .pay-chip').forEach(c => { c.onclick = () => { document.querySelectorAll('#f-time .pay-chip').forEach(x => x.classList.remove('active')); c.classList.add('active'); }; });
+    document.querySelectorAll('#f-asset-select .icon-chip').forEach(c => {
+      c.onclick = () => {
+        document.querySelectorAll('#f-asset-select .icon-chip').forEach(x => x.classList.remove('active'));
+        c.classList.add('active');
+      };
+    });
+
+    document.querySelectorAll('#f-side .seg-btn').forEach(b => {
+      b.onclick = () => {
+        if (b.disabled) return;
+        document.querySelectorAll('#f-side .seg-btn').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+      };
+    });
+
+    document.querySelectorAll('#f-face .seg-btn').forEach(b => {
+      b.onclick = () => {
+        document.querySelectorAll('#f-face .seg-btn').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+      };
+    });
+
+    document.getElementById('createBtn')?.addEventListener('click', async () => {
+      const errEl = document.getElementById('createError'); if (errEl) errEl.textContent = '';
+      const u = API.user();
+      if (!u) { if (errEl) errEl.textContent = 'Войдите в аккаунт'; setTimeout(() => document.getElementById('authModal')?.classList.add('active'), 500); return; }
+
+      const payments = [...document.querySelectorAll('#f-payments .pay-chip.active')].map(c => c.dataset.val);
+      if (!payments.length) { if (errEl) errEl.textContent = 'Выберите способ оплаты'; return; }
+
+      const price = document.getElementById('f-price')?.value;
+      const amount = document.getElementById('f-amount')?.value;
+      const min = document.getElementById('f-min')?.value;
+      const max = document.getElementById('f-max')?.value;
+      if (!price || !amount || !min || !max) { if (errEl) errEl.textContent = 'Заполните поля'; return; }
+
+      const payment_time = document.querySelector('#f-time .pay-chip.active')?.dataset.val || 30;
+      const side = document.querySelector('#f-side .seg-btn.active')?.dataset.val;
+      const asset = document.querySelector('#f-asset-select .icon-chip.active')?.dataset.val;
+
+      if (side === 'buy') {
+         const isStaff = ['admin', 'owner', 'deputy'].includes(u.role);
+         if (!isStaff && !u.isMaker && !u.isMerchant) {
+             toast('Только мейкеры и мерчанты могут создавать объявления о покупке', 'error');
+             return;
+         }
+         if (u.balanceRub < Number(max)) {
+             toast(`Недостаточно RUB на балансе (Нужно: ${fmt(max)} ₽)`, 'error');
+             return;
+         }
+      } else if (side === 'sell') {
+         if (u.balanceUsdt < Number(amount)) {
+             toast(`Недостаточно ${asset} на балансе (Нужно: ${fmtDec(amount, 2)})`, 'error');
+             return;
+         }
+      }
+
+      const btn = document.getElementById('createBtn'); btn.disabled = true; btn.textContent = '...';
+
+      try {
+        await API.req('POST', '/ads', {
+          side: side,
+          face_type: document.querySelector('#f-face .seg-btn.active')?.dataset.val,
+          asset: asset, price: price, amount_total: amount,
+          min_rub: min, max_rub: max,
+          payment_methods: payments, terms: document.getElementById('f-terms')?.value || '',
+          payment_time: Number(payment_time)
+        });
+        toast('Объявление опубликовано!', 'success');
+        addNotification('Вы создали новое объявление.', 'success');
+        screenCache.market = false; screenCache.home = false;
+        show('market');
+        setTimeout(() => document.querySelector('.mm-tab[data-mtab="ads"]')?.click(), 100);
+      } catch (err) {
+        const map = { max_exceeds_total: 'Макс. лимит больше объема', min_gt_max: 'Мин больше макс', bad_amounts: 'Проверьте числа' };
+        if (errEl) errEl.textContent = map[err.code] || err.message;
+      } finally { btn.disabled = false; btn.textContent = 'Опубликовать'; }
+    });
+
+    async function loadOrders(filter) {
+      const list = document.getElementById('ordersList'); if (!list) return;
+      if (!API.user()) { list.innerHTML = '<div class="empty-state">Войдите</div>'; return; }
+      try {
+        const { items } = await API.req('GET', '/orders/my?status=' + filter);
+        const sc = { pending: 'var(--yellow)', accepted: 'var(--blue)', paid: 'var(--grn)', completed: 'var(--grn)', cancelled: 'var(--red)', declined: 'var(--red)', dispute: 'var(--gold)' };
+        list.innerHTML = items.length ? items.map(o => `
+          <div class="ad-card" style="cursor:pointer;border-left:4px solid ${sc[o.status] || 'var(--dim)'}; padding:16px; margin-bottom:12px;" data-order-id="${o.id}">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+              <strong style="font-family:Inter,monospace;font-size:15px;color:var(--txt);">#${o.publicId}</strong>
+              <span style="color:${sc[o.status] || 'var(--txt)'};font-size:12px;font-weight:800">${o.statusLabel}</span>
+            </div>
+            <div class="ad-body">
+              <div><div style="font-size:12px;color:var(--dim);">Сумма</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmtDec(o.amountRub, 2)} ₽</div></div>
+              <div><div style="font-size:12px;color:var(--dim);">Актив</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmtDec(o.amountAsset, 2)} ${o.asset}</div></div>
+            </div>
+            <div style="font-size:12px;color:var(--dim);display:flex;justify-content:space-between;font-weight:600;margin-top:12px;">
+              <span>${new Date(o.createdAt).toLocaleString('ru-RU')}</span>
+              <span>${o.buyer.displayName} ↔ ${o.seller.displayName}</span>
+            </div>
+          </div>`).join('') : '<div class="empty-state">Ордеров нет</div>';
+        list.querySelectorAll('[data-order-id]').forEach(el => { el.onclick = () => openOrderPage(+el.dataset.orderId); });
+      } catch(e) { list.innerHTML = '<div class="empty-state">Ошибка</div>'; }
+    }
+
+    document.querySelectorAll('#ordersFilter .tab').forEach(c => {
+      c.onclick = () => {
+        document.querySelectorAll('#ordersFilter .tab').forEach(x => x.classList.remove('active'));
+        c.classList.add('active');
+        loadOrders(c.dataset.val);
+      };
+    });
+
+    async function openOrderPage(orderId) {
+      if (!API.user()) { document.getElementById('authModal')?.classList.add('active'); return; }
+      previousScreen = 'market'; show('order');
+      const container = document.getElementById('orderDetailContent'); if (!container) return;
+      container.innerHTML = '<div class="empty-state">Загрузка...</div>';
+      try {
+        const { order, history, terms } = await API.req('GET', '/orders/' + orderId);
+        renderOrderPage(order, history, terms);
+
+        if (window.orderPollInterval) clearInterval(window.orderPollInterval);
+        window.orderPollInterval = setInterval(async () => {
+           try {
+               const freshData = await API.req('GET', '/orders/' + orderId);
+               if (freshData.order.status !== order.status) {
+                   renderOrderPage(freshData.order, freshData.history, freshData.terms);
+                   toast(`Статус обновлен: ${freshData.order.statusLabel}`, 'info');
+                   addNotification(`Статус ордера #${freshData.order.publicId} изменился на: ${freshData.order.statusLabel}`, 'info');
+               }
+           } catch(e) {}
+        }, 5000);
+
+      } catch (e) { container.innerHTML = '<div class="empty-state">Ошибка</div>'; }
+    }
+
+    window.openAdminOrder = function(orderId) { previousScreen = 'admin'; openOrderPage(orderId); };
+
+    window.viewReceipt = function(data) {
+        if (!data) return toast('Чек не прикреплен', 'error');
+        const content = document.getElementById('receiptViewContent');
+        content.innerHTML = `<img src="${data}" style="max-width:100%; max-height:80vh; border-radius:8px;">`;
+        document.getElementById('receiptViewModal').classList.add('active');
+    };
+
+    function renderOrderPage(order, history, terms) {
+      const u = API.user(), isBuyer = order.buyer_id === u.id, isSeller = order.seller_id === u.id, isAdmin = ['admin', 'owner', 'deputy'].includes(u.role);
+      const isAdCreator = u.id === order.adUserId;
+
+      const sc = { pending: '#FFD60A', accepted: '#3b82f6', paid: '#22c55e', completed: '#22c55e', cancelled: '#ef4444', declined: '#ef4444', dispute: '#D4AF37' };
+      let progress = 20;
+      if (order.status === 'accepted') progress = 40;
+      if (order.status === 'paid') progress = 70;
+      if (order.status === 'completed') progress = 100;
+      if (order.status === 'cancelled' || order.status === 'dispute' || order.status === 'declined') progress = 0;
+
+      const counterparty = isBuyer ? order.seller : order.buyer;
+      const counterpartyRole = isBuyer ? 'Продавец' : 'Покупатель';
+
+      let actionsHtml = '';
+
+      if (order.status === 'pending') {
+        if (isAdCreator) {
+          actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><button class="btn btn-primary btn-sm" onclick="doAction(${order.id},'accept')" style="background:var(--grn);color:#fff;border:none;height:44px;font-size:14px;">Принять</button><button class="btn btn-ghost btn-sm" style="color:var(--red);border:1px solid var(--red);height:44px;font-size:14px;" onclick="doAction(${order.id},'decline')">Отклонить</button></div>`;
+        } else {
+          actionsHtml = `<div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:14px;margin-bottom:10px;font-weight:600;">Ожидайте подтверждения</div>
+          <button class="btn btn-ghost btn-block btn-sm" style="color:var(--red);height:44px;font-size:14px;" onclick="doAction(${order.id},'cancel')">Отменить</button>`;
+        }
+      }
+      else if (order.status === 'accepted') {
+        if (isBuyer) {
+          actionsHtml = `
+          <div style="background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:12px;padding:16px;text-align:center;margin-bottom:12px;">
+            <div style="font-size:13px;color:var(--dim);margin-bottom:8px;">Время на оплату:</div>
+            <div id="paymentTimerDisplay" style="font-size:24px;font-weight:900;color:var(--yellow);margin-bottom:12px;">--:--</div>
+            <input type="file" id="receiptFile" style="display:none;" accept="image/*,application/pdf">
+            <button class="btn btn-primary btn-sm" onclick="document.getElementById('receiptFile').click()" style="margin-bottom:8px;height:36px;font-size:13px;">Прикрепить чек</button>
+            <div id="fileName" style="font-size:12px;color:var(--grn);margin-bottom:12px;font-weight:600;"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+               <button class="btn btn-primary btn-sm" onclick="doAction(${order.id},'paid')" style="height:44px;font-size:14px;">Я оплатил</button>
+               <button class="btn btn-ghost btn-sm" style="color:var(--red);height:44px;font-size:14px;" onclick="doAction(${order.id},'cancel')">Отменить</button>
+            </div>
+          </div>`;
+        } else {
+          actionsHtml = `<div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:14px;margin-bottom:10px;font-weight:600;">Ожидайте оплаты</div><button class="btn btn-ghost btn-block btn-sm" style="color:var(--gold);height:44px;font-size:14px;" onclick="doAction(${order.id},'dispute')">Спор</button>`;
+        }
+      }
+      else if (order.status === 'paid') {
+        if (isSeller) {
+          actionsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><button class="btn btn-primary btn-sm" onclick="doAction(${order.id},'confirm')" style="height:44px;font-size:14px;">Оплата получена</button><button class="btn btn-ghost btn-sm" style="color:var(--red);height:44px;font-size:14px;" onclick="doAction(${order.id},'dispute')">Спор</button></div>`;
+        } else {
+          actionsHtml = `<div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;padding:14px;text-align:center;color:var(--dim);font-size:14px;margin-bottom:10px;font-weight:600;">Ожидайте подтверждения</div><button class="btn btn-ghost btn-block btn-sm" style="color:var(--red);height:44px;font-size:14px;" onclick="doAction(${order.id},'dispute')">Спор</button>`;
+        }
+      }
+      else if (order.status === 'completed') {
+        actionsHtml = `<div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:14px;text-align:center;color:var(--grn);font-size:15px;font-weight:800;margin-bottom:12px">✓ Сделка завершена</div><button class="btn btn-primary btn-block btn-sm" onclick="openReview(${order.id})" style="margin-bottom:16px;height:44px;font-size:14px;">Оставить отзыв</button>`;
+      }
+      else if (order.status === 'cancelled' || order.status === 'declined') {
+        actionsHtml = `<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:14px;text-align:center;color:var(--red);font-size:15px;margin-bottom:16px;font-weight:800;">Заявка ${order.status === 'declined' ? 'отклонена' : 'отменена'}</div>`;
+      }
+      else if (order.status === 'dispute') {
+        if (isAdmin) actionsHtml = `<div style="background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:14px;text-align:center;color:var(--gold);font-size:15px;margin-bottom:12px;font-weight:800;">Решите спор:</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px"><button class="btn btn-primary btn-sm" onclick="resolveDispute(${order.id}, 'completed')" style="height:44px;font-size:14px;">Завершить</button><button class="btn btn-ghost btn-sm" style="color:var(--red);height:44px;font-size:14px;" onclick="resolveDispute(${order.id}, 'cancelled')">Отменить</button></div>`;
+        else actionsHtml = `<div style="background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:14px;text-align:center;color:var(--gold);font-size:15px;margin-bottom:16px;font-weight:800;">Спор рассматривается</div>`;
+      }
+
+      let adminReceiptHtml = '';
+      if ((isAdmin || isSeller) && ['paid', 'dispute'].includes(order.status) && order.receipt_data) {
+        adminReceiptHtml = `
+        <div class="glass-card" style="padding:14px;margin-bottom:16px;border:1px dashed var(--primary);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:12px;color:var(--dim);font-weight:700;margin-bottom:4px;">Чек об оплате</div>
+              <div style="font-size:14px;font-weight:800;color:var(--txt);">Прикреплен</div>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="viewReceipt('${order.receipt_data}')" style="height:32px;font-size:12px;">Посмотреть</button>
+          </div>
+        </div>`;
+      }
+
+      const timelineHtml = (history || []).map(h => `<div style="display:flex;gap:12px;padding:8px 0"><div style="width:12px;height:12px;border-radius:50%;background:var(--txt);flex-shrink:0;margin-top:4px"></div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--txt);">${h.note || h.status}</div><div style="font-size:12px;color:var(--dim);font-weight:600;">${new Date(h.at).toLocaleString('ru-RU')}</div></div></div>`).join('');
+
+      const container = document.getElementById('orderDetailContent');
+      container.innerHTML = `
+        <div class="glass-card" style="padding: 20px; margin-bottom: 16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+             <div style="font-size:13px;color:var(--dim);font-family:monospace;font-weight:700;">#${order.public_id}</div>
+             <div style="background:var(--glass-bg);color:${sc[order.status]};font-size:13px;font-weight:800;padding:4px 10px;border-radius:6px">${order.statusLabel}</div>
+          </div>
+          <h2 style="font-size:22px;font-weight:900;margin-bottom:6px;color:var(--txt)">${isBuyer ? 'Покупка ' : 'Продажа '}${order.asset}</h2>
+          <div style="font-size:32px;font-weight:900;color:var(--txt);font-variant-numeric:tabular-nums;">${fmtDec(order.amount_rub, 2)}<span style="font-size:16px;color:var(--dim);font-weight:600;margin-left:4px">₽</span></div>
+          <div style="width:100%;height:6px;background:var(--glass-border);border-radius:3px;margin-top:16px;overflow:hidden"><div style="height:100%;width:${progress}%;background:${sc[order.status]};transition:0.3s"></div></div>
+        </div>
+
+        <div class="glass-card" style="padding:14px;margin-bottom:16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;" onclick="openPublicProfile(${counterparty.id})">
+          <div style="display:flex;align-items:center;gap:12px;">
+             <div class="avatar" style="width:40px;height:40px;font-size:14px;">${counterparty.avatarUrl ? `<img src="${counterparty.avatarUrl}">` : counterparty.displayName[0].toUpperCase()}</div>
+             <div>
+               <div style="font-size:12px;color:var(--dim);font-weight:600;">${counterpartyRole}</div>
+               <div style="font-size:15px;font-weight:800;color:var(--txt);">${counterparty.displayName}</div>
+             </div>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="border:1px solid var(--glass-border);height:32px;font-size:12px;">Профиль</button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+          <div class="glass-card" style="padding:14px;"><div style="font-size:12px;color:var(--dim);font-weight:700;margin-bottom:4px;">Количество</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmtDec(order.amount_asset, 2)} ${order.asset}</div></div>
+          <div class="glass-card" style="padding:14px;"><div style="font-size:12px;color:var(--dim);font-weight:700;margin-bottom:4px;">Курс</div><div style="font-size:15px;font-weight:800;color:var(--txt);">${fmtDec(order.price, 2)} ₽</div></div>
+        </div>
+
+        <div class="glass-card" style="padding:16px;margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+             <div style="font-size: 12px; font-weight: 800; color: var(--dim); text-transform: uppercase;">Время на оплату</div>
+             <div style="font-size: 13px; font-weight: 800; color: var(--yellow);">${order.paymentTime} мин</div>
+          </div>
+          <div style="font-size: 12px; font-weight: 800; color: var(--dim); text-transform: uppercase; margin-bottom: 6px;">Условия</div>
+          <div style="font-size: 14px; color: var(--txt); line-height: 1.4; font-weight: 500;">${terms || 'Стандартные условия.'}</div>
+        </div>
+
+        ${adminReceiptHtml}
+        ${actionsHtml}
+
+        <button style="width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;padding:14px;margin-bottom:16px;color:var(--txt);font-size:14px; cursor:pointer;" onclick="openChatModal(${order.id})">
+          <div style="display:flex;align-items:center;gap:12px"><div class="avatar" style="width:32px;height:32px;font-size:16px">💬</div><div style="text-align:left;"><div style="font-weight:800; color:var(--txt);">Чат по сделке</div></div></div>
+        </button>
+        <div class="glass-card" style="padding:16px"><div style="font-size:13px;font-weight:800;margin-bottom:12px;color:var(--dim);text-transform:uppercase">История</div>${timelineHtml}</div>`;
+
+      if (order.status === 'accepted') {
+        const timerEl = document.getElementById('paymentTimerDisplay');
+        if (timerEl) {
+           const createdAt = new Date(order.createdAt).getTime();
+           const limitMs = order.paymentTime * 60000;
+           const expiresAt = createdAt + limitMs;
+           if (window.orderTimerInterval) clearInterval(window.orderTimerInterval);
+           window.orderTimerInterval = setInterval(() => {
+             const now = Date.now();
+             const diff = expiresAt - now;
+             if (diff <= 0) {
+               clearInterval(window.orderTimerInterval);
+               timerEl.textContent = '00:00';
+               timerEl.style.color = 'var(--red)';
+             } else {
+               const m = Math.floor(diff / 60000).toString().padStart(2, '0');
+               const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+               timerEl.textContent = `${m}:${s}`;
+             }
+           }, 1000);
+        }
+      }
+
+      let tempReceiptData = null;
+      const fileInput = document.getElementById('receiptFile');
+      if (fileInput) {
+        fileInput.onchange = async (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            document.getElementById('fileName').textContent = `Загрузка...`;
+            try {
+                tempReceiptData = await fileToBase64(file);
+                document.getElementById('fileName').textContent = `✓ Чек прикреплен`;
+                toast('Чек прикреплен!', 'success');
+            } catch(err) { toast('Ошибка чтения файла', 'error'); }
+          }
+        };
+      }
+
+      window.doAction = async function(orderId, action) {
+        if (action === 'cancel' && !await confirmAsync('Отмена', 'Отменить заявку?', 'Да')) return;
+        if (action === 'confirm' && !await confirmAsync('Подтверждение', 'Подтвердить оплату?', 'Да')) return;
+        if (action === 'dispute' && !await confirmAsync('Спор', 'Вы уверены?', 'Да')) return;
+        if (action === 'decline' && !await confirmAsync('Отклонение', 'Отклонить заявку?', 'Да')) return;
+
+        try {
+          const body = {};
+          if (action === 'paid' && tempReceiptData) body.receipt_data = tempReceiptData;
+
+          await API.req('POST', `/orders/${orderId}/${action}`, body);
+          toast('Статус обновлён', 'success');
+
+          const msgMap = {
+             accept: 'Заявка принята',
+             decline: 'Заявка отклонена',
+             paid: 'Оплата отправлена',
+             confirm: 'Сделка завершена',
+             cancel: 'Заявка отменена',
+             dispute: 'Спор открыт'
+          };
+
+          addNotification(`Ордер #${order.publicId}: ${msgMap[action] || 'Действие'}`, 'info');
+          screenCache.orders = false; screenCache.wallet = false;
+          openOrderPage(orderId);
+        }
+        catch (e) { toast(e.message, 'error'); }
+      };
+    }
+
+    window.resolveDispute = async function(orderId, resolution) {
+      if (!await confirmAsync('Решение спора', 'Вы уверены?', 'Да')) return;
+      try { await API.req('POST', `/orders/${orderId}/resolve`, { resolution }); toast('Спор решен', 'success'); openOrderPage(orderId); }
+      catch (e) { toast(e.message, 'error'); }
+    };
+
     let currentChatOrderId = null, chatPollTimer = null;
     window.openChatModal = async function(orderId) {
       currentChatOrderId = orderId;
@@ -1238,7 +1243,7 @@ window.resolveDispute = async function(orderId, resolution) {
           const div = document.createElement('div');
           div.className = 'msg' + (m.isMine ? ' me' : '');
           div.dataset.msgId = m.id;
-          
+
           let mediaHtml = '';
           if (m.media_data && m.media_type) {
               if (m.media_type.startsWith('image/')) {
@@ -1246,7 +1251,7 @@ window.resolveDispute = async function(orderId, resolution) {
               } else if (m.media_type.startsWith('video/')) {
                   mediaHtml = `<video src="${m.media_data}" controls style="max-width:100%; border-radius:8px; margin-bottom:6px;"></video>`;
               } else if (m.media_type === 'application/pdf') {
-                  mediaHtml = `<a href="${m.media_data}" download="document.pdf" style="display:inline-block; padding:10px; background:var(--btn-glass-bg); color:var(--txt); border-radius:10px; text-decoration:none; font-size:13px; margin-bottom:6px;">📄 Скачать PDF</a>`;
+                  mediaHtml = `<a href="${m.media_data}" download="document.pdf" style="display:inline-block; padding:10px; background:var(--btn-bg); color:var(--txt); border-radius:10px; text-decoration:none; font-size:13px; margin-bottom:6px;">📄 Скачать PDF</a>`;
               }
           }
 
@@ -1266,11 +1271,11 @@ window.resolveDispute = async function(orderId, resolution) {
       document.getElementById('reviewModal')?.classList.add('active');
     };
     function updateStars() { document.querySelectorAll('#ratingStars .rating-star').forEach(s => s.classList.toggle('active', +s.dataset.r <= currentRating)); }
-    document.querySelectorAll('#ratingStars .rating-star').forEach(s => { 
-      s.onclick = () => { 
-        currentRating = +s.dataset.r; updateStars(); 
+    document.querySelectorAll('#ratingStars .rating-star').forEach(s => {
+      s.onclick = () => {
+        currentRating = +s.dataset.r; updateStars();
         document.querySelectorAll('#ratingStars .rating-star').forEach(el => el.style.color = +el.dataset.r <= currentRating ? '#FFD60A' : 'var(--dim)');
-      }; 
+      };
     });
     document.getElementById('reviewSubmitBtn')?.addEventListener('click', async () => {
       const btn = document.getElementById('reviewSubmitBtn'); btn.disabled = true;
@@ -1281,17 +1286,17 @@ window.resolveDispute = async function(orderId, resolution) {
       finally { btn.disabled = false; }
     });
 
-    let profileTab = 'history'; 
+    let profileTab = 'history';
     async function loadProfile() {
       const u = API.user();
       const content = document.getElementById('profileContent');
       if (!content) return;
       if (!u) { content.innerHTML = '<div class="empty-state"><button class="btn btn-primary btn-sm" onclick="document.getElementById(\'authModal\').classList.add(\'active\')">Войти</button></div>'; return; }
-      
+
       try {
         const { user, stats } = await API.req('GET', '/users/me');
         localStorage.setItem('vexo_user', JSON.stringify(user));
-        
+
         const proBadge = user.isPro ? `<span class="badge-pro" title="PRO">${ICONS.pro}</span>` : '';
         const merchantBadge = user.isMerchant ? `<span class="badge-merchant" title="Merchant">${ICONS.merchant}</span>` : '';
         const makerBadge = user.isMaker ? `<span class="badge-maker" title="Maker">${ICONS.maker}</span>` : '';
@@ -1303,32 +1308,30 @@ window.resolveDispute = async function(orderId, resolution) {
         if (profileTab === 'history') contentHtml = '<div id="myHistoryList"><div class="empty-state">Загрузка...</div></div>';
         else if (profileTab === 'reviews') contentHtml = '<div id="myReviewsList"><div class="empty-state">Загрузка...</div></div>';
         else if (profileTab === 'requests') contentHtml = '<div id="myRequestsList"><div class="empty-state">Загрузка...</div></div>';
-        
-        let avatarHtml = `<div class="avatar lg">${user.displayName[0].toUpperCase()}</div>`;
-        if (user.avatarUrl) avatarHtml = `<div class="avatar lg"><img src="${user.avatarUrl}" onerror="this.style.display='none'; this.parentElement.innerHTML='${user.displayName[0].toUpperCase()}'"></div>`;
 
-        let bannerHtml = '';
-        if (user.bannerUrl) {
-            bannerHtml = `<div class="profile-banner" style="margin-bottom: 16px;">
-                ${user.bannerUrl.startsWith('data:video') ? `<video src="${user.bannerUrl}" autoplay loop muted playsinline></video>` : 
-                  user.bannerUrl.includes('.pdf') ? `<iframe src="${user.bannerUrl}" style="pointer-events:none;"></iframe>` : 
-                  `<img src="${user.bannerUrl}">`}
-            </div>`;
-        }
+        const avatarSrc = user.avatarUrl
+          ? `<img src="${user.avatarUrl}" onerror="this.style.display='none'; this.parentNode.textContent='${(user.displayName||'?')[0].toUpperCase()}';">`
+          : (user.displayName || '?')[0].toUpperCase();
+
+        const bannerInner = user.bannerUrl
+          ? (user.bannerUrl.startsWith('data:video')
+              ? `<video src="${user.bannerUrl}" autoplay loop muted playsinline></video>`
+              : user.bannerUrl.includes('.pdf')
+                ? `<iframe src="${user.bannerUrl}" style="pointer-events:none;"></iframe>`
+                : `<img src="${user.bannerUrl}">`)
+          : '';
 
         content.innerHTML = `
-          ${bannerHtml}
-          <div class="glass-card profile-header-card">
-            <div class="profile-info-left">
-              ${avatarHtml}
-              <div style="flex:1;min-width:0">
-                <h2 class="profile-name-row">${user.displayName} ${merchantBadge} ${makerBadge} ${proBadge}</h2>
-                <div style="font-size:13px;color:var(--dim);font-weight:600;">@${user.username} (ID: ${user.id})</div>
-              </div>
+          <div class="profile-hero">
+            <div class="profile-hero-banner">${bannerInner}</div>
+            <div class="profile-hero-avatar">${avatarSrc}</div>
+            <button class="profile-hero-settings" onclick="openSettings()">⚙️</button>
+            <div class="profile-hero-info">
+              <div class="name">${user.displayName} ${merchantBadge} ${makerBadge} ${proBadge}</div>
+              <div class="username">@${user.username} · ID: ${user.id}</div>
             </div>
-            <button class="profile-settings-btn" onclick="openSettings()">⚙️</button>
           </div>
-          
+
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
             <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;padding:14px;text-align:center;">
               <div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Сделок</div>
@@ -1347,7 +1350,7 @@ window.resolveDispute = async function(orderId, resolution) {
               <div style="font-size:18px;font-weight:800;">${ratingAvgStr}</div>
             </div>
           </div>
-          
+
           <div class="profile-tabs">
             <button class="profile-tab ${profileTab === 'history' ? 'active' : ''}" onclick="switchProfileTab('history')">История</button>
             <button class="profile-tab ${profileTab === 'reviews' ? 'active' : ''}" onclick="switchProfileTab('reviews')">Отзывы</button>
@@ -1380,7 +1383,7 @@ window.resolveDispute = async function(orderId, resolution) {
       if (!API.user()) { list.innerHTML = '<div class="empty-state">Войдите</div>'; return; }
       try {
         const { items } = await API.req('GET', '/ads/my');
-        const activeItems = items.filter(ad => ad.active); 
+        const activeItems = items.filter(ad => ad.active);
 
         list.innerHTML = activeItems.length ? activeItems.map(ad => `
           <div class="glass-card" style="margin-bottom:12px; padding:16px;">
@@ -1420,7 +1423,7 @@ window.resolveDispute = async function(orderId, resolution) {
         document.getElementById('edit-min').value = ad.minRub;
         document.getElementById('edit-max').value = ad.maxRub;
         document.getElementById('edit-terms').value = ad.terms || '';
-        
+
         const payBox = document.getElementById('edit-payments');
         payBox.innerHTML = '';
         const allPayments = ['СБП', 'Тинькофф', 'Сбербанк', 'Альфа-Банк', 'ВТБ', 'Райффайзен'];
@@ -1470,7 +1473,7 @@ window.resolveDispute = async function(orderId, resolution) {
       const list = document.getElementById('myRequestsList'); if (!list) return;
       try {
         const { items } = await API.req('GET', '/requests/my');
-        
+
         const statusMap = {
           pending: { l: 'На рассмотрении', c: 'var(--yellow)' },
           processing: { l: 'В обработке', c: 'var(--blue)' },
@@ -1509,9 +1512,9 @@ window.resolveDispute = async function(orderId, resolution) {
       const details = r.details || {};
       const m = document.getElementById('requestDetailModal');
       const c = document.getElementById('requestDetailContent');
-      
+
       const reqId = r.id + 1000;
-      
+
       const statusMap = {
         pending: { l: 'На рассмотрении', class: 'processing', icon: '⏱' },
         processing: { l: 'В обработке', class: 'processing', icon: '⏳' },
@@ -1525,7 +1528,7 @@ window.resolveDispute = async function(orderId, resolution) {
       let fromCurr = r.currency;
       let toAmount = '—';
       let toCurr = '';
-      let rateVal = details.rate || 90; 
+      let rateVal = details.rate || 90;
 
       if (r.type === 'withdraw_usdt') { toAmount = fmtDec(r.amount * rateVal, 0); toCurr = '₽'; }
       else if (r.type === 'deposit_rub') { toAmount = fmtDec(r.amount / rateVal, 2); toCurr = 'USDT'; }
@@ -1599,7 +1602,7 @@ window.resolveDispute = async function(orderId, resolution) {
           <button class="btn btn-ghost" style="margin-top:8px; height:50px; font-size:15px; border:none !important; color:var(--dim);" onclick="closeModal('requestDetailModal')">Готово</button>
         </div>
       `;
-      
+
       if (r.status === 'processing') {
         let tempReqReceipt = null;
         const fileInput = document.getElementById('reqReceiptFile');
@@ -1613,7 +1616,7 @@ window.resolveDispute = async function(orderId, resolution) {
              }
            };
         }
-        
+
         document.getElementById('confirmReqPayBtn').onclick = async () => {
            if (!tempReqReceipt && !r.receipt_data) return toast('Прикрепите чек', 'error');
            const btn = document.getElementById('confirmReqPayBtn'); btn.disabled = true; btn.textContent = '...';
@@ -1637,24 +1640,48 @@ window.resolveDispute = async function(orderId, resolution) {
       document.getElementById('settingsCurrentPass').value = '';
       document.getElementById('settingsNewPass').value = '';
       document.getElementById('settingsError').textContent = '';
-      
+
       window._tempBanner = u.bannerUrl || null;
+      window._tempAvatar = null;
+
       const bannerStatus = document.getElementById('bannerUploadStatus');
       if (bannerStatus) bannerStatus.textContent = u.bannerUrl ? 'Баннер уже загружен' : '';
+      const avatarStatus = document.getElementById('avatarUploadStatus');
+      if (avatarStatus) avatarStatus.textContent = '';
 
-      document.getElementById('settingsBannerFile').onchange = async (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
-          const status = document.getElementById('bannerUploadStatus');
-          status.textContent = 'Загрузка файла...';
-          try {
-              const base64 = await fileToBase64(file);
-              window._tempBanner = base64;
-              status.textContent = '✓ Баннер выбран (сохранится при нажатии "Сохранить")';
-          } catch (err) {
-              status.textContent = 'Ошибка загрузки файла';
-          }
-      };
+      const bannerInput = document.getElementById('settingsBannerFile');
+      if (bannerInput) {
+        bannerInput.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const status = document.getElementById('bannerUploadStatus');
+            status.textContent = 'Загрузка файла...';
+            try {
+                const base64 = await fileToBase64(file);
+                window._tempBanner = base64;
+                status.textContent = '✓ Баннер выбран (сохранится при нажатии "Сохранить")';
+            } catch (err) {
+                status.textContent = 'Ошибка загрузки файла';
+            }
+        };
+      }
+
+      const avatarInput = document.getElementById('settingsAvatarFile');
+      if (avatarInput) {
+        avatarInput.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const status = document.getElementById('avatarUploadStatus');
+            status.textContent = 'Загрузка файла...';
+            try {
+                const base64 = await fileToBase64(file);
+                window._tempAvatar = base64;
+                status.textContent = '✓ Аватар выбран (сохранится при нажатии "Сохранить")';
+            } catch (err) {
+                status.textContent = 'Ошибка загрузки файла';
+            }
+        };
+      }
 
       try {
         const { user, stats } = await API.req('GET', '/users/me');
@@ -1697,10 +1724,10 @@ window.resolveDispute = async function(orderId, resolution) {
     document.getElementById('settingsSaveBtn')?.addEventListener('click', async () => {
       const btn = document.getElementById('settingsSaveBtn'); btn.disabled = true; btn.textContent = '...';
       try {
-        const payload = { 
-            displayName: document.getElementById('settingsName').value, 
-            avatarUrl: document.getElementById('settingsAvatarUrl').value, 
-            email: document.getElementById('settingsEmail').value
+        const payload = {
+          displayName: document.getElementById('settingsName').value,
+          avatarUrl: window._tempAvatar || document.getElementById('settingsAvatarUrl').value,
+          email: document.getElementById('settingsEmail').value
         };
         if (window._tempBanner) payload.bannerUrl = window._tempBanner;
 
@@ -1708,7 +1735,7 @@ window.resolveDispute = async function(orderId, resolution) {
         const newPass = document.getElementById('settingsNewPass').value;
         if (newPass) { if (!curPass) throw new Error('Введите текущий пароль'); payload.currentPassword = curPass; payload.password = newPass; }
         const { user } = await API.req('PATCH', '/users/me', payload);
-        
+
         localStorage.setItem('vexo_user', JSON.stringify(user));
         closeModal('settingsModal'); toast('Сохранено', 'success'); addNotification('Настройки обновлены.', 'success');
         updateAuthUI(); screenCache.profile = false; loadProfile();
@@ -1723,7 +1750,7 @@ window.resolveDispute = async function(orderId, resolution) {
       currentAd = ad; selectedPay = ad.paymentMethods?.[0] || null; window.currentAd = ad;
       const isBuy = ad.side === 'sell';
       const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
-      
+
       setText('orderTitle', (isBuy ? 'Покупка ' : 'Продажа ') + ad.asset);
       setText('orderUsername', ad.displayName);
       setText('orderUserMeta', (ad.faceType === 'first' ? '1-е лицо' : '3-е лицо') + ' · ★ ' + (ad.ratingAvg || '—'));
@@ -1760,7 +1787,7 @@ window.resolveDispute = async function(orderId, resolution) {
           }
         };
       }
-      
+
       document.getElementById('btnOrderMax').onclick = () => {
         const realMaxRub = Math.min(ad.maxRub, ad.amountLeft * ad.price);
         amountInput.value = realMaxRub.toFixed(2); amountInput.dispatchEvent(new Event('input'));
@@ -1771,18 +1798,18 @@ window.resolveDispute = async function(orderId, resolution) {
       payBox.innerHTML = '';
       (ad.paymentMethods || []).forEach(p => {
         const el = document.createElement('div');
-        el.className = 'pay-chip' + (p === selectedPay ? ' active' : ''); 
+        el.className = 'pay-chip' + (p === selectedPay ? ' active' : '');
         el.innerHTML = `${getPayIcon(p)} ${p}`;
         el.style.display = 'inline-flex'; el.style.alignItems = 'center'; el.style.gap = '4px';
         el.onclick = () => { payBox.querySelectorAll('.pay-chip').forEach(x => x.classList.remove('active')); el.classList.add('active'); selectedPay = p; };
         payBox.appendChild(el);
       });
-      
+
       const btn = document.getElementById('orderSubmit');
       btn.className = 'btn ' + (isBuy ? 'btn-buy' : 'btn-sell');
       btn.textContent = isBuy ? 'Купить' : 'Продать';
       btn.disabled = false; btn.style.opacity = '1'; btn.onclick = submitOrder;
-      
+
       let timeLeft = 60; const timerEl = document.getElementById('priceTimer');
       if (timerEl) timerEl.textContent = timeLeft + 's';
       if (priceTimerInterval) clearInterval(priceTimerInterval);
@@ -1811,7 +1838,7 @@ window.resolveDispute = async function(orderId, resolution) {
       const realMaxRub = Math.min(currentAd.maxRub, currentAd.amountLeft * currentAd.price);
       if (rub < currentAd.minRub) { if (errEl) errEl.textContent = 'Минимум ' + fmt(currentAd.minRub) + ' ₽'; return; }
       if (rub > realMaxRub) { if (errEl) errEl.textContent = 'Максимум ' + fmt(realMaxRub) + ' ₽'; return; }
-      
+
       const btn = document.getElementById('orderSubmit'); btn.disabled = true; btn.textContent = '...';
       try {
         const order = await API.req('POST', '/orders', { ad_id: currentAd.id, amount_rub: rub, payment_method: selectedPay });
@@ -1827,13 +1854,13 @@ window.resolveDispute = async function(orderId, resolution) {
 
     let adminTab = 'users';
     let currentAdminUserId = null;
-    let allAdminUsers = []; 
+    let allAdminUsers = [];
     let allRequisites = [];
 
     async function loadAdmin() {
       const u = API.user();
       if (!u || !['admin', 'owner', 'deputy'].includes(u.role)) return;
-      
+
       const content = document.getElementById('adminContent');
       const searchInput = document.getElementById('adminUserSearch');
       if (!content) return;
@@ -1860,7 +1887,7 @@ window.resolveDispute = async function(orderId, resolution) {
             `).join('');
           };
           renderUsers(searchInput.value); searchInput.oninput = () => renderUsers(searchInput.value);
-        } 
+        }
         else if (adminTab === 'disputes') {
           searchInput.style.display = 'none'; content.innerHTML = 'Загрузка...';
           const { items } = await API.req('GET', '/admin/orders');
@@ -1872,8 +1899,8 @@ window.resolveDispute = async function(orderId, resolution) {
                 <span style="color:var(--txt);font-size:12px;font-weight:800">${o.statusLabel}</span>
               </div>
               <div class="ad-body">
-                <div><div class="ad-lbl" style="font-size:12px;color:var(--dim);">Сумма</div><div class="ad-val" style="font-size:15px;font-weight:800;">${fmtDec(o.amountRub, 2)} ₽</div></div>
-                <div><div class="ad-lbl" style="font-size:12px;color:var(--dim);">Актив</div><div class="ad-val" style="font-size:15px;font-weight:800;">${fmtDec(o.amountAsset, 2)} ${o.asset}</div></div>
+                <div><div style="font-size:12px;color:var(--dim);">Сумма</div><div style="font-size:15px;font-weight:800;">${fmtDec(o.amountRub, 2)} ₽</div></div>
+                <div><div style="font-size:12px;color:var(--dim);">Актив</div><div style="font-size:15px;font-weight:800;">${fmtDec(o.amountAsset, 2)} ${o.asset}</div></div>
               </div>
             </div>
           `).join('');
@@ -1892,16 +1919,14 @@ window.resolveDispute = async function(orderId, resolution) {
               cancelled: { l: 'Отменено', c: 'var(--dim)' }
             };
             const st = statusMap[req.status] || { l: req.status, c: 'var(--txt)' };
-            
+
             let typeLabel = req.type;
             if (req.type === 'exchange') typeLabel = 'Обмен';
             if (req.type === 'deposit_rub') typeLabel = 'Деп RUB';
             if (req.type === 'withdraw_rub') typeLabel = 'Выв RUB';
             if (req.type === 'deposit_usdt') typeLabel = 'Деп USDT';
             if (req.type === 'withdraw_usdt') typeLabel = 'Выв USDT';
-            
-            const details = req.details || {};
-            
+
             return `
             <div class="glass-card" style="padding:14px; margin-bottom:12px; border-left:4px solid ${st.c};">
               <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
@@ -1910,7 +1935,6 @@ window.resolveDispute = async function(orderId, resolution) {
               </div>
               <div style="font-size:13px; color:var(--dim); margin-bottom:6px;">@${req.username}</div>
               ${req.amount ? `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;"><div style="font-size:12px; color:var(--dim);">Сумма:</div><div style="font-size:15px; font-weight:800; color:var(--txt);">${fmtDec(req.amount, 2)} ${req.currency}</div></div>` : ''}
-              
               <button class="btn btn-primary btn-block btn-sm" style="margin-top:8px; height:36px; font-size:12px;" onclick="openAssignRequisite(${req.id}, ${req.amount}, '${req.currency}')">Обработать / Назначить</button>
             </div>
           `}).join('');
@@ -1944,7 +1968,7 @@ window.resolveDispute = async function(orderId, resolution) {
       try {
         const { items } = await API.req('GET', '/admin/requisites');
         allRequisites = items;
-        
+
         list.innerHTML = items.length ? items.map(r => `
           <div class="glass-card" style="padding:16px; margin-bottom:12px; opacity: ${r.active ? 1 : 0.5}; transition: 0.2s;">
             <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
@@ -1960,8 +1984,8 @@ window.resolveDispute = async function(orderId, resolution) {
             <div style="font-size:12px; color:var(--dim); display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-bottom:12px;">
               <div>Лимит: ${fmt(r.min_limit)} - ${fmt(r.max_limit)}</div>
               <div>Оборот: ${fmt(r.turnover)} ₽</div>
-              <div>Депозиты: ${r.stats_dep_count || 0} / ${r.total_dep_count || 0}</div>
-              <div>Выводы: ${r.stats_wd_count || 0} / ${r.total_wd_count || 0}</div>
+              <div>Депозиты: ${r.total_dep_count || 0}</div>
+              <div>Выводы: ${r.total_wd_count || 0}</div>
             </div>
             <div style="display:flex; gap:8px;">
                <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="openRequisiteModal(${r.id})">Изменить</button>
@@ -1995,7 +2019,7 @@ window.resolveDispute = async function(orderId, resolution) {
       document.getElementById('req-turnover').value = r?.turnover || '';
       document.getElementById('req-active').checked = r ? r.active : true;
       document.getElementById('req-error').textContent = '';
-      
+
       document.getElementById('req-save-btn').onclick = async () => {
         const btn = document.getElementById('req-save-btn'); btn.disabled = true; btn.textContent = '...';
         const payload = {
@@ -2011,45 +2035,43 @@ window.resolveDispute = async function(orderId, resolution) {
           turnover: Number(document.getElementById('req-turnover').value) || 0,
           active: document.getElementById('req-active').checked
         };
-        
-        if(!payload.name || !payload.value) { 
-            document.getElementById('req-error').textContent = 'Заполните название и реквизит'; 
-            btn.disabled = false; btn.textContent = 'Сохранить'; return; 
+
+        if(!payload.name || !payload.value) {
+            document.getElementById('req-error').textContent = 'Заполните название и реквизит';
+            btn.disabled = false; btn.textContent = 'Сохранить'; return;
         }
 
         try {
           if (id) await API.req('PATCH', '/admin/requisites/' + id, payload);
           else await API.req('POST', '/admin/requisites', payload);
-          
-          toast('Сохранено', 'success'); 
-          closeModal('requisiteModal'); 
+
+          toast('Сохранено', 'success');
+          closeModal('requisiteModal');
           loadAdminRequisites();
-        } catch(err) { 
-            document.getElementById('req-error').textContent = err.message || 'Ошибка сервера'; 
+        } catch(err) {
+            document.getElementById('req-error').textContent = err.message || 'Ошибка сервера';
         }
         finally { btn.disabled = false; btn.textContent = 'Сохранить'; }
       };
-      
+
       document.getElementById('requisiteModal').classList.add('active');
     };
 
     window.deleteRequisite = async function(id) {
       if (!await confirmAsync('Удаление', 'Удалить реквизит?', 'Удалить')) return;
-      try { 
+      try {
           await API.req('DELETE', '/admin/requisites/' + id);
-          toast('Удалено', 'success'); 
-          loadAdminRequisites(); 
+          toast('Удалено', 'success');
+          loadAdminRequisites();
       }
       catch(e) { toast(e.message || 'Ошибка', 'error'); }
     };
 
-    // Назначение реквизита для заявки
     window.openAssignRequisite = async function(reqId, amount, currency) {
       document.getElementById('assign-req-id').textContent = reqId + 1000;
       const select = document.getElementById('assign-requisite-select');
       select.innerHTML = '<option value="">Выберите...</option>';
-      
-      // Фильтруем активные реквизиты, подходящие по лимитам
+
       const suitable = allRequisites.filter(r => r.active && amount >= r.min_limit && amount <= r.max_limit);
       suitable.forEach(r => {
          const opt = document.createElement('option');
@@ -2064,11 +2086,11 @@ window.resolveDispute = async function(orderId, resolution) {
 
       document.getElementById('assign-comment').value = '';
       document.getElementById('assign-status').value = 'processing';
-      
+
       document.getElementById('assign-save-btn').onclick = async () => {
         const reqToFind = allRequisites.find(r => r.id == select.value);
         if (!select.value || !reqToFind) return toast('Выберите реквизит', 'error');
-        
+
         const btn = document.getElementById('assign-save-btn'); btn.disabled = true; btn.textContent = '...';
         try {
           await API.req('PATCH', '/admin/requests/' + reqId, {
@@ -2082,7 +2104,7 @@ window.resolveDispute = async function(orderId, resolution) {
         } catch(e) { toast(e.message, 'error'); }
         finally { btn.disabled = false; btn.textContent = 'Сохранить'; }
       };
-      
+
       document.getElementById('assignRequisiteModal').classList.add('active');
     };
 
@@ -2142,7 +2164,7 @@ window.resolveDispute = async function(orderId, resolution) {
       if (!amount || amount <= 0) return toast('Введите сумму', 'error');
       try {
         await API.req('POST', '/admin/users/' + currentAdminUserId + '/balance', { currency, amount, action });
-        toast('Баланс изменен', 'success'); document.getElementById('admBalanceAmount').value = ''; openAdminUserModal(currentAdminUserId); 
+        toast('Баланс изменен', 'success'); document.getElementById('admBalanceAmount').value = ''; openAdminUserModal(currentAdminUserId);
       } catch(e) { toast(e.message || 'Ошибка', 'error'); }
     };
 
@@ -2153,7 +2175,6 @@ window.resolveDispute = async function(orderId, resolution) {
       };
     });
 
-    // СТАРТ
     initBannerCarousel();
     updateAuthUI();
     loadHomeDashboard();

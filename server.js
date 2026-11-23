@@ -2,15 +2,15 @@ require('dotenv').config();
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const cors = require('cors'); // ВОТ ОНА, ТА САМАЯ БИБЛИОТЕКА
+const cors = require('cors');
 const path = require('path');
 const crypto = require('crypto');
 const { Pool } = require('pg');
 
 const PORT = Number(process.env.PORT) || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_vexo_key_that_is_long_enough_12345';
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8859024431:AAF9vvyC0AGHJNZfjhQ989yryflRMtXYvoQ'; 
-const APP_URL = process.env.APP_URL || 'https://vexo-p2p.onrender.com'; 
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8859024431:AAF9vvyC0AGHJNZfjhQ989yryflRMtXYvoQ';
+const APP_URL = process.env.APP_URL || 'https://vexo-p2p.onrender.com';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_UDtaHhd5Zr6s@ep-divine-sun-bawvlsl5-pooler.c-8.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
@@ -26,8 +26,9 @@ async function initDB() {
       CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, order_id INT REFERENCES orders(id), sender_id INT REFERENCES users(id), text TEXT, media_data TEXT, media_type VARCHAR(50), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS reviews (id SERIAL PRIMARY KEY, order_id INT REFERENCES orders(id), author_id INT REFERENCES users(id), target_id INT REFERENCES users(id), rating INT, comment TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS requests (id SERIAL PRIMARY KEY, user_id INT REFERENCES users(id), type VARCHAR(50), amount NUMERIC, currency VARCHAR(10), status VARCHAR(20) DEFAULT 'pending', details JSONB, admin_comment TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS requisites (id SERIAL PRIMARY KEY, type VARCHAR(50) DEFAULT 'Банк', name VARCHAR(100) NOT NULL, value TEXT NOT NULL, min_limit NUMERIC DEFAULT 0, max_limit NUMERIC DEFAULT 0, total_dep_count INT DEFAULT 0, total_dep_sum NUMERIC DEFAULT 0, total_wd_count INT DEFAULT 0, total_wd_sum NUMERIC DEFAULT 0, turnover NUMERIC DEFAULT 0, active BOOLEAN DEFAULT true, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
     `);
-    
+
     await pool.query(`ALTER TABLE ads ADD COLUMN IF NOT EXISTS payment_time INT DEFAULT 30;`);
     await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_time INT DEFAULT 30;`);
     await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS receipt_data TEXT;`);
@@ -39,8 +40,11 @@ async function initDB() {
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_merchant BOOLEAN DEFAULT false;`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_maker BOOLEAN DEFAULT false;`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS telegram_id BIGINT UNIQUE;`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS banner_url TEXT;`);
     await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS admin_comment TEXT;`);
-    
+    await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS assigned_requisite TEXT;`);
+    await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS receipt_data TEXT;`);
+
     console.log('✓ Database tables initialized');
   } catch (err) {
     console.error('❌ DB Init Error:', err);
@@ -71,14 +75,14 @@ async function sendTG(tgId, text, buttons = null) {
 }
 
 async function notifyUser(userId, text, buttons = null) {
-    try {
-        const res = await pool.query('SELECT telegram_id FROM users WHERE id = $1', [userId]);
-        if (res.rows[0] && res.rows[0].telegram_id) await sendTG(res.rows[0].telegram_id, text, buttons);
-    } catch (e) { console.error('Notify error:', e); }
+  try {
+    const res = await pool.query('SELECT telegram_id FROM users WHERE id = $1', [userId]);
+    if (res.rows[0] && res.rows[0].telegram_id) await sendTG(res.rows[0].telegram_id, text, buttons);
+  } catch (e) { console.error('Notify error:', e); }
 }
 
 function formatOrderMsg(order, title) {
-    return `
+  return `
 🔥 <b>${title}</b>
 
 🆔 Ордер: <code>#${order.public_id}</code>
@@ -86,7 +90,7 @@ function formatOrderMsg(order, title) {
 💵 Сумма: <b>${new Intl.NumberFormat('ru-RU').format(order.amount_rub)} ₽</b>
 💳 Оплата: <b>${order.payment_method}</b>
 📝 Тип: <b>${order.face_type === 'first' ? '1-е лицо' : '3-е лицо'}</b>
-    `.trim();
+  `.trim();
 }
 
 function validateTelegramWebAppData(telegramInitData) {
@@ -103,125 +107,125 @@ function validateTelegramWebAppData(telegramInitData) {
 }
 
 app.post('/api/telegram/webhook', async (req, res) => {
-    try {
-        if (req.body.message) {
-            const msg = req.body.message;
-            const chatId = msg.chat.id;
-            const text = msg.text;
+  try {
+    if (req.body.message) {
+      const msg = req.body.message;
+      const chatId = msg.chat.id;
+      const text = msg.text;
 
-            if (text === '/start') {
-                const replyMarkup = {
-                    inline_keyboard: [
-                        [{ text: "🚀 Открыть VEXO", web_app: { url: APP_URL } }],
-                        [
-                            { text: "📈 Маркет", web_app: { url: APP_URL + '/?screen=market' } },
-                            { text: "👤 Профиль", web_app: { url: APP_URL + '/?screen=profile' } }
-                        ],
-                        [{ text: "💰 Кошелёк", web_app: { url: APP_URL + '/?screen=wallet' } }]
-                    ]
-                };
-                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        chat_id: chatId, 
-                        text: "👋 <b>Добро пожаловать в VEXO P2P!</b>\n\nЗдесь вы можете безопасно обменивать криптовалюту на рубли.\nНажмите на кнопку ниже, чтобы открыть приложение:", 
-                        parse_mode: 'HTML',
-                        reply_markup: replyMarkup 
-                    })
-                });
-            }
-            return res.sendStatus(200);
-        }
-
-        const { callback_query } = req.body;
-        if (!callback_query) return res.sendStatus(200);
-
-        const data = callback_query.data;
-        const tgId = callback_query.from.id;
-        const messageId = callback_query.message.message_id;
-        const chatId = callback_query.message.chat.id;
-        
-        const [action, orderIdStr] = data.split(':');
-        const orderId = parseInt(orderIdStr);
-
-        const userRes = await pool.query('SELECT id, role FROM users WHERE telegram_id = $1', [tgId]);
-        if (userRes.rows.length === 0) {
-            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ callback_query_id: callback_query.id, text: "Вы не авторизованы. Откройте приложение через /start", show_alert: true })
-            });
-            return res.sendStatus(200);
-        }
-        const userId = userRes.rows[0].id;
-
-        const orderRes = await pool.query('SELECT * FROM orders WHERE id = $1', [orderId]);
-        const o = orderRes.rows[0];
-        if (!o) return res.sendStatus(200);
-
-        const adRes = await pool.query('SELECT user_id FROM ads WHERE id = $1', [o.ad_id]);
-        const adCreatorId = adRes.rows[0]?.user_id;
-
-        let successText = "";
-        let success = false;
-
-        if (action === 'accept' && o.status === 'pending' && userId === adCreatorId) {
-            await transition(o.id, 'accepted', 'Заявка принята');
-            success = true; successText = "✅ Заявка принята!";
-            const targetId = o.buyer_id === userId ? o.seller_id : o.buyer_id;
-            const isRequesterBuyer = targetId === o.buyer_id;
-            const btn = isRequesterBuyer ? [[{ text: "💸 Я оплатил", callback_data: `paid:${o.id}` }]] : [];
-            notifyUser(targetId, formatOrderMsg({...o, counterparty_username: 'Контрагент'}, "✅ Заявка принята!"), btn);
-        } 
-        else if (action === 'decline' && o.status === 'pending' && userId === adCreatorId) {
-            await transition(o.id, 'declined', 'Заявка отклонена');
-            success = true; successText = "❌ Заявка отклонена!";
-            const targetId = o.buyer_id === userId ? o.seller_id : o.buyer_id;
-            notifyUser(targetId, formatOrderMsg({...o, counterparty_username: 'Контрагент'}, "❌ Заявка отклонена"));
-        }
-        else if (action === 'paid' && o.buyer_id === userId && o.status === 'accepted') {
-            await transition(o.id, 'paid', 'Оплата отправлена');
-            success = true; successText = "💰 Оплата отправлена!";
-            const btn = [[{ text: "✅ Подтвердить получение", callback_data: `confirm:${o.id}` }], [{ text: "🛡 Открыть спор", callback_data: `dispute:${o.id}` }]];
-            notifyUser(o.seller_id, formatOrderMsg({...o, counterparty_username: 'Покупатель'}, "💰 Покупатель нажал 'Оплатил'!"), btn);
-        }
-        else if (action === 'confirm' && o.seller_id === userId && o.status === 'paid') {
-            await transition(o.id, 'completed', 'Завершён');
-            const volumeToAdd = Number(o.amount_rub) / 90;
-            await pool.query('UPDATE users SET volume_usd = volume_usd + $1 WHERE id = $2', [volumeToAdd, o.buyer_id]);
-            await pool.query('UPDATE users SET volume_usd = volume_usd + $1 WHERE id = $2', [volumeToAdd, o.seller_id]);
-            await pool.query('UPDATE users SET balance_usdt = balance_usdt + $1 WHERE id = $2', [o.amount_asset, o.buyer_id]);
-            await pool.query('UPDATE users SET balance_rub = balance_rub + $1 WHERE id = $2', [o.amount_rub, o.seller_id]);
-            success = true; successText = "🎉 Сделка завершена!";
-            notifyUser(o.buyer_id, formatOrderMsg({...o, counterparty_username: 'Продавец'}, "🎉 Сделка завершена!"));
-        }
-        else if (action === 'dispute' && (o.buyer_id === userId || o.seller_id === userId) && ['accepted', 'paid'].includes(o.status)) {
-            await transition(o.id, 'dispute', 'Открыт спор через TG');
-            success = true; successText = "🛡 Спор открыт!";
-            const targetId = o.buyer_id === userId ? o.seller_id : o.buyer_id;
-            notifyUser(targetId, formatOrderMsg({...o, counterparty_username: 'Контрагент'}, "🛑 Открыт спор!"));
-        }
-
-        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ callback_query_id: callback_query.id, text: success ? successText : "Действие недоступно", show_alert: !success })
+      if (text === '/start') {
+        const replyMarkup = {
+          inline_keyboard: [
+            [{ text: "🚀 Открыть VEXO", web_app: { url: APP_URL } }],
+            [
+              { text: "📈 Маркет", web_app: { url: APP_URL + '/?screen=market' } },
+              { text: "👤 Профиль", web_app: { url: APP_URL + '/?screen=profile' } }
+            ],
+            [{ text: "💰 Кошелёк", web_app: { url: APP_URL + '/?screen=wallet' } }]
+          ]
+        };
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: "👋 <b>Добро пожаловать в VEXO P2P!</b>\n\nЗдесь вы можете безопасно обменивать криптовалюту на рубли.\nНажмите на кнопку ниже, чтобы открыть приложение:",
+            parse_mode: 'HTML',
+            reply_markup: replyMarkup
+          })
         });
-
-        if (success) {
-            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/editMessageReplyMarkup`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: chatId, message_id: messageId, reply_markup: { inline_keyboard: [] } })
-            });
-            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: chatId, text: `✅ <i>Статус обновлен: ${successText}</i>`, parse_mode: 'HTML' })
-            });
-        }
-
-        res.sendStatus(200);
-    } catch (e) {
-        console.error('Webhook error:', e);
-        res.sendStatus(500);
+      }
+      return res.sendStatus(200);
     }
+
+    const { callback_query } = req.body;
+    if (!callback_query) return res.sendStatus(200);
+
+    const data = callback_query.data;
+    const tgId = callback_query.from.id;
+    const messageId = callback_query.message.message_id;
+    const chatId = callback_query.message.chat.id;
+
+    const [action, orderIdStr] = data.split(':');
+    const orderId = parseInt(orderIdStr);
+
+    const userRes = await pool.query('SELECT id, role FROM users WHERE telegram_id = $1', [tgId]);
+    if (userRes.rows.length === 0) {
+      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ callback_query_id: callback_query.id, text: "Вы не авторизованы. Откройте приложение через /start", show_alert: true })
+      });
+      return res.sendStatus(200);
+    }
+    const userId = userRes.rows[0].id;
+
+    const orderRes = await pool.query('SELECT * FROM orders WHERE id = $1', [orderId]);
+    const o = orderRes.rows[0];
+    if (!o) return res.sendStatus(200);
+
+    const adRes = await pool.query('SELECT user_id FROM ads WHERE id = $1', [o.ad_id]);
+    const adCreatorId = adRes.rows[0]?.user_id;
+
+    let successText = "";
+    let success = false;
+
+    if (action === 'accept' && o.status === 'pending' && userId === adCreatorId) {
+      await transition(o.id, 'accepted', 'Заявка принята');
+      success = true; successText = "✅ Заявка принята!";
+      const targetId = o.buyer_id === userId ? o.seller_id : o.buyer_id;
+      const isRequesterBuyer = targetId === o.buyer_id;
+      const btn = isRequesterBuyer ? [[{ text: "💸 Я оплатил", callback_data: `paid:${o.id}` }]] : [];
+      notifyUser(targetId, formatOrderMsg({...o, counterparty_username: 'Контрагент'}, "✅ Заявка принята!"), btn);
+    }
+    else if (action === 'decline' && o.status === 'pending' && userId === adCreatorId) {
+      await transition(o.id, 'declined', 'Заявка отклонена');
+      success = true; successText = "❌ Заявка отклонена!";
+      const targetId = o.buyer_id === userId ? o.seller_id : o.buyer_id;
+      notifyUser(targetId, formatOrderMsg({...o, counterparty_username: 'Контрагент'}, "❌ Заявка отклонена"));
+    }
+    else if (action === 'paid' && o.buyer_id === userId && o.status === 'accepted') {
+      await transition(o.id, 'paid', 'Оплата отправлена');
+      success = true; successText = "💰 Оплата отправлена!";
+      const btn = [[{ text: "✅ Подтвердить получение", callback_data: `confirm:${o.id}` }], [{ text: "🛡 Открыть спор", callback_data: `dispute:${o.id}` }]];
+      notifyUser(o.seller_id, formatOrderMsg({...o, counterparty_username: 'Покупатель'}, "💰 Покупатель нажал 'Оплатил'!"), btn);
+    }
+    else if (action === 'confirm' && o.seller_id === userId && o.status === 'paid') {
+      await transition(o.id, 'completed', 'Завершён');
+      const volumeToAdd = Number(o.amount_rub) / 90;
+      await pool.query('UPDATE users SET volume_usd = volume_usd + $1 WHERE id = $2', [volumeToAdd, o.buyer_id]);
+      await pool.query('UPDATE users SET volume_usd = volume_usd + $1 WHERE id = $2', [volumeToAdd, o.seller_id]);
+      await pool.query('UPDATE users SET balance_usdt = balance_usdt + $1 WHERE id = $2', [o.amount_asset, o.buyer_id]);
+      await pool.query('UPDATE users SET balance_rub = balance_rub + $1 WHERE id = $2', [o.amount_rub, o.seller_id]);
+      success = true; successText = "🎉 Сделка завершена!";
+      notifyUser(o.buyer_id, formatOrderMsg({...o, counterparty_username: 'Продавец'}, "🎉 Сделка завершена!"));
+    }
+    else if (action === 'dispute' && (o.buyer_id === userId || o.seller_id === userId) && ['accepted', 'paid'].includes(o.status)) {
+      await transition(o.id, 'dispute', 'Открыт спор через TG');
+      success = true; successText = "🛡 Спор открыт!";
+      const targetId = o.buyer_id === userId ? o.seller_id : o.buyer_id;
+      notifyUser(targetId, formatOrderMsg({...o, counterparty_username: 'Контрагент'}, "🛑 Открыт спор!"));
+    }
+
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ callback_query_id: callback_query.id, text: success ? successText : "Действие недоступно", show_alert: !success })
+    });
+
+    if (success) {
+      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/editMessageReplyMarkup`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, message_id: messageId, reply_markup: { inline_keyboard: [] } })
+      });
+      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text: `✅ <i>Статус обновлен: ${successText}</i>`, parse_mode: 'HTML' })
+      });
+    }
+
+    res.sendStatus(200);
+  } catch (e) {
+    console.error('Webhook error:', e);
+    res.sendStatus(500);
+  }
 });
 
 async function auth(req, res, next) {
@@ -239,9 +243,10 @@ async function auth(req, res, next) {
 }
 
 function publicUser(u) {
-  return { 
-    id: u.id, username: u.username, displayName: u.display_name || u.username, 
-    email: u.email, role: u.role, kycStatus: u.kyc_status, avatarUrl: u.avatar_url || '', 
+  return {
+    id: u.id, username: u.username, displayName: u.display_name || u.username,
+    email: u.email, role: u.role, kycStatus: u.kyc_status, avatarUrl: u.avatar_url || '',
+    bannerUrl: u.banner_url || '',
     volumeUsd: Number(u.volume_usd), createdAt: u.created_at,
     balanceRub: Number(u.balance_rub || 0), balanceUsdt: Number(u.balance_usdt || 0),
     isPro: u.is_pro || false, isMerchant: u.is_merchant || false, isMaker: u.is_maker || false,
@@ -251,7 +256,7 @@ function publicUser(u) {
 
 async function getUserStats(userId) {
   const completedRes = await pool.query("SELECT COUNT(*) FROM orders WHERE status = 'completed' AND (buyer_id = $1 OR seller_id = $1)", [userId]);
-  const cancelledRes = await pool.query("SELECT COUNT(*) FROM orders WHERE status = 'cancelled' AND (buyer_id = $1 OR seller_id = $1)", [userId]);
+  const cancelledRes = await pool.query("SELECT COUNT(*) FROM orders WHERE status IN ('cancelled','declined') AND (buyer_id = $1 OR seller_id = $1)", [userId]);
   const reviewsRes = await pool.query("SELECT rating FROM reviews WHERE target_id = $1", [userId]);
   const volumeRes = await pool.query("SELECT volume_usd FROM users WHERE id = $1", [userId]);
   const completed = parseInt(completedRes.rows[0].count);
@@ -261,7 +266,7 @@ async function getUserStats(userId) {
   const ratings = reviewsRes.rows.map(r => r.rating);
   const avg = ratings.length ? Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)) : 0;
   const volumeUsd = Number(volumeRes.rows[0]?.volume_usd || 0);
-  
+
   return { dealsTotal: total, dealsCompleted: completed, successRate, reviewsCount: ratings.length, ratingAvg: avg, volumeUsd };
 }
 
@@ -337,7 +342,7 @@ app.get('/api/users/:id', auth, async (req, res) => {
 });
 
 app.patch('/api/users/me', auth, async (req, res) => {
-  const { email, displayName, avatarUrl, password, currentPassword } = req.body || {};
+  const { email, displayName, avatarUrl, bannerUrl, password, currentPassword } = req.body || {};
   try {
     if (email && email !== req.user.email) {
       const check = await pool.query('SELECT id FROM users WHERE email = $1 AND id != $2', [email.toLowerCase(), req.user.id]);
@@ -348,13 +353,16 @@ app.patch('/api/users/me', auth, async (req, res) => {
       if (!currentPassword || !(await bcrypt.compare(currentPassword, req.user.password_hash))) return res.status(400).json({ error: 'wrong_password' });
       newHash = await bcrypt.hash(password, 10);
     }
-    const result = await pool.query('UPDATE users SET email = COALESCE($1, email), display_name = COALESCE($2, display_name), avatar_url = COALESCE($3, avatar_url), password_hash = $4 WHERE id = $5 RETURNING *', [email ? email.toLowerCase() : null, displayName, avatarUrl, newHash, req.user.id]);
+    const result = await pool.query(
+      'UPDATE users SET email = COALESCE($1, email), display_name = COALESCE($2, display_name), avatar_url = COALESCE($3, avatar_url), banner_url = COALESCE($4, banner_url), password_hash = $5 WHERE id = $6 RETURNING *',
+      [email ? email.toLowerCase() : null, displayName, avatarUrl, bannerUrl, newHash, req.user.id]
+    );
     res.json({ user: publicUser(result.rows[0]) });
   } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
 app.post('/api/users/apply', auth, async (req, res) => {
-  const { type } = req.body; 
+  const { type } = req.body;
   try {
     const existing = await pool.query("SELECT * FROM requests WHERE user_id = $1 AND type = $2 AND status = 'pending'", [req.user.id, type + '_req']);
     if (existing.rows.length > 0) return res.status(400).json({ error: 'Заявка уже на рассмотрении' });
@@ -367,12 +375,12 @@ app.post('/api/requests/finance', auth, async (req, res) => {
   const { type, amount, currency, requisites, tg_username, network, user_id, comment } = req.body;
   if (!amount || amount <= 0) return res.status(400).json({ error: 'bad_amount' });
   if (!requisites || !tg_username) return res.status(400).json({ error: 'Заполните все поля' });
-  
+
   if (type === 'withdraw_usdt' && Number(req.user.balance_usdt) < Number(amount)) return res.status(400).json({ error: 'Недостаточно средств' });
   if (type === 'withdraw_rub' && Number(req.user.balance_rub) < Number(amount)) return res.status(400).json({ error: 'Недостаточно средств' });
 
   try {
-    await pool.query("INSERT INTO requests (user_id, type, amount, currency, details, status, admin_comment) VALUES ($1, $2, $3, $4, $5, 'pending', $6)", 
+    await pool.query("INSERT INTO requests (user_id, type, amount, currency, details, status, admin_comment) VALUES ($1, $2, $3, $4, $5, 'pending', $6)",
       [req.user.id, type, amount, currency, JSON.stringify({ requisites, tg_username, network, user_id: req.user.id }), comment || null]);
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: 'db_error' }); }
@@ -382,6 +390,17 @@ app.get('/api/requests/my', auth, async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM requests WHERE user_id = $1 ORDER BY created_at DESC", [req.user.id]);
     res.json({ items: result.rows });
+  } catch(e) { res.status(500).json({ error: 'db_error' }); }
+});
+
+app.patch('/api/requests/:id/receipt', auth, async (req, res) => {
+  const { receipt_data } = req.body;
+  if (!receipt_data) return res.status(400).json({ error: 'no_receipt' });
+  try {
+    const r = await pool.query('SELECT * FROM requests WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
+    if (!r.rows[0]) return res.status(403).json({ error: 'forbidden' });
+    await pool.query('UPDATE requests SET receipt_data = $1 WHERE id = $2', [receipt_data, req.params.id]);
+    res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: 'db_error' }); }
 });
 
@@ -443,7 +462,7 @@ app.post('/api/ads', auth, async (req, res) => {
   const { side, face_type, asset, price, amount_total, min_rub, max_rub, payment_methods, terms, payment_time } = req.body;
   const p = Number(price), at = Number(amount_total), mn = Number(min_rub), mx = Number(max_rub);
   if (!(p > 0) || !(at > 0) || !(mn > 0) || !(mx > 0) || mn > mx || mx > at * p) return res.status(400).json({ error: 'bad_amounts' });
-  
+
   if (side === 'buy') {
     const isStaff = ['admin', 'owner', 'deputy'].includes(req.user.role);
     const canCreateBuyAd = isStaff || req.user.is_maker || req.user.is_merchant;
@@ -456,7 +475,7 @@ app.post('/api/ads', auth, async (req, res) => {
 
   try {
     const result = await pool.query(
-      'INSERT INTO ads (user_id, side, face_type, asset, price, amount_total, amount_left, min_rub, max_rub, payment_methods, terms, payment_time) VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $8, $9, $10, $11) RETURNING *', 
+      'INSERT INTO ads (user_id, side, face_type, asset, price, amount_total, amount_left, min_rub, max_rub, payment_methods, terms, payment_time) VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $8, $9, $10, $11) RETURNING *',
       [req.user.id, side, face_type, asset, p, at, mn, mx, payment_methods, terms, payment_time || 30]
     );
     res.status(201).json(await shapeAd(result.rows[0]));
@@ -468,7 +487,7 @@ app.delete('/api/ads/:id', auth, async (req, res) => {
     const adRes = await pool.query('SELECT * FROM ads WHERE id = $1', [req.params.id]);
     const ad = adRes.rows[0];
     if (!ad || ad.user_id !== req.user.id) return res.status(403).json({ error: 'forbidden' });
-    
+
     try {
       await pool.query('DELETE FROM ads WHERE id = $1', [req.params.id]);
     } catch(e) {
@@ -507,7 +526,7 @@ app.post('/api/exchange', auth, async (req, res) => {
   if (type === 'buy' && Number(req.user.balance_rub) < Number(amount)) return res.status(400).json({ error: 'Недостаточно RUB' });
   if (type === 'sell' && Number(req.user.balance_usdt) < Number(amount)) return res.status(400).json({ error: 'Недостаточно USDT' });
   try {
-    await pool.query("INSERT INTO requests (user_id, type, amount, currency, details, status) VALUES ($1, $2, $3, $4, $5, 'pending')", 
+    await pool.query("INSERT INTO requests (user_id, type, amount, currency, details, status) VALUES ($1, $2, $3, $4, $5, 'pending')",
       [req.user.id, 'exchange', amount, type === 'buy' ? 'RUB' : 'USDT', JSON.stringify({ rate, exchange_type: type })]);
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: 'db_error' }); }
@@ -520,7 +539,7 @@ async function shapeOrder(o) {
   const sRes = await pool.query('SELECT * FROM users WHERE id = $1', [o.seller_id]);
   const adRes = await pool.query('SELECT user_id FROM ads WHERE id = $1', [o.ad_id]);
   const adUserId = adRes.rows[0]?.user_id || null;
-  
+
   const buyer = bRes.rows[0]; const seller = sRes.rows[0];
   return { id: o.id, publicId: o.public_id, adId: o.ad_id, adUserId: adUserId, asset: o.asset, price: Number(o.price), amountRub: Number(o.amount_rub), amountAsset: Number(o.amount_asset), faceType: o.face_type, paymentMethod: o.payment_method, paymentTime: Number(o.payment_time) || 30, status: o.status, statusLabel: STATUS_LABEL[o.status] || o.status, buyer: { id: o.buyer_id, username: buyer?.username, displayName: buyer?.display_name || buyer?.username, avatarUrl: buyer?.avatar_url }, seller: { id: o.seller_id, username: seller?.username, displayName: seller?.display_name || seller?.username, avatarUrl: seller?.avatar_url }, createdAt: o.created_at, expiresAt: o.expires_at, buyer_id: o.buyer_id, seller_id: o.seller_id, amount_rub: o.amount_rub, amount_asset: o.amount_asset, public_id: o.public_id, payment_method: o.payment_method, face_type: o.face_type, receipt_data: o.receipt_data };
 }
@@ -547,12 +566,12 @@ app.post('/api/orders', auth, async (req, res) => {
     const publicId = 'VX-' + crypto.randomBytes(3).toString('hex').toUpperCase();
     const history = JSON.stringify([{ status: 'pending', at: new Date().toISOString(), note: 'Заявка создана' }]);
     const orderRes = await client.query(
-      'INSERT INTO orders (public_id, ad_id, buyer_id, seller_id, asset, price, amount_rub, amount_asset, face_type, payment_method, history, payment_time, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *', 
+      'INSERT INTO orders (public_id, ad_id, buyer_id, seller_id, asset, price, amount_rub, amount_asset, face_type, payment_method, history, payment_time, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *',
       [publicId, ad.id, buyerId, sellerId, ad.asset, ad.price, rub, assetQty, ad.face_type, payment_method, history, ad.payment_time || 30, 'pending']
     );
     await client.query('COMMIT');
     const orderData = { ...orderRes.rows[0], counterparty_username: req.user.username };
-    
+
     const targetTgId = (await pool.query('SELECT telegram_id FROM users WHERE id = $1', [ad.user_id])).rows[0]?.telegram_id;
     if (targetTgId) {
         const msg = formatOrderMsg(orderData, "🔥 Новая заявка!");
@@ -603,7 +622,7 @@ app.post('/api/orders/:id/accept', auth, async (req, res) => {
   const adRes = await pool.query('SELECT user_id FROM ads WHERE id = $1', [o.ad_id]);
   if (adRes.rows[0].user_id !== req.user.id || o.status !== 'pending') return res.status(403).json({ error: 'Доступ запрещен' });
   await transition(o.id, 'accepted', 'Заявка принята');
-  
+
   const targetId = o.buyer_id === req.user.id ? o.seller_id : o.buyer_id;
   const targetTgId = (await pool.query('SELECT telegram_id FROM users WHERE id = $1', [targetId])).rows[0]?.telegram_id;
   if (targetTgId) {
@@ -621,7 +640,7 @@ app.post('/api/orders/:id/decline', auth, async (req, res) => {
   const adRes = await pool.query('SELECT user_id FROM ads WHERE id = $1', [o.ad_id]);
   if (adRes.rows[0].user_id !== req.user.id || o.status !== 'pending') return res.status(403).json({ error: 'Доступ запрещен' });
   await transition(o.id, 'declined', 'Заявка отклонена');
-  
+
   const targetId = o.buyer_id === req.user.id ? o.seller_id : o.buyer_id;
   const targetTgId = (await pool.query('SELECT telegram_id FROM users WHERE id = $1', [targetId])).rows[0]?.telegram_id;
   if (targetTgId) {
@@ -636,8 +655,8 @@ app.post('/api/orders/:id/paid', auth, async (req, res) => {
   const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
   const o = oRes.rows[0];
   if (o.buyer_id !== req.user.id || o.status !== 'accepted') return res.status(409).json({ error: 'Неверный статус' });
-  
-  await transition(o.id, 'paid', 'Оплата отправлена'); 
+
+  await transition(o.id, 'paid', 'Оплата отправлена');
   if (receipt_data) {
       await pool.query('UPDATE orders SET receipt_data = $1 WHERE id = $2', [receipt_data, o.id]);
   }
@@ -681,7 +700,7 @@ app.post('/api/orders/:id/cancel', auth, async (req, res) => {
   const o = oRes.rows[0];
   if (!['pending', 'accepted', 'paid'].includes(o.status)) return res.status(409).json({ error: 'bad' });
   if (o.buyer_id !== req.user.id && o.seller_id !== req.user.id) return res.status(403).json({ error: 'forbidden' });
-  await transition(o.id, 'cancelled', 'Отменён пользователем'); 
+  await transition(o.id, 'cancelled', 'Отменён пользователем');
   const targetId = o.buyer_id === req.user.id ? o.seller_id : o.buyer_id;
   const targetTgId = (await pool.query('SELECT telegram_id FROM users WHERE id = $1', [targetId])).rows[0]?.telegram_id;
   if (targetTgId) {
@@ -696,7 +715,7 @@ app.post('/api/orders/:id/dispute', auth, async (req, res) => {
   const o = oRes.rows[0];
   if (!o || !['pending', 'accepted', 'paid'].includes(o.status)) return res.status(409).json({ error: 'bad' });
   if (o.buyer_id !== req.user.id && o.seller_id !== req.user.id) return res.status(403).json({ error: 'forbidden' });
-  await transition(o.id, 'dispute', 'Открыт спор: ' + (req.body?.reason || '')); 
+  await transition(o.id, 'dispute', 'Открыт спор: ' + (req.body?.reason || ''));
   const targetId = o.buyer_id === req.user.id ? o.seller_id : o.buyer_id;
   const targetTgId = (await pool.query('SELECT telegram_id FROM users WHERE id = $1', [targetId])).rows[0]?.telegram_id;
   if (targetTgId) {
@@ -707,7 +726,7 @@ app.post('/api/orders/:id/dispute', auth, async (req, res) => {
 });
 
 app.post('/api/orders/:id/resolve', auth, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
+  if (!['admin','owner','deputy'].includes(req.user.role)) return res.status(403).json({ error: 'forbidden' });
   const { resolution } = req.body;
   if (!['completed', 'cancelled'].includes(resolution)) return res.status(400).json({ error: 'bad' });
   const client = await pool.connect();
@@ -745,7 +764,7 @@ app.post('/api/chat/:orderId', auth, async (req, res) => {
   const { text, media_data, media_type } = req.body;
   const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.orderId]);
   const o = oRes.rows[0];
-  if (!o || ['completed', 'cancelled', 'declined'].includes(o.status)) return res.status(409).json({ error: 'closed' });
+  if (!o || ['cancelled', 'declined'].includes(o.status)) return res.status(409).json({ error: 'closed' });
   if (o.buyer_id !== req.user.id && o.seller_id !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
   const result = await pool.query('INSERT INTO messages (order_id, sender_id, text, media_data, media_type) VALUES ($1, $2, $3, $4, $5) RETURNING *', [o.id, req.user.id, text || '', media_data || null, media_type || null]);
   res.status(201).json({ ...result.rows[0], isMine: true });
@@ -820,20 +839,78 @@ app.get('/api/admin/requests', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'db_error' }); }
 });
 
+app.get('/api/admin/requisites', auth, async (req, res) => {
+  if (!['admin', 'owner', 'deputy'].includes(req.user.role)) return res.status(403).json({ error: 'forbidden' });
+  try {
+    const result = await pool.query('SELECT * FROM requisites ORDER BY created_at DESC');
+    res.json({ items: result.rows });
+  } catch(e) { res.status(500).json({ error: 'db_error' }); }
+});
+
+app.post('/api/admin/requisites', auth, async (req, res) => {
+  if (!['admin', 'owner', 'deputy'].includes(req.user.role)) return res.status(403).json({ error: 'forbidden' });
+  const { type, name, value, min_limit, max_limit, total_dep_count, total_dep_sum, total_wd_count, total_wd_sum, turnover, active } = req.body;
+  if (!name || !value) return res.status(400).json({ error: 'Заполните название и реквизит' });
+  try {
+    const result = await pool.query(
+      `INSERT INTO requisites (type, name, value, min_limit, max_limit, total_dep_count, total_dep_sum, total_wd_count, total_wd_sum, turnover, active)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+      [type || 'Банк', name, value, min_limit || 0, max_limit || 0, total_dep_count || 0, total_dep_sum || 0, total_wd_count || 0, total_wd_sum || 0, turnover || 0, active !== false]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch(e) { res.status(500).json({ error: 'db_error' }); }
+});
+
+app.patch('/api/admin/requisites/:id', auth, async (req, res) => {
+  if (!['admin', 'owner', 'deputy'].includes(req.user.role)) return res.status(403).json({ error: 'forbidden' });
+  const b = req.body || {};
+  try {
+    const result = await pool.query(
+      `UPDATE requisites SET
+        type = COALESCE($1, type),
+        name = COALESCE($2, name),
+        value = COALESCE($3, value),
+        min_limit = COALESCE($4, min_limit),
+        max_limit = COALESCE($5, max_limit),
+        total_dep_count = COALESCE($6, total_dep_count),
+        total_dep_sum = COALESCE($7, total_dep_sum),
+        total_wd_count = COALESCE($8, total_wd_count),
+        total_wd_sum = COALESCE($9, total_wd_sum),
+        turnover = COALESCE($10, turnover),
+        active = COALESCE($11, active)
+       WHERE id = $12 RETURNING *`,
+      [b.type, b.name, b.value, b.min_limit, b.max_limit, b.total_dep_count, b.total_dep_sum, b.total_wd_count, b.total_wd_sum, b.turnover, b.active, req.params.id]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: 'not_found' });
+    res.json(result.rows[0]);
+  } catch(e) { res.status(500).json({ error: 'db_error' }); }
+});
+
+app.delete('/api/admin/requisites/:id', auth, async (req, res) => {
+  if (!['admin', 'owner', 'deputy'].includes(req.user.role)) return res.status(403).json({ error: 'forbidden' });
+  try {
+    await pool.query('DELETE FROM requisites WHERE id = $1', [req.params.id]);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: 'db_error' }); }
+});
+
 app.patch('/api/admin/requests/:id', auth, async (req, res) => {
   if (!['admin', 'owner', 'deputy'].includes(req.user.role)) return res.status(403).json({ error: 'forbidden' });
-  const { status, admin_comment } = req.body; 
+  const { status, admin_comment, assigned_requisite } = req.body;
   const reqId = req.params.id;
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     const rRes = await client.query('SELECT * FROM requests WHERE id = $1 FOR UPDATE', [reqId]);
     const request = rRes.rows[0];
-    if (!request || ['completed', 'rejected', 'cancelled'].includes(request.status)) throw new Error('Заявка уже завершена');
-    
-    await client.query('UPDATE requests SET status = $1, admin_comment = COALESCE($2, admin_comment) WHERE id = $3', [status, admin_comment, reqId]);
-    
-    if (status === 'approved') {
+    if (!request || ['completed', 'rejected', 'cancelled', 'success', 'failed'].includes(request.status)) throw new Error('Заявка уже завершена');
+
+    await client.query(
+      'UPDATE requests SET status = $1, admin_comment = COALESCE($2, admin_comment), assigned_requisite = COALESCE($3, assigned_requisite) WHERE id = $4',
+      [status, admin_comment, assigned_requisite, reqId]
+    );
+
+    if (['success', 'approved'].includes(status)) {
       if (request.type === 'maker_req') await client.query('UPDATE users SET is_maker = true WHERE id = $1', [request.user_id]);
       else if (request.type === 'merchant_req') await client.query('UPDATE users SET is_merchant = true WHERE id = $1', [request.user_id]);
       else if (request.type === 'deposit_rub') await client.query('UPDATE users SET balance_rub = balance_rub + $1 WHERE id = $2', [request.amount, request.user_id]);
@@ -852,18 +929,17 @@ app.patch('/api/admin/requests/:id', auth, async (req, res) => {
       }
     }
     await client.query('COMMIT');
-    const statusText = status === 'approved' ? 'одобрена ✅' : status === 'rejected' ? 'отклонена ❌' : 'отменена';
+    const statusText = ['success', 'approved'].includes(status) ? 'одобрена ✅' : status === 'failed' ? 'не выполнена ❌' : status === 'cancelled' ? 'отменена' : 'в обработке';
     notifyUser(request.user_id, `📄 <b>Статус заявки обновлен</b>\nВаша заявка была ${statusText}.${admin_comment ? `\n💬 Комментарий: ${admin_comment}` : ''}`);
     res.json({ ok: true });
   } catch(e) { await client.query('ROLLBACK'); res.status(400).json({ error: e.message || 'error' }); }
   finally { client.release(); }
 });
 
-// --- ADMIN STATISTICS ---
 app.get('/api/admin/stats', auth, async (req, res) => {
   if (!['admin', 'owner', 'deputy'].includes(req.user.role)) return res.status(403).json({ error: 'forbidden' });
-  const { period } = req.query; // day, week, month, year, all
-  
+  const { period } = req.query;
+
   let timeCondition = "";
   if (period === 'day') timeCondition = "AND created_at >= NOW() - INTERVAL '1 day'";
   else if (period === 'week') timeCondition = "AND created_at >= NOW() - INTERVAL '7 days'";
@@ -871,20 +947,19 @@ app.get('/api/admin/stats', auth, async (req, res) => {
   else if (period === 'year') timeCondition = "AND created_at >= NOW() - INTERVAL '1 year'";
 
   try {
-    const reqRes = await pool.query(`SELECT COUNT(*) as count, COALESCE(SUM(amount), 0) as total FROM requests WHERE type LIKE 'withdraw%' AND status = 'approved' ${timeCondition}`);
+    const reqRes = await pool.query(`SELECT COUNT(*) as count, COALESCE(SUM(amount), 0) as total FROM requests WHERE type LIKE 'withdraw%' AND status IN ('success','approved') ${timeCondition}`);
     const count = parseInt(reqRes.rows[0].count);
     const total = Number(reqRes.rows[0].total);
-    
+
     let avg = 0;
     if (period === 'day') avg = total;
     else if (period === 'week') avg = total / 7;
     else if (period === 'month') avg = total / 30;
     else if (period === 'year') avg = total / 365;
     else {
-        // Для all time считаем среднее в день от первой заявки
-        const daysRes = await pool.query(`SELECT EXTRACT(DAY FROM NOW() - MIN(created_at)) as days FROM requests WHERE type LIKE 'withdraw%' AND status = 'approved'`);
-        const days = parseInt(daysRes.rows[0].days) || 1;
-        avg = total / (days || 1);
+      const daysRes = await pool.query(`SELECT EXTRACT(DAY FROM NOW() - MIN(created_at)) as days FROM requests WHERE type LIKE 'withdraw%' AND status IN ('success','approved')`);
+      const days = parseInt(daysRes.rows[0].days) || 1;
+      avg = total / (days || 1);
     }
 
     res.json({ count, total, avg });
