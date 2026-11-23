@@ -26,7 +26,7 @@ async function initDB() {
       CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, order_id INT REFERENCES orders(id), sender_id INT REFERENCES users(id), text TEXT, media_data TEXT, media_type VARCHAR(50), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS reviews (id SERIAL PRIMARY KEY, order_id INT REFERENCES orders(id), author_id INT REFERENCES users(id), target_id INT REFERENCES users(id), rating INT, comment TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS requests (id SERIAL PRIMARY KEY, user_id INT REFERENCES users(id), type VARCHAR(50), amount NUMERIC, currency VARCHAR(10), status VARCHAR(20) DEFAULT 'pending', details JSONB, admin_comment TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
-      CREATE TABLE IF NOT EXISTS requisites (id SERIAL PRIMARY KEY, type VARCHAR(50) DEFAULT 'Банк', name VARCHAR(100) NOT NULL, value TEXT NOT NULL, min_limit NUMERIC DEFAULT 0, max_limit NUMERIC DEFAULT 0, total_dep_count INT DEFAULT 0, total_dep_sum NUMERIC DEFAULT 0, total_wd_count INT DEFAULT 0, total_wd_sum NUMERIC DEFAULT 0, turnover NUMERIC DEFAULT 0, active BOOLEAN DEFAULT true, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS requisites (id SERIAL PRIMARY KEY, type VARCHAR(50) DEFAULT 'Банк', name VARCHAR(100) NOT NULL, value TEXT NOT NULL, network VARCHAR(50), min_limit NUMERIC DEFAULT 0, max_limit NUMERIC DEFAULT 0, total_dep_count INT DEFAULT 0, total_dep_sum NUMERIC DEFAULT 0, total_wd_count INT DEFAULT 0, total_wd_sum NUMERIC DEFAULT 0, turnover NUMERIC DEFAULT 0, active BOOLEAN DEFAULT true, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
     `);
 
     await pool.query(`ALTER TABLE ads ADD COLUMN IF NOT EXISTS payment_time INT DEFAULT 30;`);
@@ -44,6 +44,7 @@ async function initDB() {
     await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS admin_comment TEXT;`);
     await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS assigned_requisite TEXT;`);
     await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS receipt_data TEXT;`);
+    await pool.query(`ALTER TABLE requisites ADD COLUMN IF NOT EXISTS network VARCHAR(50);`);
 
     console.log('✓ Database tables initialized');
   } catch (err) {
@@ -849,13 +850,13 @@ app.get('/api/admin/requisites', auth, async (req, res) => {
 
 app.post('/api/admin/requisites', auth, async (req, res) => {
   if (!['admin', 'owner', 'deputy'].includes(req.user.role)) return res.status(403).json({ error: 'forbidden' });
-  const { type, name, value, min_limit, max_limit, total_dep_count, total_dep_sum, total_wd_count, total_wd_sum, turnover, active } = req.body;
+  const { type, name, value, network, min_limit, max_limit, total_dep_count, total_dep_sum, total_wd_count, total_wd_sum, turnover, active } = req.body;
   if (!name || !value) return res.status(400).json({ error: 'Заполните название и реквизит' });
   try {
     const result = await pool.query(
-      `INSERT INTO requisites (type, name, value, min_limit, max_limit, total_dep_count, total_dep_sum, total_wd_count, total_wd_sum, turnover, active)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
-      [type || 'Банк', name, value, min_limit || 0, max_limit || 0, total_dep_count || 0, total_dep_sum || 0, total_wd_count || 0, total_wd_sum || 0, turnover || 0, active !== false]
+      `INSERT INTO requisites (type, name, value, network, min_limit, max_limit, total_dep_count, total_dep_sum, total_wd_count, total_wd_sum, turnover, active)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+      [type || 'Банк', name, value, network || null, min_limit || 0, max_limit || 0, total_dep_count || 0, total_dep_sum || 0, total_wd_count || 0, total_wd_sum || 0, turnover || 0, active !== false]
     );
     res.status(201).json(result.rows[0]);
   } catch(e) { res.status(500).json({ error: 'db_error' }); }
@@ -867,19 +868,13 @@ app.patch('/api/admin/requisites/:id', auth, async (req, res) => {
   try {
     const result = await pool.query(
       `UPDATE requisites SET
-        type = COALESCE($1, type),
-        name = COALESCE($2, name),
-        value = COALESCE($3, value),
-        min_limit = COALESCE($4, min_limit),
-        max_limit = COALESCE($5, max_limit),
-        total_dep_count = COALESCE($6, total_dep_count),
-        total_dep_sum = COALESCE($7, total_dep_sum),
-        total_wd_count = COALESCE($8, total_wd_count),
-        total_wd_sum = COALESCE($9, total_wd_sum),
-        turnover = COALESCE($10, turnover),
-        active = COALESCE($11, active)
-       WHERE id = $12 RETURNING *`,
-      [b.type, b.name, b.value, b.min_limit, b.max_limit, b.total_dep_count, b.total_dep_sum, b.total_wd_count, b.total_wd_sum, b.turnover, b.active, req.params.id]
+        type = COALESCE($1, type), name = COALESCE($2, name), value = COALESCE($3, value),
+        network = COALESCE($4, network), min_limit = COALESCE($5, min_limit), max_limit = COALESCE($6, max_limit),
+        total_dep_count = COALESCE($7, total_dep_count), total_dep_sum = COALESCE($8, total_dep_sum),
+        total_wd_count = COALESCE($9, total_wd_count), total_wd_sum = COALESCE($10, total_wd_sum),
+        turnover = COALESCE($11, turnover), active = COALESCE($12, active)
+       WHERE id = $13 RETURNING *`,
+      [b.type, b.name, b.value, b.network, b.min_limit, b.max_limit, b.total_dep_count, b.total_dep_sum, b.total_wd_count, b.total_wd_sum, b.turnover, b.active, req.params.id]
     );
     if (!result.rows[0]) return res.status(404).json({ error: 'not_found' });
     res.json(result.rows[0]);

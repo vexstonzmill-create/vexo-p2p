@@ -598,10 +598,36 @@
 <div class="modal-overlay" id="requisiteModal">
   <div class="modal glass-modal" style="padding: 18px;">
     <h3 id="requisiteModalTitle" style="font-size: 18px; font-weight: 800; margin-bottom: 12px;">Добавить реквизит</h3>
+    
     <div class="grid-2-col" style="margin-bottom:12px;">
-      <div class="field"><label>Тип</label><input class="input" type="text" id="req-type" placeholder="СБП / USDT" style="height: 44px;"></div>
-      <div class="field"><label>Название</label><input class="input" type="text" id="req-name" placeholder="Тинькофф" style="height: 44px;"></div>
+      <div class="field">
+        <label>Тип / Банк</label>
+        <select class="input" id="req-type" style="height: 44px; font-size: 14px !important;" onchange="toggleReqNetworkField()">
+          <option value="СБП">СБП</option>
+          <option value="Тинькофф">Тинькофф</option>
+          <option value="Сбербанк">Сбербанк</option>
+          <option value="Альфа-Банк">Альфа-Банк</option>
+          <option value="ВТБ">ВТБ</option>
+          <option value="Райффайзен">Райффайзен</option>
+          <option value="USDT">USDT (Крипта)</option>
+          <option value="BTC">BTC (Крипта)</option>
+          <option value="TON">TON (Крипта)</option>
+        </select>
+      </div>
+      <div class="field"><label>Название (видно юзеру)</label><input class="input" type="text" id="req-name" placeholder="Основной" style="height: 44px;"></div>
     </div>
+
+    <div class="field" id="req-network-group" style="margin-bottom:12px; display:none;">
+      <label>Сеть (Network)</label>
+      <select class="input" id="req-network" style="height: 44px; font-size: 14px !important;">
+        <option value="TRC-20">TRC-20 (Tron)</option>
+        <option value="ERC-20">ERC-20 (Ethereum)</option>
+        <option value="BEP-20">BEP-20 (BSC)</option>
+        <option value="Bitcoin">Bitcoin</option>
+        <option value="TON">TON</option>
+      </select>
+    </div>
+
     <div class="field" style="margin-bottom:12px;"><label>Реквизит (карта / адрес)</label><input class="input" type="text" id="req-value" placeholder="+7 999..." style="height: 44px;"></div>
     <div class="grid-2-col" style="margin-bottom:12px;">
       <div class="field"><label>Мин. лимит (₽)</label><input class="input" type="number" id="req-min" placeholder="2000" style="height: 44px;"></div>

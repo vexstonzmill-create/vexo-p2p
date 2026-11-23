@@ -827,10 +827,11 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="name">${user.displayName} ${merchantBadge} ${makerBadge} ${proBadge}</div>
               <div class="username">@${user.username}</div>
             </div>
-          </div>
-          <div class="stats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-            <div class="glass-card" style="padding:12px;text-align:center;border-radius:12px;"><div style="font-size:12px;color:var(--dim);">Сделок</div><div style="font-size:16px;font-weight:800;color:var(--txt);">${stats.dealsTotal}</div></div>
-            <div class="glass-card" style="padding:12px;text-align:center;border-radius:12px;"><div style="font-size:12px;color:var(--dim);">Успешных</div><div style="font-size:16px;font-weight:800;color:var(--txt);">${stats.successRate !== null ? stats.successRate + '%' : '—'}</div></div>
+            <div class="profile-stats-row">
+              <div class="profile-stat-col"><div class="val">${stats.dealsTotal}</div><div class="lbl">Сделок</div></div>
+              <div class="profile-stat-col"><div class="val">${stats.successRate !== null ? stats.successRate + '%' : '—'}</div><div class="lbl">Успешных</div></div>
+              <div class="profile-stat-col"><div class="val">${stats.ratingAvg !== null ? stats.ratingAvg : '—'}</div><div class="lbl">Рейтинг</div></div>
+            </div>
           </div>
           <div id="publicReviewsList" style="margin-top:16px;">Загрузка отзывов...</div>`;
         loadPublicReviews(user.id);
@@ -1330,24 +1331,10 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="name">${user.displayName} ${merchantBadge} ${makerBadge} ${proBadge}</div>
               <div class="username">@${user.username} · ID: ${user.id}</div>
             </div>
-          </div>
-
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
-            <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;padding:14px;text-align:center;">
-              <div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Сделок</div>
-              <div style="font-size:18px;font-weight:800;">${stats.dealsTotal}</div>
-            </div>
-            <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;padding:14px;text-align:center;">
-              <div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Успешных</div>
-              <div style="font-size:18px;font-weight:800;">${successRateStr}</div>
-            </div>
-            <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;padding:14px;text-align:center;">
-              <div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Отзывов</div>
-              <div style="font-size:18px;font-weight:800;">${stats.reviewsCount}</div>
-            </div>
-            <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;padding:14px;text-align:center;">
-              <div style="font-size:12px;color:var(--dim);font-weight:600;margin-bottom:4px;">Рейтинг</div>
-              <div style="font-size:18px;font-weight:800;">${ratingAvgStr}</div>
+            <div class="profile-stats-row">
+              <div class="profile-stat-col"><div class="val">${stats.dealsTotal}</div><div class="lbl">Сделок</div></div>
+              <div class="profile-stat-col"><div class="val">${successRateStr}</div><div class="lbl">Успешных</div></div>
+              <div class="profile-stat-col"><div class="val">${ratingAvgStr}</div><div class="lbl">Рейтинг</div></div>
             </div>
           </div>
 
@@ -1974,7 +1961,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
               <div>
                 <strong style="font-size:16px; color:var(--txt); display:flex; align-items:center; gap:6px;">${getPayIcon(r.type)} ${r.name}</strong>
-                <div style="font-size:14px; font-weight:800; color:var(--primary); margin-top:4px;">${r.value}</div>
+                <div style="font-size:14px; font-weight:800; color:var(--primary); margin-top:4px;">${r.value} ${r.network ? `<span style="font-size:10px; color:var(--dim); background:rgba(255,255,255,0.1); padding:2px 4px; border-radius:4px;">${r.network}</span>` : ''}</div>
               </div>
               <label class="toggle-switch">
                 <input type="checkbox" ${r.active ? 'checked' : ''} onchange="toggleRequisiteStatus(${r.id}, this.checked)">
@@ -2004,10 +1991,22 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch(e) { toast(e.message || 'Ошибка', 'error'); }
     };
 
+    window.toggleReqNetworkField = function() {
+      const type = document.getElementById('req-type').value;
+      const netGroup = document.getElementById('req-network-group');
+      if (['USDT', 'BTC', 'TON'].includes(type)) {
+        netGroup.style.display = 'block';
+      } else {
+        netGroup.style.display = 'none';
+      }
+    };
+
     window.openRequisiteModal = function(id = null) {
       const r = id ? allRequisites.find(x => x.id === id) : null;
       document.getElementById('requisiteModalTitle').textContent = id ? 'Редактировать реквизит' : 'Добавить реквизит';
-      document.getElementById('req-type').value = r?.type || '';
+      
+      document.getElementById('req-type').value = r?.type || 'СБП';
+      document.getElementById('req-network').value = r?.network || 'TRC-20';
       document.getElementById('req-name').value = r?.name || '';
       document.getElementById('req-value').value = r?.value || '';
       document.getElementById('req-min').value = r?.min_limit || '';
@@ -2019,12 +2018,19 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('req-turnover').value = r?.turnover || '';
       document.getElementById('req-active').checked = r ? r.active : true;
       document.getElementById('req-error').textContent = '';
+      
+      toggleReqNetworkField();
 
       document.getElementById('req-save-btn').onclick = async () => {
         const btn = document.getElementById('req-save-btn'); btn.disabled = true; btn.textContent = '...';
+        
+        const typeVal = document.getElementById('req-type').value;
+        const isCrypto = ['USDT', 'BTC', 'TON'].includes(typeVal);
+        
         const payload = {
-          type: document.getElementById('req-type').value || 'Банк',
-          name: document.getElementById('req-name').value,
+          type: typeVal,
+          network: isCrypto ? document.getElementById('req-network').value : null,
+          name: document.getElementById('req-name').value || typeVal,
           value: document.getElementById('req-value').value,
           min_limit: Number(document.getElementById('req-min').value) || 0,
           max_limit: Number(document.getElementById('req-max').value) || 0,
@@ -2036,33 +2042,33 @@ document.addEventListener('DOMContentLoaded', () => {
           active: document.getElementById('req-active').checked
         };
 
-        if(!payload.name || !payload.value) {
-            document.getElementById('req-error').textContent = 'Заполните название и реквизит';
-            btn.disabled = false; btn.textContent = 'Сохранить'; return;
+        if(!payload.value) { 
+            document.getElementById('req-error').textContent = 'Заполните сам реквизит (номер карты / адрес)'; 
+            btn.disabled = false; btn.textContent = 'Сохранить'; return; 
         }
 
         try {
           if (id) await API.req('PATCH', '/admin/requisites/' + id, payload);
           else await API.req('POST', '/admin/requisites', payload);
-
-          toast('Сохранено', 'success');
-          closeModal('requisiteModal');
+          
+          toast('Сохранено', 'success'); 
+          closeModal('requisiteModal'); 
           loadAdminRequisites();
-        } catch(err) {
-            document.getElementById('req-error').textContent = err.message || 'Ошибка сервера';
+        } catch(err) { 
+            document.getElementById('req-error').textContent = err.message || 'Ошибка сервера'; 
         }
         finally { btn.disabled = false; btn.textContent = 'Сохранить'; }
       };
-
+      
       document.getElementById('requisiteModal').classList.add('active');
     };
 
     window.deleteRequisite = async function(id) {
       if (!await confirmAsync('Удаление', 'Удалить реквизит?', 'Удалить')) return;
-      try {
+      try { 
           await API.req('DELETE', '/admin/requisites/' + id);
-          toast('Удалено', 'success');
-          loadAdminRequisites();
+          toast('Удалено', 'success'); 
+          loadAdminRequisites(); 
       }
       catch(e) { toast(e.message || 'Ошибка', 'error'); }
     };
@@ -2076,7 +2082,7 @@ document.addEventListener('DOMContentLoaded', () => {
       suitable.forEach(r => {
          const opt = document.createElement('option');
          opt.value = r.id;
-         opt.textContent = `${r.name} (${r.value})`;
+         opt.textContent = `${r.name} (${r.value}) ${r.network ? `[${r.network}]` : ''}`;
          select.appendChild(opt);
       });
 
@@ -2172,6 +2178,19 @@ document.addEventListener('DOMContentLoaded', () => {
       c.onclick = () => {
         document.querySelectorAll('#adminTabs .tab').forEach(x => x.classList.remove('active'));
         c.classList.add('active'); adminTab = c.dataset.val; loadAdmin();
+      };
+    });
+
+    initBannerCarousel();
+    updateAuthUI();
+    loadHomeDashboard();
+    updateNotifUI();
+    try { loadHomeRate(); } catch(e) { console.error('Initial load error:', e); }
+
+  } catch (err) {
+    console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
+  }
+});ive'); adminTab = c.dataset.val; loadAdmin();
       };
     });
 
