@@ -2190,17 +2190,4 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch (err) {
     console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
   }
-});ive'); adminTab = c.dataset.val; loadAdmin();
-      };
-    });
-
-    initBannerCarousel();
-    updateAuthUI();
-    loadHomeDashboard();
-    updateNotifUI();
-    try { loadHomeRate(); } catch(e) { console.error('Initial load error:', e); }
-
-  } catch (err) {
-    console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
-  }
 });
