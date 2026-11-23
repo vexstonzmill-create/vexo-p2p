@@ -38,6 +38,10 @@ body[data-theme="light"] {
 
 button, input, select, textarea { appearance: none; -webkit-appearance: none; -moz-appearance: none; outline: none; border: none; background: transparent; font-family: 'Inter', -apple-system, sans-serif; color: inherit; }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent !important; }
+
+/* ГЛОБАЛЬНЫЙ ФИКС ДЛЯ ВСЕХ ИКОНОК (чтобы не растягивались) */
+svg { flex-shrink: 0; display: block; max-width: 100%; }
+
 body { background-color: var(--bg); color: var(--txt); font-family: 'Inter', -apple-system, sans-serif; font-size: 15px; font-weight: var(--font-weight-base); overflow-x: hidden; position: relative; min-height: 100vh; transition: background-color 0.4s ease, color 0.4s ease; overscroll-behavior: none; }
 body > script, body > style, body > template, body > noscript { display: none !important; }
 
@@ -66,12 +70,14 @@ body.tg-fullscreen .sidebar { top: calc(80px + env(safe-area-inset-top, 0px)) !i
 .sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); z-index: 1000; backdrop-filter: blur(4px); }
 .sidebar-backdrop.active { display: block; }
 .nav-btn { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 16px; color: var(--dim); font-weight: 600; width: 100%; text-align: left; margin-bottom: 4px; font-size: 15px; transition: 0.2s; background: transparent; border: none;}
+.nav-btn svg { width: 18px; height: 18px; }
 .nav-btn.active, .nav-btn:hover { background: var(--card-bg); color: var(--txt); }
 .nav-btn.active { font-weight: 800; }
 
 .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .topbar { position: sticky; top: 0; z-index: 40; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; background: var(--bg); }
 .topbar .menu-btn { background: transparent; border: none; color: var(--txt); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.topbar .menu-btn svg { width: 24px; height: 24px; }
 .user-greeting { display: flex; flex-direction: column; line-height: 1.2; }
 .greeting-text { font-size: 13px; color: var(--dim); font-weight: 500; }
 .user-name { font-size: 16px; font-weight: 800; color: var(--txt); }
@@ -84,6 +90,25 @@ body.tg-fullscreen .sidebar { top: calc(80px + env(safe-area-inset-top, 0px)) !i
 .screen { display: none; animation: fadeIn 0.3s ease; }
 .screen.active { display: block; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ГЛАВНАЯ */
+.search-bar { display: flex; align-items: center; gap: 10px; background: var(--card-bg); padding: 12px 16px; border-radius: 16px; margin-bottom: 20px; color: var(--dim); }
+.search-bar svg { width: 20px; height: 20px; }
+.search-bar span { font-size: 14px; font-weight: 500; }
+.bento-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.bento-card { border-radius: 24px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; min-height: 120px; cursor: pointer; transition: transform 0.2s; }
+.bento-card:active { transform: scale(0.97); }
+.blue-card { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: #fff; }
+.dark-card { background: var(--card-bg); border: 1px solid var(--card-border); color: var(--txt); }
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+.card-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); }
+.card-icon svg { width: 22px; height: 22px; }
+.circle-btn { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; }
+.circle-btn svg { width: 16px; height: 16px; }
+.dark-card .circle-btn { background: var(--btn-bg); }
+.card-content { margin-top: 10px; }
+.card-label { font-size: 12px; font-weight: 500; opacity: 0.8; display: block; margin-bottom: 4px; }
+.card-value { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; }
 
 /* КАРУСЕЛЬ БАННЕРОВ */
 .banner-carousel { position: relative; margin-bottom: 20px; }
@@ -185,6 +210,7 @@ select.input { cursor: pointer; }
 .modal-overlay.active { display: flex; }
 .modal { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 20px; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; box-shadow: 0 24px 50px rgba(0,0,0,0.6); position: relative; }
 .modal h3 { color: var(--txt); }
+.modal-actions-col { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
 
 /* ЧАТ, ТОСТЫ, АДМИНКА, ПРОФИЛЬ */
 .chat-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; background: var(--inner-card); }
@@ -258,45 +284,15 @@ body[data-theme="light"] .ticket-divider::before, body[data-theme="light"] .tick
 .toggle-switch input:checked + .slider { background-color: var(--grn); }
 .toggle-switch input:checked + .slider:before { transform: translateX(20px); }
 
-.tg-promo-card {
-  background: linear-gradient(135deg, #229ED9 0%, #1c7db1 100%);
-  border-radius: 20px; padding: 18px; margin-top: 24px; display: flex; align-items: center; justify-content: space-between;
-  color: #fff; cursor: pointer; text-decoration: none; box-shadow: 0 4px 15px rgba(34, 158, 217, 0.3);
-  transition: transform 0.2s;
-}
+.tg-promo-card { background: linear-gradient(135deg, #229ED9 0%, #1c7db1 100%); border-radius: 20px; padding: 18px; margin-top: 24px; display: flex; align-items: center; justify-content: space-between; color: #fff; cursor: pointer; text-decoration: none; box-shadow: 0 4px 15px rgba(34, 158, 217, 0.3); transition: transform 0.2s; }
 .tg-promo-card:active { transform: scale(0.98); }
 .tg-promo-card .tg-icon { width: 44px; height: 44px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); flex-shrink: 0; }
 .tg-promo-card .tg-icon svg { width: 24px; height: 24px; fill: #fff; }
 .tg-promo-card .tg-content { flex: 1; margin-left: 14px; }
 .tg-promo-card h3 { font-size: 16px; font-weight: 900; margin-bottom: 2px; }
-.tg-promo-card p { font-size: 12px; opacity: 0.9; font-weight: 500; }0%;
-  height: 54px;
-  border-radius: 30px;
-  font-size: 15px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.2s;
-  border: none;
-}
-.receipt-action-btn:active { transform: scale(0.97); }
-.receipt-action-btn.white {
-  background: #ffffff;
-  color: #000000;
-}
-.receipt-action-btn.black {
-  background: transparent;
-  color: #ffffff;
-  border: 1px solid rgba(255,255,255,0.2);
-}
+.tg-promo-card p { font-size: 12px; opacity: 0.9; font-weight: 500; }
 
-/* Стили для крипто-иконок в чипах и карточках */
-.pay-tag svg, .coin-icon svg {
-  border-radius: 50%;
-  display: block;
-}
-.coin-icon {
-  background: transparent !important;
-}
+/* НОВЫЙ БАННЕР В ПРОФИЛЕ */
+.profile-banner { width: 100%; height: 120px; border-radius: 20px; margin-bottom: 16px; position: relative; overflow: hidden; background: linear-gradient(135deg, #3b82f6, #8b5cf6); display: flex; align-items: flex-end; justify-content: flex-end; padding: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+.profile-banner img, .profile-banner video, .profile-banner iframe { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border: none; }
+.profile-banner-btn { position: relative; z-index: 10; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); color: #fff; padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); }
