@@ -64,7 +64,6 @@
     </header>
 
     <main class="content">
-
       <section class="screen active" id="screen-home">
         <div class="search-bar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -473,12 +472,14 @@
   <div class="modal glass-modal" style="max-width: 350px;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
       <h3 style="font-size: 16px; font-weight: 800;">Уведомления</h3>
-      <button class="btn btn-ghost btn-sm" onclick="clearNotifications()" style="font-size: 12px; color: var(--dim); height: 28px;">Очистить</button>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button class="btn btn-ghost btn-sm" onclick="clearNotifications()" style="font-size: 12px; color: var(--dim); height: 28px; padding: 0 8px;">Очистить</button>
+        <button class="btn btn-ghost btn-sm" style="font-size: 16px; padding: 0; width: 28px; height: 28px; border-radius: 50%;" onclick="closeModal('notificationsModal')">✕</button>
+      </div>
     </div>
     <div id="notificationsList" style="display: flex; flex-direction: column; gap: 8px;">
       <div class="empty-state" style="padding: 20px 0;">Нет новых уведомлений</div>
     </div>
-    <button class="btn btn-ghost btn-block" style="margin-top: 12px; height: 44px;" onclick="closeModal('notificationsModal')">Закрыть</button>
   </div>
 </div>
 
@@ -601,7 +602,7 @@
     
     <div class="grid-2-col" style="margin-bottom:12px;">
       <div class="field">
-        <label>Тип / Банк</label>
+        <label>Тип / Способ</label>
         <select class="input" id="req-type" style="height: 44px; font-size: 14px !important;" onchange="toggleReqNetworkField()">
           <option value="СБП">СБП</option>
           <option value="Тинькофф">Тинькофф</option>
@@ -614,7 +615,7 @@
           <option value="TON">TON (Крипта)</option>
         </select>
       </div>
-      <div class="field"><label>Название (видно юзеру)</label><input class="input" type="text" id="req-name" placeholder="Основной" style="height: 44px;"></div>
+      <div class="field"><label>Название (для админа)</label><input class="input" type="text" id="req-name" placeholder="Основной" style="height: 44px;"></div>
     </div>
 
     <div class="field" id="req-network-group" style="margin-bottom:12px; display:none;">
@@ -628,21 +629,15 @@
       </select>
     </div>
 
-    <div class="field" style="margin-bottom:12px;"><label>Реквизит (карта / адрес)</label><input class="input" type="text" id="req-value" placeholder="+7 999..." style="height: 44px;"></div>
+    <div class="field" style="margin-bottom:12px;"><label>Адрес / Номер карты / Телефона</label><input class="input" type="text" id="req-value" placeholder="+7 999..." style="height: 44px;"></div>
+    
     <div class="grid-2-col" style="margin-bottom:12px;">
-      <div class="field"><label>Мин. лимит (₽)</label><input class="input" type="number" id="req-min" placeholder="2000" style="height: 44px;"></div>
-      <div class="field"><label>Макс. лимит (₽)</label><input class="input" type="number" id="req-max" placeholder="50000" style="height: 44px;"></div>
+      <div class="field"><label>Мин. сумма (₽)</label><input class="input" type="number" id="req-min" placeholder="2000" style="height: 44px;"></div>
+      <div class="field"><label>Макс. сумма (₽)</label><input class="input" type="number" id="req-max" placeholder="50000" style="height: 44px;"></div>
     </div>
-    <h4 style="font-size: 14px; font-weight: 800; margin: 16px 0 8px; color: var(--dim);">Общие лимиты (задаются вручную)</h4>
-    <div class="grid-2-col" style="margin-bottom:8px;">
-      <div class="field"><label>Лимит пополнений (кол-во)</label><input class="input" type="number" id="req-total-dep-count" placeholder="100" style="height: 44px;"></div>
-      <div class="field"><label>Лимит пополнений (сумма)</label><input class="input" type="number" id="req-total-dep-sum" placeholder="5000000" style="height: 44px;"></div>
-    </div>
-    <div class="grid-2-col" style="margin-bottom:12px;">
-      <div class="field"><label>Лимит выводов (кол-во)</label><input class="input" type="number" id="req-total-wd-count" placeholder="100" style="height: 44px;"></div>
-      <div class="field"><label>Лимит выводов (сумма)</label><input class="input" type="number" id="req-total-wd-sum" placeholder="5000000" style="height: 44px;"></div>
-    </div>
-    <div class="field" style="margin-bottom:12px;"><label>Текущий оборот (₽)</label><input class="input" type="number" id="req-turnover" placeholder="0" style="height: 44px;"></div>
+
+    <div class="field" style="margin-bottom:12px;"><label>Текущий оборот (₽)</label><input class="input" type="number" id="req-turnover" placeholder="0" style="height: 44px;" readonly title="Заполняется автоматически"></div>
+    
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
       <label style="font-size: 14px; font-weight: 700;">Активен для работы</label>
       <label class="toggle-switch">
@@ -677,9 +672,10 @@
       <label>Изменить статус</label>
       <select class="input" id="assign-status" style="height: 48px; font-size:14px !important;">
         <option value="pending">На рассмотрение</option>
-        <option value="processing">В обработке</option>
-        <option value="success">Успешно</option>
-        <option value="failed">Не выполнено</option>
+        <option value="processing">В обработке (Реквизиты даны)</option>
+        <option value="paid">Оплачено юзером (Ждет проверки)</option>
+        <option value="success">Успешно (Зачислить)</option>
+        <option value="failed">Не выполнено (Отказ)</option>
         <option value="cancelled">Отменено</option>
       </select>
     </div>
@@ -789,6 +785,17 @@
     <div class="field" style="margin-bottom: 12px;">
       <label>Способы оплаты</label>
       <div class="icon-scroll" id="edit-payments" style="margin-bottom:0;"></div>
+    </div>
+    <div class="field" style="margin-bottom: 12px;"><label>Условия</label><textarea class="input" id="edit-terms" style="min-height: 60px; font-size: 14px !important;"></textarea></div>
+    <div class="error-msg" id="editError" style="font-size: 12px;"></div>
+    <button class="btn btn-primary btn-block" id="editSaveBtn" style="height: 44px;">Сохранить</button>
+    <button class="btn btn-ghost btn-block" onclick="closeModal('editAdModal')" style="margin-top: 6px; height: 44px;">Отмена</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>class="icon-scroll" id="edit-payments" style="margin-bottom:0;"></div>
     </div>
     <div class="field" style="margin-bottom: 12px;"><label>Условия</label><textarea class="input" id="edit-terms" style="min-height: 60px; font-size: 14px !important;"></textarea></div>
     <div class="error-msg" id="editError" style="font-size: 12px;"></div>

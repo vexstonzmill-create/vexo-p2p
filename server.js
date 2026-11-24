@@ -25,8 +25,8 @@ async function initDB() {
       CREATE TABLE IF NOT EXISTS orders (id SERIAL PRIMARY KEY, public_id VARCHAR(20) UNIQUE, ad_id INT REFERENCES ads(id), buyer_id INT REFERENCES users(id), seller_id INT REFERENCES users(id), asset VARCHAR(20), price NUMERIC, amount_rub NUMERIC, amount_asset NUMERIC, face_type VARCHAR(20), payment_method VARCHAR(50), status VARCHAR(20) DEFAULT 'pending', history JSONB DEFAULT '[]', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, expires_at TIMESTAMP, receipt_data TEXT);
       CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, order_id INT REFERENCES orders(id), sender_id INT REFERENCES users(id), text TEXT, media_data TEXT, media_type VARCHAR(50), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS reviews (id SERIAL PRIMARY KEY, order_id INT REFERENCES orders(id), author_id INT REFERENCES users(id), target_id INT REFERENCES users(id), rating INT, comment TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
-      CREATE TABLE IF NOT EXISTS requests (id SERIAL PRIMARY KEY, user_id INT REFERENCES users(id), type VARCHAR(50), amount NUMERIC, currency VARCHAR(10), status VARCHAR(20) DEFAULT 'pending', details JSONB, admin_comment TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
-      CREATE TABLE IF NOT EXISTS requisites (id SERIAL PRIMARY KEY, type VARCHAR(50) DEFAULT 'Банк', name VARCHAR(100) NOT NULL, value TEXT NOT NULL, network VARCHAR(50), min_limit NUMERIC DEFAULT 0, max_limit NUMERIC DEFAULT 0, total_dep_count INT DEFAULT 0, total_dep_sum NUMERIC DEFAULT 0, total_wd_count INT DEFAULT 0, total_wd_sum NUMERIC DEFAULT 0, turnover NUMERIC DEFAULT 0, active BOOLEAN DEFAULT true, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS requests (id SERIAL PRIMARY KEY, user_id INT REFERENCES users(id), type VARCHAR(50), amount NUMERIC, currency VARCHAR(10), status VARCHAR(20) DEFAULT 'pending', details JSONB, admin_comment TEXT, receipt_data TEXT, assigned_requisite TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS requisites (id SERIAL PRIMARY KEY, type VARCHAR(50) DEFAULT 'Банк', name VARCHAR(100) NOT NULL, value TEXT NOT NULL, network VARCHAR(50), min_limit NUMERIC DEFAULT 0, max_limit NUMERIC DEFAULT 0, turnover NUMERIC DEFAULT 0, active BOOLEAN DEFAULT true, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
     `);
 
     await pool.query(`ALTER TABLE ads ADD COLUMN IF NOT EXISTS payment_time INT DEFAULT 30;`);
@@ -394,13 +394,22 @@ app.get('/api/requests/my', auth, async (req, res) => {
   } catch(e) { res.status(500).json({ error: 'db_error' }); }
 });
 
+app.patch('/api/requests/:id/cancel', auth, async (req, res) => {
+  try {
+    const r = await pool.query('SELECT * FROM requests WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
+    if (!r.rows[0] || r.rows[0].status !== 'pending') return res.status(400).json({ error: 'Нельзя отменить' });
+    await pool.query("UPDATE requests SET status = 'cancelled' WHERE id = $1", [req.params.id]);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: 'db_error' }); }
+});
+
 app.patch('/api/requests/:id/receipt', auth, async (req, res) => {
   const { receipt_data } = req.body;
   if (!receipt_data) return res.status(400).json({ error: 'no_receipt' });
   try {
     const r = await pool.query('SELECT * FROM requests WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
-    if (!r.rows[0]) return res.status(403).json({ error: 'forbidden' });
-    await pool.query('UPDATE requests SET receipt_data = $1 WHERE id = $2', [receipt_data, req.params.id]);
+    if (!r.rows[0] || r.rows[0].status !== 'processing') return res.status(400).json({ error: 'Неверный статус' });
+    await pool.query("UPDATE requests SET status = 'paid', receipt_data = $1 WHERE id = $2", [receipt_data, req.params.id]);
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: 'db_error' }); }
 });
@@ -765,6 +774,7 @@ app.post('/api/chat/:orderId', auth, async (req, res) => {
   const { text, media_data, media_type } = req.body;
   const oRes = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.orderId]);
   const o = oRes.rows[0];
+  // Блокируем только если сделка отменена/отклонена, завершенные - можно
   if (!o || ['cancelled', 'declined'].includes(o.status)) return res.status(409).json({ error: 'closed' });
   if (o.buyer_id !== req.user.id && o.seller_id !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
   const result = await pool.query('INSERT INTO messages (order_id, sender_id, text, media_data, media_type) VALUES ($1, $2, $3, $4, $5) RETURNING *', [o.id, req.user.id, text || '', media_data || null, media_type || null]);
@@ -850,13 +860,13 @@ app.get('/api/admin/requisites', auth, async (req, res) => {
 
 app.post('/api/admin/requisites', auth, async (req, res) => {
   if (!['admin', 'owner', 'deputy'].includes(req.user.role)) return res.status(403).json({ error: 'forbidden' });
-  const { type, name, value, network, min_limit, max_limit, total_dep_count, total_dep_sum, total_wd_count, total_wd_sum, turnover, active } = req.body;
+  const { type, name, value, network, min_limit, max_limit, active } = req.body;
   if (!name || !value) return res.status(400).json({ error: 'Заполните название и реквизит' });
   try {
     const result = await pool.query(
-      `INSERT INTO requisites (type, name, value, network, min_limit, max_limit, total_dep_count, total_dep_sum, total_wd_count, total_wd_sum, turnover, active)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
-      [type || 'Банк', name, value, network || null, min_limit || 0, max_limit || 0, total_dep_count || 0, total_dep_sum || 0, total_wd_count || 0, total_wd_sum || 0, turnover || 0, active !== false]
+      `INSERT INTO requisites (type, name, value, network, min_limit, max_limit, active)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      [type || 'Банк', name, value, network || null, min_limit || 0, max_limit || 0, active !== false]
     );
     res.status(201).json(result.rows[0]);
   } catch(e) { res.status(500).json({ error: 'db_error' }); }
@@ -870,11 +880,9 @@ app.patch('/api/admin/requisites/:id', auth, async (req, res) => {
       `UPDATE requisites SET
         type = COALESCE($1, type), name = COALESCE($2, name), value = COALESCE($3, value),
         network = COALESCE($4, network), min_limit = COALESCE($5, min_limit), max_limit = COALESCE($6, max_limit),
-        total_dep_count = COALESCE($7, total_dep_count), total_dep_sum = COALESCE($8, total_dep_sum),
-        total_wd_count = COALESCE($9, total_wd_count), total_wd_sum = COALESCE($10, total_wd_sum),
-        turnover = COALESCE($11, turnover), active = COALESCE($12, active)
-       WHERE id = $13 RETURNING *`,
-      [b.type, b.name, b.value, b.network, b.min_limit, b.max_limit, b.total_dep_count, b.total_dep_sum, b.total_wd_count, b.total_wd_sum, b.turnover, b.active, req.params.id]
+        turnover = COALESCE($7, turnover), active = COALESCE($8, active)
+       WHERE id = $9 RETURNING *`,
+      [b.type, b.name, b.value, b.network, b.min_limit, b.max_limit, b.turnover, b.active, req.params.id]
     );
     if (!result.rows[0]) return res.status(404).json({ error: 'not_found' });
     res.json(result.rows[0]);
@@ -898,14 +906,14 @@ app.patch('/api/admin/requests/:id', auth, async (req, res) => {
     await client.query('BEGIN');
     const rRes = await client.query('SELECT * FROM requests WHERE id = $1 FOR UPDATE', [reqId]);
     const request = rRes.rows[0];
-    if (!request || ['completed', 'rejected', 'cancelled', 'success', 'failed'].includes(request.status)) throw new Error('Заявка уже завершена');
+    if (!request || ['success', 'failed', 'cancelled'].includes(request.status)) throw new Error('Заявка уже завершена');
 
     await client.query(
       'UPDATE requests SET status = $1, admin_comment = COALESCE($2, admin_comment), assigned_requisite = COALESCE($3, assigned_requisite) WHERE id = $4',
       [status, admin_comment, assigned_requisite, reqId]
     );
 
-    if (['success', 'approved'].includes(status)) {
+    if (status === 'success') {
       if (request.type === 'maker_req') await client.query('UPDATE users SET is_maker = true WHERE id = $1', [request.user_id]);
       else if (request.type === 'merchant_req') await client.query('UPDATE users SET is_merchant = true WHERE id = $1', [request.user_id]);
       else if (request.type === 'deposit_rub') await client.query('UPDATE users SET balance_rub = balance_rub + $1 WHERE id = $2', [request.amount, request.user_id]);
@@ -922,9 +930,20 @@ app.patch('/api/admin/requests/:id', auth, async (req, res) => {
           await client.query('UPDATE users SET balance_usdt = balance_usdt - $1, balance_rub = balance_rub + $2 WHERE id = $3', [usdtAmount, rubAmount, request.user_id]);
         }
       }
+
+      // Автоотключение реквизита при достижении лимита оборота
+      if (request.assigned_requisite) {
+        const reqRes = await client.query('SELECT id, turnover, max_limit FROM requisites WHERE value = $1', [request.assigned_requisite]);
+        if (reqRes.rows[0]) {
+          const reqData = reqRes.rows[0];
+          const newTurnover = Number(reqData.turnover) + Number(request.amount);
+          const shouldDeactivate = Number(reqData.max_limit) > 0 && newTurnover >= Number(reqData.max_limit);
+          await client.query('UPDATE requisites SET turnover = $1, active = $2 WHERE id = $3', [newTurnover, !shouldDeactivate, reqData.id]);
+        }
+      }
     }
     await client.query('COMMIT');
-    const statusText = ['success', 'approved'].includes(status) ? 'одобрена ✅' : status === 'failed' ? 'не выполнена ❌' : status === 'cancelled' ? 'отменена' : 'в обработке';
+    const statusText = status === 'success' ? 'одобрена ✅' : status === 'failed' ? 'не выполнена ❌' : status === 'cancelled' ? 'отменена' : status === 'paid' ? 'ожидает подтверждения ⏳' : 'в обработке';
     notifyUser(request.user_id, `📄 <b>Статус заявки обновлен</b>\nВаша заявка была ${statusText}.${admin_comment ? `\n💬 Комментарий: ${admin_comment}` : ''}`);
     res.json({ ok: true });
   } catch(e) { await client.query('ROLLBACK'); res.status(400).json({ error: e.message || 'error' }); }
@@ -942,7 +961,7 @@ app.get('/api/admin/stats', auth, async (req, res) => {
   else if (period === 'year') timeCondition = "AND created_at >= NOW() - INTERVAL '1 year'";
 
   try {
-    const reqRes = await pool.query(`SELECT COUNT(*) as count, COALESCE(SUM(amount), 0) as total FROM requests WHERE type LIKE 'withdraw%' AND status IN ('success','approved') ${timeCondition}`);
+    const reqRes = await pool.query(`SELECT COUNT(*) as count, COALESCE(SUM(amount), 0) as total FROM requests WHERE type LIKE 'withdraw%' AND status = 'success' ${timeCondition}`);
     const count = parseInt(reqRes.rows[0].count);
     const total = Number(reqRes.rows[0].total);
 
@@ -952,7 +971,7 @@ app.get('/api/admin/stats', auth, async (req, res) => {
     else if (period === 'month') avg = total / 30;
     else if (period === 'year') avg = total / 365;
     else {
-      const daysRes = await pool.query(`SELECT EXTRACT(DAY FROM NOW() - MIN(created_at)) as days FROM requests WHERE type LIKE 'withdraw%' AND status IN ('success','approved')`);
+      const daysRes = await pool.query(`SELECT EXTRACT(DAY FROM NOW() - MIN(created_at)) as days FROM requests WHERE type LIKE 'withdraw%' AND status = 'success'`);
       const days = parseInt(daysRes.rows[0].days) || 1;
       avg = total / (days || 1);
     }

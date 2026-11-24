@@ -20,7 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       document.querySelectorAll('.modal-overlay').forEach(overlay => {
-        if (['dialogOverlay', 'receiptViewModal', 'orderModal', 'chatModal', 'requestDetailModal', 'assignRequisiteModal'].includes(overlay.id)) return;
+        // Уведомления исключаем, чтобы не было стрелки
+        if (['dialogOverlay', 'receiptViewModal', 'orderModal', 'chatModal', 'requestDetailModal', 'assignRequisiteModal', 'notificationsModal'].includes(overlay.id)) return;
         const modal = overlay.querySelector('.modal');
         if (modal && !modal.querySelector('.global-back-btn')) {
           const btn = document.createElement('button');
@@ -1442,7 +1443,22 @@ document.addEventListener('DOMContentLoaded', () => {
       const list = document.getElementById('myHistoryList'); if (!list) return;
       try {
         const { items } = await API.req('GET', '/orders/my?status=completed');
-        list.innerHTML = items.length ? items.map(o => `<div class="glass-card" style="margin-bottom:12px; border-left:4px solid var(--grn); padding:16px;"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><strong style="font-size:15px;">#${o.publicId}</strong><span style="color:var(--grn);font-size:12px;font-weight:700;">Завершен</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div><div style="font-size:12px;color:var(--dim);font-weight:600;">Сумма</div><div style="font-size:15px;font-weight:800;">${fmtDec(o.amountRub, 2)} ₽</div></div><div><div style="font-size:12px;color:var(--dim);font-weight:600;">Актив</div><div style="font-size:15px;font-weight:800;">${fmtDec(o.amountAsset, 2)} ${o.asset}</div></div></div></div>`).join('') : '<div class="empty-state">Пусто</div>';
+        list.innerHTML = items.length ? items.map(o => `
+          <div class="glass-card" style="margin-bottom:12px; border-left:4px solid var(--grn); padding:16px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+              <strong style="font-size:15px;">#${o.publicId}</strong>
+              <span style="color:var(--grn);font-size:12px;font-weight:700;">Завершен</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div><div style="font-size:12px;color:var(--dim);font-weight:600;">Сумма</div><div style="font-size:15px;font-weight:800;">${fmtDec(o.amountRub, 2)} ₽</div></div>
+              <div><div style="font-size:12px;color:var(--dim);font-weight:600;">Актив</div><div style="font-size:15px;font-weight:800;">${fmtDec(o.amountAsset, 2)} ${o.asset}</div></div>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:12px;">
+               <button class="btn btn-primary btn-sm" style="flex:1; height:36px; font-size:12px;" onclick="openChatModal(${o.id})">💬 Чат</button>
+               <button class="btn btn-ghost btn-sm" style="flex:1; height:36px; font-size:12px; border:1px solid var(--glass-border);" onclick="openOrderPage(${o.id})">Детали</button>
+            </div>
+          </div>
+        `).join('') : '<div class="empty-state">Пусто</div>';
       } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     }
 
@@ -1460,10 +1476,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const list = document.getElementById('myRequestsList'); if (!list) return;
       try {
         const { items } = await API.req('GET', '/requests/my');
-
         const statusMap = {
           pending: { l: 'На рассмотрении', c: 'var(--yellow)' },
           processing: { l: 'В обработке', c: 'var(--blue)' },
+          paid: { l: 'Ожидает проверки', c: 'var(--gold)' },
           success: { l: 'Успешно', c: 'var(--grn)' },
           failed: { l: 'Не выполнено', c: 'var(--red)' },
           cancelled: { l: 'Отменено', c: 'var(--dim)' }
@@ -1494,17 +1510,37 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (e) { list.innerHTML = '<div class="empty-state">Ошибка</div>'; }
     }
 
+    window.cancelMyRequest = async function(id) {
+      if (!await confirmAsync('Отмена', 'Отменить заявку?', 'Да')) return;
+      try {
+        await API.req('PATCH', `/requests/${id}/cancel`);
+        toast('Заявка отменена', 'success');
+        closeModal('requestDetailModal');
+        loadProfile();
+      } catch(e) { toast(e.message, 'error'); }
+    };
+
+    window.submitRequestReceipt = async function(id, base64, oldReceipt) {
+      if (!base64 && !oldReceipt) return toast('Прикрепите чек', 'error');
+      try {
+        await API.req('PATCH', `/requests/${id}/receipt`, { receipt_data: base64 || oldReceipt });
+        toast('Чек отправлен, ожидайте проверки', 'success');
+        closeModal('requestDetailModal');
+        loadProfile();
+      } catch(e) { toast(e.message, 'error'); }
+    };
+
     window.openRequestDetails = function(encodedData) {
       const r = JSON.parse(decodeURIComponent(encodedData));
       const details = r.details || {};
       const m = document.getElementById('requestDetailModal');
       const c = document.getElementById('requestDetailContent');
-
       const reqId = r.id + 1000;
 
       const statusMap = {
         pending: { l: 'На рассмотрении', class: 'processing', icon: '⏱' },
         processing: { l: 'В обработке', class: 'processing', icon: '⏳' },
+        paid: { l: 'Ожидает проверки', class: 'processing', icon: '✓' },
         success: { l: 'Успешно', class: 'success', icon: '✓' },
         failed: { l: 'Не выполнено', class: 'failed', icon: '✕' },
         cancelled: { l: 'Отменено', class: 'rejected', icon: '✕' }
@@ -1528,7 +1564,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const rateStr = `${fmtDec(rateVal, 2)} ₽ / USDT`;
 
       let userActionHtml = '';
-      if (r.status === 'processing') {
+      if (r.status === 'pending') {
+          userActionHtml = `
+            <div style="margin-top:20px; padding:16px; background:rgba(255,255,255,0.05); border:1px solid var(--card-border); border-radius:16px; text-align:center;">
+              <div style="font-size:14px; font-weight:800; color:var(--yellow); margin-bottom:8px;">Ожидает обработки админом</div>
+              <button class="btn btn-ghost btn-block" style="height:44px; color:var(--red); border-color:rgba(239,68,68,.3);" onclick="cancelMyRequest(${r.id})">Отменить заявку</button>
+            </div>
+          `;
+      } else if (r.status === 'processing') {
           userActionHtml = `
             <div style="margin-top:20px; padding:16px; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:16px;">
               <div style="font-size:14px; font-weight:800; color:var(--txt); margin-bottom:8px;">Оплатите по реквизитам:</div>
@@ -1537,10 +1580,18 @@ document.addEventListener('DOMContentLoaded', () => {
               <input type="file" id="reqReceiptFile" style="display:none;" accept="image/*,application/pdf">
               <button class="btn btn-primary btn-block btn-sm" onclick="document.getElementById('reqReceiptFile').click()" style="margin-bottom:8px; height:40px;">Прикрепить чек</button>
               <div id="reqReceiptName" style="font-size:12px; color:var(--grn); margin-bottom:8px; font-weight:600; text-align:center;"></div>
-              <button class="btn btn-primary btn-block" id="confirmReqPayBtn" style="height:44px;">Подтвердить оплату</button>
+              <button class="btn btn-primary btn-block" onclick="submitRequestReceipt(${r.id}, window._tempReqReceipt, '${r.receipt_data || ''}')" style="height:44px;">Я оплатил</button>
             </div>
           `;
-      } else if (r.status === 'success' || r.status === 'failed' || r.status === 'cancelled') {
+      } else if (r.status === 'paid') {
+          userActionHtml = `
+            <div style="margin-top:20px; padding:16px; background:rgba(212,175,55,0.1); border:1px solid rgba(212,175,55,0.3); border-radius:16px; text-align:center;">
+              <div style="font-size:14px; font-weight:800; color:var(--gold); margin-bottom:4px;">Ожидает проверки</div>
+              <div style="font-size:12px; color:var(--dim);">Админ проверяет ваш чек.</div>
+              ${r.receipt_data ? `<button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="viewReceipt('${r.receipt_data}')">Посмотреть чек</button>` : ''}
+            </div>
+          `;
+      } else if (['success', 'failed', 'cancelled'].includes(r.status)) {
           userActionHtml = `
             <div style="margin-top:20px; padding:16px; background:rgba(255,255,255,0.05); border:1px solid var(--card-border); border-radius:16px; text-align:center;">
               <div style="font-size:14px; font-weight:800; color:${st.class === 'success' ? 'var(--grn)' : 'var(--red)'}; margin-bottom:4px;">${st.l}</div>
@@ -1591,29 +1642,18 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
 
       if (r.status === 'processing') {
-        let tempReqReceipt = null;
+        window._tempReqReceipt = null;
         const fileInput = document.getElementById('reqReceiptFile');
         if (fileInput) {
            fileInput.onchange = async (e) => {
              const file = e.target.files[0];
              if (file) {
                document.getElementById('reqReceiptName').textContent = 'Загрузка...';
-               try { tempReqReceipt = await fileToBase64(file); document.getElementById('reqReceiptName').textContent = '✓ Чек прикреплен'; }
+               try { window._tempReqReceipt = await fileToBase64(file); document.getElementById('reqReceiptName').textContent = '✓ Чек прикреплен'; }
                catch(err) { toast('Ошибка', 'error'); }
              }
            };
         }
-
-        document.getElementById('confirmReqPayBtn').onclick = async () => {
-           if (!tempReqReceipt && !r.receipt_data) return toast('Прикрепите чек', 'error');
-           const btn = document.getElementById('confirmReqPayBtn'); btn.disabled = true; btn.textContent = '...';
-           try {
-              await API.req('PATCH', `/requests/${r.id}/receipt`, { receipt_data: tempReqReceipt || r.receipt_data });
-              toast('Чек отправлен! Ожидайте проверки.', 'success');
-              closeModal('requestDetailModal');
-              loadProfile();
-           } catch(e) { toast(e.message, 'error'); btn.disabled = false; btn.textContent = 'Подтвердить оплату'; }
-        };
       }
 
       m.classList.add('active');
@@ -1901,6 +1941,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const statusMap = {
               pending: { l: 'На рассмотрении', c: 'var(--yellow)' },
               processing: { l: 'В обработке', c: 'var(--blue)' },
+              paid: { l: 'Ожидает проверки', c: 'var(--gold)' },
               success: { l: 'Успешно', c: 'var(--grn)' },
               failed: { l: 'Не выполнено', c: 'var(--red)' },
               cancelled: { l: 'Отменено', c: 'var(--dim)' }
@@ -1970,9 +2011,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div style="font-size:12px; color:var(--dim); display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-bottom:12px;">
               <div>Лимит: ${fmt(r.min_limit)} - ${fmt(r.max_limit)}</div>
-              <div>Оборот: ${fmt(r.turnover)} ₽</div>
-              <div>Депозиты: ${r.total_dep_count || 0}</div>
-              <div>Выводы: ${r.total_wd_count || 0}</div>
+              <div>Оборот: ${fmt(r.turnover)} / ${fmt(r.max_limit)}</div>
             </div>
             <div style="display:flex; gap:8px;">
                <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="openRequisiteModal(${r.id})">Изменить</button>
@@ -2011,11 +2050,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('req-value').value = r?.value || '';
       document.getElementById('req-min').value = r?.min_limit || '';
       document.getElementById('req-max').value = r?.max_limit || '';
-      document.getElementById('req-total-dep-count').value = r?.total_dep_count || '';
-      document.getElementById('req-total-dep-sum').value = r?.total_dep_sum || '';
-      document.getElementById('req-total-wd-count').value = r?.total_wd_count || '';
-      document.getElementById('req-total-wd-sum').value = r?.total_wd_sum || '';
-      document.getElementById('req-turnover').value = r?.turnover || '';
+      document.getElementById('req-turnover').value = r?.turnover || '0';
       document.getElementById('req-active').checked = r ? r.active : true;
       document.getElementById('req-error').textContent = '';
       
@@ -2034,10 +2069,6 @@ document.addEventListener('DOMContentLoaded', () => {
           value: document.getElementById('req-value').value,
           min_limit: Number(document.getElementById('req-min').value) || 0,
           max_limit: Number(document.getElementById('req-max').value) || 0,
-          total_dep_count: Number(document.getElementById('req-total-dep-count').value) || 0,
-          total_dep_sum: Number(document.getElementById('req-total-dep-sum').value) || 0,
-          total_wd_count: Number(document.getElementById('req-total-wd-count').value) || 0,
-          total_wd_sum: Number(document.getElementById('req-total-wd-sum').value) || 0,
           turnover: Number(document.getElementById('req-turnover').value) || 0,
           active: document.getElementById('req-active').checked
         };
@@ -2081,7 +2112,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const suitable = allRequisites.filter(r => r.active && amount >= r.min_limit && amount <= r.max_limit);
       suitable.forEach(r => {
          const opt = document.createElement('option');
-         opt.value = r.id;
+         opt.value = r.value;
          opt.textContent = `${r.name} (${r.value}) ${r.network ? `[${r.network}]` : ''}`;
          select.appendChild(opt);
       });
@@ -2094,15 +2125,15 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('assign-status').value = 'processing';
 
       document.getElementById('assign-save-btn').onclick = async () => {
-        const reqToFind = allRequisites.find(r => r.id == select.value);
-        if (!select.value || !reqToFind) return toast('Выберите реквизит', 'error');
+        const selectedVal = select.value;
+        if (!selectedVal) return toast('Выберите реквизит', 'error');
 
         const btn = document.getElementById('assign-save-btn'); btn.disabled = true; btn.textContent = '...';
         try {
           await API.req('PATCH', '/admin/requests/' + reqId, {
             status: document.getElementById('assign-status').value,
             admin_comment: document.getElementById('assign-comment').value,
-            assigned_requisite: reqToFind.value
+            assigned_requisite: selectedVal
           });
           toast('Заявка обновлена', 'success');
           closeModal('assignRequisiteModal');
