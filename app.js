@@ -2221,9 +2221,4 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch (err) {
     console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
   }
-});al load error:', e); }
-
-  } catch (err) {
-    console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
-  }
 });
