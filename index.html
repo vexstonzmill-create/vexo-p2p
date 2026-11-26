@@ -10,6 +10,9 @@
 </head>
 <body data-theme="dark">
 
+<!-- ФОНОВОЕ СВЕЧЕНИЕ -->
+<div class="bg-glow"></div>
+
 <div id="loader">
   <div class="spinner"></div>
   <div class="loader-text">Загрузка VEXO...</div>
@@ -58,7 +61,8 @@
         <button class="icon-btn" id="themeBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
         </button>
-        <button class="btn btn-primary btn-sm" id="loginBtn" style="padding: 8px 14px; font-size: 13px; border-radius: 12px;">Войти</button>
+        <!-- БЕЛАЯ КНОПКА СО СВЕЧЕНИЕМ -->
+        <button class="btn btn-glow-white btn-sm" id="loginBtn" style="padding: 10px 20px; font-size: 14px;">Войти</button>
         <button class="avatar-btn hidden" id="avatarBtn" onclick="show('profile')"></button>
       </div>
     </header>
@@ -795,9 +799,7 @@
 
 <script src="app.js"></script>
 </body>
-</html>class="icon-scroll" id="edit-payments" style="margin-bottom:0;"></div>
-    </div>
-    <div class="field" style="margin-bottom: 12px;"><label>Условия</label><textarea class="input" id="edit-terms" style="min-height: 60px; font-size: 14px !important;"></textarea></div>
+</html>-bottom: 12px;"><label>Условия</label><textarea class="input" id="edit-terms" style="min-height: 60px; font-size: 14px !important;"></textarea></div>
     <div class="error-msg" id="editError" style="font-size: 12px;"></div>
     <button class="btn btn-primary btn-block" id="editSaveBtn" style="height: 44px;">Сохранить</button>
     <button class="btn btn-ghost btn-block" onclick="closeModal('editAdModal')" style="margin-top: 6px; height: 44px;">Отмена</button>

@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       document.querySelectorAll('.modal-overlay').forEach(overlay => {
-        // Уведомления исключаем, чтобы не было стрелки
         if (['dialogOverlay', 'receiptViewModal', 'orderModal', 'chatModal', 'requestDetailModal', 'assignRequisiteModal', 'notificationsModal'].includes(overlay.id)) return;
         const modal = overlay.querySelector('.modal');
         if (modal && !modal.querySelector('.global-back-btn')) {
@@ -35,16 +34,17 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }, 800);
 
+    // РЕАЛЬНЫЕ ИКОНКИ БАНКОВ И КРИПТЫ
     const PAY_ICONS = {
       'СБП': `<svg viewBox="0 0 24 24" width="20" height="20" style="flex-shrink:0; border-radius:50%; overflow:hidden; display:block;"><rect width="12" height="12" fill="#5B57A7"/><rect x="12" width="12" height="12" fill="#EE2D2A"/><rect y="12" width="12" height="12" fill="#1C9F6E"/><rect x="12" y="12" width="12" height="12" fill="#FFB800"/></svg>`,
-      'Тинькофф': `<svg viewBox="0 0 24 24" width="20" height="20" style="flex-shrink:0; border-radius:50%; overflow:hidden; display:block;"><rect width="24" height="24" fill="#FFDD2D"/><text x="12" y="17.5" text-anchor="middle" font-size="14" font-weight="900" fill="#000" font-family="Arial, Helvetica, sans-serif">Т</text></svg>`,
-      'Сбербанк': `<svg viewBox="0 0 24 24" width="20" height="20" style="flex-shrink:0; border-radius:50%; overflow:hidden; display:block;"><rect width="24" height="24" fill="#21A038"/><text x="12" y="17.5" text-anchor="middle" font-size="13" font-weight="900" fill="#fff" font-family="Arial, Helvetica, sans-serif">С</text></svg>`,
-      'Альфа-Банк': `<svg viewBox="0 0 24 24" width="20" height="20" style="flex-shrink:0; border-radius:50%; overflow:hidden; display:block;"><rect width="24" height="24" fill="#EF3124"/><text x="12" y="17.5" text-anchor="middle" font-size="13" font-weight="900" fill="#fff" font-family="Arial, Helvetica, sans-serif">А</text></svg>`,
-      'ВТБ': `<svg viewBox="0 0 24 24" width="20" height="20" style="flex-shrink:0; border-radius:50%; overflow:hidden; display:block;"><rect width="24" height="24" fill="#0A2896"/><text x="12" y="17" text-anchor="middle" font-size="8" font-weight="900" fill="#fff" font-family="Arial, Helvetica, sans-serif">ВТБ</text></svg>`,
-      'Райффайзен': `<svg viewBox="0 0 24 24" width="20" height="20" style="flex-shrink:0; border-radius:50%; overflow:hidden; display:block;"><rect width="24" height="24" fill="#FEE600"/><text x="12" y="17.5" text-anchor="middle" font-size="13" font-weight="900" fill="#000" font-family="Arial, Helvetica, sans-serif">R</text></svg>`,
-      'USDT': `<svg viewBox="0 0 24 24" width="20" height="20" style="flex-shrink:0; border-radius:50%; overflow:hidden; display:block;"><circle cx="12" cy="12" r="12" fill="#26A17B"/><text x="12" y="18" text-anchor="middle" font-size="16" font-weight="900" fill="#fff" font-family="Arial, Helvetica, sans-serif">₮</text></svg>`,
-      'BTC': `<svg viewBox="0 0 24 24" width="20" height="20" style="flex-shrink:0; border-radius:50%; overflow:hidden; display:block;"><circle cx="12" cy="12" r="12" fill="#F7931A"/><text x="12" y="17.5" text-anchor="middle" font-size="14" font-weight="900" fill="#fff" font-family="Arial, Helvetica, sans-serif">₿</text></svg>`,
-      'TON': `<svg viewBox="0 0 24 24" width="20" height="20" style="flex-shrink:0; border-radius:50%; overflow:hidden; display:block;"><circle cx="12" cy="12" r="12" fill="#0098EA"/><text x="12" y="17.5" text-anchor="middle" font-size="14" font-weight="900" fill="#fff" font-family="Arial, Helvetica, sans-serif">T</text></svg>`
+      'Тинькофф': `<img src="https://logo.clearbit.com/tinkoff.ru" onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'width:20px;height:20px;background:#FFDD2D;color:#000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;\\'>Т</div>';" style="width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#fff;">`,
+      'Сбербанк': `<img src="https://logo.clearbit.com/sberbank.ru" onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'width:20px;height:20px;background:#21A038;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;\\'>С</div>';" style="width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#fff;">`,
+      'Альфа-Банк': `<img src="https://logo.clearbit.com/alfabank.ru" onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'width:20px;height:20px;background:#EF3124;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;\\'>А</div>';" style="width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#fff;">`,
+      'ВТБ': `<img src="https://logo.clearbit.com/vtb.ru" onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'width:20px;height:20px;background:#0A2896;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:9px;\\'>ВТБ</div>';" style="width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#fff;">`,
+      'Райффайзен': `<img src="https://logo.clearbit.com/raiffeisen.ru" onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'width:20px;height:20px;background:#FEE600;color:#000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;\\'>R</div>';" style="width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#fff;">`,
+      'USDT': `<img src="https://cryptologos.cc/logos/tether-usdt-logo.png" style="width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0;">`,
+      'BTC': `<img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png" style="width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0;">`,
+      'TON': `<img src="https://cryptologos.cc/logos/toncoin-ton-logo.png" style="width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0;">`
     };
 
     const getPayIcon = (name) => {
@@ -2217,6 +2217,11 @@ document.addEventListener('DOMContentLoaded', () => {
     loadHomeDashboard();
     updateNotifUI();
     try { loadHomeRate(); } catch(e) { console.error('Initial load error:', e); }
+
+  } catch (err) {
+    console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
+  }
+});al load error:', e); }
 
   } catch (err) {
     console.error('VEXO: КРИТИЧЕСКАЯ ОШИБКА', err);
